@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Криминальный Блеф</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Подключение Alpine.js через CDN -->
+    <script defer src="https://unpkg.com/alpinejs@3.10.3/dist/cdn.min.js"></script>
+    <!-- Подключение Telegram WebApp API -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+
+<body x-data="app" x-init="initApp" :data-theme="theme">
+    <!-- Контейнер для сообщения загрузки -->
+    <div class="loading-container" x-show="isLoading">
+        <div class="loader"></div>
+        <p>Загрузка...</p>
+    </div>
+
+    <!-- Контейнер для основного контента -->
+    <div class="container" x-show="!isLoading" x-cloak>
+        <!-- Стартовый экран -->
+        <div class="screen" id="start-screen" x-show="currentScreen === 'start'">
+            <div class="logo">
+                <h1>Криминальный Блеф</h1>
+                <p>Проверь свою наблюдательность</p>
+            </div>
+            <button class="primary-button" @click="startGame">Играть</button>
+        </div>
+
+        <!-- Игровой экран -->
+        <div class="screen" id="game-screen" x-show="currentScreen === 'game'" x-cloak>
+            <div class="game-header">
+                <div class="score" x-text="'Счет: ' + totalScore"></div>
+                <div class="progress" x-text="'Вопрос: ' + (currentStoryIndex + 1) + '/' + stories.length"></div>
+                <div class="timer">
+                    <span x-text="secondsLeft"></span>с
+                    <div class="timer-bar" :style="'width: ' + (secondsLeft / 15 * 100) + '%'"></div>
+                </div>
+            </div>
+
+            <template x-if="currentStory">
+                <div class="story-card">
+                    <h3 x-text="currentStory.title" class="story-title"></h3>
+                    <p x-text="currentStory.content" class="story-content"></p>
+                    <p class="story-question">В чем ошибка преступника?</p>
+
+                    <div class="answers-container">
+                        <template x-for="mistake in currentStory.mistakes" :key="mistake.id">
+                            <button class="answer-button" x-text="mistake.text" @click="selectAnswer(mistake.id)"
+                                :disabled="isAnswering">
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Экран результата ответа -->
+        <div class="screen" id="result-screen" x-show="currentScreen === 'result'" x-cloak>
+            <div :class="{'result-correct': result.correct, 'result-incorrect': !result.correct}">
+                <h3 x-text="result.correct ? 'Правильно!' : 'Неправильно!'"></h3>
+                <p x-text="result.explanation"></p>
+                <div class="points-details">
+                    <template x-if="result.correct">
+                        <div>
+                            <p class="points-line">Базовые очки: <span x-text="result.details.base"></span></p>
+                            <p class="points-line">За скорость: <span x-text="'+' + result.details.timeBonus"></span>
+                            </p>
+                            <p class="points-line">За сложность: <span
+                                    x-text="'+' + result.details.difficultyBonus"></span></p>
+                            <p class="points-total">Всего: <span x-text="'+' + result.details.total"></span></p>
+                        </div>
+                    </template>
+                    <template x-if="!result.correct">
+                        <p class="points-total">Очки не начислены</p>
+                    </template>
+                </div>
+                <button @click="nextQuestion" class="primary-button">Далее</button>
+            </div>
+        </div>
+
+        <!-- Экран результатов игры -->
+        <div class="screen" id="finish-screen" x-show="currentScreen === 'finish'" x-cloak>
+            <div class="game-results">
+                <h2>Игра завершена!</h2>
+                <div class="results-details">
+                    <p class="results-line">Итоговый счет: <span x-text="gameResult.totalScore"></span></p>
+                    <p class="results-line">Правильных ответов: <span
+                            x-text="gameResult.correctAnswers + '/' + gameResult.totalQuestions"></span></p>
+                    <p class="results-line">Точность: <span x-text="gameResult.accuracy + '%'"></span></p>
+                </div>
+                <div class="results-stats">
+                    <h3>Ваша статистика</h3>
+                    <p class="stats-line">Всего игр: <span x-text="gameResult.stats.totalGames"></span></p>
+                    <p class="stats-line">Общий счет: <span x-text="gameResult.stats.totalScore"></span></p>
+                    <p class="stats-line">Максимальная серия: <span x-text="gameResult.stats.maxStreak"></span></p>
+                </div>
+                <div class="action-buttons">
+                    <button @click="restartGame" class="primary-button">Сыграть еще</button>
+                    <button @click="goToMain" class="secondary-button">На главную</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключение основного JavaScript файла -->
+    <script src="app.js"></script>
+</body>
+
+</html>

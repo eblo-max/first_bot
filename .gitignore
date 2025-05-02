@@ -1,0 +1,45 @@
+# Зависимости
+/node_modules
+/.pnp
+.pnp.js
+
+# Тестирование
+/coverage
+
+# Продакшн
+/build
+/dist
+
+# Переменные окружения
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Логи
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+
+# Операционные системы
+.DS_Store
+Thumbs.db
+
+# IDE и редакторы
+/.idea
+/.vscode
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# MongoDB
+/data/db
+
+# Временные файлы
+*.tmp
+*.temp
+.cache 
