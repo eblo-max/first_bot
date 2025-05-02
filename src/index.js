@@ -55,7 +55,7 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
     try {
         // Подключение к MongoDB
-        await mongoose.connect(process.env.MONGODB_URI, {
+        await mongoose.connect(process.env.MONGO_URL, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
