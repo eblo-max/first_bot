@@ -25,11 +25,113 @@
                     if (container) {
                         container.style.display = 'block';
                     }
+
+                    // Принудительно показываем главный экран
+                    showStartScreen();
                 }
             }, 5000);
 
             return false; // true чтобы подавить стандартное сообщение об ошибке
         };
+
+        // Функция для принудительного отображения главного экрана
+        function showStartScreen() {
+            // Скрываем все экраны
+            var screens = document.querySelectorAll('.screen');
+            screens.forEach(function (screen) {
+                screen.style.display = 'none';
+            });
+
+            // Показываем только стартовый экран
+            var startScreen = document.querySelector('#start-screen');
+            if (startScreen) {
+                startScreen.style.display = 'block';
+                console.log('Принудительное отображение стартового экрана');
+            }
+
+            // Обеспечиваем работу кнопки "Играть"
+            var playButton = document.querySelector('.primary-button');
+            if (playButton) {
+                // Удаляем существующие обработчики
+                var newPlayButton = playButton.cloneNode(true);
+                playButton.parentNode.replaceChild(newPlayButton, playButton);
+
+                // Добавляем обработчик для демо-режима
+                newPlayButton.addEventListener('click', function () {
+                    console.log('Кнопка "Играть" нажата в режиме без Alpine.js');
+
+                    // Скрываем стартовый экран
+                    startScreen.style.display = 'none';
+
+                    // Показываем экран игры с демо-данными
+                    var gameScreen = document.querySelector('#game-screen');
+                    if (gameScreen) {
+                        gameScreen.style.display = 'block';
+
+                        // Устанавливаем демо-данные для игры
+                        document.querySelector('.score').textContent = 'Счет: 0';
+                        document.querySelector('.progress').textContent = 'Вопрос: 1/1';
+
+                        var storyTitle = gameScreen.querySelector('.story-title');
+                        if (storyTitle) storyTitle.textContent = 'Ограбление музея';
+
+                        var storyContent = gameScreen.querySelector('.story-content');
+                        if (storyContent) storyContent.textContent = 'Ночью в местном музее произошло ограбление. Преступник проник через окно на втором этаже, разбил витрину и похитил знаменитый алмаз "Звезда Востока". На следующий день он попытался продать его перекупщику, но был задержан полицией.';
+
+                        // Добавляем варианты ошибок
+                        var answerContainer = gameScreen.querySelector('.answers-container');
+                        if (answerContainer) {
+                            answerContainer.innerHTML = `
+                                <button class="answer-button">Неправильно выбрал время</button>
+                                <button class="answer-button">Оставил отпечатки пальцев</button>
+                                <button class="answer-button">Слишком быстро пытался продать украденное</button>
+                            `;
+
+                            // Добавляем обработчики для кнопок ответов
+                            var answerButtons = answerContainer.querySelectorAll('.answer-button');
+                            answerButtons.forEach(function (button) {
+                                button.addEventListener('click', function () {
+                                    // Показываем экран результата
+                                    gameScreen.style.display = 'none';
+                                    var resultScreen = document.querySelector('#result-screen');
+                                    if (resultScreen) {
+                                        resultScreen.style.display = 'block';
+
+                                        // Устанавливаем результат
+                                        var resultTitle = resultScreen.querySelector('h3');
+                                        if (resultTitle) resultTitle.textContent = 'Правильно!';
+
+                                        var explanation = resultScreen.querySelector('p');
+                                        if (explanation) explanation.textContent = 'Преступник совершил ошибку, пытаясь слишком быстро продать украденное. Это привлекло внимание полиции.';
+
+                                        // Настраиваем обработчик для кнопки "Далее"
+                                        var nextButton = resultScreen.querySelector('.primary-button');
+                                        if (nextButton) {
+                                            nextButton.addEventListener('click', function () {
+                                                resultScreen.style.display = 'none';
+                                                var finishScreen = document.querySelector('#finish-screen');
+                                                if (finishScreen) {
+                                                    finishScreen.style.display = 'block';
+
+                                                    // Настраиваем обработчики для кнопок завершения
+                                                    var actionButtons = finishScreen.querySelectorAll('button');
+                                                    actionButtons.forEach(function (btn) {
+                                                        btn.addEventListener('click', function () {
+                                                            finishScreen.style.display = 'none';
+                                                            startScreen.style.display = 'block';
+                                                        });
+                                                    });
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            });
+                        }
+                    }
+                });
+            }
+        }
 
         // Загрузка завершена
         window.addEventListener('load', function () {
@@ -56,6 +158,9 @@
                     if (container) {
                         container.style.display = 'block';
                     }
+
+                    // Принудительно показываем главный экран
+                    showStartScreen();
                 }
             }, 7000);
         });
