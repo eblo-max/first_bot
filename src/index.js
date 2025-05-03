@@ -57,6 +57,16 @@ app.use('/api/game', gameRoutes);
 // app.use('/api/user', userRoutes); // Будет добавлено в фазе 2
 // app.use('/api/leaderboard', leaderboardRoutes); // Будет добавлено в фазе 2
 
+// Корневой маршрут показывает главное меню
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/main-menu.html'));
+});
+
+// Игровой экран
+app.get('/game', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 // Маршрут для проверки здоровья приложения
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -64,7 +74,7 @@ app.get('/api/health', (req, res) => {
 
 // Обработка 404
 app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, '../public/index.html'));
+    res.status(404).sendFile(path.join(__dirname, '../public/main-menu.html'));
 });
 
 // Обработка ошибок
