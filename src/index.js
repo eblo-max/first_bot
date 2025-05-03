@@ -48,6 +48,32 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Middleware для отключения кеширования
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    next();
+});
+
+// Корневой маршрут показывает главное меню - ставим перед статическими файлами
+app.get('/', (req, res) => {
+    console.log('Запрос на корневой маршрут - отправляем main-menu.html');
+    res.sendFile(path.join(__dirname, '../public/main-menu.html'));
+});
+
+// Игровой экран
+app.get('/game', (req, res) => {
+    console.log('Запрос на игровой экран - отправляем index.html');
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Редирект для старых ссылок на index.html
+app.get('/index.html', (req, res) => {
+    console.log('Обнаружен запрос к старому index.html - редиректим на главную');
+    res.redirect(301, '/');
+});
+
 // Статические файлы
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -56,16 +82,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/game', gameRoutes);
 // app.use('/api/user', userRoutes); // Будет добавлено в фазе 2
 // app.use('/api/leaderboard', leaderboardRoutes); // Будет добавлено в фазе 2
-
-// Корневой маршрут показывает главное меню
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/main-menu.html'));
-});
-
-// Игровой экран
-app.get('/game', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
-});
 
 // Маршрут для проверки здоровья приложения
 app.get('/api/health', (req, res) => {
