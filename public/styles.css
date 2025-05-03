@@ -138,23 +138,24 @@ button {
   position: absolute;
   background-color: var(--yellow-tape);
   color: #000;
-  transform: rotate(-10deg);
+  transform: rotate(-8deg);
   font-size: 10px;
   text-align: center;
   padding: 4px 0;
   width: 150%;
   left: -25%;
-  top: 45%;
+  top: 28%;
   z-index: 1;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
   animation: tape-animation 10s linear infinite;
+  overflow: hidden;
 }
 
 .police-tape-2 {
-  top: 52%;
+  top: 78%;
   transform: rotate(5deg);
   animation: tape-animation 15s linear infinite reverse;
   animation-delay: -5s;
@@ -171,11 +172,14 @@ button {
   display: inline-block;
 }
 
+/* Логотип */
 .logo {
   margin-bottom: calc(var(--spacing-unit) * 5);
   text-align: center;
   position: relative;
   z-index: 2;
+  padding: 20px;
+  margin-top: 40px;
 }
 
 .logo h1 {
@@ -221,6 +225,9 @@ button {
   letter-spacing: 3px;
   position: relative;
   text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  max-width: 90%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Эффект следов крови */
@@ -244,8 +251,11 @@ button {
 /* Кнопки */
 .primary-button {
   display: block;
-  width: 100%;
-  padding: calc(var(--spacing-unit) * 2);
+  width: 85%;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 15px 20px;
   background-color: var(--primary-color);
   color: white;
   border-radius: var(--border-radius);
@@ -253,7 +263,8 @@ button {
   font-weight: 600;
   text-align: center;
   transition: all var(--transition-speed);
-  margin: calc(var(--spacing-unit) * 2) 0;
+  margin-top: 30px;
+  margin-bottom: 30px;
   box-shadow: 
     0 4px 8px var(--shadow-color),
     0 0 15px rgba(150, 0, 0, 0.1);
