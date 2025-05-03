@@ -5,11 +5,14 @@ const { test, expect } = require('playwright/test');
  * Использует Vanilla JS подход вместо Alpine.js
  */
 
-// Базовый URL для тестов
-const TEST_URL = 'http://localhost:3000?test=true';
+// Токен, предоставленный для тестов
+const TEST_TOKEN = '32266164ccf5fdb77194bee3aa37a13fa429971e441aa0702f843185b9885059';
+
+// Базовый URL для тестов (продакшн)
+const TEST_URL = `https://firstbot-production-87c1.up.railway.app?test=true&token=${TEST_TOKEN}`;
 
 // Таймаут для ожидания загрузки приложения
-const APP_LOAD_TIMEOUT = 5000;
+const APP_LOAD_TIMEOUT = 15000; // Увеличим таймаут для продакшн среды
 
 /**
  * Базовые тесты загрузки приложения
@@ -40,6 +43,9 @@ test('Запуск игры и отображение первого вопро�
 
     // Нажимаем на кнопку "Играть"
     await page.click('button[data-action="startGame"]');
+
+    // Ожидаем дольше для загрузки игрового экрана
+    await page.waitForSelector('#game-screen.active', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
 
     // Проверяем, что игровой экран отображается
     const gameScreen = await page.$('#game-screen.active');
@@ -75,18 +81,18 @@ test('Полный игровой цикл', async ({ page }) => {
     // Проходим через все вопросы, выбирая первый ответ
     for (let i = 0; i < 5; i++) {
         // Ожидаем загрузки вопроса
-        await page.waitForSelector('#answers-container button', { state: 'visible' });
+        await page.waitForSelector('#answers-container button', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
 
         // Выбираем первый ответ
         await page.click('#answers-container button:first-child');
 
         // Ожидаем экран результата
-        await page.waitForSelector('#result-screen.active', { state: 'visible' });
+        await page.waitForSelector('#result-screen.active', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
 
         if (i < 4) {
             // Нажимаем "Далее" для следующего вопроса
             await page.click('button[data-action="nextQuestion"]');
-            await page.waitForSelector('#game-screen.active', { state: 'visible' });
+            await page.waitForSelector('#game-screen.active', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
         }
     }
 
@@ -94,7 +100,7 @@ test('Полный игровой цикл', async ({ page }) => {
     await page.click('button[data-action="nextQuestion"]');
 
     // Проверяем, что отображается экран с результатами
-    const finishScreen = await page.waitForSelector('#finish-screen.active', { state: 'visible' });
+    const finishScreen = await page.waitForSelector('#finish-screen.active', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
     expect(finishScreen).not.toBeNull();
 
     // Проверяем наличие кнопок для рестарта и возврата на главную
