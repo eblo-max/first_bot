@@ -8,6 +8,7 @@
   --border-radius: 8px;
   --spacing-unit: 8px;
   --max-width: 480px;
+  --container-desktop-width: 700px; /* Новая переменная для ширины на десктопе */
   --transition-speed: 0.3s;
   --accent-color: #880000; /* Более темный акцент */
   --shadow-color: rgba(150, 0, 0, 0.2); /* Более интенсивные тени */
@@ -89,6 +90,7 @@ button {
   margin: 0 auto;
   padding: calc(var(--spacing-unit) * 2);
   min-height: 100%;
+  position: relative; /* Для позиционирования декоративных элементов */
 }
 
 .screen {
@@ -679,6 +681,7 @@ button {
   display: flex;
   flex-direction: column;
   animation: fadeIn 0.4s ease-in-out;
+  width: 100%; /* Обеспечивает полную ширину */
 }
 
 @keyframes fadeIn {
@@ -687,4 +690,236 @@ button {
 }
 
 /* Добавляем шрифт Google для единого криминального стиля */
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap'); 
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap');
+
+/* Медиа-запросы для адаптивности */
+@media screen and (min-width: 768px) {
+  .container {
+    max-width: var(--container-desktop-width);
+    padding: calc(var(--spacing-unit) * 3);
+  }
+  
+  .story-card {
+    padding: calc(var(--spacing-unit) * 4);
+  }
+  
+  .logo h1 {
+    font-size: 3.2rem;
+  }
+  
+  .logo p {
+    font-size: 1rem;
+    max-width: 70%;
+  }
+  
+  .primary-button, 
+  .secondary-button {
+    max-width: 400px;
+    font-size: 1.1rem;
+    padding: 16px 25px;
+  }
+  
+  .answers-container {
+    gap: calc(var(--spacing-unit) * 2);
+  }
+  
+  .answer-button {
+    padding: calc(var(--spacing-unit) * 2.5);
+    font-size: 1.05rem;
+  }
+  
+  /* Корректировка декоративных элементов */
+  .police-tape {
+    width: 200%;
+    left: -50%;
+    font-size: 12px;
+  }
+  
+  .fingerprint, .bloodstain {
+    transform: scale(1.5);
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .container {
+    max-width: 900px;
+  }
+  
+  .police-tape {
+    width: 250%;
+    left: -75%;
+  }
+  
+  /* Для больших экранов добавим эффект масштабирования и центровки */
+  #start-screen, 
+  #finish-screen {
+    height: 90vh;
+    justify-content: center;
+  }
+  
+  .game-results, 
+  .story-card {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .logo {
+    margin-top: 0;
+  }
+}
+
+/* Исправления для очень маленьких экранов */
+@media screen and (max-width: 360px) {
+  html, body {
+    font-size: 14px;
+  }
+  
+  .logo h1 {
+    font-size: 2rem;
+  }
+  
+  .story-card {
+    padding: calc(var(--spacing-unit) * 2);
+  }
+  
+  .police-tape {
+    font-size: 8px;
+  }
+}
+
+/* Ориентация экрана (для планшетов) */
+@media screen and (min-width: 768px) and (max-height: 1024px) and (orientation: landscape) {
+  #start-screen {
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  .logo {
+    margin-top: 5vh;
+    margin-bottom: 3vh;
+  }
+}
+
+/* Стили для разных типов устройств */
+.desktop-view .container {
+  padding: calc(var(--spacing-unit) * 4);
+  max-width: 900px;
+}
+
+.desktop-view .story-card {
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+}
+
+.desktop-view .game-header {
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 18px 25px;
+}
+
+.desktop-view .primary-button {
+  min-width: 300px;
+  padding: 18px 25px;
+}
+
+.desktop-view #start-screen,
+.desktop-view #finish-screen {
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.desktop-view .police-tape {
+  width: 300%;
+  left: -100%;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.desktop-view .logo h1 {
+  font-size: 3.5rem;
+}
+
+.desktop-view .game-results {
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: calc(var(--spacing-unit) * 5);
+}
+
+/* Вертикальное центрирование для планшетов и настольных компьютеров */
+@media screen and (min-height: 700px) {
+  .desktop-view #start-screen,
+  .tablet-view #start-screen {
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .logo {
+    margin-top: 0;
+  }
+}
+
+/* Оптимизированные стили для мобильных устройств */
+.mobile-view .story-content {
+  font-size: 0.93rem;
+  letter-spacing: 0.2px;
+}
+
+.mobile-view .logo h1 {
+  font-size: 2.2rem;
+}
+
+.mobile-view .answer-button {
+  padding: 14px;
+  font-size: 0.92rem;
+}
+
+/* Улучшения для карточек с содержимым */
+.story-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  will-change: transform;
+}
+
+.desktop-view .story-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8);
+}
+
+/* Улучшенные стили для кнопок на десктопе */
+.desktop-view .answer-button {
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.desktop-view .answer-button:hover {
+  transform: translateX(3px);
+  background-color: rgba(169, 0, 0, 0.1);
+  border-color: var(--primary-color);
+}
+
+.desktop-view .primary-button:hover {
+  background-color: var(--secondary-color);
+  box-shadow: 0 5px 15px rgba(150, 0, 0, 0.3);
+}
+
+.desktop-view .secondary-button:hover {
+  background-color: rgba(169, 0, 0, 0.1);
+  border-color: var(--primary-color);
+}
+
+/* Добавляем центрирование содержимого на больших экранах */
+@media screen and (min-width: 1200px) {
+  .screen {
+    align-items: center;
+  }
+  
+  /* Дополнительные ограничения ширины для очень больших экранов */
+  @media screen and (min-width: 1600px) {
+    .container {
+      max-width: 1000px;
+    }
+  }
+} 
