@@ -7,6 +7,9 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Криминальный Блеф</title>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
         /* Стиль для загрузчика */
@@ -40,6 +43,7 @@
             border-radius: 50%;
             filter: blur(10px);
             z-index: -1;
+            opacity: 0.7;
         }
 
         .bloodstain-1 {
@@ -58,6 +62,16 @@
             transform: rotate(-15deg);
         }
 
+        .bloodstain-3 {
+            width: 40px;
+            height: 60px;
+            bottom: 40%;
+            left: 15%;
+            transform: rotate(15deg);
+            filter: blur(8px);
+        }
+
+        /* Отпечатки пальцев */
         .fingerprint {
             position: absolute;
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="red" opacity="0.08" d="M50,0C32.8,0,19,13.8,19,31c0,19.2,28.8,64,31,64s31-44.8,31-64C81,13.8,67.2,0,50,0z M50,54c-12.7,0-23-10.3-23-23 s10.3-23,23-23s23,10.3,23,23S62.7,54,50,54z"/></svg>');
@@ -78,9 +92,17 @@
             transform: rotate(-30deg) scale(0.8);
         }
 
+        .fingerprint-3 {
+            top: 65%;
+            right: 20%;
+            transform: rotate(10deg) scale(1.2);
+            opacity: 0.05;
+        }
+
+        /* Полицейская лента */
         .crime-tape {
             position: absolute;
-            background-color: var(--primary-color);
+            background-color: var(--yellow-tape);
             color: black;
             transform: rotate(-35deg);
             font-size: 10px;
@@ -93,14 +115,16 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
         }
 
         .crime-tape::before,
         .crime-tape::after {
-            content: "не пересекать";
+            content: "место преступления";
             margin-right: 10px;
         }
 
+        /* Анимация мерцания для заголовка */
         @keyframes flicker {
 
             0%,
@@ -122,6 +146,96 @@
 
         .logo h1 {
             animation: flicker 4s infinite;
+        }
+
+        /* Силуэт тела мелом */
+        .chalk-outline {
+            position: absolute;
+            width: 120px;
+            height: 60px;
+            z-index: -1;
+            opacity: 0.05;
+            bottom: 8%;
+            left: 5%;
+            transform: rotate(-5deg);
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><path fill="none" stroke="white" stroke-width="0.5" d="M20,10 C25,5 35,5 40,10 C45,15 45,20 40,25 C35,30 25,30 20,25 C15,20 15,15 20,10 Z M30,25 L30,45 M25,35 L35,35 M20,45 L40,45" /></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+        }
+
+        /* Следы от обуви */
+        .footprint {
+            position: absolute;
+            width: 25px;
+            height: 60px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 24"><path fill="white" opacity="0.07" d="M6,1C8.2,1,9,4,9,6C9,8,8.2,13,6,13C3.8,13,3,10.5,3,9C3,4,3.8,1,6,1z M6,13C7,14,8,19,7,22C6,24,3,24,2,22C1,20,3,18,4,16C5,14,5,13,6,13z"></path></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            z-index: -1;
+            opacity: 0.15;
+        }
+
+        .footprint-1 {
+            bottom: 25%;
+            right: 30%;
+            transform: rotate(15deg);
+        }
+
+        .footprint-2 {
+            bottom: 15%;
+            right: 25%;
+            transform: rotate(25deg);
+        }
+
+        .footprint-3 {
+            bottom: 35%;
+            right: 35%;
+            transform: rotate(5deg);
+        }
+
+        /* Капли крови на логотипе */
+        .blood-drip {
+            position: absolute;
+            background-color: var(--primary-color);
+            border-radius: 50% 50% 0 50%;
+            transform: rotate(45deg);
+            z-index: 1;
+            filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
+        }
+
+        .blood-drip-1 {
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            left: 30%;
+        }
+
+        .blood-drip-2 {
+            width: 8px;
+            height: 8px;
+            top: -5px;
+            left: 50%;
+        }
+
+        .blood-drip-3 {
+            width: 12px;
+            height: 12px;
+            top: -8px;
+            left: 70%;
+        }
+
+        .blood-streak {
+            position: absolute;
+            background: linear-gradient(to bottom, var(--primary-color), transparent);
+            width: 3px;
+            height: 30px;
+            top: 0;
+            left: 50%;
+            opacity: 0.6;
+            border-radius: 0 0 3px 3px;
+            filter: blur(1px);
         }
     </style>
 
@@ -185,7 +299,7 @@
     <!-- Контейнер для сообщения загрузки -->
     <div class="loading-container">
         <div class="loader"></div>
-        <p>Загрузка...</p>
+        <p>Загрузка расследования...</p>
     </div>
 
     <!-- Контейнер для основного контента -->
@@ -195,22 +309,35 @@
             <!-- Декоративные элементы для криминальной тематики -->
             <div class="bloodstain bloodstain-1"></div>
             <div class="bloodstain bloodstain-2"></div>
+            <div class="bloodstain bloodstain-3"></div>
             <div class="fingerprint fingerprint-1"></div>
             <div class="fingerprint fingerprint-2"></div>
+            <div class="fingerprint fingerprint-3"></div>
             <div class="crime-tape"></div>
+            <div class="chalk-outline"></div>
+            <div class="footprint footprint-1"></div>
+            <div class="footprint footprint-2"></div>
+            <div class="footprint footprint-3"></div>
+            <div class="police-tape">МЕСТО ПРЕСТУПЛЕНИЯ • НЕ ПЕРЕСЕКАТЬ • МЕСТО ПРЕСТУПЛЕНИЯ • НЕ ПЕРЕСЕКАТЬ •</div>
+            <div class="police-tape police-tape-2">МЕСТО ПРЕСТУПЛЕНИЯ • НЕ ПЕРЕСЕКАТЬ • МЕСТО ПРЕСТУПЛЕНИЯ • НЕ
+                ПЕРЕСЕКАТЬ •</div>
 
             <div class="logo">
+                <div class="blood-drip blood-drip-1"></div>
+                <div class="blood-drip blood-drip-2"></div>
+                <div class="blood-drip blood-drip-3"></div>
+                <div class="blood-streak"></div>
                 <h1>Криминальный Блеф</h1>
-                <p>РАСКРОЙ ИСТИНУ В ЖЕСТОКОМ МИРЕ</p>
+                <p>НАЙДИ УЛИКИ. РАСКРОЙ ТАЙНУ. ВЫЖИВИ.</p>
             </div>
-            <button class="primary-button" data-action="startGame">РАССЛЕДОВАТЬ</button>
+            <button class="primary-button" data-action="startGame">НАЧАТЬ РАССЛЕДОВАНИЕ</button>
         </div>
 
         <!-- Игровой экран -->
         <div class="screen" id="game-screen">
             <div class="game-header">
                 <div class="score">Счет: <span id="score-display">0</span></div>
-                <div class="progress">Вопрос: <span id="question-progress">1/5</span></div>
+                <div class="progress">Дело: <span id="question-progress">1/5</span></div>
                 <div class="timer">
                     <span id="timer-value">15</span>с
                     <div class="timer-bar" id="timer-bar"></div>
@@ -220,7 +347,7 @@
             <div class="story-card">
                 <h3 class="story-title" id="story-title"></h3>
                 <p class="story-content" id="story-content"></p>
-                <p class="story-question">В чем ошибка преступника?</p>
+                <p class="story-question">Где ошибка преступника?</p>
 
                 <div class="answers-container" id="answers-container">
                     <!-- Ответы будут добавлены через JavaScript -->
@@ -236,28 +363,28 @@
                 <div class="points-details" id="points-details">
                     <!-- Детали очков будут добавлены через JavaScript -->
                 </div>
-                <button data-action="nextQuestion" class="primary-button">ДАЛЕЕ</button>
+                <button data-action="nextQuestion" class="primary-button">СЛЕДУЮЩЕЕ ДЕЛО</button>
             </div>
         </div>
 
         <!-- Экран результатов игры -->
         <div class="screen" id="finish-screen">
             <div class="game-results">
-                <h2>Игра завершена!</h2>
+                <h2>Расследование завершено</h2>
                 <div class="results-details">
                     <p class="results-line">Итоговый счет: <span id="final-score">0</span></p>
-                    <p class="results-line">Правильных ответов: <span id="correct-answers">0/0</span></p>
-                    <p class="results-line">Точность: <span id="accuracy">0%</span></p>
+                    <p class="results-line">Раскрыто дел: <span id="correct-answers">0/0</span></p>
+                    <p class="results-line">Эффективность: <span id="accuracy">0%</span></p>
                 </div>
                 <div class="results-stats">
-                    <h3>Ваша статистика</h3>
-                    <p class="stats-line">Всего игр: <span id="total-games">0</span></p>
-                    <p class="stats-line">Общий счет: <span id="total-score">0</span></p>
-                    <p class="stats-line">Максимальная серия: <span id="max-streak">0</span></p>
+                    <h3>Досье детектива</h3>
+                    <p class="stats-line">Всего расследований: <span id="total-games">0</span></p>
+                    <p class="stats-line">Общий рейтинг: <span id="total-score">0</span></p>
+                    <p class="stats-line">Серия успешных дел: <span id="max-streak">0</span></p>
                 </div>
                 <div class="action-buttons">
-                    <button data-action="restartGame" class="primary-button">СЫГРАТЬ ЕЩЕ</button>
-                    <button data-action="goToMain" class="secondary-button">НА ГЛАВНУЮ</button>
+                    <button data-action="restartGame" class="primary-button">НОВОЕ РАССЛЕДОВАНИЕ</button>
+                    <button data-action="goToMain" class="secondary-button">В ШТАБ-КВАРТИРУ</button>
                 </div>
             </div>
         </div>
