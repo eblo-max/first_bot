@@ -90,7 +90,7 @@ app.get('/api/health', (req, res) => {
 
 // Обработка 404
 app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, '../public/main-menu.html'));
+    res.status(404).sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Обработка ошибок

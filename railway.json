@@ -9,6 +9,6 @@
         "restartPolicyMaxRetries": 10,
         "startCommand": "npm start",
         "healthcheckPath": "/api/health",
-        "healthcheckTimeout": 5
+        "healthcheckTimeout": 60
     }
 }
