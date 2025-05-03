@@ -1,0 +1,24 @@
+{
+    "mcpServers": {
+        "context7": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@upstash/context7-mcp@latest"
+            ]
+        },
+        "shrimp-task-manager": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "mcp-shrimp-task-manager"
+            ],
+            "env": {
+                "DATA_DIR": "C:/Users/user/first_bot",
+                "ENABLE_THOUGHT_CHAIN": "true",
+                "TEMPLATES_USE": "en",
+                "ENABLE_GUI": "false"
+            }
+        }
+    }
+}

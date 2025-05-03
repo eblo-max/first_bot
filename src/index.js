@@ -58,21 +58,21 @@ app.use((req, res, next) => {
 
 // Корневой маршрут показывает главное меню - ставим перед статическими файлами
 app.get('/', (req, res) => {
-    console.log('Запрос на корневой маршрут - отправляем main-menu.html');
-    res.sendFile(path.join(__dirname, '../public/main-menu.html'));
+    console.log('Запрос на корневой маршрут - отправляем index.html (главное меню)');
+    res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Игровой экран
 app.get('/game', (req, res) => {
-    console.log('Запрос на игровой экран - отправляем index.html');
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+    console.log('Запрос на игровой экран - отправляем game.html');
+    res.sendFile(path.join(__dirname, '../public/game.html'));
 });
 
-// Редирект для старых ссылок на index.html
-app.get('/index.html', (req, res) => {
-    console.log('Обнаружен запрос к старому index.html - редиректим на главную');
-    res.redirect(301, '/');
-});
+// Редирект для старых ссылок на index.html (больше не требуется)
+// app.get('/index.html', (req, res) => {
+//     console.log('Обнаружен запрос к старому index.html - редиректим на главную');
+//     res.redirect(301, '/');
+// });
 
 // Статические файлы
 app.use(express.static(path.join(__dirname, '../public')));
