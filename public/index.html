@@ -7,10 +7,54 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Криминальный Блеф</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Подключение Telegram WebApp API ПЕРВЫМ -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Инициализация глобальной проверки наличия Telegram WebApp API -->
+    <script>
+        // Эта переменная позволит Alpine.js проверить наличие Telegram WebApp API
+        window.tgWebAppReady = !!window.Telegram?.WebApp;
+
+        // Установка слушателя событий для проверки готовности Telegram WebApp
+        if (window.Telegram && window.Telegram.WebApp) {
+            console.log('Telegram WebApp API загружен успешно.');
+        } else {
+            console.warn('Telegram WebApp API не найден или загружен некорректно.');
+            // Для тестирования - создаем заглушку
+            if (window.location.host.includes('localhost') || window.location.search.includes('test=true')) {
+                console.log('Создаем заглушку для тестирования');
+                window.Telegram = {
+                    WebApp: {
+                        ready: function () { console.log('WebApp.ready() вызван'); },
+                        expand: function () { console.log('WebApp.expand() вызван'); },
+                        initData: window.location.search.substring(window.location.search.indexOf('tgWebAppData=') + 12),
+                        initDataUnsafe: {
+                            user: {
+                                id: 12345678,
+                                first_name: "Test",
+                                last_name: "User",
+                                username: "testuser",
+                                language_code: "ru"
+                            }
+                        },
+                        BackButton: {
+                            show: function () { console.log('BackButton.show() вызван'); },
+                            hide: function () { console.log('BackButton.hide() вызван'); },
+                            onClick: function (callback) { console.log('BackButton.onClick() установлен'); }
+                        },
+                        colorScheme: 'dark',
+                        HapticFeedback: {
+                            impactOccurred: function () { },
+                            notificationOccurred: function () { },
+                            selectionChanged: function () { }
+                        }
+                    }
+                };
+                window.tgWebAppReady = true;
+            }
+        }
+    </script>
     <!-- Подключение Alpine.js через CDN -->
     <script defer src="https://unpkg.com/alpinejs@3.10.3/dist/cdn.min.js"></script>
-    <!-- Подключение Telegram WebApp API -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 
 <body x-data="app" x-init="initApp" :data-theme="theme">

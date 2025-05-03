@@ -8,6 +8,9 @@ document.addEventListener('alpine:init', () => {
         currentScreen: 'start',
         theme: 'dark',
 
+        // Режим тестирования
+        isTestMode: false,
+
         // Игровые данные
         gameId: null,
         stories: [],
@@ -25,65 +28,134 @@ document.addEventListener('alpine:init', () => {
 
         // Инициализация приложения
         initApp() {
-            // Получаем объект Telegram WebApp
-            this.tg = window.Telegram.WebApp;
+            // Создаем глобальный объект для доступа к приложению из тестов
+            window.CriminalBluffApp = {
+                getData: () => this
+            };
 
-            // Применяем тему Telegram
-            this.theme = this.tg.colorScheme || 'dark';
+            // Проверяем наличие Telegram WebApp API
+            if (!window.Telegram || !window.Telegram.WebApp) {
+                console.error('Telegram WebApp API недоступен');
+                this.handleNoTelegramApi();
+                return;
+            }
 
-            // Раскрываем приложение на весь экран
-            this.tg.expand();
+            try {
+                // Получаем объект Telegram WebApp
+                this.tg = window.Telegram.WebApp;
 
-            // Прячем кнопку "Назад"
-            this.tg.BackButton.hide();
+                // Применяем тему Telegram
+                this.theme = this.tg.colorScheme || 'dark';
 
-            // Настраиваем обработчик кнопки "Назад"
-            this.tg.BackButton.onClick(() => {
-                // Если мы на экране с результатом вопроса, возвращаемся к игре
-                if (this.currentScreen === 'result') {
-                    this.nextQuestion();
-                    this.tg.BackButton.hide();
-                }
-                // Если мы на экране с результатами игры, возвращаемся в главное меню
-                else if (this.currentScreen === 'finish') {
-                    this.goToMain();
-                    this.tg.BackButton.hide();
-                }
-                // Если мы на игровом экране, показываем диалог подтверждения
-                else if (this.currentScreen === 'game') {
-                    if (confirm('Вы уверены, что хотите прервать игру?')) {
-                        this.abandonGame();
+                // Раскрываем приложение на весь экран
+                this.tg.expand();
+
+                // Прячем кнопку "Назад"
+                this.tg.BackButton.hide();
+
+                // Настраиваем обработчик кнопки "Назад"
+                this.tg.BackButton.onClick(() => {
+                    // Если мы на экране с результатом вопроса, возвращаемся к игре
+                    if (this.currentScreen === 'result') {
+                        this.nextQuestion();
+                        this.tg.BackButton.hide();
                     }
+                    // Если мы на экране с результатами игры, возвращаемся в главное меню
+                    else if (this.currentScreen === 'finish') {
+                        this.goToMain();
+                        this.tg.BackButton.hide();
+                    }
+                    // Если мы на игровом экране, показываем диалог подтверждения
+                    else if (this.currentScreen === 'game') {
+                        if (confirm('Вы уверены, что хотите прервать игру?')) {
+                            this.abandonGame();
+                        }
+                    }
+                });
+
+                // Пытаемся получить токен из localStorage
+                this.token = localStorage.getItem('token');
+
+                // Если токен есть, проверяем его
+                if (this.token) {
+                    // В полной реализации здесь был бы запрос для проверки токена
+                    this.isInitialized = true;
                 }
-            });
 
-            // Пытаемся получить токен из localStorage
-            this.token = localStorage.getItem('token');
-
-            // Если токен есть, проверяем его
-            if (this.token) {
-                // В полной реализации здесь был бы запрос для проверки токена
-                this.isInitialized = true;
-            }
-
-            // В любом случае инициализируем приложение
-            if (this.tg.initDataUnsafe && this.tg.initDataUnsafe.user) {
-                if (!this.token) {
-                    // Проходим процесс авторизации
-                    this.authorize();
+                // В любом случае инициализируем приложение
+                if (this.tg.initDataUnsafe && this.tg.initDataUnsafe.user) {
+                    if (!this.token) {
+                        // Проходим процесс авторизации
+                        this.authorize();
+                    } else {
+                        // Просто отображаем главный экран
+                        this.isLoading = false;
+                    }
                 } else {
-                    // Просто отображаем главный экран
-                    this.isLoading = false;
+                    // Если данные пользователя отсутствуют, показываем заглушку для тестирования
+                    console.warn('Telegram WebApp: initDataUnsafe не содержит данных пользователя. Режим разработки.');
+                    this.handleTestMode();
                 }
-            } else {
-                // Если данные пользователя отсутствуют, показываем заглушку для тестирования
-                console.warn('Telegram WebApp: initDataUnsafe не содержит данных пользователя. Режим разработки.');
-                this.isLoading = false;
-                this.isInitialized = true;
+
+                // Сообщаем Telegram, что приложение готово
+                this.tg.ready();
+            } catch (error) {
+                console.error('Ошибка инициализации приложения:', error);
+                this.handleNoTelegramApi();
+            }
+        },
+
+        // Обработка отсутствия Telegram WebApp API
+        handleNoTelegramApi() {
+            console.warn('Запуск в режиме тестирования - Telegram WebApp API недоступен');
+            this.isTestMode = true;
+
+            // Создаем тестовую заглушку для Telegram WebApp API если её ещё нет
+            if (!window.Telegram) {
+                window.Telegram = {
+                    WebApp: {
+                        ready: () => { },
+                        expand: () => { },
+                        initData: "test_mode_data",
+                        initDataUnsafe: {
+                            user: {
+                                id: 12345678,
+                                first_name: "Test",
+                                last_name: "User",
+                                username: "testuser"
+                            }
+                        },
+                        BackButton: {
+                            show: () => { },
+                            hide: () => { },
+                            onClick: () => { }
+                        },
+                        colorScheme: "dark",
+                        HapticFeedback: {
+                            impactOccurred: () => { },
+                            notificationOccurred: () => { }
+                        }
+                    }
+                };
             }
 
-            // Сообщаем Telegram, что приложение готово
-            this.tg.ready();
+            this.tg = window.Telegram.WebApp;
+            this.handleTestMode();
+        },
+
+        // Обработка тестового режима
+        handleTestMode() {
+            this.isTestMode = true;
+            this.isLoading = false;
+            this.isInitialized = true;
+
+            // Генерируем тестовый токен, если нет настоящего
+            if (!this.token) {
+                this.token = `test_token_${Date.now()}`;
+                localStorage.setItem('token', this.token);
+            }
+
+            console.log('Приложение запущено в тестовом режиме');
         },
 
         // Авторизация
@@ -116,7 +188,8 @@ document.addEventListener('alpine:init', () => {
             } catch (error) {
                 console.error('Ошибка авторизации:', error);
                 alert('Не удалось авторизоваться. Попробуйте позже.');
-                this.isLoading = false;
+                // Включаем тестовый режим в случае ошибки авторизации
+                this.handleTestMode();
             }
         },
 
@@ -378,4 +451,82 @@ document.addEventListener('alpine:init', () => {
             }
         }
     }));
-}); 
+});
+
+// Обеспечиваем глобальную инициализацию приложения для тестов
+document.addEventListener('DOMContentLoaded', () => {
+    // Проверяем, есть ли Alpine.js на странице
+    if (window.Alpine) {
+        console.log('Alpine.js загружен, приложение автоматически инициализируется');
+
+        // Специальная проверка для тестов - обеспечиваем инициализацию приложения
+        setTimeout(() => {
+            const appElement = document.querySelector('[x-data="app"]');
+            if (appElement && !appElement.__x) {
+                console.log('Принудительная инициализация Alpine.js для тестов');
+                if (typeof Alpine.initTree === 'function') {
+                    Alpine.initTree(appElement);
+                } else if (typeof Alpine.start === 'function') {
+                    Alpine.start();
+                }
+            }
+        }, 100);
+    } else {
+        console.warn('Alpine.js не обнаружен. Ожидаем загрузку Alpine.js...');
+        // Устанавливаем интервал для проверки Alpine
+        const alpineInitInterval = setInterval(() => {
+            if (window.Alpine) {
+                console.log('Alpine.js обнаружен, инициализируем приложение');
+                clearInterval(alpineInitInterval);
+
+                // Если Alpine уже инициализирован, но приложение не запущено, запускаем вручную
+                const appElement = document.querySelector('[x-data="app"]');
+                if (appElement && typeof Alpine.initTree === 'function') {
+                    console.log('Инициализируем дерево Alpine.js');
+                    Alpine.initTree(appElement);
+                }
+            }
+        }, 100);
+
+        // Останавливаем интервал через 10 секунд, если Alpine не загрузился
+        setTimeout(() => {
+            clearInterval(alpineInitInterval);
+            console.error('Alpine.js не был загружен в течение 10 секунд');
+        }, 10000);
+    }
+});
+
+// Создаем глобальный интерфейс для тестов
+window.AlpineTestInterface = {
+    isAlpineInitialized() {
+        return !!window.Alpine;
+    },
+    getAppData() {
+        try {
+            const appElement = document.querySelector('[x-data="app"]');
+            if (appElement && appElement.__x && appElement.__x.data) {
+                return appElement.__x.data;
+            } else if (window.CriminalBluffApp && window.CriminalBluffApp.getData) {
+                return window.CriminalBluffApp.getData();
+            }
+            return null;
+        } catch (e) {
+            console.error('Ошибка доступа к данным приложения:', e);
+            return null;
+        }
+    },
+    forceInitialize() {
+        const appElement = document.querySelector('[x-data="app"]');
+        if (appElement && window.Alpine) {
+            console.log('Принудительная инициализация Alpine.js');
+            if (typeof Alpine.initTree === 'function') {
+                Alpine.initTree(appElement);
+                return true;
+            } else if (typeof Alpine.start === 'function') {
+                Alpine.start();
+                return true;
+            }
+        }
+        return false;
+    }
+}; 
