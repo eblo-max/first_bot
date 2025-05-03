@@ -18,8 +18,30 @@ const seedDatabase = require('./utils/seedData');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(helmet());
+// Настройка Helmet CSP, разрешающая загрузку необходимых скриптов
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'",
+                "https://telegram.org",
+                "https://unpkg.com",
+                "https://cdn.jsdelivr.net"],
+            styleSrc: ["'self'", "'unsafe-inline'",
+                "https://unpkg.com",
+                "https://cdn.jsdelivr.net"],
+            connectSrc: ["'self'", "https://api.telegram.org", "wss://*.telegram.org"],
+            imgSrc: ["'self'", "data:", "https://telegram.org", "https://*.telegram.org"],
+            fontSrc: ["'self'", "data:"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            frameSrc: ["'self'", "https://telegram.org", "https://*.telegram.org"],
+            workerSrc: ["'self'", "blob:"]
+        }
+    },
+    crossOriginEmbedderPolicy: false // Разрешить загрузку ресурсов из разных источников
+}));
+
 app.use(cors({
     origin: process.env.CORS_ORIGIN || '*'
 }));
@@ -51,27 +73,56 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Внутренняя ошибка сервера' });
 });
 
+// Массив строк подключения к MongoDB (основной и резервный варианты)
+const mongoURIs = [
+    process.env.MONGO_URL,
+    'mongodb://localhost:27017/criminal-bluff',
+    'mongodb://127.0.0.1:27017/criminal-bluff'
+];
+
 // Подключение к MongoDB и запуск сервера
 const startServer = async () => {
-    try {
-        // Подключение к MongoDB
-        await mongoose.connect(process.env.MONGO_URL, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-        console.log('Подключено к MongoDB');
+    let isConnected = false;
 
-        // Заполнение базы тестовыми данными
-        await seedDatabase();
+    // Запускаем сервер независимо от подключения к MongoDB
+    const server = app.listen(PORT, () => {
+        console.log(`Сервер запущен на порту ${PORT}`);
+    });
 
-        // Запуск сервера
-        app.listen(PORT, () => {
-            console.log(`Сервер запущен на порту ${PORT}`);
-        });
-    } catch (error) {
-        console.error('Ошибка запуска сервера:', error);
-        process.exit(1);
+    // Пытаемся подключиться к MongoDB (попробуем все строки подключения)
+    for (const uri of mongoURIs) {
+        if (!uri) continue;
+
+        try {
+            console.log(`Попытка подключения к MongoDB: ${uri.substring(0, uri.indexOf('://') + 6)}...`);
+
+            await mongoose.connect(uri, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                serverSelectionTimeoutMS: 5000 // 5 секунд таймаут для быстрого фолбэка
+            });
+
+            console.log('Подключено к MongoDB успешно!');
+
+            // Заполнение базы тестовыми данными
+            await seedDatabase();
+
+            isConnected = true;
+            break; // Выходим из цикла, так как подключение успешно
+        } catch (error) {
+            console.warn(`Не удалось подключиться к MongoDB по адресу ${uri}:`, error.message);
+        }
     }
+
+    if (!isConnected) {
+        console.error('❌ Не удалось подключиться ни к одной базе данных MongoDB!');
+        console.log('⚠️ Приложение запущено в режиме с ограниченной функциональностью.');
+        console.log('⚠️ API запросы к базе данных будут возвращать ошибки.');
+    }
+
+    return server;
 };
 
-startServer(); 
+startServer().catch(error => {
+    console.error('Критическая ошибка запуска сервера:', error);
+}); 

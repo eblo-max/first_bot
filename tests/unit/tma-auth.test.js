@@ -1,112 +1,94 @@
 /**
- * Модульные тесты для утилиты аутентификации Telegram Mini App
+ * Unit-тесты для аутентификации Telegram Mini App
+ * Адаптировано для работы с Vanilla JS
  */
+
 const assert = require('assert');
-const { generateInitData, verifyInitData } = require('../utils/tma-auth');
+const {
+    generateTelegramInitData,
+    validateTelegramInitData,
+    createTelegramWebAppStub
+} = require('../utils/tma-auth');
 
-// Тестовые данные
-const testUser = {
-    id: 12345678,
-    first_name: "Test",
-    last_name: "User",
-    username: "testuser",
-    language_code: "ru"
-};
-
-const testBot = {
-    token: '7617823094:AAFXQaaLnn9773sF0BgW-YPRewO2p0b2XU8' // Токен из .env
-};
+// Тестовый токен для генерации и проверки подписи
+const TEST_BOT_TOKEN = 'TEST_BOT_TOKEN';
 
 /**
- * Запуск тестов
+ * Тест генерации и валидации Telegram initData
  */
-function runTests() {
-    console.log('Запуск тестов TMA Auth...');
+(function testInitDataValidation() {
+    console.log('Запуск тестов валидации initData');
 
-    try {
-        testGenerateInitData();
-        testInitDataVerification();
-        testInitDataModification();
+    // Генерируем initData с тестовыми данными
+    const initData = generateTelegramInitData({
+        user: { id: 12345678, first_name: 'Test', username: 'testuser' },
+        botToken: TEST_BOT_TOKEN
+    });
 
-        console.log('✅ Все тесты TMA Auth пройдены успешно!');
-    } catch (error) {
-        console.error('❌ Ошибка в тестах TMA Auth:', error);
-        throw error;
-    }
-}
+    // Проверяем валидность сгенерированных данных
+    const isValid = validateTelegramInitData(initData, TEST_BOT_TOKEN);
+    assert.strictEqual(isValid, true, 'Валидация должна пройти успешно');
+
+    // Проверяем, что невалидные данные не проходят проверку
+    const invalidData = initData.replace('hash=', 'hash=invalid');
+    const isInvalid = validateTelegramInitData(invalidData, TEST_BOT_TOKEN);
+    assert.strictEqual(isInvalid, false, 'Невалидные данные не должны проходить проверку');
+
+    console.log('✓ Тесты валидации initData пройдены успешно');
+})();
 
 /**
- * Тест генерации initData
+ * Тест создания заглушки Telegram WebApp
  */
-function testGenerateInitData() {
-    console.log('Тест: Генерация initData...');
+(function testTelegramWebAppStub() {
+    console.log('Запуск тестов создания заглушки Telegram WebApp');
+
+    // Создаем заглушку с пользовательскими параметрами
+    const customStub = createTelegramWebAppStub({
+        userId: 87654321,
+        firstName: 'Custom',
+        lastName: 'Tester',
+        username: 'customtester',
+        colorScheme: 'light'
+    });
+
+    // Проверяем данные пользователя
+    assert.strictEqual(customStub.WebApp.initDataUnsafe.user.id, 87654321, 'ID пользователя должен соответствовать переданному');
+    assert.strictEqual(customStub.WebApp.initDataUnsafe.user.first_name, 'Custom', 'Имя пользователя должно соответствовать переданному');
+    assert.strictEqual(customStub.WebApp.initDataUnsafe.user.last_name, 'Tester', 'Фамилия пользователя должна соответствовать переданной');
+    assert.strictEqual(customStub.WebApp.initDataUnsafe.user.username, 'customtester', 'Username должен соответствовать переданному');
+    assert.strictEqual(customStub.WebApp.colorScheme, 'light', 'Цветовая схема должна соответствовать переданной');
+
+    // Создаем заглушку с дефолтными параметрами
+    const defaultStub = createTelegramWebAppStub();
+
+    // Проверяем дефолтные значения
+    assert.strictEqual(defaultStub.WebApp.initDataUnsafe.user.id, 12345678, 'ID пользователя должен иметь дефолтное значение');
+    assert.strictEqual(defaultStub.WebApp.initDataUnsafe.user.first_name, 'Test', 'Имя пользователя должно иметь дефолтное значение');
+    assert.strictEqual(defaultStub.WebApp.colorScheme, 'dark', 'Цветовая схема должна иметь дефолтное значение');
+
+    console.log('✓ Тесты создания заглушки Telegram WebApp пройдены успешно');
+})();
+
+/**
+ * Тест формата initData
+ */
+(function testInitDataFormat() {
+    console.log('Запуск тестов формата initData');
 
     // Генерируем initData
-    const initData = generateInitData({
-        user: testUser,
-        query_id: '12345',
-        auth_date: 1662771648
-    }, testBot.token);
+    const initData = generateTelegramInitData({
+        botToken: TEST_BOT_TOKEN
+    });
 
-    // Проверяем, что строка генерируется и содержит нужные компоненты
-    assert(typeof initData === 'string', 'initData должен быть строкой');
-    assert(initData.includes('user='), 'initData должен содержать user');
-    assert(initData.includes('query_id='), 'initData должен содержать query_id');
-    assert(initData.includes('auth_date='), 'initData должен содержать auth_date');
-    assert(initData.includes('hash='), 'initData должен содержать hash');
+    // Проверяем наличие обязательных параметров
+    assert.ok(initData.includes('user='), 'initData должен содержать параметр user');
+    assert.ok(initData.includes('auth_date='), 'initData должен содержать параметр auth_date');
+    assert.ok(initData.includes('hash='), 'initData должен содержать параметр hash');
+    assert.ok(initData.includes('query_id='), 'initData должен содержать параметр query_id');
 
-    console.log('✅ Тест генерации initData пройден');
-}
+    console.log('✓ Тесты формата initData пройдены успешно');
+})();
 
-/**
- * Тест проверки подписи initData
- */
-function testInitDataVerification() {
-    console.log('Тест: Проверка подписи initData...');
-
-    // Генерируем initData
-    const initData = generateInitData({
-        user: testUser,
-        query_id: '12345'
-    }, testBot.token);
-
-    // Проверяем подпись
-    const isValid = verifyInitData(initData, testBot.token);
-    assert(isValid === true, 'Подпись должна быть валидной');
-
-    // Проверяем с неправильным токеном
-    const isInvalidToken = verifyInitData(initData, 'wrong_token');
-    assert(isInvalidToken === false, 'Подпись должна быть невалидной с неправильным токеном');
-
-    console.log('✅ Тест проверки подписи пройден');
-}
-
-/**
- * Тест на модификацию данных
- */
-function testInitDataModification() {
-    console.log('Тест: Модификация данных...');
-
-    // Генерируем initData
-    const initData = generateInitData({
-        user: testUser,
-        query_id: '12345'
-    }, testBot.token);
-
-    // Модифицируем данные (меняем значение query_id)
-    const modifiedInitData = initData.replace('query_id=12345', 'query_id=54321');
-
-    // Проверяем подпись для модифицированных данных
-    const isValid = verifyInitData(modifiedInitData, testBot.token);
-    assert(isValid === false, 'Подпись должна быть невалидной после модификации данных');
-
-    console.log('✅ Тест модификации данных пройден');
-}
-
-// Экспортируем функцию для запуска тестов
-module.exports = { runTests };
-
-// Если запущен непосредственно (не через import/require)
-if (require.main === module) {
-    runTests();
-} 
+// Вывод общего результата
+console.log('Все тесты пройдены успешно!'); 

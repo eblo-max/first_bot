@@ -60,10 +60,6 @@ button {
   outline: none;
 }
 
-[x-cloak] {
-  display: none !important;
-}
-
 /* Контейнеры */
 .container {
   max-width: var(--max-width);
@@ -73,9 +69,7 @@ button {
 }
 
 .screen {
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100vh - calc(var(--spacing-unit) * 4));
+  display: none;
 }
 
 /* Компоненты загрузки */
@@ -301,4 +295,9 @@ button {
 
 .action-buttons {
   margin-top: calc(var(--spacing-unit) * 4);
+}
+
+/* Стили для управления отображением экранов */
+.screen.active {
+  display: flex;
 } 
