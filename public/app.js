@@ -28,6 +28,8 @@ document.addEventListener('alpine:init', () => {
 
         // Инициализация приложения
         initApp() {
+            console.log('Инициализация приложения начата...');
+
             // Создаем глобальный объект для доступа к приложению из тестов
             window.CriminalBluffApp = {
                 getData: () => this
@@ -43,9 +45,11 @@ document.addEventListener('alpine:init', () => {
             try {
                 // Получаем объект Telegram WebApp
                 this.tg = window.Telegram.WebApp;
+                console.log('Telegram WebApp API найден, инициализация...');
 
                 // Применяем тему Telegram
                 this.theme = this.tg.colorScheme || 'dark';
+                console.log('Применена тема:', this.theme);
 
                 // Раскрываем приложение на весь экран
                 this.tg.expand();
@@ -75,6 +79,7 @@ document.addEventListener('alpine:init', () => {
 
                 // Пытаемся получить токен из localStorage
                 this.token = localStorage.getItem('token');
+                console.log('Токен из localStorage:', this.token ? 'Найден' : 'Не найден');
 
                 // Если токен есть, проверяем его
                 if (this.token) {
@@ -84,11 +89,14 @@ document.addEventListener('alpine:init', () => {
 
                 // В любом случае инициализируем приложение
                 if (this.tg.initDataUnsafe && this.tg.initDataUnsafe.user) {
+                    console.log('Данные пользователя получены:', this.tg.initDataUnsafe.user.username);
                     if (!this.token) {
                         // Проходим процесс авторизации
+                        console.log('Начинаем процесс авторизации...');
                         this.authorize();
                     } else {
                         // Просто отображаем главный экран
+                        console.log('Переход на главный экран...');
                         this.isLoading = false;
                     }
                 } else {
@@ -98,7 +106,18 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 // Сообщаем Telegram, что приложение готово
+                console.log('Отправка сигнала ready() в Telegram WebApp...');
                 this.tg.ready();
+
+                // Принудительно прекращаем загрузку через 5 секунд, если она ещё активна
+                setTimeout(() => {
+                    if (this.isLoading) {
+                        console.warn('Загрузка принудительно прервана по таймауту безопасности');
+                        this.isLoading = false;
+                        this.isInitialized = true;
+                    }
+                }, 5000);
+
             } catch (error) {
                 console.error('Ошибка инициализации приложения:', error);
                 this.handleNoTelegramApi();
@@ -114,8 +133,8 @@ document.addEventListener('alpine:init', () => {
             if (!window.Telegram) {
                 window.Telegram = {
                     WebApp: {
-                        ready: () => { },
-                        expand: () => { },
+                        ready: () => { console.log('WebApp.ready() вызван в режиме тестирования'); },
+                        expand: () => { console.log('WebApp.expand() вызван в режиме тестирования'); },
                         initData: "test_mode_data",
                         initDataUnsafe: {
                             user: {
@@ -126,14 +145,14 @@ document.addEventListener('alpine:init', () => {
                             }
                         },
                         BackButton: {
-                            show: () => { },
-                            hide: () => { },
-                            onClick: () => { }
+                            show: () => { console.log('BackButton.show() вызван в режиме тестирования'); },
+                            hide: () => { console.log('BackButton.hide() вызван в режиме тестирования'); },
+                            onClick: (callback) => { console.log('BackButton.onClick() установлен в режиме тестирования'); }
                         },
                         colorScheme: "dark",
                         HapticFeedback: {
-                            impactOccurred: () => { },
-                            notificationOccurred: () => { }
+                            impactOccurred: () => { console.log('HapticFeedback.impactOccurred вызван в режиме тестирования'); },
+                            notificationOccurred: () => { console.log('HapticFeedback.notificationOccurred вызван в режиме тестирования'); }
                         }
                     }
                 };
@@ -145,6 +164,7 @@ document.addEventListener('alpine:init', () => {
 
         // Обработка тестового режима
         handleTestMode() {
+            console.log('Активация тестового режима...');
             this.isTestMode = true;
             this.isLoading = false;
             this.isInitialized = true;
@@ -153,9 +173,33 @@ document.addEventListener('alpine:init', () => {
             if (!this.token) {
                 this.token = `test_token_${Date.now()}`;
                 localStorage.setItem('token', this.token);
+                console.log('Сгенерирован тестовый токен:', this.token);
             }
 
             console.log('Приложение запущено в тестовом режиме');
+
+            // Создаем моковые данные для тестирования
+            if (this.isTestMode && window.location.search.includes('autostory=true')) {
+                setTimeout(() => {
+                    console.log('Автоматическая загрузка тестовой истории...');
+                    this.stories = [
+                        {
+                            id: 'test-story-1',
+                            title: 'Тестовая история',
+                            content: 'Это тестовая история для демонстрации работы приложения без бэкенда.',
+                            mistakes: [
+                                { id: 'mistake-1', text: 'Ошибка 1' },
+                                { id: 'mistake-2', text: 'Ошибка 2' },
+                                { id: 'mistake-3', text: 'Ошибка 3' }
+                            ]
+                        }
+                    ];
+                    this.currentStory = this.stories[0];
+                    this.currentStoryIndex = 0;
+                    this.currentScreen = 'game';
+                    this.startTimer();
+                }, 1000);
+            }
         },
 
         // Авторизация
@@ -185,6 +229,7 @@ document.addEventListener('alpine:init', () => {
 
                 // Прячем экран загрузки
                 this.isLoading = false;
+                console.log('Авторизация успешна, токен получен');
             } catch (error) {
                 console.error('Ошибка авторизации:', error);
                 alert('Не удалось авторизоваться. Попробуйте позже.');
@@ -201,6 +246,7 @@ document.addEventListener('alpine:init', () => {
             }
 
             this.isLoading = true;
+            console.log('Начало игры...');
 
             try {
                 // Запрос на начало игры
@@ -217,6 +263,7 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 const data = await response.json();
+                console.log('Данные игры получены от сервера:', data);
 
                 // Сохраняем данные игры
                 this.gameId = data.gameId;
@@ -237,6 +284,28 @@ document.addEventListener('alpine:init', () => {
             } catch (error) {
                 console.error('Ошибка начала игры:', error);
                 alert('Не удалось начать игру. Попробуйте позже.');
+
+                // В тестовом режиме создаем моковые данные
+                if (this.isTestMode) {
+                    console.log('Генерация тестовых данных для игры...');
+                    this.gameId = `test-game-${Date.now()}`;
+                    this.stories = [
+                        {
+                            id: 'test-story-1',
+                            title: 'Ограбление музея',
+                            content: 'Ночью в местном музее произошло ограбление. Преступник проник через окно на втором этаже, разбил витрину и похитил знаменитый алмаз "Звезда Востока". На следующий день он попытался продать его перекупщику, но был задержан полицией.',
+                            mistakes: [
+                                { id: 'mistake-1', text: 'Неправильно выбрал время' },
+                                { id: 'mistake-2', text: 'Оставил отпечатки пальцев' },
+                                { id: 'mistake-3', text: 'Слишком быстро пытался продать украденное' }
+                            ]
+                        }
+                    ];
+                    this.currentStoryIndex = 0;
+                    this.currentStory = this.stories[0];
+                    this.currentScreen = 'game';
+                    this.startTimer();
+                }
             } finally {
                 this.isLoading = false;
             }
@@ -248,6 +317,7 @@ document.addEventListener('alpine:init', () => {
             clearInterval(this.timer);
             this.secondsLeft = 15;
             this.startTime = Date.now();
+            console.log('Таймер запущен, 15 секунд...');
 
             // Запускаем таймер обратного отсчета
             this.timer = setInterval(() => {
@@ -256,6 +326,7 @@ document.addEventListener('alpine:init', () => {
                 // Если время вышло, автоматически выбираем первый вариант
                 if (this.secondsLeft <= 0) {
                     clearInterval(this.timer);
+                    console.log('Время истекло!');
                     if (!this.isAnswering) {
                         this.timeExpired();
                     }
@@ -265,6 +336,7 @@ document.addEventListener('alpine:init', () => {
 
         // Время истекло
         timeExpired() {
+            console.log('Выбор автоматического ответа...');
             // Выбираем первый вариант по умолчанию
             if (this.currentStory && this.currentStory.mistakes.length > 0) {
                 this.selectAnswer(this.currentStory.mistakes[0].id);
@@ -278,6 +350,7 @@ document.addEventListener('alpine:init', () => {
             // Останавливаем таймер
             clearInterval(this.timer);
             this.isAnswering = true;
+            console.log('Выбран ответ:', mistakeId);
 
             // Вычисляем время ответа
             const responseTime = Date.now() - this.startTime;
@@ -306,6 +379,7 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 const data = await response.json();
+                console.log('Получен результат от сервера:', data);
 
                 // Запоминаем результат ответа
                 this.result = data;
@@ -322,8 +396,33 @@ document.addEventListener('alpine:init', () => {
             } catch (error) {
                 console.error('Ошибка отправки ответа:', error);
                 alert('Не удалось отправить ответ. Попробуйте еще раз.');
+
+                // В тестовом режиме создаем моковый результат
+                if (this.isTestMode) {
+                    console.log('Генерация тестового результата...');
+                    const isCorrect = Math.random() > 0.5;
+                    this.result = {
+                        correct: isCorrect,
+                        explanation: isCorrect
+                            ? 'Правильно! Преступник совершил ошибку, пытаясь слишком быстро продать украденное. Это привлекло внимание полиции.'
+                            : 'Неправильно. Основная ошибка преступника была в том, что он слишком быстро попытался продать украденное, не выждав достаточно времени.',
+                        details: {
+                            base: 100,
+                            timeBonus: Math.floor(responseTime / 1000) * 10,
+                            difficultyBonus: 20,
+                            total: 100 + Math.floor(responseTime / 1000) * 10 + 20
+                        },
+                        totalScore: this.totalScore + (isCorrect ? 150 : 0)
+                    };
+
+                    if (isCorrect) {
+                        this.totalScore += this.result.details.total;
+                    }
+
+                    this.currentScreen = 'result';
+                }
+
                 this.isAnswering = false;
-                this.startTimer(); // Перезапускаем таймер
             }
         },
 
@@ -332,6 +431,7 @@ document.addEventListener('alpine:init', () => {
             // Переходим к следующему вопросу
             this.currentStoryIndex++;
             this.isAnswering = false;
+            console.log('Переход к следующему вопросу, индекс:', this.currentStoryIndex);
 
             // Если есть еще вопросы, показываем их
             if (this.currentStoryIndex < this.stories.length) {
@@ -347,6 +447,7 @@ document.addEventListener('alpine:init', () => {
         // Завершение игры
         async finishGame() {
             this.isLoading = true;
+            console.log('Завершение игры...');
 
             try {
                 // Отправляем запрос на завершение игры
@@ -366,6 +467,7 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 const data = await response.json();
+                console.log('Получены результаты игры:', data);
 
                 // Сохраняем результаты игры
                 this.gameResult = data;
@@ -376,7 +478,29 @@ document.addEventListener('alpine:init', () => {
             } catch (error) {
                 console.error('Ошибка завершения игры:', error);
                 alert('Не удалось завершить игру. Результаты могут быть не сохранены.');
-                this.goToMain();
+
+                // В тестовом режиме создаем моковые результаты
+                if (this.isTestMode) {
+                    console.log('Генерация тестовых результатов игры...');
+                    const correctAnswers = Math.floor(Math.random() * 5) + 3; // 3-7 правильных ответов
+                    const totalQuestions = 10;
+
+                    this.gameResult = {
+                        totalScore: this.totalScore,
+                        correctAnswers: correctAnswers,
+                        totalQuestions: totalQuestions,
+                        accuracy: Math.floor((correctAnswers / totalQuestions) * 100),
+                        stats: {
+                            totalGames: 5,
+                            totalScore: 1250,
+                            maxStreak: 3
+                        }
+                    };
+
+                    this.currentScreen = 'finish';
+                } else {
+                    this.goToMain();
+                }
             } finally {
                 this.isLoading = false;
             }
@@ -385,6 +509,7 @@ document.addEventListener('alpine:init', () => {
         // Прерывание игры
         async abandonGame() {
             this.isLoading = true;
+            console.log('Прерывание игры...');
 
             try {
                 // Отправляем запрос на завершение игры с пометкой о прерывании
@@ -412,11 +537,13 @@ document.addEventListener('alpine:init', () => {
 
         // Начать новую игру
         restartGame() {
+            console.log('Запуск новой игры...');
             this.startGame();
         },
 
         // Вернуться на главный экран
         goToMain() {
+            console.log('Переход на главный экран...');
             this.currentScreen = 'start';
             this.tg.BackButton.hide();
 
@@ -455,6 +582,8 @@ document.addEventListener('alpine:init', () => {
 
 // Обеспечиваем глобальную инициализацию приложения для тестов
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM полностью загружен и разобран');
+
     // Проверяем, есть ли Alpine.js на странице
     if (window.Alpine) {
         console.log('Alpine.js загружен, приложение автоматически инициализируется');
@@ -492,8 +621,41 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             clearInterval(alpineInitInterval);
             console.error('Alpine.js не был загружен в течение 10 секунд');
+
+            // Пытаемся скрыть индикатор загрузки, даже если Alpine не загружен
+            const loadingContainer = document.querySelector('.loading-container');
+            if (loadingContainer) {
+                console.log('Принудительное скрытие индикатора загрузки');
+                loadingContainer.style.display = 'none';
+
+                // Показываем основной контент
+                const mainContainer = document.querySelector('.container');
+                if (mainContainer) {
+                    mainContainer.style.display = 'block';
+                }
+            }
         }, 10000);
     }
+
+    // Обеспечиваем запуск приложения в любом случае через 5 секунд
+    setTimeout(() => {
+        const appElement = document.querySelector('[x-data="app"]');
+        if (appElement && (!appElement.__x || appElement.__x.data.isLoading)) {
+            console.log('Принудительный запуск приложения по таймауту');
+
+            // Пытаемся скрыть индикатор загрузки
+            const loadingContainer = document.querySelector('.loading-container');
+            if (loadingContainer) {
+                loadingContainer.style.display = 'none';
+            }
+
+            // Показываем основной контент
+            const mainContainer = document.querySelector('.container');
+            if (mainContainer) {
+                mainContainer.style.display = 'block';
+            }
+        }
+    }, 5000);
 });
 
 // Создаем глобальный интерфейс для тестов
@@ -528,5 +690,24 @@ window.AlpineTestInterface = {
             }
         }
         return false;
+    },
+    // Метод для отладки приложения
+    debug() {
+        const appData = this.getAppData();
+        return {
+            alpineLoaded: this.isAlpineInitialized(),
+            appInitialized: appData ? true : false,
+            appState: appData ? {
+                screen: appData.currentScreen,
+                loading: appData.isLoading,
+                initialized: appData.isInitialized,
+                testMode: appData.isTestMode
+            } : null,
+            dom: {
+                appElement: !!document.querySelector('[x-data="app"]'),
+                loadingVisible: document.querySelector('.loading-container')?.style.display !== 'none',
+                mainContainer: !!document.querySelector('.container')
+            }
+        };
     }
 }; 

@@ -7,6 +7,59 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Криминальный Блеф</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Загрузка вспомогательного скрипта для обработки ошибок -->
+    <script>
+        // Глобальный обработчик ошибок
+        window.onerror = function (msg, url, line, col, error) {
+            console.error('Глобальная ошибка:', msg);
+            console.error('Детали:', { url, line, col, error });
+
+            // Если есть ошибка загрузки, пытаемся принудительно скрыть индикатор загрузки через 5 сек
+            setTimeout(function () {
+                var loadingElement = document.querySelector('.loading-container');
+                if (loadingElement) {
+                    console.log('Принудительное скрытие индикатора загрузки после ошибки');
+                    loadingElement.style.display = 'none';
+
+                    var container = document.querySelector('.container');
+                    if (container) {
+                        container.style.display = 'block';
+                    }
+                }
+            }, 5000);
+
+            return false; // true чтобы подавить стандартное сообщение об ошибке
+        };
+
+        // Загрузка завершена
+        window.addEventListener('load', function () {
+            console.log('Окно полностью загружено');
+            // Запускаем таймер безопасности
+            setTimeout(function () {
+                var appLoaded = false;
+                try {
+                    // Проверяем, инициализировано ли приложение
+                    var appElement = document.querySelector('[x-data="app"]');
+                    appLoaded = appElement && appElement.__x && !appElement.__x.data.isLoading;
+                } catch (e) {
+                    console.error('Ошибка при проверке статуса приложения:', e);
+                }
+
+                if (!appLoaded) {
+                    console.log('Принудительная инициализация после таймаута загрузки окна');
+                    var loadingElement = document.querySelector('.loading-container');
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+
+                    var container = document.querySelector('.container');
+                    if (container) {
+                        container.style.display = 'block';
+                    }
+                }
+            }, 7000);
+        });
+    </script>
     <!-- Подключение Telegram WebApp API ПЕРВЫМ -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Инициализация глобальной проверки наличия Telegram WebApp API -->
@@ -55,6 +108,23 @@
     </script>
     <!-- Подключение Alpine.js через CDN -->
     <script defer src="https://unpkg.com/alpinejs@3.10.3/dist/cdn.min.js"></script>
+    <!-- Резервное подключение Alpine.js через другой CDN для надежности -->
+    <script>
+        setTimeout(function () {
+            if (!window.Alpine) {
+                console.warn('Alpine.js не загрузился через основной CDN, пробуем альтернативный источник');
+                var script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.10.3/dist/cdn.min.js';
+                script.onload = function () {
+                    console.log('Alpine.js успешно загружен из альтернативного источника');
+                };
+                script.onerror = function () {
+                    console.error('Не удалось загрузить Alpine.js из альтернативного источника');
+                };
+                document.head.appendChild(script);
+            }
+        }, 3000);
+    </script>
 </head>
 
 <body x-data="app" x-init="initApp" :data-theme="theme">
