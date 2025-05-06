@@ -10,59 +10,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Стиль для загрузчика */
-        .loading-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: var(--background-color);
-            z-index: 9999;
-        }
-
-        /* Стили для управления отображением экранов */
-        .screen {
-            display: none;
-        }
-
-        .screen.active {
-            display: flex;
-        }
-
-        /* Анимация мерцания для заголовка */
-        @keyframes flicker {
-
-            0%,
-            19.999%,
-            22%,
-            62.999%,
-            64%,
-            100% {
-                opacity: 1;
-            }
-
-            20%,
-            21.999%,
-            63%,
-            63.999% {
-                opacity: 0.4;
-            }
-        }
-
-        .logo h1 {
-            animation: flicker 4s infinite;
-        }
-    </style>
 
     <!-- Подключение Telegram WebApp API ПЕРВЫМ -->
     <script src="https://telegram.org/js/telegram-web-app.js" crossorigin="anonymous"></script>
+
+    <!-- Подключение стилей -->
+    <link rel="stylesheet" href="styles.css">
 
     <!-- Инициализация объекта TG и проверка наличия Telegram WebApp API -->
     <script>
@@ -110,61 +63,30 @@
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 document.querySelector('.loading-container').style.display = 'none';
-                document.querySelector('.container').style.display = 'block';
-                document.getElementById('start-screen').classList.add('active');
-            }, 3000);
+                document.querySelector('.app-container').style.display = 'flex';
+            }, 1000);
         });
     </script>
 </head>
 
-<body data-theme="dark" class="adaptive-body">
+<body>
     <!-- Контейнер для сообщения загрузки -->
     <div class="loading-container">
         <div class="loader"></div>
         <p>Загрузка расследования...</p>
     </div>
 
-    <!-- Контейнер для основного контента -->
-    <div class="container" style="display: none;">
-        <!-- Стартовый экран -->
-        <div class="screen" id="start-screen">
-            <!-- Декоративные элементы для криминальной тематики -->
-            <div class="bloodstain bloodstain-1"></div>
-            <div class="bloodstain bloodstain-2"></div>
-            <div class="bloodstain bloodstain-3"></div>
+    <div class="app-container" style="display: none;">
+        <div class="blood-splatter"></div>
+        <div class="chalk-outline"></div>
 
-            <div class="fingerprint fingerprint-1"></div>
-            <div class="fingerprint fingerprint-2"></div>
-            <div class="fingerprint fingerprint-3"></div>
-
-            <div class="chalk-outline"></div>
-
-            <div class="footprint footprint-1"></div>
-            <div class="footprint footprint-2"></div>
-            <div class="footprint footprint-3"></div>
-
-            <!-- Полицейские ленты с фиксированным позиционированием -->
-            <div class="police-tape police-tape-1">МЕСТО ПРЕСТУПЛЕНИЯ • НЕ ПЕРЕСЕКАТЬ • МЕСТО ПРЕСТУПЛЕНИЯ • НЕ
-                ПЕРЕСЕКАТЬ •</div>
-            <div class="police-tape police-tape-2">МЕСТО ПРЕСТУПЛЕНИЯ • НЕ ПЕРЕСЕКАТЬ • МЕСТО ПРЕСТУПЛЕНИЯ • НЕ
-                ПЕРЕСЕКАТЬ •</div>
-
-            <div class="logo">
-                <!-- Элементы крови и эффекты -->
-                <div class="blood-drip blood-drip-1"></div>
-                <div class="blood-drip blood-drip-2"></div>
-                <div class="blood-drip blood-drip-3"></div>
-                <div class="blood-streak"></div>
-
-                <h1>Криминальный<br>Блеф</h1>
-                <p>НАЙДИ УЛИКИ. РАСКРОЙ ТАЙНУ. ВЫЖИВИ.</p>
-            </div>
-
-            <button class="primary-button" data-action="startGame">НАЧАТЬ РАССЛЕДОВАНИЕ</button>
+        <div class="police-tape police-tape-1">МЕСТО ПРЕСТУПЛЕНИЯ • НЕ ПЕРЕСЕКАТЬ • МЕСТО ПРЕСТУПЛЕНИЯ • НЕ ПЕРЕСЕКАТЬ •
+        </div>
+        <div class="police-tape police-tape-2">МЕСТО ПРЕСТУПЛЕНИЯ • НЕ ПЕРЕСЕКАТЬ • МЕСТО ПРЕСТУПЛЕНИЯ • НЕ ПЕРЕСЕКАТЬ •
         </div>
 
         <!-- Игровой экран -->
-        <div class="screen" id="game-screen">
+        <div class="screen active" id="game-screen">
             <div class="game-header">
                 <div class="score">Счет: <span id="score-display">0</span></div>
                 <div class="progress">Дело: <span id="question-progress">1/5</span></div>
@@ -224,29 +146,31 @@
     <script src="game-state.js"></script>
     <script src="app.js"></script>
 
-    <!-- Скрипт для адаптивности на разных устройствах -->
     <script>
-        // Определение типа устройства для дополнительных настроек
         document.addEventListener('DOMContentLoaded', function () {
-            // Проверка ширины экрана
-            function checkScreenSize() {
-                if (window.innerWidth >= 1200) {
-                    document.body.classList.add('desktop-view');
-                    document.body.classList.remove('tablet-view', 'mobile-view');
-                } else if (window.innerWidth >= 768) {
-                    document.body.classList.add('tablet-view');
-                    document.body.classList.remove('desktop-view', 'mobile-view');
-                } else {
-                    document.body.classList.add('mobile-view');
-                    document.body.classList.remove('desktop-view', 'tablet-view');
-                }
+            // Инициализация Telegram WebApp
+            if (window.Telegram?.WebApp) {
+                // Расширяем WebApp
+                window.Telegram.WebApp.expand();
+
+                // Показываем кнопку "Назад" при запуске игры
+                window.Telegram.WebApp.BackButton.show();
+
+                // Настраиваем обработчик кнопки "Назад"
+                window.Telegram.WebApp.BackButton.onClick(function () {
+                    if (confirm('Вы уверены, что хотите прервать игру?')) {
+                        window.location.href = '/';
+                    }
+                });
             }
 
-            // Выполняем при загрузке
-            checkScreenSize();
-
-            // Обновляем при изменении размера окна
-            window.addEventListener('resize', checkScreenSize);
+            // Автоматически запускаем игру
+            if (typeof startGame === 'function') {
+                // Даем немного времени для загрузки
+                setTimeout(function () {
+                    startGame();
+                }, 500);
+            }
         });
     </script>
 </body>
