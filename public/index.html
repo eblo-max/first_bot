@@ -694,6 +694,10 @@
         </footer>
     </div>
 
+    <!-- Подключение JavaScript файлов для игры -->
+    <script src="game-state.js"></script>
+    <script src="app.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Инициализация Telegram WebApp
@@ -712,8 +716,27 @@
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
                 }
 
-                // Переход на игровой экран
-                window.location.href = '/game';
+                // Вместо перехода запускаем игру напрямую
+                if (typeof startGame === 'function') {
+                    startGame();
+                } else {
+                    console.error('Функция startGame не найдена, подключаем game-state.js и app.js');
+                    // Динамически подключаем скрипты для игры
+                    const gameStateScript = document.createElement('script');
+                    gameStateScript.src = 'game-state.js';
+                    document.body.appendChild(gameStateScript);
+
+                    const appScript = document.createElement('script');
+                    appScript.src = 'app.js';
+                    appScript.onload = function () {
+                        if (typeof startGame === 'function') {
+                            startGame();
+                        } else {
+                            alert('Не удалось загрузить игровые скрипты. Пожалуйста, обновите страницу.');
+                        }
+                    };
+                    document.body.appendChild(appScript);
+                }
             });
         });
     </script>
