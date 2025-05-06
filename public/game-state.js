@@ -118,7 +118,7 @@ const GameState = {
         // Обновляем таймер
         if (this.current === 'game') {
             document.getElementById('timer-value').textContent = this.data.secondsLeft;
-            document.getElementById('timer-bar').style.width = `${(this.data.secondsLeft / 15) * 100}%`;
+            document.getElementById('timer-bar').style.width = `${(this.data.secondsLeft / this.data.timerDuration) * 100}%`;
         }
 
         // Обновляем информацию о текущей истории
@@ -129,20 +129,26 @@ const GameState = {
             const storyContent = document.getElementById('story-content');
             let content = this.data.currentStory.content || '';
 
-            // Проверяем, содержит ли текст HTML-теги
-            if (!content.includes('<span class="highlighted-text">')) {
-                // Выделяем ключевые фразы
-                content = content
-                    .replace(/скрытую камеру над сейфом/gi, '<span class="highlighted-text">скрытую камеру над сейфом</span>')
-                    .replace(/без перчаток/gi, '<span class="highlighted-text">без перчаток</span>')
-                    .replace(/раковиной в подсобке/gi, '<span class="highlighted-text">раковиной в подсобке</span>')
-                    .replace(/кровь с пореза/gi, '<span class="highlighted-text">кровь с пореза</span>');
-            }
+            // Заменяем ключевые фразы с выделением
+            content = content
+                .replace(/скрытую камеру над сейфом/gi, '<span class="highlighted-text">скрытую камеру над сейфом</span>')
+                .replace(/без перчаток/gi, '<span class="highlighted-text">без перчаток</span>')
+                .replace(/раковиной в подсобке/gi, '<span class="highlighted-text">раковиной в подсобке</span>');
 
             storyContent.innerHTML = content;
 
-            // Обновляем варианты ответов
+            // Обновляем метаданные истории
+            document.getElementById('story-date').textContent = this.data.currentStory.date || '';
+            document.getElementById('story-difficulty').textContent = this.data.currentStory.difficulty || '';
+
+            // Показываем/скрываем нужные разделы и обновляем варианты ответов
             this.updateAnswers();
+
+            if (this.data.isAnswering) {
+                document.getElementById('action-button').textContent = 'ПОДТВЕРДИТЬ ОТВЕТ';
+            } else {
+                document.getElementById('action-button').textContent = 'СЛЕДУЮЩЕЕ ДЕЛО';
+            }
         }
 
         // Обновляем экран результата
@@ -178,16 +184,21 @@ const GameState = {
                 answerOption.classList.add('disabled');
             }
 
+            // Создаем маркер с буквой ответа
             const marker = document.createElement('div');
             marker.className = 'answer-marker';
             marker.textContent = letters[index];
 
+            // Создаем текст ответа
             const text = document.createElement('div');
             text.className = 'answer-text';
             text.textContent = mistake.text;
 
+            // Добавляем элементы в вариант ответа
             answerOption.appendChild(marker);
             answerOption.appendChild(text);
+
+            // Добавляем вариант ответа в контейнер
             container.appendChild(answerOption);
         });
     },

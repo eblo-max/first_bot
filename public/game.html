@@ -225,17 +225,17 @@
 
         .evidence-tag {
             position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(211, 47, 47, 0.2);
-            color: var(--accent-yellow);
-            font-size: 10px;
+            top: -10px;
+            right: 15px;
+            background: var(--accent-red);
+            color: #fff;
             padding: 4px 8px;
-            border-radius: var(--radius-sm);
-            text-transform: uppercase;
+            font-size: 10px;
+            font-weight: 700;
             letter-spacing: 1px;
-            font-weight: 600;
-            backdrop-filter: blur(4px);
+            border-radius: 3px;
+            text-transform: uppercase;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
         }
 
         .case-metadata {
@@ -267,20 +267,58 @@
             margin-bottom: var(--spacing-md);
         }
 
-        .highlighted-text {
-            color: var(--highlight-text);
+        .case-content a {
+            color: var(--accent-red);
+            text-decoration: none;
             font-weight: 500;
         }
 
+        .case-content a:hover {
+            text-decoration: underline;
+        }
+
+        .highlighted-text {
+            color: var(--accent-yellow);
+            font-weight: 500;
+            position: relative;
+            display: inline;
+            padding: 0 2px;
+        }
+
         .case-question {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
-            color: var(--highlight-text);
-            margin-top: var(--spacing-md);
-            padding: var(--spacing-sm) var(--spacing-md);
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: var(--radius-sm);
-            border-left: 3px solid var(--highlight-text);
+            margin-top: var(--spacing-lg);
+            color: var(--primary-text);
+            position: relative;
+            padding-left: var(--spacing-lg);
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .mission-container {
+            position: relative;
+            margin: var(--spacing-lg) 0;
+            padding-left: var(--spacing-md);
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .mission-question {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--primary-text);
+            line-height: 1.4;
+            position: relative;
+            padding-left: var(--spacing-sm);
+        }
+
+        .mission-line {
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 15px;
+            height: 3px;
+            background: var(--accent-red);
         }
 
         /* Answer Options */
@@ -312,74 +350,77 @@
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: var(--radius-md);
-            padding: var(--spacing-md);
-            margin-bottom: var(--spacing-md);
+            padding: 14px 16px;
+            margin-bottom: var(--spacing-sm);
             cursor: pointer;
             transition: all var(--transition-normal);
-            position: relative;
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
             display: flex;
-            align-items: flex-start;
-            gap: var(--spacing-md);
+            align-items: center;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .answer-option::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-yellow);
+            opacity: 0;
+            transition: opacity var(--transition-normal);
         }
 
         .answer-option:hover {
-            transform: translateY(-2px);
             box-shadow: var(--shadow-md);
-            background: rgba(40, 40, 50, 1);
-        }
-
-        .answer-option:active {
-            transform: translateY(0);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .answer-marker {
-            width: 28px;
-            height: 28px;
-            min-width: 28px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius-full);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--primary-text);
-            margin-top: 2px;
-            transition: all var(--transition-normal);
-        }
-
-        .answer-option:hover .answer-marker {
-            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+            border-color: rgba(255, 255, 255, 0.1);
         }
 
         .answer-option.selected {
             border-color: var(--accent-yellow);
-            background: rgba(255, 193, 7, 0.1);
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.15);
+        }
+
+        .answer-option.selected::before {
+            opacity: 1;
+        }
+
+        .answer-marker {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent-yellow);
+            margin-right: var(--spacing-md);
+            flex-shrink: 0;
+            transition: all var(--transition-normal);
+        }
+
+        .answer-text {
+            font-size: 15px;
+            line-height: 1.4;
+            color: var(--primary-text);
+            flex: 1;
+            letter-spacing: 0.2px;
         }
 
         .answer-option.selected .answer-marker {
             background: var(--accent-yellow);
             color: var(--dark-bg);
-            border-color: var(--accent-yellow);
-        }
-
-        .answer-text {
-            font-size: 15px;
-            line-height: 1.5;
-            color: var(--secondary-text);
-        }
-
-        .answer-option.selected .answer-text {
-            color: var(--primary-text);
         }
 
         .answer-option.disabled {
-            opacity: 0.7;
+            opacity: 0.6;
             cursor: not-allowed;
+            pointer-events: none;
         }
 
         /* Results Section */
@@ -1034,16 +1075,13 @@
                 </div>
 
                 <div class="case-content" id="story-content">
-                    Преступник взломал заднюю дверь ювелирного магазина в 3 часа ночи. Он отключил камеры
-                    видеонаблюдения, но не заметил <span class="highlighted-text">скрытую камеру над сейфом</span>. На
-                    записи видно, как он <span class="highlighted-text">без перчаток</span> открывает витрины и собирает
-                    украшения в рюкзак. Перед уходом преступник воспользовался <span class="highlighted-text">раковиной
-                        в подсобке</span>, чтобы смыть кровь с пореза на руке.
+                    <!-- Контент истории будет добавлен динамически -->
                 </div>
 
-                <p class="case-question">
-                    Какую роковую ошибку допустил преступник?
-                </p>
+                <div class="mission-container">
+                    <div class="mission-line"></div>
+                    <div class="mission-question">Какую роковую ошибку допустил преступник?</div>
+                </div>
             </section>
 
             <section class="answers-section">
