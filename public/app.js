@@ -364,126 +364,261 @@ async function startGame() {
 }
 
 /**
- * Таймер обратного отсчета
+ * Запуск таймера для текущего вопроса
  */
 function startTimer() {
-    // Сбрасываем таймер
-    clearInterval(GameState.data.timer);
-    GameState.data.secondsLeft = 15;
-    GameState.data.startTime = Date.now();
-    console.log('Таймер запущен, 15 секунд...');
-    GameState.updateUI();
+    console.log('Запуск таймера...');
+    const timerBar = document.getElementById('timer-bar');
+    const timerValue = document.getElementById('timer-value');
 
-    // Запускаем таймер обратного отсчета
+    // Устанавливаем начальное значение
+    GameState.data.secondsLeft = 15;
+    timerValue.textContent = GameState.data.secondsLeft;
+    timerBar.style.width = '100%';
+
+    // Запоминаем время начала для вычисления бонуса за скорость
+    GameState.data.startTime = Date.now();
+
+    // Запускаем таймер
     GameState.data.timer = setInterval(() => {
         GameState.data.secondsLeft--;
-        GameState.updateUI();
 
-        // Если время вышло, автоматически выбираем первый вариант
-        if (GameState.data.secondsLeft <= 0) {
-            clearInterval(GameState.data.timer);
-            console.log('Время истекло!');
-            if (!GameState.data.isAnswering) {
-                timeExpired();
+        // Обновляем отображение
+        timerValue.textContent = GameState.data.secondsLeft;
+
+        // Обновляем полосу таймера
+        const percentage = (GameState.data.secondsLeft / 15) * 100;
+        timerBar.style.width = `${percentage}%`;
+
+        // Меняем класс для предупреждения, когда мало времени
+        if (GameState.data.secondsLeft <= 5) {
+            document.querySelector('.timer-container').classList.add('urgent');
+
+            // Добавляем тактильный отклик каждую секунду, когда мало времени
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('warning');
             }
+        }
+
+        // Время истекло
+        if (GameState.data.secondsLeft <= 0) {
+            timeExpired();
         }
     }, 1000);
 }
 
 /**
- * Время истекло
+ * Обработка истечения времени
  */
 function timeExpired() {
-    console.log('Выбор автоматического ответа...');
-    // Выбираем первый вариант по умолчанию
-    if (GameState.data.currentStory && GameState.data.currentStory.mistakes.length > 0) {
-        selectAnswer(GameState.data.currentStory.mistakes[0].id);
+    console.log('Время на ответ истекло');
+
+    // Останавливаем таймер
+    clearInterval(GameState.data.timer);
+
+    // Визуальная и тактильная обратная связь
+    document.querySelector('.timer-container').classList.add('expired');
+    if (tg && tg.HapticFeedback) {
+        tg.HapticFeedback.notificationOccurred('error');
+    }
+
+    // Если не в процессе выбора ответа
+    if (!GameState.data.isAnswering) {
+        GameState.data.isAnswering = true;
+
+        // В тестовом режиме создаем моковый отрицательный результат
+        if (GameState.data.isTestMode) {
+            GameState.data.result = {
+                correct: false,
+                explanation: "Время истекло! Важное качество детектива - принимать решения в ограниченное время. Не торопитесь, но и не медлите слишком долго.",
+                score: 0,
+                details: {
+                    base: 0,
+                    timeBonus: 0,
+                    difficultyBonus: 0,
+                    streak: 0,
+                    total: 0
+                }
+            };
+
+            // Показываем правильный ответ
+            const correctMistakeId = GameState.data.currentStory.mistakes[0].id;
+            const correctOption = document.querySelector(`.answer-option[data-mistake-id="${correctMistakeId}"]`);
+            if (correctOption) {
+                correctOption.classList.add('selected');
+            }
+
+            setTimeout(() => {
+                GameState.transition('showResult');
+                GameState.data.isAnswering = false;
+            }, 1500);
+
+        } else {
+            // В реальном режиме отправляем запрос на сервер
+            fetch('/api/game/timeout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${GameState.data.token}`
+                },
+                body: JSON.stringify({
+                    gameId: GameState.data.gameId,
+                    storyId: GameState.data.currentStory.id
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.ok) {
+                        GameState.data.result = data.data;
+
+                        // Показываем правильный ответ
+                        if (data.data.correctMistakeId) {
+                            const correctOption = document.querySelector(`.answer-option[data-mistake-id="${data.data.correctMistakeId}"]`);
+                            if (correctOption) {
+                                correctOption.classList.add('selected');
+                            }
+                        }
+
+                        setTimeout(() => {
+                            GameState.transition('showResult');
+                            GameState.data.isAnswering = false;
+                        }, 1500);
+                    } else {
+                        console.error('Ошибка при обработке истечения времени:', data.error);
+                        alert('Произошла ошибка. Пожалуйста, попробуйте еще раз.');
+                        GameState.data.isAnswering = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при обработке истечения времени:', error);
+                    alert('Произошла ошибка при соединении с сервером.');
+                    GameState.data.isAnswering = false;
+                });
+        }
     }
 }
 
 /**
- * Выбор ответа
- * @param {string} mistakeId - ID ошибки
+ * Обработка выбора ответа
+ * @param {string} mistakeId - ID выбранной ошибки
  */
 async function selectAnswer(mistakeId) {
+    // Если уже выбираем ответ, игнорируем повторные клики
     if (GameState.data.isAnswering) return;
+
+    console.log('Выбран ответ:', mistakeId);
+    GameState.data.isAnswering = true;
+
+    // Находим выбранный элемент
+    const selectedOption = document.querySelector(`.answer-option[data-mistake-id="${mistakeId}"]`);
+    if (selectedOption) {
+        // Добавляем класс для визуального выделения
+        selectedOption.classList.add('selected');
+
+        // Визуальная и тактильная обратная связь
+        if (tg && tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+    }
 
     // Останавливаем таймер
     clearInterval(GameState.data.timer);
-    GameState.data.isAnswering = true;
-    console.log('Выбран ответ:', mistakeId);
-
-    // Вычисляем время ответа
-    const responseTime = Date.now() - GameState.data.startTime;
 
     try {
-        // Haptic feedback через Telegram WebApp
-        provideFeedback('tap');
+        // Вычисляем, сколько времени затрачено на ответ
+        const endTime = Date.now();
+        const timeTaken = Math.floor((endTime - GameState.data.startTime) / 1000);
+        const timeLeft = GameState.data.secondsLeft;
+
+        console.log(`Затрачено времени: ${timeTaken}с, осталось: ${timeLeft}с`);
+
+        // Подготавливаем данные для отправки на сервер
+        const data = {
+            gameId: GameState.data.gameId,
+            storyId: GameState.data.currentStory.id,
+            mistakeId: mistakeId,
+            timeLeft: timeLeft
+        };
 
         // Отправляем ответ на сервер
-        const response = await fetch('/api/game/submit', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${GameState.data.token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                gameId: GameState.data.gameId,
-                storyId: GameState.data.currentStory.id,
-                mistakeId,
-                responseTime
-            })
-        });
+        const token = GameState.data.token;
+        let response;
 
-        if (!response.ok) {
-            throw new Error('Ошибка отправки ответа');
-        }
-
-        const data = await response.json();
-        console.log('Получен результат от сервера:', data);
-
-        // Запоминаем результат ответа
-        GameState.data.result = data;
-
-        // Обновляем общий счет
-        GameState.data.score = data.totalScore;
-
-        // Показываем тактильную обратную связь
-        provideFeedback(data.correct ? 'correct' : 'incorrect');
-
-        // Переключаемся на экран результата
-        GameState.transition('showResult');
-
-    } catch (error) {
-        console.error('Ошибка отправки ответа:', error);
-        alert('Не удалось отправить ответ. Попробуйте еще раз.');
-
-        // В тестовом режиме создаем моковый результат
+        // В тестовом режиме генерируем моковый ответ
         if (GameState.data.isTestMode) {
-            console.log('Генерация тестового результата...');
-            const isCorrect = Math.random() > 0.5;
-
-            GameState.data.result = {
-                correct: isCorrect,
-                explanation: isCorrect
-                    ? 'Правильно! Преступник совершил ошибку, пытаясь слишком быстро продать украденное. Это привлекло внимание полиции.'
-                    : 'Неправильно. Основная ошибка преступника была в том, что он слишком быстро попытался продать украденное, не выждав достаточно времени.',
-                details: {
-                    base: 100,
-                    timeBonus: Math.floor(responseTime / 1000) * 10,
-                    difficultyBonus: 20,
-                    total: 100 + Math.floor(responseTime / 1000) * 10 + 20
-                },
-                totalScore: GameState.data.score + (isCorrect ? 150 : 0)
+            console.log('Тестовый режим: генерируем моковый ответ');
+            response = {
+                ok: true,
+                data: {
+                    correct: Math.random() > 0.3, // 70% правильных ответов в тесте
+                    correctMistakeId: GameState.data.currentStory.mistakes[0].id,
+                    explanation: "Это тестовое объяснение результата. В реальной игре здесь будет подробное объяснение от сервера о том, почему выбранный вариант правильный или неправильный.",
+                    score: Math.floor(Math.random() * 100) + 50,
+                    details: {
+                        base: 100,
+                        timeBonus: Math.floor(timeLeft * 5),
+                        difficultyBonus: 20,
+                        streak: 10,
+                        total: 100 + Math.floor(timeLeft * 5) + 20 + 10
+                    }
+                }
             };
 
-            if (isCorrect) {
-                GameState.data.score += GameState.data.result.details.total;
-            }
-
-            GameState.transition('showResult');
+            // Добавляем задержку для имитации запроса к серверу
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+            // Реальный запрос к серверу
+            response = await fetch('/api/game/answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            }).then(res => res.json());
         }
 
+        // Обработка ответа от сервера
+        if (response.ok) {
+            const result = response.data;
+
+            // Обновляем счет
+            GameState.setData('score', GameState.data.score + (result.details?.total || 0));
+
+            // Сохраняем результат ответа
+            GameState.setData('result', result);
+
+            // Находим и выделяем правильный ответ, если ответ неверный
+            if (!result.correct && result.correctMistakeId) {
+                const correctOption = document.querySelector(`.answer-option[data-mistake-id="${result.correctMistakeId}"]`);
+                if (correctOption) {
+                    // Даем немного времени для отображения выбранного варианта
+                    setTimeout(() => {
+                        selectedOption.classList.remove('selected');
+                        correctOption.classList.add('selected');
+                    }, 1000);
+                }
+            }
+
+            // Показываем экран результата
+            setTimeout(() => {
+                GameState.transition('showResult');
+                GameState.data.isAnswering = false;
+
+                // Показываем кнопку "Назад" Telegram
+                if (tg && tg.BackButton) {
+                    tg.BackButton.show();
+                }
+            }, 1500);
+
+        } else {
+            console.error('Ошибка при отправке ответа:', response.error);
+            alert('Произошла ошибка при проверке ответа. Пожалуйста, попробуйте еще раз.');
+            GameState.data.isAnswering = false;
+        }
+    } catch (error) {
+        console.error('Ошибка при отправке ответа:', error);
+        alert('Произошла ошибка при отправке ответа. Пожалуйста, проверьте подключение к интернету.');
         GameState.data.isAnswering = false;
     }
 }
@@ -659,62 +794,125 @@ function provideFeedback(type) {
 }
 
 /**
- * Обработчик клика на кнопку
- * @param {Event} event - Событие клика
+ * Обработка кликов по кнопкам и элементам интерфейса
+ * @param {Event} event - DOM событие клика
  */
 function handleButtonClick(event) {
-    const button = event.target.closest('button');
-    if (!button) return;
+    let target = event.target;
 
-    const action = button.dataset.action;
-    if (!action) return;
+    // Ищем ближайший элемент с data-action если сам элемент не имеет атрибута
+    while (target && !target.dataset.action && target !== document.body) {
+        target = target.parentElement;
+    }
 
-    // Обрабатываем нажатие по кнопке
+    if (!target || !target.dataset.action) return;
+
+    const action = target.dataset.action;
+    console.log('Действие:', action);
+
+    // Haptic feedback through Telegram WebApp API
+    if (tg && tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('light');
+    }
+
     switch (action) {
+        // Начало игры
         case 'startGame':
             startGame();
             break;
 
+        // Выбор ответа
         case 'selectAnswer':
-            selectAnswer(button.dataset.mistakeId);
+            if (!GameState.data.isAnswering && target.dataset.mistakeId) {
+                selectAnswer(target.dataset.mistakeId);
+            }
             break;
 
+        // Следующий вопрос
         case 'nextQuestion':
             nextQuestion();
             break;
 
+        // Перезапуск игры
         case 'restartGame':
             restartGame();
             break;
 
+        // Возврат на главный экран
         case 'goToMain':
             goToMain();
             break;
+
+        // Другие действия
+        default:
+            console.log('Неизвестное действие:', action);
     }
 }
 
 /**
- * Инициализация обработчиков событий
+ * Устанавливает слушатели событий для элементов интерфейса
  */
 function setupEventListeners() {
-    // Глобальный обработчик кликов по кнопкам
+    console.log('Настройка обработчиков событий...');
+
+    // Глобальный обработчик кликов для делегирования событий
     document.addEventListener('click', handleButtonClick);
 
-    // Глобальный обработчик тестового интерфейса
-    window.CriminalBluffTestInterface = {
-        startGame,
-        selectAnswer,
-        nextQuestion,
-        goToMain,
-        restartGame,
-        getState: () => ({
-            currentScreen: GameState.current,
-            score: GameState.data.score,
-            stories: GameState.data.stories.length,
-            currentIndex: GameState.data.currentStoryIndex,
-            isTestMode: GameState.data.isTestMode
-        })
-    };
+    // Обработчик изменения темы Telegram
+    if (tg) {
+        const onThemeChanged = () => {
+            const theme = tg.colorScheme || 'dark';
+            GameState.data.theme = theme;
+            document.body.setAttribute('data-theme', theme);
+            console.log('Тема изменена на:', theme);
+        };
+
+        // Если доступен API для отслеживания изменения темы, используем его
+        if (typeof tg.onEvent === 'function') {
+            tg.onEvent('themeChanged', onThemeChanged);
+        }
+    }
+
+    // Обработчик нажатия клавиш
+    document.addEventListener('keydown', (event) => {
+        // Обработка нажатия цифровых клавиш для быстрого выбора ответа
+        if (GameState.current === 'game' && !GameState.data.isAnswering) {
+            const keyToIndex = {
+                '1': 0, '2': 1, '3': 2, '4': 3, // Цифры
+                'a': 0, 'b': 1, 'c': 2, 'd': 3  // Буквы
+            };
+
+            const key = event.key.toLowerCase();
+            if (key in keyToIndex) {
+                const index = keyToIndex[key];
+                const answers = GameState.data.currentStory?.mistakes || [];
+
+                if (index < answers.length) {
+                    selectAnswer(answers[index].id);
+                }
+            }
+        }
+
+        // Обработка нажатия Enter для перехода к следующему вопросу
+        if (event.key === 'Enter' && GameState.current === 'result') {
+            nextQuestion();
+        }
+    });
+
+    // Обработчик видимости страницы для паузы/возобновления таймера
+    document.addEventListener('visibilitychange', () => {
+        if (GameState.current === 'game' && !GameState.data.isAnswering) {
+            if (document.hidden) {
+                // Страница скрыта - приостанавливаем таймер
+                clearInterval(GameState.data.timer);
+                console.log('Таймер приостановлен (страница скрыта)');
+            } else {
+                // Страница снова видима - возобновляем таймер
+                startTimer();
+                console.log('Таймер возобновлен (страница снова видима)');
+            }
+        }
+    });
 }
 
 /**

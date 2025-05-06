@@ -152,18 +152,28 @@ const GameState = {
         container.innerHTML = '';
 
         // Добавляем варианты ответов
-        this.data.currentStory.mistakes.forEach(mistake => {
-            const button = document.createElement('button');
-            button.className = 'answer-button';
-            button.textContent = mistake.text;
-            button.dataset.mistakeId = mistake.id;
-            button.dataset.action = 'selectAnswer';
+        const letters = ['A', 'B', 'C', 'D'];
+        this.data.currentStory.mistakes.forEach((mistake, index) => {
+            const answerOption = document.createElement('div');
+            answerOption.className = 'answer-option';
+            answerOption.dataset.mistakeId = mistake.id;
+            answerOption.dataset.action = 'selectAnswer';
 
             if (this.data.isAnswering) {
-                button.disabled = true;
+                answerOption.classList.add('disabled');
             }
 
-            container.appendChild(button);
+            const marker = document.createElement('div');
+            marker.className = 'answer-marker';
+            marker.textContent = letters[index];
+
+            const text = document.createElement('div');
+            text.className = 'answer-text';
+            text.textContent = mistake.text;
+
+            answerOption.appendChild(marker);
+            answerOption.appendChild(text);
+            container.appendChild(answerOption);
         });
     },
 
@@ -175,7 +185,10 @@ const GameState = {
         const container = document.getElementById('result-container');
 
         // Устанавливаем класс в зависимости от правильности ответа
-        container.className = result.correct ? 'result-correct' : 'result-incorrect';
+        container.className = result.correct ? 'results-section result-correct' : 'results-section result-incorrect';
+
+        // Устанавливаем текст значка
+        document.getElementById('result-badge').textContent = result.correct ? 'ВЕРНО' : 'НЕВЕРНО';
 
         // Заголовок
         document.getElementById('result-title').textContent = result.correct ? 'Правильно!' : 'Неправильно!';
@@ -184,38 +197,15 @@ const GameState = {
         document.getElementById('result-explanation').textContent = result.explanation;
 
         // Детали очков
-        const pointsDetails = document.getElementById('points-details');
-        pointsDetails.innerHTML = '';
+        const pointsValue = document.getElementById('points-details');
 
         if (result.correct && result.details) {
-            const detailsDiv = document.createElement('div');
-
-            const basePoints = document.createElement('p');
-            basePoints.className = 'points-line';
-            basePoints.innerHTML = `Базовые очки: <span>${result.details.base}</span>`;
-            detailsDiv.appendChild(basePoints);
-
-            const timeBonus = document.createElement('p');
-            timeBonus.className = 'points-line';
-            timeBonus.innerHTML = `За скорость: <span>+${result.details.timeBonus}</span>`;
-            detailsDiv.appendChild(timeBonus);
-
-            const difficultyBonus = document.createElement('p');
-            difficultyBonus.className = 'points-line';
-            difficultyBonus.innerHTML = `За сложность: <span>+${result.details.difficultyBonus}</span>`;
-            detailsDiv.appendChild(difficultyBonus);
-
-            const totalPoints = document.createElement('p');
-            totalPoints.className = 'points-total';
-            totalPoints.innerHTML = `Всего: <span>+${result.details.total}</span>`;
-            detailsDiv.appendChild(totalPoints);
-
-            pointsDetails.appendChild(detailsDiv);
+            const totalPoints = result.details.base + result.details.timeBonus + result.details.streak;
+            pointsValue.textContent = totalPoints;
         } else {
-            const noPoints = document.createElement('p');
-            noPoints.className = 'points-total';
-            noPoints.textContent = 'Очки не начислены';
-            pointsDetails.appendChild(noPoints);
+            pointsValue.textContent = '0';
+            // Скрываем знак "+" для неправильных ответов
+            pointsValue.style.setProperty('--before-content', 'none');
         }
     },
 
