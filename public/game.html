@@ -339,30 +339,32 @@
             width: 28px;
             height: 28px;
             min-width: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--radius-full);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
             font-size: 14px;
-            background: rgba(30, 30, 40, 0.8);
+            background: rgba(255, 255, 255, 0.05);
             color: var(--primary-text);
+            margin-top: 2px;
             transition: all var(--transition-normal);
         }
 
         .answer-option:hover .answer-marker {
-            background: rgba(50, 50, 60, 0.9);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .answer-option.selected {
             border-color: var(--accent-yellow);
-            background: rgba(255, 193, 7, 0.15);
+            background: rgba(255, 193, 7, 0.1);
         }
 
         .answer-option.selected .answer-marker {
             background: var(--accent-yellow);
             color: var(--dark-bg);
-            font-weight: 700;
+            border-color: var(--accent-yellow);
         }
 
         .answer-text {
@@ -373,6 +375,11 @@
 
         .answer-option.selected .answer-text {
             color: var(--primary-text);
+        }
+
+        .answer-option.disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
 
         /* Results Section */
@@ -628,55 +635,66 @@
         .case-badge {
             display: flex;
             align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: var(--radius-full);
+            gap: var(--spacing-xs);
+            background: var(--card-bg);
             padding: 8px 12px;
+            border-radius: var(--radius-full);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .case-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 8px;
-            color: #fff;
+            width: 18px;
+            height: 18px;
+            color: var(--accent-yellow);
         }
 
         .case-number {
             font-size: 14px;
-            font-weight: 700;
-            color: #fff;
+            font-weight: 600;
+            color: var(--primary-text);
+            letter-spacing: 0.5px;
         }
 
         .score-badge {
             display: flex;
             align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: var(--radius-full);
+            gap: var(--spacing-xs);
+            background: var(--card-bg);
             padding: 8px 12px;
+            border-radius: var(--radius-full);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .score-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 8px;
+            width: 18px;
+            height: 18px;
             color: var(--accent-yellow);
         }
 
         .score-value {
             font-size: 14px;
-            font-weight: 700;
-            color: #fff;
+            font-weight: 600;
+            color: var(--primary-text);
+            letter-spacing: 0.5px;
         }
 
         .profile-link {
-            background: rgba(0, 0, 0, 0.3);
+            background: none;
             border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            color: var(--primary-text);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-normal);
         }
 
         .profile-icon {
@@ -830,319 +848,21 @@
             background: rgba(255, 255, 255, 0.25);
         }
 
-        .timer-marker:nth-child(5n)::after {
-            content: '';
-            position: absolute;
-            top: -1px;
-            left: -1px;
-            width: 3px;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
-        }
-
-        /* Right-to-left timer fill */
-        .timer-fill {
+        .timer-bar {
             position: absolute;
             top: 0;
             right: 0;
-            /* Changed from left to right */
             height: 100%;
             width: 70%;
-            /* Will be controlled by JS in real app */
             background: linear-gradient(-90deg,
-                    /* Reversed gradient direction */
                     rgba(211, 47, 47, 0.8) 0%,
                     rgba(255, 71, 71, 0.95) 50%,
                     rgba(255, 100, 100, 0.9) 100%);
-            animation: timer-countdown-rtl 15s linear forwards, glow-pulse 2s infinite;
             z-index: 3;
             box-shadow: 0 0 20px rgba(211, 47, 47, 0.5),
                 inset 0 0 15px rgba(255, 255, 255, 0.3);
-            clip-path: polygon(0 0,
-                    100% 0,
-                    100% 100%,
-                    0 100%,
-                    0.5% 95%,
-                    0% 90%,
-                    1% 85%,
-                    0.3% 80%,
-                    0.5% 75%,
-                    0% 70%,
-                    0.3% 65%,
-                    0.5% 60%,
-                    0% 55%,
-                    0.5% 50%,
-                    0% 45%,
-                    0.5% 40%,
-                    0% 35%,
-                    0.3% 30%,
-                    0.4% 25%,
-                    0% 20%,
-                    0.4% 15%,
-                    0% 10%,
-                    0.5% 5%);
         }
 
-        @keyframes timer-countdown-rtl {
-            from {
-                width: 100%;
-            }
-
-            to {
-                width: 0%;
-            }
-        }
-
-        @keyframes glow-pulse {
-            0% {
-                box-shadow: 0 0 20px rgba(211, 47, 47, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.3);
-            }
-
-            50% {
-                box-shadow: 0 0 30px rgba(211, 47, 47, 0.7), inset 0 0 25px rgba(255, 255, 255, 0.5);
-            }
-
-            100% {
-                box-shadow: 0 0 20px rgba(211, 47, 47, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.3);
-            }
-        }
-
-        .timer-fill::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 40%;
-            background: linear-gradient(to bottom,
-                    rgba(255, 255, 255, 0.7) 0%,
-                    rgba(255, 255, 255, 0) 100%);
-        }
-
-        /* Add ripple effect going right-to-left */
-        .timer-ripple {
-            position: absolute;
-            top: 0;
-            left: 0;
-            /* Changed from right to left */
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.4);
-            z-index: 4;
-            transform-origin: left center;
-            /* Changed from right to left */
-            animation: ripple-rtl 2s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes ripple-rtl {
-            0% {
-                transform: scaleX(0.02);
-                opacity: 0.7;
-            }
-
-            100% {
-                transform: scaleX(1);
-                opacity: 0;
-            }
-        }
-
-        /* Particle effect at the left edge */
-        .timer-particles {
-            position: absolute;
-            top: 0;
-            left: 0;
-            /* Changed from right to left */
-            width: 20px;
-            height: 100%;
-            z-index: 5;
-            overflow: hidden;
-            animation: timer-countdown-rtl 15s linear forwards;
-            pointer-events: none;
-        }
-
-        .particle {
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            background: #fff;
-            border-radius: 50%;
-            opacity: 0;
-            animation: particle-float-rtl 2s ease-out infinite;
-        }
-
-        .particle:nth-child(1) {
-            top: 20%;
-            animation-delay: 0.2s;
-        }
-
-        .particle:nth-child(2) {
-            top: 50%;
-            animation-delay: 0.5s;
-        }
-
-        .particle:nth-child(3) {
-            top: 80%;
-            animation-delay: 0.8s;
-        }
-
-        .particle:nth-child(4) {
-            top: 30%;
-            animation-delay: 1.1s;
-        }
-
-        .particle:nth-child(5) {
-            top: 70%;
-            animation-delay: 1.4s;
-        }
-
-        @keyframes particle-float-rtl {
-            0% {
-                left: 0;
-                opacity: 0.8;
-                transform: translateX(0);
-            }
-
-            100% {
-                left: 50px;
-                opacity: 0;
-                transform: translateX(-20px) translateY(10px);
-            }
-        }
-
-        /* Edge effect on the left side */
-        .timer-edge {
-            position: absolute;
-            top: 0;
-            left: 0;
-            /* Changed from right to left */
-            width: 3px;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            z-index: 6;
-            box-shadow: 0 0 10px #fff, 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.4);
-            animation: timer-countdown-rtl 15s linear forwards, edge-flicker 2s infinite;
-        }
-
-        @keyframes edge-flicker {
-
-            0%,
-            100% {
-                opacity: 1;
-                background: rgba(255, 255, 255, 0.9);
-                box-shadow: 0 0 10px #fff, 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.4);
-            }
-
-            80% {
-                opacity: 1;
-                background: rgba(255, 255, 255, 0.9);
-                box-shadow: 0 0 10px #fff, 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.4);
-            }
-
-            85% {
-                opacity: 0.5;
-                background: rgba(255, 200, 200, 0.7);
-                box-shadow: 0 0 5px rgba(255, 150, 150, 0.9), 0 0 10px rgba(255, 150, 150, 0.6), 0 0 20px rgba(255, 150, 150, 0.3);
-            }
-
-            90% {
-                opacity: 1;
-                background: rgba(255, 255, 255, 0.9);
-                box-shadow: 0 0 10px #fff, 0 0 20px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.4);
-            }
-
-            95% {
-                opacity: 0.7;
-                background: rgba(255, 220, 220, 0.8);
-                box-shadow: 0 0 8px rgba(255, 180, 180, 0.9), 0 0 16px rgba(255, 180, 180, 0.6), 0 0 24px rgba(255, 180, 180, 0.3);
-            }
-        }
-
-        .timer-edge::before {
-            content: '';
-            position: absolute;
-            top: -1px;
-            right: -2px;
-            /* Changed from left to right */
-            width: 7px;
-            height: 7px;
-            background: #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 5px #fff, 0 0 10px rgba(255, 255, 255, 0.8);
-            animation: node-pulse 2s infinite alternate;
-        }
-
-        .timer-edge::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            right: -2px;
-            /* Changed from left to right */
-            width: 7px;
-            height: 7px;
-            background: #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 5px #fff, 0 0 10px rgba(255, 255, 255, 0.8);
-            animation: node-pulse 2s infinite alternate-reverse;
-        }
-
-        @keyframes node-pulse {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(1.3);
-                opacity: 0.7;
-            }
-        }
-
-        /* Glow effect */
-        .timer-glow {
-            position: absolute;
-            top: -5px;
-            left: 0;
-            /* Changed from left to right */
-            bottom: -5px;
-            width: 70%;
-            /* Same as timer-fill */
-            filter: blur(20px);
-            background: rgba(211, 47, 47, 0.6);
-            opacity: 0.6;
-            animation: timer-countdown-rtl 15s linear forwards;
-            z-index: 1;
-            border-radius: var(--radius-lg);
-        }
-
-        .timer-scanline {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: linear-gradient(to bottom,
-                    rgba(120, 120, 255, 0) 20%,
-                    rgba(120, 120, 255, 0.05) 50%,
-                    rgba(120, 120, 255, 0) 80%);
-            z-index: 5;
-            animation: scanline 3s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes scanline {
-            0% {
-                transform: translateY(-100%);
-            }
-
-            100% {
-                transform: translateY(100%);
-            }
-        }
-
-        /* Digital noise effect on the timer */
         .timer-noise {
             position: absolute;
             top: 0;
@@ -1168,65 +888,6 @@
             }
         }
 
-        /* Laser sight effect */
-        .laser-sight {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            transform: translateY(-50%);
-            width: 100%;
-            height: 1px;
-            background: rgba(255, 0, 0, 0.7);
-            z-index: 7;
-            box-shadow: 0 0 2px rgba(255, 0, 0, 0.7), 0 0 4px rgba(255, 0, 0, 0.4);
-            animation: laser-flicker 4s infinite;
-            pointer-events: none;
-        }
-
-        @keyframes laser-flicker {
-
-            0%,
-            100% {
-                opacity: 0.7;
-            }
-
-            50% {
-                opacity: 0.3;
-            }
-
-            75% {
-                opacity: 0.5;
-            }
-
-            85% {
-                opacity: 0.7;
-            }
-
-            95% {
-                opacity: 0.3;
-            }
-        }
-
-        /* Notches at the bottom of the timer */
-        .timer-notches {
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            display: flex;
-            justify-content: space-between;
-            z-index: 10;
-        }
-
-        .timer-notch {
-            width: 4px;
-            height: 2px;
-            background: rgba(50, 50, 60, 0.8);
-            border-radius: 0 0 1px 1px;
-        }
-
-        /* Time remaining indicator */
         .remaining-indicator {
             position: absolute;
             bottom: -18px;
@@ -1266,66 +927,6 @@
                 opacity: 0.6;
             }
         }
-
-        /* Стили для предупреждения о малом количестве времени */
-        .timer-container.urgent .timer-value {
-            color: var(--accent-red);
-            animation: pulse-urgent 0.5s infinite alternate;
-        }
-
-        .timer-container.urgent .timer-edge {
-            animation: edge-flicker 0.2s infinite alternate;
-        }
-
-        /* Стили для истечения времени */
-        .timer-container.expired .timer-value {
-            color: var(--error-color);
-            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
-        }
-
-        .timer-container.expired .timer-fill {
-            animation: none;
-            width: 0;
-        }
-
-        .timer-container.expired .timer-edge {
-            opacity: 0;
-        }
-
-        @keyframes pulse-urgent {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(1.2);
-                opacity: 0.8;
-            }
-        }
-
-        @keyframes shake {
-
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            10%,
-            30%,
-            50%,
-            70%,
-            90% {
-                transform: translateX(-2px);
-            }
-
-            20%,
-            40%,
-            60%,
-            80% {
-                transform: translateX(2px);
-            }
-        }
     </style>
 </head>
 
@@ -1348,14 +949,14 @@
                         <path
                             d="M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM10 4h4v2h-4V4zm10 16H4V8h16v12z" />
                     </svg>
-                    <span class="case-number" id="question-progress">ДЕЛО 1/5</span>
+                    <span class="case-number">ДЕЛО <span id="question-progress">1/5</span></span>
                 </div>
 
                 <div class="score-badge">
                     <svg class="score-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 15V3m0 12l-4 4m4-4l4 4M3 12h18" />
                     </svg>
-                    <span class="score-value" id="score-display">0 ОЧКОВ</span>
+                    <span class="score-value"><span id="score-display">0</span> ОЧКОВ</span>
                 </div>
 
                 <button class="profile-link">
@@ -1395,38 +996,10 @@
                             <div class="timer-marker"></div>
                             <div class="timer-marker"></div>
                         </div>
-                        <div class="timer-notches">
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                            <div class="timer-notch"></div>
-                        </div>
-                        <div class="timer-glow"></div>
-                        <div class="timer-fill" id="timer-bar"></div>
-                        <div class="timer-ripple"></div>
-                        <div class="timer-particles">
-                            <div class="particle"></div>
-                            <div class="particle"></div>
-                            <div class="particle"></div>
-                            <div class="particle"></div>
-                            <div class="particle"></div>
-                        </div>
-                        <div class="timer-edge"></div>
-                        <div class="timer-scanline"></div>
-                        <div class="laser-sight"></div>
+                        <div class="timer-bar" id="timer-bar"></div>
                         <div class="timer-value-container">
-                            <div class="timer-value"><span id="timer-value">0</span><span
-                                    class="timer-blink">:</span><span>13</span></div>
+                            <div class="timer-value"><span id="timer-value">15</span><span
+                                    class="timer-blink">:</span>00</div>
                         </div>
                     </div>
                 </div>
@@ -1437,8 +1010,8 @@
             </div>
 
             <section class="case-file glass-effect">
-                <div class="evidence-tag">УЛИКА #<span id="evidence-number">01</span></div>
-                <h2 class="case-title" id="story-title">Ограбление ювелирного магазина</h2>
+                <div class="evidence-tag">УЛИКА #<span id="story-evidence-id">01</span></div>
+                <h2 class="case-title" id="story-title">ОГРАБЛЕНИЕ ЮВЕЛИРНОГО МАГАЗИНА</h2>
 
                 <div class="case-metadata">
                     <div class="metadata-item">
@@ -1449,19 +1022,23 @@
                             <line x1="8" y1="2" x2="8" y2="6" />
                             <line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
-                        <span id="case-date">12.04.2024</span>
+                        <span id="story-date">12.04.2024</span>
                     </div>
                     <div class="metadata-item">
                         <svg class="metadata-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                         </svg>
-                        <span id="case-difficulty">СЛОЖНОСТЬ: СРЕДНЯЯ</span>
+                        <span id="story-difficulty">СЛОЖНОСТЬ: СРЕДНЯЯ</span>
                     </div>
                 </div>
 
                 <div class="case-content" id="story-content">
-                    <!-- Содержимое истории будет добавлено через JavaScript -->
+                    Преступник взломал заднюю дверь ювелирного магазина в 3 часа ночи. Он отключил камеры
+                    видеонаблюдения, но не заметил <span class="highlighted-text">скрытую камеру над сейфом</span>. На
+                    записи видно, как он <span class="highlighted-text">без перчаток</span> открывает витрины и собирает
+                    украшения в рюкзак. Перед уходом преступник воспользовался <span class="highlighted-text">раковиной
+                        в подсобке</span>, чтобы смыть кровь с пореза на руке.
                 </div>
 
                 <p class="case-question">
@@ -1469,7 +1046,7 @@
                 </p>
             </section>
 
-            <section class="answers-section" id="answers-section">
+            <section class="answers-section">
                 <div class="answers-label">
                     <svg class="answers-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path
@@ -1479,12 +1056,12 @@
                 </div>
 
                 <div id="answers-container">
-                    <!-- Варианты ответов будут добавлены через JavaScript -->
+                    <!-- Варианты ответов будут добавлены динамически через JavaScript -->
                 </div>
             </section>
 
-            <footer class="game-footer" id="game-footer" style="display: none;">
-                <button class="action-button" data-action="nextQuestion">СЛЕДУЮЩЕЕ ДЕЛО</button>
+            <footer class="game-footer">
+                <button class="action-button" id="action-button">СЛЕДУЮЩЕЕ ДЕЛО</button>
             </footer>
         </div>
 
