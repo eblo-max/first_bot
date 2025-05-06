@@ -716,26 +716,50 @@
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
                 }
 
-                // Вместо перехода запускаем игру напрямую
-                if (typeof startGame === 'function') {
-                    startGame();
+                // Проверяем готовность игры
+                if (typeof window.CriminalBluffApp !== 'undefined' && window.CriminalBluffApp.isReady()) {
+                    // Если приложение готово, просто запускаем игру
+                    if (typeof startGame === 'function') {
+                        startGame();
+                    }
                 } else {
-                    console.error('Функция startGame не найдена, подключаем game-state.js и app.js');
-                    // Динамически подключаем скрипты для игры
-                    const gameStateScript = document.createElement('script');
-                    gameStateScript.src = 'game-state.js';
-                    document.body.appendChild(gameStateScript);
+                    console.log('Принудительная инициализация игры...');
 
-                    const appScript = document.createElement('script');
-                    appScript.src = 'app.js';
-                    appScript.onload = function () {
-                        if (typeof startGame === 'function') {
-                            startGame();
+                    // Показываем загрузку
+                    document.querySelector('.loading-container').style.display = 'flex';
+
+                    // Динамически подключаем скрипты для игры если их еще нет
+                    if (typeof GameState === 'undefined') {
+                        const gameStateScript = document.createElement('script');
+                        gameStateScript.src = 'game-state.js';
+                        document.body.appendChild(gameStateScript);
+                    }
+
+                    if (typeof initApp === 'undefined') {
+                        const appScript = document.createElement('script');
+                        appScript.src = 'app.js';
+                        document.body.appendChild(appScript);
+                    }
+
+                    // Ждем загрузки и запускаем
+                    setTimeout(() => {
+                        // Принудительно инициализируем
+                        if (typeof initApp === 'function') {
+                            initApp();
+                            // Даем время на инициализацию и запускаем игру
+                            setTimeout(() => {
+                                if (typeof startGame === 'function') {
+                                    startGame();
+                                } else {
+                                    alert('Не удалось запустить игру. Пожалуйста, обновите страницу.');
+                                    document.querySelector('.loading-container').style.display = 'none';
+                                }
+                            }, 1000);
                         } else {
                             alert('Не удалось загрузить игровые скрипты. Пожалуйста, обновите страницу.');
+                            document.querySelector('.loading-container').style.display = 'none';
                         }
-                    };
-                    document.body.appendChild(appScript);
+                    }, 500);
                 }
             });
         });

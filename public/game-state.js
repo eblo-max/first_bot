@@ -240,26 +240,119 @@ const GameState = {
      * Инициализация State Machine
      */
     init() {
-        // Получаем доступ к экранам
-        this.screens = {
-            start: document.getElementById('start-screen'),
-            game: document.getElementById('game-screen'),
-            result: document.getElementById('result-screen'),
-            finish: document.getElementById('finish-screen')
-        };
+        console.log('Инициализация GameState...');
 
-        // Показываем начальный экран
-        this.showScreen('start');
+        try {
+            // Получаем доступ к экранам - проверяем их наличие
+            const startScreen = document.getElementById('start-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const resultScreen = document.getElementById('result-screen');
+            const finishScreen = document.getElementById('finish-screen');
 
-        // Восстанавливаем токен из localStorage
-        this.data.token = localStorage.getItem('token');
+            // Если не все экраны найдены, создаем их для совместимости
+            if (!startScreen || !gameScreen || !resultScreen || !finishScreen) {
+                console.warn('Некоторые игровые экраны не найдены - создаем временные для совместимости');
 
-        // Проверяем тему
-        if (window.Telegram?.WebApp) {
-            this.data.theme = window.Telegram.WebApp.colorScheme || 'dark';
-            document.body.setAttribute('data-theme', this.data.theme);
+                // Создаем контейнер для игровых экранов если он не существует
+                let container = document.querySelector('.container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.className = 'container';
+                    document.body.appendChild(container);
+                }
+
+                // Создаем отсутствующие экраны
+                if (!startScreen) {
+                    const screen = document.createElement('div');
+                    screen.id = 'start-screen';
+                    screen.className = 'screen';
+                    container.appendChild(screen);
+                }
+
+                if (!gameScreen) {
+                    const screen = document.createElement('div');
+                    screen.id = 'game-screen';
+                    screen.className = 'screen';
+                    screen.innerHTML = `
+                        <div class="game-header">
+                            <div class="score">Счет: <span id="score-display">0</span></div>
+                            <div class="progress">Дело: <span id="question-progress">1/5</span></div>
+                            <div class="timer">
+                                <span id="timer-value">15</span>с
+                                <div class="timer-bar" id="timer-bar"></div>
+                            </div>
+                        </div>
+                        <div class="story-card">
+                            <h3 class="story-title" id="story-title"></h3>
+                            <p class="story-content" id="story-content"></p>
+                            <p class="story-question">Где ошибка преступника?</p>
+                            <div class="answers-container" id="answers-container"></div>
+                        </div>
+                    `;
+                    container.appendChild(screen);
+                }
+
+                if (!resultScreen) {
+                    const screen = document.createElement('div');
+                    screen.id = 'result-screen';
+                    screen.className = 'screen';
+                    screen.innerHTML = `
+                        <div id="result-container">
+                            <h3 id="result-title"></h3>
+                            <p id="result-explanation"></p>
+                            <div class="points-details" id="points-details"></div>
+                            <button data-action="nextQuestion" class="primary-button">СЛЕДУЮЩЕЕ ДЕЛО</button>
+                        </div>
+                    `;
+                    container.appendChild(screen);
+                }
+
+                if (!finishScreen) {
+                    const screen = document.createElement('div');
+                    screen.id = 'finish-screen';
+                    screen.className = 'screen';
+                    screen.innerHTML = `
+                        <div class="game-results">
+                            <h2>Расследование завершено</h2>
+                            <div class="results-details">
+                                <p class="results-line">Итоговый счет: <span id="final-score">0</span></p>
+                                <p class="results-line">Раскрыто дел: <span id="correct-answers">0/0</span></p>
+                                <p class="results-line">Эффективность: <span id="accuracy">0%</span></p>
+                            </div>
+                            <div class="results-stats">
+                                <h3>Досье детектива</h3>
+                                <p class="stats-line">Всего расследований: <span id="total-games">0</span></p>
+                                <p class="stats-line">Общий рейтинг: <span id="total-score">0</span></p>
+                                <p class="stats-line">Серия успешных дел: <span id="max-streak">0</span></p>
+                            </div>
+                            <div class="action-buttons">
+                                <button data-action="restartGame" class="primary-button">НОВОЕ РАССЛЕДОВАНИЕ</button>
+                                <button data-action="goToMain" class="secondary-button">В ШТАБ-КВАРТИРУ</button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(screen);
+                }
+            }
+
+            // Обновляем ссылки на экраны
+            this.screens = {
+                start: document.getElementById('start-screen'),
+                game: document.getElementById('game-screen'),
+                result: document.getElementById('result-screen'),
+                finish: document.getElementById('finish-screen')
+            };
+
+            // Проверка успешности инициализации
+            const allScreensInitialized = Object.values(this.screens).every(screen => screen !== null);
+            if (!allScreensInitialized) {
+                console.error('Не удалось инициализировать все экраны GameState');
+            } else {
+                console.log('GameState инициализирован успешно');
+            }
+
+        } catch (error) {
+            console.error('Ошибка инициализации GameState:', error);
         }
-
-        console.log('GameState инициализирован');
     }
 }; 
