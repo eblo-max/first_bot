@@ -124,7 +124,22 @@ const GameState = {
         // Обновляем информацию о текущей истории
         if (this.data.currentStory) {
             document.getElementById('story-title').textContent = this.data.currentStory.title;
-            document.getElementById('story-content').textContent = this.data.currentStory.content;
+
+            // Обновляем текстовый контент с выделением ключевых фраз
+            const storyContent = document.getElementById('story-content');
+            let content = this.data.currentStory.content || '';
+
+            // Проверяем, содержит ли текст HTML-теги
+            if (!content.includes('<span class="highlighted-text">')) {
+                // Выделяем ключевые фразы
+                content = content
+                    .replace(/скрытую камеру над сейфом/gi, '<span class="highlighted-text">скрытую камеру над сейфом</span>')
+                    .replace(/без перчаток/gi, '<span class="highlighted-text">без перчаток</span>')
+                    .replace(/раковиной в подсобке/gi, '<span class="highlighted-text">раковиной в подсобке</span>')
+                    .replace(/кровь с пореза/gi, '<span class="highlighted-text">кровь с пореза</span>');
+            }
+
+            storyContent.innerHTML = content;
 
             // Обновляем варианты ответов
             this.updateAnswers();

@@ -339,32 +339,30 @@
             width: 28px;
             height: 28px;
             min-width: 28px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--radius-full);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
             font-size: 14px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(30, 30, 40, 0.8);
             color: var(--primary-text);
-            margin-top: 2px;
             transition: all var(--transition-normal);
         }
 
         .answer-option:hover .answer-marker {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(50, 50, 60, 0.9);
         }
 
         .answer-option.selected {
             border-color: var(--accent-yellow);
-            background: rgba(255, 193, 7, 0.1);
+            background: rgba(255, 193, 7, 0.15);
         }
 
         .answer-option.selected .answer-marker {
             background: var(--accent-yellow);
             color: var(--dark-bg);
-            border-color: var(--accent-yellow);
+            font-weight: 700;
         }
 
         .answer-text {
@@ -490,17 +488,26 @@
         .game-footer {
             margin-top: auto;
             padding-top: var(--spacing-md);
+            position: fixed;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            max-width: 450px;
+            width: calc(100% - 32px);
+            margin-left: auto;
+            margin-right: auto;
+            z-index: 10;
         }
 
         .action-button {
             width: 100%;
-            padding: var(--spacing-md);
+            padding: 14px;
             background: var(--accent-red);
             color: var(--primary-text);
             border: none;
             border-radius: var(--radius-md);
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
             cursor: pointer;
@@ -616,6 +623,66 @@
             align-items: center;
             margin-bottom: var(--spacing-lg);
             position: relative;
+        }
+
+        .case-badge {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--radius-full);
+            padding: 8px 12px;
+        }
+
+        .case-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            color: #fff;
+        }
+
+        .case-number {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .score-badge {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--radius-full);
+            padding: 8px 12px;
+        }
+
+        .score-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            color: var(--accent-yellow);
+        }
+
+        .score-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .profile-link {
+            background: rgba(0, 0, 0, 0.3);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .profile-icon {
+            width: 20px;
+            height: 20px;
+            color: #fff;
         }
 
         /* High-tech Timer Section */
@@ -1358,14 +1425,14 @@
                         <div class="timer-scanline"></div>
                         <div class="laser-sight"></div>
                         <div class="timer-value-container">
-                            <div class="timer-value"><span id="timer-value">15</span><span
-                                    class="timer-blink">:</span>00</div>
+                            <div class="timer-value"><span id="timer-value">0</span><span
+                                    class="timer-blink">:</span><span>13</span></div>
                         </div>
                     </div>
                 </div>
                 <div class="remaining-indicator">
                     <span class="red-dot"></span>
-                    Время идет
+                    ВРЕМЯ ИДЕТ
                 </div>
             </div>
 
