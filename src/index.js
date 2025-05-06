@@ -64,8 +64,8 @@ app.get('/', (req, res) => {
 
 // Игровой экран
 app.get('/game', (req, res) => {
-    console.log('Запрос на игровой экран - отправляем index.html с новым дизайном');
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+    console.log('Запрос на игровой экран - отправляем game.html');
+    res.sendFile(path.join(__dirname, '../public/game.html'));
 });
 
 // Редирект для старых ссылок на index.html (больше не требуется)

@@ -343,13 +343,19 @@ const GameState = {
                 finish: document.getElementById('finish-screen')
             };
 
-            // Проверка успешности инициализации
-            const allScreensInitialized = Object.values(this.screens).every(screen => screen !== null);
-            if (!allScreensInitialized) {
-                console.error('Не удалось инициализировать все экраны GameState');
-            } else {
-                console.log('GameState инициализирован успешно');
+            // Показываем начальный экран
+            this.showScreen('start');
+
+            // Восстанавливаем токен из localStorage
+            this.data.token = localStorage.getItem('token');
+
+            // Проверяем тему
+            if (window.Telegram?.WebApp) {
+                this.data.theme = window.Telegram.WebApp.colorScheme || 'dark';
+                document.body.setAttribute('data-theme', this.data.theme);
             }
+
+            console.log('GameState инициализирован успешно');
 
         } catch (error) {
             console.error('Ошибка инициализации GameState:', error);
