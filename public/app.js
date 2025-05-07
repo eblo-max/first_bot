@@ -286,6 +286,67 @@ async function startGame() {
     console.log('Начало игры...');
 
     try {
+        // Получаем данные для игры с сервера или создаем тестовые данные
+        if (GameState.data.isTestMode) {
+            console.log('Тестовый режим: генерируем тестовые данные для игры');
+
+            // Создаем тестовую игру с 5 историями
+            const testStories = [
+                {
+                    id: 'test-story-1',
+                    title: 'Ограбление ювелирного магазина',
+                    content: 'Преступник взломал заднюю дверь ювелирного магазина в 3 часа ночи. Он отключил камеры видеонаблюдения, но не заметил <span class="highlighted-text">скрытую камеру над сейфом</span>. На записи видно, как он <span class="highlighted-text">без перчаток</span> открывает витрины и собирает украшения в рюкзак. Перед уходом преступник воспользовался <span class="highlighted-text">раковиной в подсобке</span>, чтобы смыть кровь с пореза на руке.',
+                    difficulty: 'medium',
+                    date: '12.04.2024',
+                    mistakes: [
+                        {
+                            id: 'mistake-1',
+                            text: 'Неправильно отключил систему видеонаблюдения, не заметив скрытую камеру',
+                            isCorrect: false
+                        },
+                        {
+                            id: 'mistake-2',
+                            text: 'Работал без перчаток, оставив отпечатки пальцев на витринах и украшениях',
+                            isCorrect: false
+                        },
+                        {
+                            id: 'mistake-3',
+                            text: 'Оставил свои биологические следы, смыв кровь в раковине, что позволило получить его ДНК',
+                            isCorrect: true
+                        }
+                    ]
+                },
+                // ... existing code ...
+            ];
+
+            GameState.setData('gameId', 'test-game-' + Date.now());
+            GameState.setData('stories', testStories);
+            GameState.setData('currentStoryIndex', 0);
+            GameState.setData('currentStory', testStories[0]);
+            GameState.setData('timerDuration', 15); // Продолжительность таймера в секундах
+
+            // Переходим на игровой экран
+            GameState.transition('startGame');
+
+            // Запускаем таймер
+            startTimer();
+
+            // Автоматический запуск выбора, если указано в URL
+            if (window.location.search.includes('autostart=true')) {
+                setTimeout(() => {
+                    // Выбираем случайный ответ через 5 секунд
+                    const options = document.querySelectorAll('.answer-option');
+                    if (options.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * options.length);
+                        const mistakeId = options[randomIndex].dataset.mistakeId;
+                        selectAnswer(mistakeId);
+                    }
+                }, 5000);
+            }
+
+            return;
+        }
+
         // Запрос на начало игры
         const response = await fetch('/api/game/start', {
             method: 'GET',
@@ -547,19 +608,25 @@ async function selectAnswer(mistakeId) {
         // В тестовом режиме генерируем моковый ответ
         if (GameState.data.isTestMode) {
             console.log('Тестовый режим: генерируем моковый ответ');
+
+            // Находим правильный ответ
+            const correctMistake = GameState.data.currentStory.mistakes.find(m => m.isCorrect);
+            const isCorrect = correctMistake && correctMistake.id === mistakeId;
+
             response = {
                 ok: true,
                 data: {
-                    correct: Math.random() > 0.3, // 70% правильных ответов в тесте
-                    correctMistakeId: GameState.data.currentStory.mistakes[0].id,
-                    explanation: "Это тестовое объяснение результата. В реальной игре здесь будет подробное объяснение от сервера о том, почему выбранный вариант правильный или неправильный.",
-                    score: Math.floor(Math.random() * 100) + 50,
+                    correct: isCorrect,
+                    correctMistakeId: correctMistake ? correctMistake.id : null,
+                    explanation: isCorrect
+                        ? "Правильно! Преступник оставил биологический материал (кровь), который попал в слив раковины. Даже после смывания, следы ДНК остаются на сантехнике и в трубах. Криминалисты легко извлекают такие образцы и используют для идентификации."
+                        : "Неправильно. Преступник оставил биологический материал (кровь), который попал в слив раковины. Даже после смывания, следы ДНК остаются на сантехнике и в трубах. Криминалисты легко извлекают такие образцы и используют для идентификации.",
+                    pointsEarned: isCorrect ? 120 : 0,
                     details: {
-                        base: 100,
-                        timeBonus: Math.floor(timeLeft * 5),
-                        difficultyBonus: 20,
-                        streak: 10,
-                        total: 100 + Math.floor(timeLeft * 5) + 20 + 10
+                        base: isCorrect ? 100 : 0,
+                        timeBonus: isCorrect ? Math.floor(timeLeft * 5) : 0,
+                        difficultyBonus: isCorrect ? 20 : 0,
+                        total: isCorrect ? 120 : 0
                     }
                 }
             };
@@ -568,13 +635,18 @@ async function selectAnswer(mistakeId) {
             await new Promise(resolve => setTimeout(resolve, 1000));
         } else {
             // Реальный запрос к серверу
-            response = await fetch('/api/game/answer', {
+            response = await fetch('/api/game/submit', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify({
+                    gameId: GameState.data.gameId,
+                    storyId: GameState.data.currentStory.id,
+                    mistakeId: mistakeId,
+                    responseTime: timeLeft
+                })
             }).then(res => res.json());
         }
 
@@ -583,7 +655,7 @@ async function selectAnswer(mistakeId) {
             const result = response.data;
 
             // Обновляем счет
-            GameState.setData('score', GameState.data.score + (result.details?.total || 0));
+            GameState.setData('score', GameState.data.score + (result.pointsEarned || 0));
 
             // Сохраняем результат ответа
             GameState.setData('result', result);
@@ -600,25 +672,20 @@ async function selectAnswer(mistakeId) {
                 }
             }
 
-            // Показываем экран результата
+            // Переходим к экрану результата через небольшую задержку
             setTimeout(() => {
                 GameState.transition('showResult');
                 GameState.data.isAnswering = false;
-
-                // Показываем кнопку "Назад" Telegram
-                if (tg && tg.BackButton) {
-                    tg.BackButton.show();
-                }
             }, 1500);
 
         } else {
             console.error('Ошибка при отправке ответа:', response.error);
-            alert('Произошла ошибка при проверке ответа. Пожалуйста, попробуйте еще раз.');
+            alert('Произошла ошибка. Пожалуйста, попробуйте еще раз.');
             GameState.data.isAnswering = false;
         }
     } catch (error) {
         console.error('Ошибка при отправке ответа:', error);
-        alert('Произошла ошибка при отправке ответа. Пожалуйста, проверьте подключение к интернету.');
+        alert('Произошла ошибка при соединении с сервером.');
         GameState.data.isAnswering = false;
     }
 }
@@ -627,20 +694,30 @@ async function selectAnswer(mistakeId) {
  * Переход к следующему вопросу
  */
 function nextQuestion() {
-    // Переходим к следующему вопросу
-    GameState.data.currentStoryIndex++;
-    GameState.data.isAnswering = false;
-    console.log('Переход к следующему вопросу, индекс:', GameState.data.currentStoryIndex);
+    console.log('Переход к следующему вопросу');
 
-    // Если есть еще вопросы, показываем их
-    if (GameState.data.currentStoryIndex < GameState.data.stories.length) {
-        GameState.data.currentStory = GameState.data.stories[GameState.data.currentStoryIndex];
-        GameState.transition('nextQuestion');
-        startTimer();
-    } else {
-        // Завершаем игру
+    // Если это была последняя история, переходим к экрану результатов
+    if (GameState.data.currentStoryIndex >= GameState.data.stories.length - 1) {
+        console.log('Это был последний вопрос. Переход к финальному экрану');
         finishGame();
+        return;
     }
+
+    // Увеличиваем индекс текущей истории
+    const newIndex = GameState.data.currentStoryIndex + 1;
+    GameState.setData('currentStoryIndex', newIndex);
+    GameState.setData('currentStory', GameState.data.stories[newIndex]);
+
+    // Переходим обратно на игровой экран
+    GameState.transition('nextQuestion');
+
+    // Сбрасываем таймер
+    GameState.setData('secondsLeft', GameState.data.timerDuration || 15);
+    GameState.setData('startTime', Date.now());
+    GameState.setData('isAnswering', false);
+
+    // Запускаем таймер
+    startTimer();
 }
 
 /**
@@ -798,54 +875,43 @@ function provideFeedback(type) {
  * @param {Event} event - DOM событие клика
  */
 function handleButtonClick(event) {
-    let target = event.target;
+    // Находим ближайший элемент с атрибутом data-action
+    const actionElement = event.target.closest('[data-action]');
+    if (!actionElement) return;
 
-    // Ищем ближайший элемент с data-action если сам элемент не имеет атрибута
-    while (target && !target.dataset.action && target !== document.body) {
-        target = target.parentElement;
-    }
+    // Получаем название действия
+    const action = actionElement.getAttribute('data-action');
+    console.log('Клик по действию:', action);
 
-    if (!target || !target.dataset.action) return;
-
-    const action = target.dataset.action;
-    console.log('Действие:', action);
-
-    // Haptic feedback through Telegram WebApp API
+    // Тактильный отклик
     if (tg && tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('light');
     }
 
+    // Обрабатываем различные действия
     switch (action) {
-        // Начало игры
         case 'startGame':
             startGame();
             break;
-
-        // Выбор ответа
         case 'selectAnswer':
-            if (!GameState.data.isAnswering && target.dataset.mistakeId) {
-                selectAnswer(target.dataset.mistakeId);
-            }
+            const mistakeId = actionElement.getAttribute('data-mistake-id');
+            if (mistakeId) selectAnswer(mistakeId);
             break;
-
-        // Следующий вопрос
         case 'nextQuestion':
             nextQuestion();
             break;
-
-        // Перезапуск игры
         case 'restartGame':
             restartGame();
             break;
-
-        // Возврат на главный экран
         case 'goToMain':
             goToMain();
             break;
-
-        // Другие действия
+        case 'feedback':
+            const feedbackType = actionElement.getAttribute('data-feedback-type');
+            if (feedbackType) provideFeedback(feedbackType);
+            break;
         default:
-            console.log('Неизвестное действие:', action);
+            console.warn('Неизвестное действие:', action);
     }
 }
 
@@ -853,24 +919,22 @@ function handleButtonClick(event) {
  * Устанавливает слушатели событий для элементов интерфейса
  */
 function setupEventListeners() {
-    console.log('Настройка обработчиков событий...');
+    console.log('Настройка обработчиков событий');
 
-    // Глобальный обработчик кликов для делегирования событий
+    // Обработка кликов по всему документу с делегированием событий
     document.addEventListener('click', handleButtonClick);
 
-    // Обработчик изменения темы Telegram
-    if (tg) {
+    // Обработка изменения темы в TG WebApp
+    if (tg && tg.colorScheme) {
         const onThemeChanged = () => {
-            const theme = tg.colorScheme || 'dark';
-            GameState.data.theme = theme;
-            document.body.setAttribute('data-theme', theme);
-            console.log('Тема изменена на:', theme);
+            const newTheme = tg.colorScheme;
+            console.log('Изменение темы Telegram:', newTheme);
+            GameState.data.theme = newTheme;
+            document.body.setAttribute('data-theme', newTheme);
         };
 
-        // Если доступен API для отслеживания изменения темы, используем его
-        if (typeof tg.onEvent === 'function') {
-            tg.onEvent('themeChanged', onThemeChanged);
-        }
+        // Слушаем событие изменения темы
+        tg.onEvent('themeChanged', onThemeChanged);
     }
 
     // Обработчик нажатия клавиш
@@ -918,13 +982,138 @@ function setupEventListeners() {
 /**
  * Инициализация приложения при загрузке страницы
  */
-document.addEventListener('DOMContentLoaded', () => {
-    // Инициализируем State Machine
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM загружен. Инициализируем GameState');
     GameState.init();
 
-    // Настраиваем обработчики событий
+    console.log('Настраиваем обработчики событий');
     setupEventListeners();
+
+    // Проверяем параметры URL для тестирования
+    if (window.location.search.includes('test=true')) {
+        console.log('Тестовый режим активирован через URL параметр');
+        GameState.data.isTestMode = true;
+    }
+
+    // Автоматический запуск игры, если указано в URL
+    if (window.location.search.includes('autostart=true')) {
+        console.log('Автозапуск активирован через URL параметр');
+        setTimeout(() => {
+            startGame();
+        }, 500);
+    }
 
     // Инициализируем приложение
     initApp();
-}); 
+});
+
+/**
+ * Обновление интерфейса при изменении данных
+ */
+GameState.updateUI = function () {
+    // Обновляем счетчик очков
+    document.getElementById('score-display').textContent = this.data.score;
+
+    // Обновляем прогресс вопросов, если есть истории
+    if (this.data.stories.length > 0) {
+        document.getElementById('question-progress').textContent =
+            `${this.data.currentStoryIndex + 1}/${this.data.stories.length}`;
+    }
+
+    // Обновляем таймер
+    if (this.current === 'game') {
+        document.getElementById('timer-value').textContent = this.data.secondsLeft;
+        document.getElementById('timer-bar').style.width = `${(this.data.secondsLeft / this.data.timerDuration) * 100}%`;
+    }
+
+    // Обновляем информацию о текущей истории
+    if (this.data.currentStory) {
+        document.getElementById('story-title').textContent = this.data.currentStory.title;
+
+        // Обновляем текстовый контент с выделением ключевых фраз
+        const storyContent = document.getElementById('story-content');
+        let content = this.data.currentStory.content || '';
+
+        // Проверяем, содержит ли контент уже HTML-разметку
+        if (!content.includes('<span class="highlighted-text">')) {
+            // Заменяем ключевые фразы с выделением
+            content = content
+                .replace(/скрытую камеру над сейфом/gi, '<span class="highlighted-text">скрытую камеру над сейфом</span>')
+                .replace(/без перчаток/gi, '<span class="highlighted-text">без перчаток</span>')
+                .replace(/раковиной в подсобке/gi, '<span class="highlighted-text">раковиной в подсобке</span>');
+        }
+
+        storyContent.innerHTML = content;
+
+        // Обновляем метаданные истории
+        if (document.getElementById('story-date')) {
+            document.getElementById('story-date').textContent = this.data.currentStory.date || '';
+        }
+        if (document.getElementById('story-difficulty')) {
+            document.getElementById('story-difficulty').textContent = this.data.currentStory.difficulty || '';
+        }
+
+        // Обновляем варианты ответов
+        this.updateAnswers();
+
+        // Обновляем текст кнопки действия
+        if (document.getElementById('action-button')) {
+            if (this.data.isAnswering) {
+                document.getElementById('action-button').textContent = 'ПОДТВЕРДИТЬ ОТВЕТ';
+            } else {
+                document.getElementById('action-button').textContent = 'СЛЕДУЮЩЕЕ ДЕЛО';
+            }
+        }
+    }
+
+    // Обновляем экран результата
+    if (this.data.result && this.current === 'result') {
+        this.updateResultScreen();
+    }
+
+    // Обновляем экран финиша
+    if (this.data.gameResult && this.current === 'finish') {
+        this.updateFinishScreen();
+    }
+};
+
+/**
+ * Обновление вариантов ответов
+ */
+GameState.updateAnswers = function () {
+    const container = document.getElementById('answers-container');
+    if (!container || !this.data.currentStory || !this.data.currentStory.mistakes) return;
+
+    // Очищаем контейнер
+    container.innerHTML = '';
+
+    // Добавляем варианты ответов
+    const letters = ['A', 'B', 'C', 'D'];
+    this.data.currentStory.mistakes.forEach((mistake, index) => {
+        const answerOption = document.createElement('div');
+        answerOption.className = 'answer-option';
+        answerOption.dataset.mistakeId = mistake.id;
+        answerOption.dataset.action = 'selectAnswer';
+
+        if (this.data.isAnswering) {
+            answerOption.classList.add('disabled');
+        }
+
+        // Создаем маркер с буквой ответа
+        const marker = document.createElement('div');
+        marker.className = 'answer-marker';
+        marker.textContent = letters[index];
+
+        // Создаем текст ответа
+        const text = document.createElement('div');
+        text.className = 'answer-text';
+        text.textContent = mistake.text;
+
+        // Добавляем элементы в вариант ответа
+        answerOption.appendChild(marker);
+        answerOption.appendChild(text);
+
+        // Добавляем вариант ответа в контейнер
+        container.appendChild(answerOption);
+    });
+}; 

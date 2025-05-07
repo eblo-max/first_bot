@@ -103,278 +103,91 @@ const GameState = {
     },
 
     /**
-     * Обновление данных на UI
-     */
-    updateUI() {
-        // Обновляем счетчик очков
-        document.getElementById('score-display').textContent = this.data.score;
-
-        // Обновляем прогресс вопросов, если есть истории
-        if (this.data.stories.length > 0) {
-            document.getElementById('question-progress').textContent =
-                `${this.data.currentStoryIndex + 1}/${this.data.stories.length}`;
-        }
-
-        // Обновляем таймер
-        if (this.current === 'game') {
-            document.getElementById('timer-value').textContent = this.data.secondsLeft;
-            document.getElementById('timer-bar').style.width = `${(this.data.secondsLeft / this.data.timerDuration) * 100}%`;
-        }
-
-        // Обновляем информацию о текущей истории
-        if (this.data.currentStory) {
-            document.getElementById('story-title').textContent = this.data.currentStory.title;
-
-            // Обновляем текстовый контент с выделением ключевых фраз
-            const storyContent = document.getElementById('story-content');
-            let content = this.data.currentStory.content || '';
-
-            // Заменяем ключевые фразы с выделением
-            content = content
-                .replace(/скрытую камеру над сейфом/gi, '<span class="highlighted-text">скрытую камеру над сейфом</span>')
-                .replace(/без перчаток/gi, '<span class="highlighted-text">без перчаток</span>')
-                .replace(/раковиной в подсобке/gi, '<span class="highlighted-text">раковиной в подсобке</span>');
-
-            storyContent.innerHTML = content;
-
-            // Обновляем метаданные истории
-            document.getElementById('story-date').textContent = this.data.currentStory.date || '';
-            document.getElementById('story-difficulty').textContent = this.data.currentStory.difficulty || '';
-
-            // Показываем/скрываем нужные разделы и обновляем варианты ответов
-            this.updateAnswers();
-
-            if (this.data.isAnswering) {
-                document.getElementById('action-button').textContent = 'ПОДТВЕРДИТЬ ОТВЕТ';
-            } else {
-                document.getElementById('action-button').textContent = 'СЛЕДУЮЩЕЕ ДЕЛО';
-            }
-        }
-
-        // Обновляем экран результата
-        if (this.data.result && this.current === 'result') {
-            this.updateResultScreen();
-        }
-
-        // Обновляем экран финиша
-        if (this.data.gameResult && this.current === 'finish') {
-            this.updateFinishScreen();
-        }
-    },
-
-    /**
-     * Обновление вариантов ответов
-     */
-    updateAnswers() {
-        const container = document.getElementById('answers-container');
-        if (!container || !this.data.currentStory || !this.data.currentStory.mistakes) return;
-
-        // Очищаем контейнер
-        container.innerHTML = '';
-
-        // Добавляем варианты ответов
-        const letters = ['A', 'B', 'C', 'D'];
-        this.data.currentStory.mistakes.forEach((mistake, index) => {
-            const answerOption = document.createElement('div');
-            answerOption.className = 'answer-option';
-            answerOption.dataset.mistakeId = mistake.id;
-            answerOption.dataset.action = 'selectAnswer';
-
-            if (this.data.isAnswering) {
-                answerOption.classList.add('disabled');
-            }
-
-            // Создаем маркер с буквой ответа
-            const marker = document.createElement('div');
-            marker.className = 'answer-marker';
-            marker.textContent = letters[index];
-
-            // Создаем текст ответа
-            const text = document.createElement('div');
-            text.className = 'answer-text';
-            text.textContent = mistake.text;
-
-            // Добавляем элементы в вариант ответа
-            answerOption.appendChild(marker);
-            answerOption.appendChild(text);
-
-            // Добавляем вариант ответа в контейнер
-            container.appendChild(answerOption);
-        });
-    },
-
-    /**
      * Обновление экрана результата
      */
     updateResultScreen() {
+        const resultSection = document.getElementById('result-section');
+        if (!resultSection || !this.data.result) return;
+
         const result = this.data.result;
-        const container = document.getElementById('result-container');
+        resultSection.className = result.correct ? 'results-section result-correct' : 'results-section result-incorrect';
 
-        // Устанавливаем класс в зависимости от правильности ответа
-        container.className = result.correct ? 'results-section result-correct' : 'results-section result-incorrect';
+        const resultHeader = document.getElementById('result-header');
+        const resultBadge = document.getElementById('result-badge');
+        const resultExplanation = document.getElementById('result-explanation');
+        const resultPoints = document.getElementById('result-points');
 
-        // Устанавливаем текст значка
-        document.getElementById('result-badge').textContent = result.correct ? 'ВЕРНО' : 'НЕВЕРНО';
-
-        // Заголовок
-        document.getElementById('result-title').textContent = result.correct ? 'Правильно!' : 'Неправильно!';
-
-        // Объяснение
-        document.getElementById('result-explanation').textContent = result.explanation;
-
-        // Детали очков
-        const pointsValue = document.getElementById('points-details');
-
-        if (result.correct && result.details) {
-            const totalPoints = result.details.base + result.details.timeBonus + result.details.streak;
-            pointsValue.textContent = totalPoints;
-        } else {
-            pointsValue.textContent = '0';
-            // Скрываем знак "+" для неправильных ответов
-            pointsValue.style.setProperty('--before-content', 'none');
+        if (resultHeader) {
+            resultHeader.textContent = result.correct ? 'Верно!' : 'Неверно!';
         }
+
+        if (resultBadge) {
+            resultBadge.textContent = result.correct ? 'ВЕРНО' : 'ОШИБКА';
+        }
+
+        if (resultExplanation) {
+            resultExplanation.textContent = result.explanation || '';
+        }
+
+        if (resultPoints) {
+            resultPoints.innerHTML = `<span class="points-value">${result.pointsEarned || 0}</span> ОЧКОВ`;
+        }
+
+        // Показываем раздел с результатом
+        resultSection.style.display = 'block';
     },
 
     /**
      * Обновление экрана финиша
      */
     updateFinishScreen() {
-        const result = this.data.gameResult;
+        const finishScoreElement = document.getElementById('finish-score');
+        if (finishScoreElement) {
+            finishScoreElement.textContent = this.data.score;
+        }
 
-        if (!result) return;
+        const gameStats = this.data.gameResult || {
+            totalQuestions: this.data.stories.length,
+            correctAnswers: this.data.stories.filter(s => s.correct).length,
+            averageTime: Math.round(this.data.stories.reduce((acc, s) => acc + s.timeSpent, 0) / this.data.stories.length)
+        };
 
-        document.getElementById('final-score').textContent = result.totalScore;
-        document.getElementById('correct-answers').textContent = `${result.correctAnswers}/${result.totalQuestions}`;
-        document.getElementById('accuracy').textContent = `${result.accuracy}%`;
+        const statsCorrect = document.getElementById('stats-correct');
+        const statsAccuracy = document.getElementById('stats-accuracy');
+        const statsAvgTime = document.getElementById('stats-avg-time');
 
-        document.getElementById('total-games').textContent = result.stats.totalGames;
-        document.getElementById('total-score').textContent = result.stats.totalScore;
-        document.getElementById('max-streak').textContent = result.stats.maxStreak;
+        if (statsCorrect) {
+            statsCorrect.textContent = `${gameStats.correctAnswers}/${gameStats.totalQuestions}`;
+        }
+
+        if (statsAccuracy) {
+            const accuracy = Math.round((gameStats.correctAnswers / gameStats.totalQuestions) * 100);
+            statsAccuracy.textContent = `${accuracy}%`;
+        }
+
+        if (statsAvgTime) {
+            statsAvgTime.textContent = `${gameStats.averageTime}сек`;
+        }
     },
 
     /**
      * Инициализация State Machine
      */
     init() {
-        console.log('Инициализация GameState...');
+        // Устанавливаем начальный экран
+        this.showScreen('start');
 
-        try {
-            // Получаем доступ к экранам - проверяем их наличие
-            const startScreen = document.getElementById('start-screen');
-            const gameScreen = document.getElementById('game-screen');
-            const resultScreen = document.getElementById('result-screen');
-            const finishScreen = document.getElementById('finish-screen');
+        // Предварительная загрузка темы из Telegram WebApp, если доступно
+        if (window.Telegram?.WebApp?.colorScheme) {
+            this.data.theme = window.Telegram.WebApp.colorScheme;
+        }
 
-            // Если не все экраны найдены, создаем их для совместимости
-            if (!startScreen || !gameScreen || !resultScreen || !finishScreen) {
-                console.warn('Некоторые игровые экраны не найдены - создаем временные для совместимости');
+        // Применяем тему к body
+        document.body.setAttribute('data-theme', this.data.theme);
 
-                // Создаем контейнер для игровых экранов если он не существует
-                let container = document.querySelector('.container');
-                if (!container) {
-                    container = document.createElement('div');
-                    container.className = 'container';
-                    document.body.appendChild(container);
-                }
-
-                // Создаем отсутствующие экраны
-                if (!startScreen) {
-                    const screen = document.createElement('div');
-                    screen.id = 'start-screen';
-                    screen.className = 'screen';
-                    container.appendChild(screen);
-                }
-
-                if (!gameScreen) {
-                    const screen = document.createElement('div');
-                    screen.id = 'game-screen';
-                    screen.className = 'screen';
-                    screen.innerHTML = `
-                        <div class="game-header">
-                            <div class="score">Счет: <span id="score-display">0</span></div>
-                            <div class="progress">Дело: <span id="question-progress">1/5</span></div>
-                            <div class="timer">
-                                <span id="timer-value">15</span>с
-                                <div class="timer-bar" id="timer-bar"></div>
-                            </div>
-                        </div>
-                        <div class="story-card">
-                            <h3 class="story-title" id="story-title"></h3>
-                            <p class="story-content" id="story-content"></p>
-                            <p class="story-question">Где ошибка преступника?</p>
-                            <div class="answers-container" id="answers-container"></div>
-                        </div>
-                    `;
-                    container.appendChild(screen);
-                }
-
-                if (!resultScreen) {
-                    const screen = document.createElement('div');
-                    screen.id = 'result-screen';
-                    screen.className = 'screen';
-                    screen.innerHTML = `
-                        <div id="result-container">
-                            <h3 id="result-title"></h3>
-                            <p id="result-explanation"></p>
-                            <div class="points-details" id="points-details"></div>
-                            <button data-action="nextQuestion" class="primary-button">СЛЕДУЮЩЕЕ ДЕЛО</button>
-                        </div>
-                    `;
-                    container.appendChild(screen);
-                }
-
-                if (!finishScreen) {
-                    const screen = document.createElement('div');
-                    screen.id = 'finish-screen';
-                    screen.className = 'screen';
-                    screen.innerHTML = `
-                        <div class="game-results">
-                            <h2>Расследование завершено</h2>
-                            <div class="results-details">
-                                <p class="results-line">Итоговый счет: <span id="final-score">0</span></p>
-                                <p class="results-line">Раскрыто дел: <span id="correct-answers">0/0</span></p>
-                                <p class="results-line">Эффективность: <span id="accuracy">0%</span></p>
-                            </div>
-                            <div class="results-stats">
-                                <h3>Досье детектива</h3>
-                                <p class="stats-line">Всего расследований: <span id="total-games">0</span></p>
-                                <p class="stats-line">Общий рейтинг: <span id="total-score">0</span></p>
-                                <p class="stats-line">Серия успешных дел: <span id="max-streak">0</span></p>
-                            </div>
-                            <div class="action-buttons">
-                                <button data-action="restartGame" class="primary-button">НОВОЕ РАССЛЕДОВАНИЕ</button>
-                                <button data-action="goToMain" class="secondary-button">В ШТАБ-КВАРТИРУ</button>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(screen);
-                }
-            }
-
-            // Обновляем ссылки на экраны
-            this.screens = {
-                start: document.getElementById('start-screen'),
-                game: document.getElementById('game-screen'),
-                result: document.getElementById('result-screen'),
-                finish: document.getElementById('finish-screen')
-            };
-
-            // Показываем начальный экран
-            this.showScreen('start');
-
-            // Восстанавливаем токен из localStorage
-            this.data.token = localStorage.getItem('token');
-
-            // Проверяем тему
-            if (window.Telegram?.WebApp) {
-                this.data.theme = window.Telegram.WebApp.colorScheme || 'dark';
-                document.body.setAttribute('data-theme', this.data.theme);
-            }
-
-            console.log('GameState инициализирован успешно');
-
-        } catch (error) {
-            console.error('Ошибка инициализации GameState:', error);
+        // Проверка для тестового режима
+        if (window.location.search.includes('test=true')) {
+            this.data.isTestMode = true;
         }
     }
 }; 
