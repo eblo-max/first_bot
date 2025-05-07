@@ -172,6 +172,9 @@ const GameInterface = {
             this.updateAnswers(story.mistakes);
         }
 
+        // Сбрасываем таймер
+        this.resetTimer(gameData.timerDuration);
+
         // Сбрасываем отображение результата
         this.hideResult();
     },
@@ -295,6 +298,26 @@ const GameInterface = {
         // В полной реализации здесь должен быть код для отображения экрана с результатами
         alert(`Игра завершена! Ваш счет: ${gameResult.totalScore || 0} очков`);
         window.location.href = '/';
+    },
+
+    /**
+     * Сбросить состояние таймера
+     * @param {number} totalTime - Общее время таймера в секундах
+     */
+    resetTimer(totalTime) {
+        if (!this.elements.timerValue || !this.elements.timerBar) return;
+
+        // Сбрасываем текстовое значение таймера
+        this.elements.timerValue.textContent = totalTime;
+
+        // Сбрасываем полосу прогресса таймера на 100%
+        this.elements.timerBar.style.width = '100%';
+
+        // Удаляем класс для предупреждения
+        const timerContainer = document.querySelector('.timer-container');
+        if (timerContainer) {
+            timerContainer.classList.remove('urgent');
+        }
     }
 };
 

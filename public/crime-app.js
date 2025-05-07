@@ -312,11 +312,16 @@ function startTimer() {
     GameData.secondsLeft = GameData.timerDuration;
     GameData.startTime = Date.now();
     GameData.isAnswering = false;
-    GameData.answerSelected = false;
+    GameData.answerSelected = false; // Сбрасываем флаг при запуске нового таймера
 
-    // Обновляем отображение таймера
-    if (typeof GameInterface !== 'undefined') {
-        GameInterface.updateTimer(GameData.secondsLeft, GameData.timerDuration);
+    // Вызываем явный сброс визуального таймера через интерфейс
+    if (typeof GameInterface !== 'undefined' && typeof GameInterface.resetTimer === 'function') {
+        GameInterface.resetTimer(GameData.timerDuration);
+    } else {
+        // Обновляем отображение таймера стандартным способом, если resetTimer не доступен
+        if (typeof GameInterface !== 'undefined') {
+            GameInterface.updateTimer(GameData.secondsLeft, GameData.timerDuration);
+        }
     }
 
     // Запускаем таймер
@@ -539,18 +544,31 @@ function nextQuestion() {
         return;
     }
 
+    // Останавливаем текущий таймер, если он активен
+    if (GameData.timer) {
+        clearInterval(GameData.timer);
+        GameData.timer = null;
+    }
+
     // Увеличиваем индекс текущей истории
     GameData.currentStoryIndex++;
     GameData.currentStory = GameData.stories[GameData.currentStoryIndex];
-    GameData.isAnswering = false;
 
-    // Обновляем интерфейс
+    // Сбрасываем все флаги состояния
+    GameData.isAnswering = false;
+    GameData.answerSelected = false;
+    GameData.result = null;
+
+    // Сначала обновляем интерфейс
     if (typeof GameInterface !== 'undefined') {
         GameInterface.updateUI(GameData);
     }
 
-    // Запускаем таймер для нового вопроса
-    startTimer();
+    // Потом запускаем таймер для нового вопроса с небольшой задержкой
+    // чтобы дать время на отрисовку интерфейса
+    setTimeout(() => {
+        startTimer();
+    }, 100);
 }
 
 /**
