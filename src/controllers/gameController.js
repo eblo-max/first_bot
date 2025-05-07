@@ -298,7 +298,7 @@ const startGame = async (req, res) => {
 /**
  * Завершение игры и сохранение результатов
  */
-exports.finishGame = async (req, res) => {
+const finishGame = async (req, res) => {
     try {
         const { gameId, totalScore, correctAnswers, totalQuestions } = req.body;
         const telegramId = req.user.telegramId;
@@ -357,7 +357,7 @@ exports.finishGame = async (req, res) => {
 /**
  * Получение игровых данных (случайные истории)
  */
-exports.getGameData = async (req, res) => {
+const getGameData = async (req, res) => {
     try {
         // Временные тестовые данные
         const testStories = [
