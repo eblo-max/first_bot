@@ -4,7 +4,7 @@
  */
 
 // Константа для режима отладки (true - только для локальной разработки)
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 // Объект Telegram WebApp для доступа к API Telegram Mini Apps
 let tg = null;
@@ -64,17 +64,21 @@ const ProfileManager = {
         this.loadingStart('Загрузка профиля...');
 
         // Проверяем наличие Telegram WebApp API
-        // Telegram может предоставить API в трех вариантах:
+        // Telegram может предоставить API в нескольких вариантах:
         // 1. window.Telegram.WebApp (основной вариант)
         // 2. window.TelegramWebApp (альтернативный вариант)
-        // 3. По параметрам в URL (fallback)
-        // 4. По наличию WebView в user agent
+        // 3. window.WebApp (новый вариант в некоторых клиентах)
+        // 4. По параметрам в URL (fallback)
+        // 5. По наличию WebView в user agent
         if (window.Telegram && window.Telegram.WebApp) {
             tg = window.Telegram.WebApp;
             console.log('Telegram WebApp API найден в window.Telegram.WebApp');
         } else if (window.TelegramWebApp) {
             tg = window.TelegramWebApp;
             console.log('Telegram WebApp API найден в window.TelegramWebApp');
+        } else if (window.WebApp) {
+            tg = window.WebApp;
+            console.log('Telegram WebApp API найден в window.WebApp');
         } else if (this.checkTelegramUrlParams()) {
             // Создаем минимальный объект для работы с Telegram WebApp
             console.log('Используем параметры URL для работы с Telegram');
@@ -85,8 +89,14 @@ const ProfileManager = {
             tg = this.createMinimalTelegramWebApp();
         }
 
+        // Дополнительное логирование для отладки
+        console.log('User Agent:', navigator.userAgent);
+        console.log('Referrer:', document.referrer);
+        console.log('URL параметры:', window.location.search);
+
         if (tg) {
-            console.log('Telegram WebApp API инициализирован успешно');
+            console.log('Telegram WebApp API инициализирован успешно, версия:', tg.version || 'неизвестно');
+            console.log('Тема клиента:', tg.colorScheme || 'не определена');
 
             // Расширяем WebApp на весь экран
             if (tg.expand) {
@@ -244,6 +254,7 @@ const ProfileManager = {
         try {
             // Получаем токен из localStorage
             const token = localStorage.getItem('auth_token');
+            console.log('Проверка аутентификации: токен ' + (token ? 'найден' : 'не найден'));
 
             if (!token) {
                 console.log('Токен не найден, перенаправляем на авторизацию');
@@ -252,6 +263,7 @@ const ProfileManager = {
             }
 
             this.state.token = token;
+            console.log('Токен сохранен в state, проверяем валидность...');
 
             // Проверяем валидность токена
             const response = await fetch('/api/auth/verify', {
@@ -262,10 +274,13 @@ const ProfileManager = {
 
             if (!response.ok) {
                 // Если токен недействителен, запрашиваем новый
-                console.log('Токен недействителен, запрашиваем новый');
+                console.log('Токен недействителен (статус ответа: ' + response.status + '), запрашиваем новый');
                 this.authenticateTelegram();
                 return;
             }
+
+            const data = await response.json();
+            console.log('Токен проверен успешно, результат:', data);
 
             // Если токен действителен, загружаем данные профиля
             this.state.isAuthenticated = true;
@@ -273,6 +288,13 @@ const ProfileManager = {
 
         } catch (error) {
             console.error('Ошибка при проверке аутентификации:', error);
+
+            // Сбрасываем состояние и пробуем пройти авторизацию заново
+            this.state.isAuthenticated = false;
+            this.state.token = null;
+            localStorage.removeItem('auth_token');
+
+            console.log('Состояние сброшено, перенаправляем на авторизацию');
             this.authenticateTelegram();
         }
     },
@@ -626,8 +648,11 @@ const ProfileManager = {
             this.loadingStart('Загрузка профиля...');
 
             if (!this.state.token) {
+                console.error('Ошибка загрузки профиля: токен авторизации отсутствует');
                 throw new Error('Токен авторизации отсутствует');
             }
+
+            console.log('Запрос данных профиля с токеном:', this.state.token.substring(0, 10) + '...');
 
             // Запрашиваем данные профиля
             const response = await fetch('/api/user/profile', {
@@ -637,12 +662,15 @@ const ProfileManager = {
             });
 
             if (!response.ok) {
-                throw new Error('Ошибка загрузки данных профиля');
+                console.error('Ошибка HTTP при загрузке профиля:', response.status, response.statusText);
+                throw new Error(`Ошибка загрузки данных профиля: ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
+            console.log('Ответ API профиля (статус):', data.status);
 
             if (data.status !== 'success') {
+                console.error('Ошибка API при загрузке профиля:', data.message);
                 throw new Error(data.message || 'Ошибка загрузки данных профиля');
             }
 
@@ -673,6 +701,19 @@ const ProfileManager = {
             // Добавляем подробный вывод в консоль для отладки
             console.debug('Полные данные ошибки:', error);
             console.debug('Токен авторизации присутствует:', !!this.state.token);
+
+            // Если ошибка связана с авторизацией (401), пробуем перезапустить процесс
+            if (error.message && (
+                error.message.includes('401') ||
+                error.message.includes('авторизации') ||
+                error.message.includes('токен')
+            )) {
+                console.log('Обнаружена ошибка авторизации, пробуем повторно аутентифицировать пользователя');
+                // Очищаем токен и запускаем авторизацию заново
+                this.state.token = null;
+                localStorage.removeItem('auth_token');
+                setTimeout(() => this.authenticateTelegram(), 1000);
+            }
         }
     },
 
