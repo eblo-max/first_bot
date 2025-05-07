@@ -981,6 +981,27 @@
             box-shadow: var(--shadow-sm);
         }
 
+        /* Стиль для заблокированных вариантов ответов */
+        .answer-option.disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Стиль для выделения правильного ответа при истечении времени */
+        .answer-option.correct-answer {
+            border-color: var(--success-color);
+            background: rgba(76, 175, 80, 0.1);
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+            opacity: 1;
+        }
+
+        .answer-option.correct-answer .answer-marker {
+            background: var(--success-color);
+            color: var(--dark-bg);
+            border-color: var(--success-color);
+        }
+
         .answer-marker {
             width: 28px;
             height: 28px;

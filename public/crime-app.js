@@ -356,8 +356,23 @@ function timeExpired() {
     if (!GameData.isAnswering) {
         GameData.isAnswering = true;
 
+        // Блокируем варианты ответов
+        if (typeof GameInterface !== 'undefined' && typeof GameInterface.disableAnswerOptions === 'function') {
+            GameInterface.disableAnswerOptions();
+        }
+
         // Находим правильный ответ
         const correctMistake = GameData.currentStory.mistakes.find(m => m.isCorrect);
+
+        // Выделяем правильный ответ
+        if (correctMistake) {
+            setTimeout(() => {
+                const correctOption = document.querySelector(`[data-mistake-id="${correctMistake.id}"]`);
+                if (correctOption) {
+                    correctOption.classList.add('correct-answer');
+                }
+            }, 500);
+        }
 
         // Готовим данные результата
         const result = {
@@ -415,6 +430,16 @@ function selectAnswer(mistakeId) {
 
     // Проверяем правильность ответа
     const isCorrect = selectedMistake && selectedMistake.isCorrect;
+
+    // Если ответ неправильный, выделяем правильный вариант
+    if (!isCorrect && correctMistake) {
+        setTimeout(() => {
+            const correctOption = document.querySelector(`[data-mistake-id="${correctMistake.id}"]`);
+            if (correctOption) {
+                correctOption.classList.add('correct-answer');
+            }
+        }, 500);
+    }
 
     // Рассчитываем очки
     const points = calculatePoints(isCorrect, timeSpent, GameData.currentStory.difficulty);

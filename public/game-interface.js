@@ -84,6 +84,11 @@ const GameInterface = {
             case 'selectAnswer':
                 const mistakeId = actionElement.getAttribute('data-mistake-id');
                 if (mistakeId && typeof window.selectAnswer === 'function') {
+                    // После выбора ответа блокируем все варианты
+                    this.disableAnswerOptions();
+                    // Выделяем выбранный вариант
+                    actionElement.classList.add('selected');
+                    // Вызываем функцию выбора ответа
                     window.selectAnswer(mistakeId);
                 }
                 break;
@@ -98,6 +103,19 @@ const GameInterface = {
                 window.location.href = '/';
                 break;
         }
+    },
+
+    /**
+     * Блокировка вариантов ответов после выбора
+     */
+    disableAnswerOptions() {
+        const answerOptions = document.querySelectorAll('.answer-option');
+        answerOptions.forEach(option => {
+            // Удаляем атрибут data-action, чтобы предотвратить клики
+            option.removeAttribute('data-action');
+            // Добавляем класс, указывающий на то, что выбор сделан
+            option.classList.add('disabled');
+        });
     },
 
     /**
@@ -220,6 +238,9 @@ const GameInterface = {
      */
     showResult(result) {
         if (!this.elements.resultSection) return;
+
+        // Блокируем варианты ответов, если они еще не заблокированы
+        this.disableAnswerOptions();
 
         // Устанавливаем класс результата
         this.elements.resultSection.className = result.correct ?
