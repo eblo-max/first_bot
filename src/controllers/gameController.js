@@ -274,7 +274,7 @@ const handleGameFinish = async (req, res) => {
 /**
  * Начало новой игры
  */
-exports.startGame = async (req, res) => {
+const startGame = async (req, res) => {
     try {
         // Создаем новую игру с уникальным ID
         const gameId = 'game_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
@@ -438,7 +438,7 @@ module.exports = {
     handleGameStart,
     handleGameSubmit,
     handleGameFinish,
-    startGame,
     finishGame,
-    getGameData
+    getGameData,
+    startGame
 }; 
