@@ -26,6 +26,9 @@ const GameData = {
     isTestMode: false
 };
 
+// Экспортируем GameData в глобальную область видимости
+window.GameData = GameData;
+
 /**
  * Инициализация приложения
  */
@@ -56,8 +59,18 @@ function initApp() {
         // Настраиваем обработчик кнопки "Назад"
         tg.BackButton.onClick(() => handleBackButton());
 
-        // Запускаем загрузку тестовых данных или обращаемся к серверу
-        loadGameData();
+        // Убеждаемся, что GameInterface инициализирован
+        if (typeof GameInterface === 'undefined') {
+            console.warn('GameInterface не определен, ожидаем загрузку DOM');
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('DOM загружен, запуск загрузки данных...');
+                loadGameData();
+            });
+        } else {
+            // Запускаем загрузку тестовых данных или обращаемся к серверу
+            console.log('GameInterface уже определен, запуск загрузки данных...');
+            loadGameData();
+        }
 
     } catch (error) {
         console.error('Ошибка инициализации приложения:', error);
@@ -439,19 +452,30 @@ function timeExpired() {
  */
 function selectAnswer(mistakeId) {
     // Если уже выбираем ответ, игнорируем повторные клики
-    if (GameData.isAnswering) return;
+    if (GameData.isAnswering) {
+        console.log('Игнорируем повторный выбор ответа, так как уже в процессе выбора');
+        return;
+    }
 
     console.log('Выбран ответ:', mistakeId);
     GameData.isAnswering = true;
     GameData.answerSelected = true;
 
-    // Останавливаем таймер
+    // Останавливаем таймер - двойная проверка для надежности
+    console.log('Остановка таймера в selectAnswer');
     if (GameData.timer) {
+        console.log('Таймер найден, останавливаем...');
         clearInterval(GameData.timer);
         GameData.timer = null;
         console.log('Таймер успешно остановлен после выбора ответа');
     } else {
-        console.warn('Таймер не был найден для остановки');
+        console.warn('Таймер не был найден для остановки. GameData.secondsLeft =', GameData.secondsLeft);
+        // Пытаемся остановить все интервалы, которые могут быть связаны с таймером
+        const highestIntervalId = setInterval(() => { }, 100000);
+        for (let i = 0; i < highestIntervalId; i++) {
+            clearInterval(i);
+        }
+        console.log('Попытка остановить все возможные интервалы');
     }
 
     // Визуальная и тактильная обратная связь

@@ -83,6 +83,15 @@ const GameInterface = {
         switch (action) {
             case 'selectAnswer':
                 const mistakeId = actionElement.getAttribute('data-mistake-id');
+
+                // Явная остановка таймера через обращение к GameData
+                if (window.GameData && window.GameData.timer) {
+                    console.log('GameInterface: Явная остановка таймера при выборе ответа');
+                    clearInterval(window.GameData.timer);
+                    window.GameData.timer = null;
+                    window.GameData.answerSelected = true;
+                }
+
                 if (mistakeId && typeof window.selectAnswer === 'function') {
                     // После выбора ответа блокируем все варианты
                     this.disableAnswerOptions();
