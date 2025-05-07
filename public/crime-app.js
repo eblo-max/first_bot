@@ -292,13 +292,27 @@ function loadTestData() {
     GameData.currentStory = testStories[0];
     GameData.isTestMode = true;
 
+    // Сбрасываем все флаги состояния для первого вопроса
+    GameData.isAnswering = false;
+    GameData.answerSelected = false;
+    GameData.result = null;
+
+    // Останавливаем предыдущий таймер, если существует
+    if (GameData.timer) {
+        clearInterval(GameData.timer);
+        GameData.timer = null;
+    }
+
     // Обновляем интерфейс
     if (typeof GameInterface !== 'undefined') {
         GameInterface.updateUI(GameData);
     }
 
-    // Запускаем таймер
-    startTimer();
+    // Запускаем таймер для первого вопроса с задержкой
+    // (аналогично nextQuestion)
+    setTimeout(() => {
+        startTimer();
+    }, 100);
 }
 
 /**
@@ -352,7 +366,13 @@ function timeExpired() {
     console.log('Время на ответ истекло');
 
     // Останавливаем таймер
-    clearInterval(GameData.timer);
+    if (GameData.timer) {
+        clearInterval(GameData.timer);
+        GameData.timer = null;
+        console.log('Таймер успешно остановлен при истечении времени');
+    } else {
+        console.warn('Таймер не был найден для остановки в timeExpired');
+    }
 
     // Если ответ уже был выбран, пропускаем обработку истечения времени
     if (GameData.answerSelected) {
@@ -426,7 +446,13 @@ function selectAnswer(mistakeId) {
     GameData.answerSelected = true;
 
     // Останавливаем таймер
-    clearInterval(GameData.timer);
+    if (GameData.timer) {
+        clearInterval(GameData.timer);
+        GameData.timer = null;
+        console.log('Таймер успешно остановлен после выбора ответа');
+    } else {
+        console.warn('Таймер не был найден для остановки');
+    }
 
     // Визуальная и тактильная обратная связь
     if (tg && tg.HapticFeedback) {
