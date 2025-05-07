@@ -20,6 +20,7 @@ const GameData = {
     result: null,
     gameResult: null,
     isAnswering: false,
+    answerSelected: false,
     token: null,
     theme: 'dark',
     isTestMode: false
@@ -311,6 +312,7 @@ function startTimer() {
     GameData.secondsLeft = GameData.timerDuration;
     GameData.startTime = Date.now();
     GameData.isAnswering = false;
+    GameData.answerSelected = false;
 
     // Обновляем отображение таймера
     if (typeof GameInterface !== 'undefined') {
@@ -346,6 +348,12 @@ function timeExpired() {
 
     // Останавливаем таймер
     clearInterval(GameData.timer);
+
+    // Если ответ уже был выбран, пропускаем обработку истечения времени
+    if (GameData.answerSelected) {
+        console.log('Пропускаем обработку истечения времени, так как ответ уже выбран');
+        return;
+    }
 
     // Визуальная и тактильная обратная связь
     if (tg && tg.HapticFeedback) {
@@ -410,6 +418,7 @@ function selectAnswer(mistakeId) {
 
     console.log('Выбран ответ:', mistakeId);
     GameData.isAnswering = true;
+    GameData.answerSelected = true;
 
     // Останавливаем таймер
     clearInterval(GameData.timer);
