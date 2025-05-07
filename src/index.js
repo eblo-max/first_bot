@@ -8,7 +8,7 @@ require('dotenv').config();
 // Импорт маршрутов
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/game');
-// const userRoutes = require('./routes/user'); // Будет добавлено в фазе 2
+const userRoutes = require('./routes/user'); // Добавляем маршруты пользователя
 // const leaderboardRoutes = require('./routes/leaderboard'); // Будет добавлено в фазе 2
 
 // Импорт функции для заполнения базы тестовыми данными
@@ -68,6 +68,12 @@ app.get('/game', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/game.html'));
 });
 
+// Профиль пользователя
+app.get('/profile', (req, res) => {
+    console.log('Запрос на страницу профиля - отправляем profile.html');
+    res.sendFile(path.join(__dirname, '../public/profile.html'));
+});
+
 // Редирект для старых ссылок на index.html (больше не требуется)
 // app.get('/index.html', (req, res) => {
 //     console.log('Обнаружен запрос к старому index.html - редиректим на главную');
@@ -80,7 +86,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Маршруты API
 app.use('/api/auth', authRoutes);
 app.use('/api/game', gameRoutes);
-// app.use('/api/user', userRoutes); // Будет добавлено в фазе 2
+app.use('/api/user', userRoutes); // Подключаем маршруты пользователя
 // app.use('/api/leaderboard', leaderboardRoutes); // Будет добавлено в фазе 2
 
 // Маршрут для проверки здоровья приложения

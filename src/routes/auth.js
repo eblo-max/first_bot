@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const { verifyTelegramWebAppData } = require('../middleware/auth');
 const User = require('../models/User');
+const authController = require('../controllers/authController');
+const authMiddleware = require('../middleware/authMiddleware');
 
 /**
  * @route   POST /api/auth/init
@@ -58,6 +60,20 @@ router.post('/init', verifyTelegramWebAppData, async (req, res) => {
         console.error('Ошибка аутентификации:', error);
         res.status(500).json({ error: 'Ошибка сервера при аутентификации' });
     }
+});
+
+// Аутентификация через Telegram WebApp
+router.post('/telegram', authController.authenticateTelegram);
+
+// Проверка токена
+router.get('/verify', authMiddleware, (req, res) => {
+    res.status(200).json({
+        status: 'success',
+        message: 'Токен действителен',
+        data: {
+            user: req.user
+        }
+    });
 });
 
 module.exports = router; 

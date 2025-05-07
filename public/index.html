@@ -672,6 +672,14 @@
                     </svg>
                     <p class="feature-text">ПРИГОВОР</p>
                 </div>
+
+                <div class="feature-item" id="goToProfile">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <p class="feature-text">ПРОФИЛЬ</p>
+                </div>
             </section>
 
             <section class="cta-section">
@@ -714,6 +722,17 @@
 
                 // Переход на игровой экран
                 window.location.href = '/game.html';
+            });
+
+            // Кнопка перехода в профиль
+            document.getElementById('goToProfile').addEventListener('click', function () {
+                // Визуальная обратная связь при нажатии
+                if (window.Telegram?.WebApp?.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+                }
+
+                // Переход на экран профиля
+                window.location.href = '/profile.html';
             });
         });
     </script>

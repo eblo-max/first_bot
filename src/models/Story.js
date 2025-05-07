@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Схема для ошибок
 const mistakeSchema = new mongoose.Schema({
     id: {
         type: String,
@@ -11,7 +12,7 @@ const mistakeSchema = new mongoose.Schema({
     },
     isCorrect: {
         type: Boolean,
-        required: true
+        default: false
     },
     explanation: {
         type: String,
@@ -19,11 +20,13 @@ const mistakeSchema = new mongoose.Schema({
     }
 });
 
+// Основная схема истории
 const storySchema = new mongoose.Schema({
     id: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        index: true
     },
     title: {
         type: String,
@@ -33,47 +36,54 @@ const storySchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    date: {
+        type: String,
+        required: true
+    },
     difficulty: {
         type: String,
         enum: ['easy', 'medium', 'hard'],
-        required: true
+        default: 'medium'
     },
     category: {
         type: String,
         enum: ['robbery', 'theft', 'fraud', 'murder', 'other'],
         required: true
     },
-    mistakes: {
-        type: [mistakeSchema],
-        required: true,
-        validate: [
-            {
-                validator: function (mistakes) {
-                    return mistakes.length >= 3; // Минимум 3 варианта ответа
-                },
-                message: 'Должно быть минимум 3 варианта ответа'
-            },
-            {
-                validator: function (mistakes) {
-                    return mistakes.filter(m => m.isCorrect).length === 1; // Только один правильный ответ
-                },
-                message: 'Должен быть ровно один правильный ответ'
-            }
-        ]
+    mistakes: [mistakeSchema],
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     },
     timesPlayed: {
         type: Number,
         default: 0
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
     }
 });
+
+// Виртуальное поле для получения правильного ответа
+storySchema.virtual('correctAnswer').get(function () {
+    const correctMistake = this.mistakes.find(mistake => mistake.isCorrect);
+    return correctMistake ? correctMistake.id : null;
+});
+
+// Метод для получения случайных историй
+storySchema.statics.getRandomStories = async function (count = 5) {
+    return await this.aggregate([
+        { $match: { isActive: true } },
+        { $sample: { size: count } }
+    ]);
+};
 
 // Создаем индексы для быстрого поиска и фильтрации
 storySchema.index({ difficulty: 1 });
 storySchema.index({ category: 1 });
 storySchema.index({ timesPlayed: 1 });
 
-module.exports = mongoose.model('Story', storySchema); 
+const Story = mongoose.model('Story', storySchema);
+
+module.exports = Story; 

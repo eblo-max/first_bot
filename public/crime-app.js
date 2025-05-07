@@ -624,7 +624,7 @@ function nextQuestion() {
 /**
  * Завершение игры
  */
-function finishGame() {
+async function finishGame() {
     console.log('Завершение игры...');
 
     // Создаем объект с результатами игры
@@ -642,9 +642,154 @@ function finishGame() {
     // Сохраняем результаты
     GameData.gameResult = gameResult;
 
+    // Пытаемся отправить результаты на сервер
+    try {
+        // Проверяем наличие токена авторизации
+        const token = localStorage.getItem('auth_token');
+
+        if (token) {
+            // Отправляем результаты на сервер
+            const response = await fetch('/api/game/finish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    gameId: GameData.gameId,
+                    totalScore: gameResult.totalScore,
+                    correctAnswers: gameResult.correctAnswers,
+                    totalQuestions: gameResult.totalQuestions
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Результаты игры успешно сохранены на сервере:', data);
+
+                // Обновляем информацию о новых достижениях, если они есть
+                if (data.status === 'success' && data.data.newAchievements && data.data.newAchievements.length > 0) {
+                    // Можно показать уведомление о новых достижениях
+                    console.log('Получены новые достижения:', data.data.newAchievements);
+                }
+            } else {
+                console.error('Ошибка при сохранении результатов на сервере:', await response.text());
+            }
+        } else {
+            console.warn('Невозможно сохранить результаты игры - отсутствует токен авторизации');
+        }
+    } catch (error) {
+        console.error('Ошибка при отправке результатов игры:', error);
+    }
+
     // Показываем экран завершения
     if (typeof GameInterface !== 'undefined') {
-        GameInterface.showGameFinish(gameResult);
+        // Создаем диалог с результатами и кнопками для перехода
+        const dialog = document.createElement('div');
+        dialog.className = 'game-finish-dialog';
+        dialog.innerHTML = `
+            <div class="game-finish-content">
+                <h2>Расследование завершено!</h2>
+                <p>Ваш счет: <span class="highlight-score">${gameResult.totalScore}</span> очков</p>
+                <p>Правильных ответов: ${gameResult.correctAnswers} из ${gameResult.totalQuestions}</p>
+                <div class="game-finish-buttons">
+                    <button id="btnGoHome" class="finish-button">ГЛАВНАЯ</button>
+                    <button id="btnGoProfile" class="finish-button primary">ПРОФИЛЬ</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(dialog);
+
+        // Обработчики для кнопок
+        document.getElementById('btnGoHome').addEventListener('click', () => {
+            window.location.href = '/';
+        });
+
+        document.getElementById('btnGoProfile').addEventListener('click', () => {
+            window.location.href = '/profile.html';
+        });
+
+        // Добавляем стили для диалога, если их нет
+        if (!document.getElementById('finish-dialog-styles')) {
+            const style = document.createElement('style');
+            style.id = 'finish-dialog-styles';
+            style.textContent = `
+                .game-finish-dialog {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                    animation: fadeIn 0.3s ease-out;
+                }
+                
+                .game-finish-content {
+                    background: var(--morgue-gray, #2C2C2C);
+                    border: 2px solid var(--blood-red, #8B0000);
+                    border-radius: 12px;
+                    padding: 24px;
+                    text-align: center;
+                    width: 80%;
+                    max-width: 400px;
+                    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+                }
+                
+                .game-finish-content h2 {
+                    margin-bottom: 16px;
+                    color: var(--chalk-white, #E8E8E8);
+                }
+                
+                .game-finish-content p {
+                    margin-bottom: 12px;
+                }
+                
+                .highlight-score {
+                    color: var(--crime-scene-yellow, #FFD700);
+                    font-weight: bold;
+                    font-size: 1.2em;
+                }
+                
+                .game-finish-buttons {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 24px;
+                }
+                
+                .finish-button {
+                    flex: 1;
+                    margin: 0 8px;
+                    padding: 12px;
+                    border: 1px solid var(--dried-blood, #5C1010);
+                    background: var(--darker-gray, #1E1E1E);
+                    color: var(--chalk-white, #E8E8E8);
+                    border-radius: 8px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+                
+                .finish-button:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                }
+                
+                .finish-button.primary {
+                    background: var(--blood-red, #8B0000);
+                }
+                
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     } else {
         alert(`Игра завершена! Ваш счет: ${gameResult.totalScore}`);
         window.location.href = '/';

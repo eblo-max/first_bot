@@ -1,31 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/auth');
-const {
-    handleGameStart,
-    handleGameSubmit,
-    handleGameFinish
-} = require('../controllers/gameController');
+const gameController = require('../controllers/gameController');
+const authMiddleware = require('../middleware/authMiddleware');
+const userMiddleware = require('../middleware/userMiddleware');
 
-/**
- * @route   GET /api/game/start
- * @desc    Начать новую игру
- * @access  Private
- */
-router.get('/start', authMiddleware, handleGameStart);
+// Маршрут без аутентификации для получения тестовых данных (в продакшене будет защищен)
+router.get('/test-data', gameController.getGameData);
 
-/**
- * @route   POST /api/game/submit
- * @desc    Отправить ответ на вопрос
- * @access  Private
- */
-router.post('/submit', authMiddleware, handleGameSubmit);
+// Все остальные маршруты требуют аутентификации
+router.use(authMiddleware);
 
-/**
- * @route   POST /api/game/finish
- * @desc    Завершить игру
- * @access  Private
- */
-router.post('/finish', authMiddleware, handleGameFinish);
+// После аутентификации создаем или обновляем пользователя
+router.use(userMiddleware.createOrUpdateUser);
+
+// Начало новой игры
+router.post('/start', gameController.startGame);
+
+// Завершение игры и сохранение результатов
+router.post('/finish', gameController.finishGame);
+
+// Получение данных для игры (истории)
+router.get('/data', gameController.getGameData);
+
+// Существующие маршруты
+router.post('/game-start', gameController.handleGameStart);
+router.post('/game-submit', gameController.handleGameSubmit);
+router.post('/game-finish', gameController.handleGameFinish);
 
 module.exports = router; 
