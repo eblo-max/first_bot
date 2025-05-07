@@ -3,6 +3,9 @@
  * Этот файл отвечает за отображение и взаимодействие с данными профиля пользователя
  */
 
+// Константа для режима отладки (true - только для локальной разработки)
+const DEBUG_MODE = false;
+
 // Объект Telegram WebApp для доступа к API Telegram Mini Apps
 let tg = null;
 
@@ -85,8 +88,75 @@ const ProfileManager = {
             // Получаем и проверяем токен из localStorage
             this.checkAuthentication();
         } else {
-            console.warn('Telegram WebApp API недоступен, работаем в обычном режиме');
-            this.loadTestData();
+            console.warn('Telegram WebApp API недоступен');
+
+            // В режиме отладки загружаем тестовые данные
+            if (DEBUG_MODE) {
+                console.log('Режим отладки активирован, загружаем тестовые данные');
+                this.loadTestData();
+                return;
+            }
+
+            this.loadingEnd();
+
+            // Показываем специальное сообщение вместо загрузки тестовых данных
+            const appContainer = document.querySelector('.app-container');
+            if (appContainer) {
+                // Создаем элемент с сообщением
+                const telegramMessage = document.createElement('div');
+                telegramMessage.className = 'telegram-warning';
+                telegramMessage.innerHTML = `
+                    <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <h3>Требуется Telegram</h3>
+                    <p>Эта страница доступна только через Telegram Mini App.</p>
+                    <p>Пожалуйста, откройте ссылку в приложении Telegram.</p>
+                `;
+
+                // Добавляем стили для сообщения
+                const style = document.createElement('style');
+                style.textContent = `
+                    .telegram-warning {
+                        background: var(--morgue-gray);
+                        padding: 20px;
+                        border-radius: var(--radius-md);
+                        text-align: center;
+                        border: 2px solid var(--dried-blood);
+                        margin: 40px auto;
+                        max-width: 320px;
+                    }
+                    .warning-icon {
+                        width: 48px;
+                        height: 48px;
+                        color: var(--blood-red);
+                        margin-bottom: 15px;
+                    }
+                    .telegram-warning h3 {
+                        color: var(--blood-red);
+                        margin-bottom: 10px;
+                        font-size: 18px;
+                    }
+                    .telegram-warning p {
+                        margin-bottom: 8px;
+                        font-size: 14px;
+                        opacity: 0.9;
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // Очищаем контейнер и добавляем сообщение
+                appContainer.innerHTML = '';
+                appContainer.appendChild(telegramMessage);
+            }
+
+            // Пытаемся перенаправить на телеграм
+            setTimeout(() => {
+                const telegramDeepLink = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}`;
+                window.location.href = telegramDeepLink;
+            }, 3000);
         }
 
         // Настраиваем обработчики событий
@@ -140,6 +210,14 @@ const ProfileManager = {
         try {
             if (!tg) {
                 console.error('Telegram WebApp API недоступен');
+
+                // В режиме отладки используем тестовые данные
+                if (DEBUG_MODE) {
+                    console.log('Режим отладки активирован, загружаем тестовые данные вместо аутентификации');
+                    this.loadTestData();
+                    return;
+                }
+
                 this.showError('Ошибка аутентификации: Telegram WebApp API недоступен');
                 return;
             }
@@ -148,6 +226,14 @@ const ProfileManager = {
 
             if (!initData) {
                 console.error('Данные инициализации Telegram WebApp отсутствуют');
+
+                // В режиме отладки используем тестовые данные
+                if (DEBUG_MODE) {
+                    console.log('Режим отладки активирован, загружаем тестовые данные вместо аутентификации');
+                    this.loadTestData();
+                    return;
+                }
+
                 this.showError('Ошибка аутентификации: Данные инициализации отсутствуют');
                 return;
             }
@@ -182,8 +268,93 @@ const ProfileManager = {
 
         } catch (error) {
             console.error('Ошибка при аутентификации:', error);
+
+            // В режиме отладки используем тестовые данные
+            if (DEBUG_MODE) {
+                console.log('Режим отладки активирован, загружаем тестовые данные после ошибки аутентификации');
+                this.loadTestData();
+                return;
+            }
+
+            this.loadingEnd();
             this.showError('Ошибка аутентификации: ' + error.message);
-            this.loadTestData(); // В случае ошибки загружаем тестовые данные
+
+            // Добавляем подробную информацию об ошибке в консоль для отладки
+            console.debug('Детали ошибки аутентификации:', error);
+
+            // Показываем сообщение о необходимости перезапустить приложение
+            const appContainer = document.querySelector('.app-container');
+            if (appContainer) {
+                const authErrorMessage = document.createElement('div');
+                authErrorMessage.className = 'auth-error';
+                authErrorMessage.innerHTML = `
+                    <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <h3>Ошибка авторизации</h3>
+                    <p>Не удалось авторизоваться через Telegram.</p>
+                    <p>Пожалуйста, закройте и заново откройте мини-приложение.</p>
+                    <button class="retry-button">Попробовать снова</button>
+                `;
+
+                // Добавляем стили для сообщения об ошибке
+                const style = document.createElement('style');
+                style.textContent = `
+                    .auth-error {
+                        background: var(--morgue-gray);
+                        padding: 20px;
+                        border-radius: var(--radius-md);
+                        text-align: center;
+                        border: 2px solid var(--dried-blood);
+                        margin: 40px auto;
+                        max-width: 320px;
+                    }
+                    .error-icon {
+                        width: 48px;
+                        height: 48px;
+                        color: var(--blood-red);
+                        margin-bottom: 15px;
+                    }
+                    .auth-error h3 {
+                        color: var(--blood-red);
+                        margin-bottom: 10px;
+                        font-size: 18px;
+                    }
+                    .auth-error p {
+                        margin-bottom: 8px;
+                        font-size: 14px;
+                        opacity: 0.9;
+                    }
+                    .retry-button {
+                        background: var(--blood-red);
+                        color: var(--chalk-white);
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: var(--radius-sm);
+                        margin-top: 10px;
+                        cursor: pointer;
+                        font-weight: bold;
+                    }
+                    .retry-button:hover {
+                        background: var(--fresh-blood);
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // Очищаем содержимое контейнера и добавляем сообщение об ошибке
+                appContainer.innerHTML = '';
+                appContainer.appendChild(authErrorMessage);
+
+                // Добавляем обработчик для кнопки повторной попытки
+                const retryButton = document.querySelector('.retry-button');
+                if (retryButton) {
+                    retryButton.addEventListener('click', () => {
+                        window.location.reload();
+                    });
+                }
+            }
         }
     },
 
@@ -391,13 +562,20 @@ const ProfileManager = {
 
         } catch (error) {
             console.error('Ошибка при загрузке данных профиля:', error);
+
+            // В режиме отладки используем тестовые данные
+            if (DEBUG_MODE) {
+                console.log('Режим отладки активирован, загружаем тестовые данные профиля');
+                this.loadTestData();
+                return;
+            }
+
             this.loadingEnd();
             this.showError('Ошибка загрузки профиля: ' + error.message);
 
-            // Если мы в браузере (не в Telegram WebApp), загружаем тестовые данные для отладки
-            if (!window.Telegram || !window.Telegram.WebApp) {
-                this.loadTestData();
-            }
+            // Добавляем подробный вывод в консоль для отладки
+            console.debug('Полные данные ошибки:', error);
+            console.debug('Токен авторизации присутствует:', !!this.state.token);
         }
     },
 
@@ -434,11 +612,38 @@ const ProfileManager = {
 
         } catch (error) {
             console.error('Ошибка при загрузке таблицы лидеров:', error);
+
+            // В режиме отладки используем тестовые данные
+            if (DEBUG_MODE) {
+                console.log('Режим отладки активирован, загружаем тестовые данные лидерборда');
+                this.loadTestLeaderboard();
+                return;
+            }
+
             this.showError('Ошибка загрузки таблицы лидеров: ' + error.message);
 
-            // Используем тестовые данные только для отладки в браузере
-            if (!window.Telegram || !window.Telegram.WebApp) {
-                this.loadTestLeaderboard();
+            // Добавляем подробный вывод в консоль для отладки
+            console.debug('Полные данные ошибки лидерборда:', error);
+            console.debug('Запрошенный период:', period);
+
+            // Очищаем таблицу лидеров при ошибке вместо показа тестовых данных
+            const tableContainer = document.querySelector('.leaderboard-table');
+            if (tableContainer) {
+                const headerRow = tableContainer.querySelector('.leaderboard-header');
+                tableContainer.innerHTML = '';
+                if (headerRow) {
+                    tableContainer.appendChild(headerRow);
+                }
+
+                // Добавляем сообщение об ошибке в таблицу
+                const errorRow = document.createElement('div');
+                errorRow.className = 'leaderboard-row';
+                errorRow.innerHTML = `
+                    <div class="rank-cell">-</div>
+                    <div class="user-cell" style="color: var(--blood-red);">Ошибка загрузки данных</div>
+                    <div class="score-cell">-</div>
+                `;
+                tableContainer.appendChild(errorRow);
             }
         }
     },
