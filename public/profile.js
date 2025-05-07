@@ -379,6 +379,7 @@ const ProfileManager = {
             }
 
             this.profileData = data.data;
+            console.log('Данные профиля получены:', this.profileData);
 
             // Обновляем UI с полученными данными
             this.updateProfileUI(this.profileData);
@@ -393,8 +394,10 @@ const ProfileManager = {
             this.loadingEnd();
             this.showError('Ошибка загрузки профиля: ' + error.message);
 
-            // В случае ошибки загружаем тестовые данные
-            this.loadTestData();
+            // Если мы в браузере (не в Telegram WebApp), загружаем тестовые данные для отладки
+            if (!window.Telegram || !window.Telegram.WebApp) {
+                this.loadTestData();
+            }
         }
     },
 
@@ -424,6 +427,8 @@ const ProfileManager = {
                 throw new Error(data.message || 'Ошибка загрузки таблицы лидеров');
             }
 
+            console.log('Данные лидерборда получены:', data.data);
+
             // Обновляем UI с данными лидерборда
             this.updateLeaderboardUI(data.data);
 
@@ -431,8 +436,10 @@ const ProfileManager = {
             console.error('Ошибка при загрузке таблицы лидеров:', error);
             this.showError('Ошибка загрузки таблицы лидеров: ' + error.message);
 
-            // В случае ошибки используем тестовые данные для лидерборда
-            this.loadTestLeaderboard();
+            // Используем тестовые данные только для отладки в браузере
+            if (!window.Telegram || !window.Telegram.WebApp) {
+                this.loadTestLeaderboard();
+            }
         }
     },
 
@@ -543,6 +550,8 @@ const ProfileManager = {
     updateProfileUI(data) {
         if (!data) return;
 
+        console.log('Обновление UI с данными:', data);
+
         // Обновляем информацию о профиле
         if (this.elements.profileName) {
             this.elements.profileName.textContent = data.name;
@@ -557,24 +566,26 @@ const ProfileManager = {
         }
 
         // Обновляем статистику
-        if (this.elements.investigationsCount) {
-            this.elements.investigationsCount.textContent = data.stats.investigations;
+        if (this.elements.investigationsCount && data.stats) {
+            this.elements.investigationsCount.textContent = data.stats.investigations || 0;
         }
 
-        if (this.elements.solvedCases) {
-            this.elements.solvedCases.textContent = data.stats.solvedCases;
+        if (this.elements.solvedCases && data.stats) {
+            this.elements.solvedCases.textContent = data.stats.solvedCases || 0;
         }
 
-        if (this.elements.winStreak) {
-            this.elements.winStreak.textContent = data.stats.winStreak;
+        if (this.elements.winStreak && data.stats) {
+            this.elements.winStreak.textContent = data.stats.winStreak || 0;
         }
 
-        if (this.elements.accuracy) {
-            this.elements.accuracy.textContent = data.stats.accuracy;
+        if (this.elements.accuracy && data.stats) {
+            this.elements.accuracy.textContent = data.stats.accuracy ? `${data.stats.accuracy}%` : '0%';
         }
 
         // Обновляем достижения
-        this.updateAchievementsUI(data.achievements);
+        if (data.achievements) {
+            this.updateAchievementsUI(data.achievements);
+        }
     },
 
     /**
@@ -648,6 +659,8 @@ const ProfileManager = {
     updateLeaderboardUI(data) {
         if (!data || !data.leaderboard) return;
 
+        console.log('Обновление UI лидерборда с данными:', data);
+
         const leaderboard = data.leaderboard;
         const currentUser = data.currentUser;
 
@@ -675,45 +688,29 @@ const ProfileManager = {
             row.innerHTML = `
                 <div class="rank-cell">${entry.rank}</div>
                 <div class="user-cell">${entry.name}</div>
-                <div class="score-cell">${entry.score.toLocaleString()}</div>
+                <div class="score-cell">${entry.score ? entry.score.toLocaleString() : '0'}</div>
             `;
 
             tableContainer.appendChild(row);
         });
 
         // Если текущий пользователь не в топе, добавляем его отдельно
-        if (currentUser) {
+        if (currentUser && !leaderboard.some(entry => entry.isCurrentUser)) {
             // Добавляем разделитель
-            const separator = document.createElement('div');
-            separator.className = 'leaderboard-separator';
-            separator.innerHTML = '...';
-            tableContainer.appendChild(separator);
+            const divider = document.createElement('div');
+            divider.className = 'leaderboard-divider';
+            divider.innerHTML = '...';
+            tableContainer.appendChild(divider);
 
-            // Добавляем строку с текущим пользователем
-            const currentUserRow = document.createElement('div');
-            currentUserRow.className = 'leaderboard-row current-user';
-            currentUserRow.innerHTML = `
+            // Добавляем строку текущего пользователя
+            const userRow = document.createElement('div');
+            userRow.className = 'leaderboard-row current-user';
+            userRow.innerHTML = `
                 <div class="rank-cell">${currentUser.rank}</div>
                 <div class="user-cell">${currentUser.name}</div>
-                <div class="score-cell">${currentUser.score.toLocaleString()}</div>
+                <div class="score-cell">${currentUser.score ? currentUser.score.toLocaleString() : '0'}</div>
             `;
-
-            tableContainer.appendChild(currentUserRow);
-        }
-
-        // Добавляем стили для разделителя, если их еще нет
-        if (!document.querySelector('#leaderboard-styles')) {
-            const style = document.createElement('style');
-            style.id = 'leaderboard-styles';
-            style.textContent = `
-                .leaderboard-separator {
-                    text-align: center;
-                    padding: 4px;
-                    color: var(--chalk-white);
-                    opacity: 0.5;
-                }
-            `;
-            document.head.appendChild(style);
+            tableContainer.appendChild(userRow);
         }
     }
 };
