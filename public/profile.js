@@ -368,6 +368,17 @@ const ProfileManager = {
     },
 
     /**
+     * Проверяет, следует ли использовать режим эмуляции
+     */
+    shouldUseEmulationMode() {
+        // Отключаем режим эмуляции в продакшене
+        return false;
+
+        // Режим для тестирования можно включить через URL параметр
+        // return window.location.search.includes('debug_mode=true');
+    },
+
+    /**
      * Аутентификация через Telegram WebApp
      */
     async authenticateTelegram() {
@@ -411,8 +422,7 @@ const ProfileManager = {
                     return;
                 }
 
-                // Режим эмуляции для разработки и тестирования
-                // В реальном приложении эта часть должна быть закомментирована или удалена
+                // Режим эмуляции используется только если явно включен
                 if (this.shouldUseEmulationMode()) {
                     console.log('Включаем режим эмуляции для тестирования');
                     await this.useEmulationAuth();
@@ -448,9 +458,9 @@ const ProfileManager = {
                     console.error('Ошибка при гостевой аутентификации:', guestError);
                 }
 
-                // Вместо показа ошибки - используем режим fallback с моковыми данными
-                console.log('Используем fallback-режим авторизации');
-                await this.useFallbackAuth();
+                // Показываем ошибку, если не удалось аутентифицироваться ни одним способом
+                console.error('Все методы аутентификации не сработали');
+                this.showTelegramRequiredMessage();
                 return;
             }
 
@@ -466,9 +476,9 @@ const ProfileManager = {
             });
 
             if (!response.ok) {
-                // Если сервер отклонил запрос, используем fallback
+                // Если сервер отклонил запрос, показываем ошибку
                 console.error(`Ошибка аутентификации через API: ${response.status} ${response.statusText}`);
-                await this.useFallbackAuth();
+                this.showError(`Ошибка аутентификации (${response.status}): ${response.statusText}`);
                 return;
             }
 
@@ -476,7 +486,7 @@ const ProfileManager = {
 
             if (!data.token) {
                 console.error('Ошибка аутентификации: Токен не получен');
-                await this.useFallbackAuth();
+                this.showError('Ошибка аутентификации: Сервер не вернул токен');
                 return;
             }
 
@@ -496,22 +506,28 @@ const ProfileManager = {
 
         } catch (error) {
             console.error('Ошибка при аутентификации:', error);
+            this.loadingEnd();
 
-            // В случае любых ошибок используем резервный метод
-            await this.useFallbackAuth();
+            // Показываем ошибку
+            this.showError('Ошибка загрузки профиля: ' + error.message);
+
+            // Добавляем подробный вывод в консоль для отладки
+            console.debug('Полные данные ошибки:', error);
+            console.debug('Токен авторизации присутствует:', !!this.state.token);
+
+            // Если ошибка связана с авторизацией, пробуем перезапустить процесс
+            if (error.message && (
+                error.message.includes('401') ||
+                error.message.includes('авторизации') ||
+                error.message.includes('токен')
+            )) {
+                console.log('Обнаружена ошибка авторизации, пробуем повторно аутентифицировать пользователя');
+                // Очищаем токен и запускаем авторизацию заново
+                this.state.token = null;
+                localStorage.removeItem('auth_token');
+                setTimeout(() => this.authenticateTelegram(), 1000);
+            }
         }
-    },
-
-    /**
-     * Проверяет, следует ли использовать режим эмуляции
-     */
-    shouldUseEmulationMode() {
-        // Включаем режим для тестирования
-        return true;
-
-        // В продакшене здесь должна быть более сложная логика:
-        // Например, проверка URL или наличие специального параметра debug_mode=true
-        // Например: return window.location.search.includes('debug_mode=true');
     },
 
     /**
@@ -596,29 +612,33 @@ const ProfileManager = {
                 return;
             } catch (e) {
                 console.error('Не удалось загрузить профиль с сохраненным токеном:', e);
-                // Продолжаем к следующему методу
+                // Если токен недействителен, удаляем его
+                localStorage.removeItem('auth_token');
+                this.state.token = null;
+                this.state.isAuthenticated = false;
             }
         }
 
-        // Если мы в режиме отладки, используем эмуляцию
-        if (this.shouldUseEmulationMode()) {
-            await this.useEmulationAuth();
-            return;
-        }
+        // Показываем ошибку и кнопку для повтора
+        this.showConnectionError('Не удалось загрузить профиль. Пожалуйста, попробуйте позже.');
+    },
 
-        // Если ничего другого не помогло, покажем ошибку с кнопкой повтора
+    /**
+     * Показывает ошибку соединения с сервером
+     */
+    showConnectionError(message) {
         const appContainer = document.querySelector('.app-container');
         if (appContainer) {
-            const fallbackMessage = document.createElement('div');
-            fallbackMessage.className = 'auth-error';
-            fallbackMessage.innerHTML = `
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'auth-error';
+            errorMessage.innerHTML = `
                 <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
-                <h3>Не удалось загрузить профиль</h3>
-                <p>Нажмите кнопку для повторной попытки.</p>
+                <h3>Ошибка подключения</h3>
+                <p>${message}</p>
                 <button class="retry-button">Повторить</button>
             `;
 
@@ -672,10 +692,10 @@ const ProfileManager = {
 
             // Очищаем контейнер и добавляем сообщение
             appContainer.innerHTML = '';
-            appContainer.appendChild(fallbackMessage);
+            appContainer.appendChild(errorMessage);
 
             // Добавляем обработчик для кнопки повтора
-            const retryButton = fallbackMessage.querySelector('.retry-button');
+            const retryButton = errorMessage.querySelector('.retry-button');
             if (retryButton) {
                 retryButton.addEventListener('click', () => {
                     window.location.reload();
@@ -861,7 +881,7 @@ const ProfileManager = {
 
             console.log('Запрос данных профиля с токеном:', this.state.token.substring(0, 10) + '...');
 
-            // Запрашиваем данные профиля
+            // Запрашиваем данные профиля с сервера
             const response = await fetch('/api/user/profile', {
                 headers: {
                     'Authorization': `Bearer ${this.state.token}`
@@ -919,6 +939,8 @@ const ProfileManager = {
         } catch (error) {
             console.error('Ошибка при загрузке данных профиля:', error);
             this.loadingEnd();
+
+            // Показываем ошибку
             this.showError('Ошибка загрузки профиля: ' + error.message);
 
             // Добавляем подробный вывод в консоль для отладки
