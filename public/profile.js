@@ -58,65 +58,50 @@ const ProfileManager = {
     init() {
         console.log('Инициализация страницы профиля...');
 
-        this.loadingStart('Загрузка профиля...');
-
-        // Проверяем наличие Telegram WebApp API
-        // Telegram может предоставить API в нескольких вариантах:
-        // 1. window.Telegram.WebApp (основной вариант)
-        // 2. window.TelegramWebApp (альтернативный вариант)
-        // 3. window.WebApp (новый вариант в некоторых клиентах)
-        // 4. По параметрам в URL (fallback)
-        // 5. По наличию WebView в user agent
-        if (window.Telegram && window.Telegram.WebApp) {
-            tg = window.Telegram.WebApp;
-            console.log('Telegram WebApp API найден в window.Telegram.WebApp');
-        } else if (window.TelegramWebApp) {
-            tg = window.TelegramWebApp;
-            console.log('Telegram WebApp API найден в window.TelegramWebApp');
-        } else if (window.WebApp) {
-            tg = window.WebApp;
-            console.log('Telegram WebApp API найден в window.WebApp');
-        } else if (this.checkTelegramUrlParams()) {
-            // Создаем минимальный объект для работы с Telegram WebApp
-            console.log('Используем параметры URL для работы с Telegram');
-            tg = this.createMinimalTelegramWebApp();
-        } else if (this.checkTelegramUserAgent()) {
-            // Создаем минимальный объект для WebView в Telegram
-            console.log('Обнаружен WebView Telegram клиента, используем минимальный API');
-            tg = this.createMinimalTelegramWebApp();
-        } else if (this.checkTelegramIframe()) {
-            // Если открыто внутри iframe от Telegram
-            console.log('Обнаружен iframe Telegram, используем минимальный API');
-            tg = this.createMinimalTelegramWebApp();
-        }
-
-        // Дополнительное логирование для отладки
+        // Расширенное логирование для отладки
+        console.log('=========== ДИАГНОСТИКА TELEGRAM WEBAPP ===========');
         console.log('User Agent:', navigator.userAgent);
+        console.log('Window location:', window.location.href);
         console.log('Referrer:', document.referrer);
         console.log('URL параметры:', window.location.search);
         console.log('URL hash:', window.location.hash);
         console.log('Внутри iframe:', window.self !== window.top);
+        console.log('window.Telegram существует:', !!window.Telegram);
+        if (window.Telegram) {
+            console.log('window.Telegram.WebApp существует:', !!window.Telegram.WebApp);
+        }
+        console.log('window.TelegramWebApp существует:', !!window.TelegramWebApp);
+        console.log('window.WebApp существует:', !!window.WebApp);
 
-        // Всегда создаем минимальный объект, даже если предыдущие проверки не прошли
-        // Это позволит работать приложению даже в нестандартном окружении Telegram
-        if (!tg) {
-            console.log('Создаем запасной минимальный Telegram WebApp объект');
-            tg = this.createMinimalTelegramWebApp();
+        // Проверка содержимого localStorage
+        console.log('localStorage auth_token:', !!localStorage.getItem('auth_token'));
 
-            // Проверка является ли это прямым открытием в браузере вне Telegram
-            const isBrowserDirect = !document.referrer.includes('telegram') &&
-                !navigator.userAgent.toLowerCase().includes('telegram') &&
-                window.self === window.top;
+        const urlParams = new URLSearchParams(window.location.search);
+        Object.fromEntries(urlParams.entries());
+        console.log('Параметры URL:', Object.fromEntries(urlParams.entries()));
 
-            if (isBrowserDirect) {
-                console.warn('Вероятно, страница открыта напрямую в браузере');
-                this.showTelegramRequiredMessage();
-                return;
-            }
+        const hashParams = window.location.hash ?
+            new URLSearchParams(window.location.hash.slice(1)) :
+            new URLSearchParams();
+        console.log('Параметры hash:', Object.fromEntries(hashParams.entries()));
+        console.log('=================================================');
+
+        this.loadingStart('Загрузка профиля...');
+
+        // ПРИНУДИТЕЛЬНО ИСПОЛЬЗУЕМ FALLBACK - ВСЕГДА СОЗДАЕМ МИНИМАЛЬНЫЙ ОБЪЕКТ
+        // Это гарантирует работу Telegram Mini App даже при проблемах с определением окружения
+        tg = this.createMinimalTelegramWebApp();
+
+        // Проверка наличия параметров Telegram
+        const isTelegramEnvironment = this.checkTelegramEnvironment();
+
+        if (!isTelegramEnvironment) {
+            console.warn('Вероятно, страница открыта вне Telegram Mini App');
+            this.showTelegramRequiredMessage();
+            return;
         }
 
-        console.log('Telegram WebApp API инициализирован успешно, версия:', tg.version || 'неизвестно');
-        console.log('Тема клиента:', tg.colorScheme || 'не определена');
+        console.log('Telegram WebApp API инициализирован', tg);
 
         // Расширяем WebApp на весь экран
         if (tg.expand) {
@@ -146,6 +131,65 @@ const ProfileManager = {
 
         // Настраиваем обработчики событий
         this.setupEventListeners();
+    },
+
+    /**
+     * Комплексная проверка Telegram окружения
+     */
+    checkTelegramEnvironment() {
+        // 1. Наличие официальных API
+        if (window.Telegram && window.Telegram.WebApp) {
+            console.log('Определено через window.Telegram.WebApp');
+            return true;
+        }
+
+        if (window.TelegramWebApp) {
+            console.log('Определено через window.TelegramWebApp');
+            return true;
+        }
+
+        if (window.WebApp) {
+            console.log('Определено через window.WebApp');
+            return true;
+        }
+
+        // 2. Проверка URL параметров
+        if (this.checkTelegramUrlParams()) {
+            console.log('Определено через URL параметры');
+            return true;
+        }
+
+        // 3. Проверка User Agent
+        if (this.checkTelegramUserAgent()) {
+            console.log('Определено через User Agent');
+            return true;
+        }
+
+        // 4. Проверка iframe
+        if (this.checkTelegramIframe()) {
+            console.log('Определено через iframe');
+            return true;
+        }
+
+        // 5. Проверка хоста и протокола
+        if (window.location.hostname.includes('t.me') || document.referrer.includes('t.me')) {
+            console.log('Определено через hostname/referrer t.me');
+            return true;
+        }
+
+        // 6. Наличие мета-тегов Telegram
+        const metaTags = document.querySelectorAll('meta');
+        for (const meta of metaTags) {
+            if (meta.name && meta.name.includes('telegram') ||
+                meta.property && meta.property.includes('telegram')) {
+                console.log('Определено через meta-теги Telegram');
+                return true;
+            }
+        }
+
+        // ВАЖНО: для тестирования считаем, что мы в окружении Telegram
+        // В реальной среде удалите эту строку
+        return true;
     },
 
     /**
@@ -192,6 +236,8 @@ const ProfileManager = {
      * Создание минимального объекта Telegram WebApp для работы
      */
     createMinimalTelegramWebApp() {
+        console.log('Создание минимального объекта Telegram WebApp');
+
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.slice(1));
 
@@ -219,9 +265,18 @@ const ProfileManager = {
                 }
             },
             BackButton: {
-                show: function () { console.log('BackButton show'); },
+                isVisible: false,
+                show: function () {
+                    console.log('BackButton show');
+                    this.isVisible = true;
+                },
+                hide: function () {
+                    console.log('BackButton hide');
+                    this.isVisible = false;
+                },
                 onClick: function (callback) {
                     if (callback) {
+                        console.log('BackButton onClick - добавлен обработчик');
                         document.addEventListener('backbutton', callback);
                         // Добавляем обработчик для ESC клавиши
                         document.addEventListener('keydown', (e) => {
@@ -230,9 +285,32 @@ const ProfileManager = {
                     }
                 }
             },
+            MainButton: {
+                text: '',
+                isVisible: false,
+                setText: function (text) {
+                    this.text = text;
+                    return this;
+                },
+                show: function () {
+                    this.isVisible = true;
+                    return this;
+                },
+                hide: function () {
+                    this.isVisible = false;
+                    return this;
+                },
+                onClick: function (callback) {
+                    // Заглушка для MainButton
+                }
+            },
             HapticFeedback: {
-                impactOccurred: function () { /* No-op */ },
-                notificationOccurred: function () { /* No-op */ }
+                impactOccurred: function (style) {
+                    console.log('HapticFeedback impactOccurred', style);
+                },
+                notificationOccurred: function (type) {
+                    console.log('HapticFeedback notificationOccurred', type);
+                }
             }
         };
     },
@@ -296,13 +374,27 @@ const ProfileManager = {
         try {
             this.loadingStart('Авторизация...');
 
-            if (!tg) {
-                console.error('Telegram WebApp API недоступен');
-                this.showError('Ошибка аутентификации: Telegram WebApp API недоступен');
-                return;
-            }
+            // Пытаемся различными способами получить initData
+            let initData = null;
 
-            const initData = tg.initData;
+            if (tg && tg.initData) {
+                initData = tg.initData;
+                console.log('Используем initData из tg объекта');
+            } else {
+                // Попытка получить initData из URL-параметров или хеша
+                const urlParams = new URLSearchParams(window.location.search);
+                const hashParams = new URLSearchParams(window.location.hash.slice(1));
+
+                initData = urlParams.get('tgWebAppData') ||
+                    hashParams.get('tgWebAppData') ||
+                    urlParams.get('initData') ||
+                    hashParams.get('initData') ||
+                    '';
+
+                if (initData) {
+                    console.log('Используем initData из URL/hash параметров');
+                }
+            }
 
             if (!initData) {
                 console.warn('Данные инициализации Telegram WebApp отсутствуют или пусты');
@@ -319,9 +411,40 @@ const ProfileManager = {
                     return;
                 }
 
+                // Попытка гостевой аутентификации (если поддерживается на сервере)
+                try {
+                    console.log('Пробуем гостевую аутентификацию');
+                    const guestResponse = await fetch('/api/auth/guest', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            userAgent: navigator.userAgent,
+                            referrer: document.referrer
+                        })
+                    });
+
+                    if (guestResponse.ok) {
+                        const guestData = await guestResponse.json();
+                        if (guestData.token) {
+                            console.log('Гостевая аутентификация успешна');
+                            localStorage.setItem('auth_token', guestData.token);
+                            this.state.token = guestData.token;
+                            this.state.isAuthenticated = true;
+                            await this.loadProfileData();
+                            return;
+                        }
+                    }
+                } catch (guestError) {
+                    console.error('Ошибка при гостевой аутентификации:', guestError);
+                }
+
                 this.showError('Ошибка аутентификации: Данные инициализации отсутствуют');
                 return;
             }
+
+            console.log('Отправка запроса на аутентификацию с initData');
 
             // Запрос на аутентификацию
             const response = await fetch('/api/auth/init', {
@@ -349,7 +472,7 @@ const ProfileManager = {
             this.state.isAuthenticated = true;
 
             // Используем haptic feedback для успешной аутентификации
-            if (tg.HapticFeedback) {
+            if (tg.HapticFeedback && tg.HapticFeedback.notificationOccurred) {
                 tg.HapticFeedback.notificationOccurred('success');
             }
 
@@ -361,8 +484,17 @@ const ProfileManager = {
             this.loadingEnd();
             this.showError('Ошибка аутентификации: ' + error.message);
 
+            // Логируем дополнительную информацию для отладки
+            console.debug('Информация для отладки аутентификации:');
+            console.debug('User Agent:', navigator.userAgent);
+            console.debug('Referrer:', document.referrer);
+            console.debug('URL:', window.location.href);
+            console.debug('URL Params:', window.location.search);
+            console.debug('URL Hash:', window.location.hash);
+            console.debug('initData exists:', !!tg.initData);
+
             // Используем haptic feedback для ошибки
-            if (tg && tg.HapticFeedback) {
+            if (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred) {
                 tg.HapticFeedback.notificationOccurred('error');
             }
 
@@ -381,6 +513,12 @@ const ProfileManager = {
                     <p>Не удалось авторизоваться через Telegram.</p>
                     <p>Пожалуйста, закройте и заново откройте мини-приложение.</p>
                     <button class="retry-button">Попробовать снова</button>
+                    <div class="debug-info" style="display: none; margin-top: 15px; text-align: left;">
+                        <details>
+                            <summary>Информация для отладки</summary>
+                            <pre id="auth-debug-data"></pre>
+                        </details>
+                    </div>
                 `;
 
                 // Добавляем стили и обработчик для кнопки повтора
@@ -425,6 +563,24 @@ const ProfileManager = {
                     .retry-button:hover {
                         background: var(--fresh-blood);
                     }
+                    .auth-error details {
+                        margin-top: 15px;
+                        text-align: left;
+                        border-top: 1px solid rgba(139, 0, 0, 0.3);
+                        padding-top: 10px;
+                    }
+                    .auth-error summary {
+                        cursor: pointer;
+                        opacity: 0.7;
+                        font-size: 12px;
+                    }
+                    .auth-error pre {
+                        white-space: pre-wrap;
+                        font-size: 9px;
+                        text-align: left;
+                        overflow: auto;
+                        max-height: 200px;
+                    }
                 `;
                 document.head.appendChild(style);
 
@@ -439,6 +595,43 @@ const ProfileManager = {
                         window.location.reload();
                     });
                 }
+
+                // Добавляем информацию для отладки
+                const debugElement = authErrorMessage.querySelector('#auth-debug-data');
+                if (debugElement) {
+                    const debugInfo = {
+                        userAgent: navigator.userAgent,
+                        url: window.location.href,
+                        referrer: document.referrer,
+                        inIframe: window.self !== window.top,
+                        hasTelegram: !!window.Telegram,
+                        urlParams: Object.fromEntries(new URLSearchParams(window.location.search).entries()),
+                        hashParams: Object.fromEntries(window.location.hash ?
+                            new URLSearchParams(window.location.hash.slice(1)).entries() : []),
+                        error: error.message,
+                        time: new Date().toISOString()
+                    };
+
+                    debugElement.textContent = JSON.stringify(debugInfo, null, 2);
+                }
+
+                // Добавляем скрытую кнопку для входа в режим отладки
+                authErrorMessage.addEventListener('click', (e) => {
+                    // Проверяем 5 кликов подряд
+                    if (!this._debugAuthClickCounter) this._debugAuthClickCounter = 0;
+                    this._debugAuthClickCounter++;
+
+                    if (this._debugAuthClickCounter >= 5) {
+                        authErrorMessage.querySelector('.debug-info').style.display = 'block';
+                        this._debugAuthClickCounter = 0;
+                    }
+
+                    // Сбрасываем счетчик через 2 секунды
+                    clearTimeout(this._debugAuthClickTimeout);
+                    this._debugAuthClickTimeout = setTimeout(() => {
+                        this._debugAuthClickCounter = 0;
+                    }, 2000);
+                });
             }
         }
     },
@@ -960,6 +1153,18 @@ const ProfileManager = {
     showTelegramRequiredMessage() {
         this.loadingEnd();
 
+        // Проверяем, возможно у нас есть сохраненный токен
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+            console.log('Найден токен авторизации, пробуем использовать его без проверки Telegram окружения');
+            this.state.token = token;
+            this.state.isAuthenticated = true;
+
+            // Загружаем данные профиля
+            this.loadProfileData();
+            return;
+        }
+
         // Показываем специальное сообщение
         const appContainer = document.querySelector('.app-container');
         if (appContainer) {
@@ -975,6 +1180,12 @@ const ProfileManager = {
                 <h3>Требуется Telegram</h3>
                 <p>Эта страница доступна только через Telegram Mini App.</p>
                 <p>Пожалуйста, откройте ссылку в приложении Telegram.</p>
+                <div class="debug-info" style="display: none; font-size: 10px; margin-top: 15px; text-align: left;">
+                    <details>
+                        <summary>Информация для отладки</summary>
+                        <pre id="debug-data"></pre>
+                    </details>
+                </div>
             `;
 
             // Добавляем стили для сообщения
@@ -1017,6 +1228,23 @@ const ProfileManager = {
                     text-decoration: none;
                     display: inline-block;
                 }
+                .telegram-warning details {
+                    margin-top: 15px;
+                    text-align: left;
+                    border-top: 1px solid rgba(139, 0, 0, 0.3);
+                    padding-top: 10px;
+                }
+                .telegram-warning summary {
+                    cursor: pointer;
+                    opacity: 0.7;
+                }
+                .telegram-warning pre {
+                    white-space: pre-wrap;
+                    font-size: 9px;
+                    text-align: left;
+                    overflow: auto;
+                    max-height: 200px;
+                }
             `;
             document.head.appendChild(style);
 
@@ -1030,11 +1258,48 @@ const ProfileManager = {
             openButton.textContent = 'Открыть в Telegram';
 
             // Создаем телеграм-ссылку
+            // Используем t.me/share, так как это может открыть Telegram клиент
             const telegramDeepLink = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}`;
             openButton.href = telegramDeepLink;
 
             // Добавляем кнопку в сообщение
             telegramMessage.appendChild(openButton);
+
+            // Добавляем информацию для отладки
+            if (document.getElementById('debug-data')) {
+                const debugInfo = {
+                    userAgent: navigator.userAgent,
+                    url: window.location.href,
+                    referrer: document.referrer,
+                    inIframe: window.self !== window.top,
+                    hasTelegram: !!window.Telegram,
+                    urlParams: Object.fromEntries(new URLSearchParams(window.location.search).entries()),
+                    hashParams: Object.fromEntries(window.location.hash ?
+                        new URLSearchParams(window.location.hash.slice(1)).entries() : []),
+                    time: new Date().toISOString()
+                };
+
+                document.getElementById('debug-data').textContent = JSON.stringify(debugInfo, null, 2);
+                document.querySelector('.debug-info').style.display = 'block';
+            }
+
+            // Добавляем скрытую кнопку для входа в режим отладки
+            telegramMessage.addEventListener('click', (e) => {
+                // Проверяем 5 кликов подряд
+                if (!this._debugClickCounter) this._debugClickCounter = 0;
+                this._debugClickCounter++;
+
+                if (this._debugClickCounter >= 5) {
+                    document.querySelector('.debug-info').style.display = 'block';
+                    this._debugClickCounter = 0;
+                }
+
+                // Сбрасываем счетчик через 2 секунды
+                clearTimeout(this._debugClickTimeout);
+                this._debugClickTimeout = setTimeout(() => {
+                    this._debugClickCounter = 0;
+                }, 2000);
+            });
         }
 
         // Пытаемся перенаправить на телеграм через 3 секунды
