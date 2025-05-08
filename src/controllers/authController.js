@@ -180,4 +180,42 @@ exports.verifyToken = async (req, res) => {
             message: 'Недействительный токен'
         });
     }
+};
+
+/**
+ * Прямой доступ для пользователей, которые не через Telegram
+ */
+exports.directAccess = async (req, res) => {
+    try {
+        console.log('Запрос на прямой доступ без Telegram авторизации');
+
+        // Создаем временного гостя
+        const guestId = 'guest_' + Math.random().toString(36).substring(2, 15);
+
+        // Генерируем JWT токен для гостя
+        const token = jwt.sign(
+            {
+                telegramId: guestId,
+                isGuest: true,
+                createdAt: new Date().toISOString()
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '2h' }
+        );
+
+        // Возвращаем успешный ответ с токеном
+        return res.status(200).json({
+            status: 'success',
+            data: {
+                token,
+                isGuest: true
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка при создании прямого доступа:', error);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Внутренняя ошибка сервера'
+        });
+    }
 }; 

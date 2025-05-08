@@ -65,6 +65,13 @@ router.post('/init', verifyTelegramWebAppData, async (req, res) => {
 // Аутентификация через Telegram WebApp
 router.post('/telegram', authController.authenticateTelegram);
 
+/**
+ * @route   POST /api/auth/direct-access
+ * @desc    Прямой доступ для пользователей, которые не через Telegram
+ * @access  Public
+ */
+router.post('/direct-access', authController.directAccess);
+
 // Проверка токена
 router.get('/verify', authMiddleware, (req, res) => {
     res.status(200).json({
