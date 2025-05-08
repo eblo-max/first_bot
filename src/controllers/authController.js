@@ -189,13 +189,43 @@ exports.directAccess = async (req, res) => {
     try {
         console.log('Запрос на прямой доступ без Telegram авторизации');
 
-        // Создаем временного гостя
+        // Создаем временного гостя с реальным ID
         const guestId = 'guest_' + Math.random().toString(36).substring(2, 15);
+
+        // Получаем имя пользователя из User-Agent или используем дефолтное
+        const userAgent = req.headers['user-agent'] || '';
+        const browserInfo = userAgent.split(' ').slice(-2).join(' ');
+        const guestName = `Гость ${guestId.substring(6, 11)}`;
+
+        // Сохраняем пользователя в базу данных для корректной работы профиля
+        let dbUser = await User.findOne({ telegramId: guestId });
+
+        if (!dbUser) {
+            // Создаем нового пользователя-гостя
+            dbUser = new User({
+                telegramId: guestId,
+                username: guestName,
+                firstName: guestName,
+                lastName: browserInfo,
+                registeredAt: new Date(),
+                lastVisit: new Date()
+            });
+
+            await dbUser.save();
+            console.log(`Создан гостевой пользователь: ${guestName} (${guestId})`);
+        } else {
+            // Обновляем время последнего визита
+            dbUser.lastVisit = new Date();
+            await dbUser.save();
+        }
 
         // Генерируем JWT токен для гостя
         const token = jwt.sign(
             {
                 telegramId: guestId,
+                username: guestName,
+                firstName: guestName,
+                lastName: browserInfo,
                 isGuest: true,
                 createdAt: new Date().toISOString()
             },
@@ -203,12 +233,18 @@ exports.directAccess = async (req, res) => {
             { expiresIn: '2h' }
         );
 
-        // Возвращаем успешный ответ с токеном
+        // Возвращаем успешный ответ с токеном и информацией о пользователе
         return res.status(200).json({
             status: 'success',
             data: {
                 token,
-                isGuest: true
+                isGuest: true,
+                user: {
+                    telegramId: guestId,
+                    name: guestName,
+                    rank: dbUser.rank,
+                    stats: dbUser.stats
+                }
             }
         });
     } catch (error) {
