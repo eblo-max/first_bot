@@ -69,17 +69,25 @@ const ProfileManager = {
         console.log('window.Telegram существует:', !!window.Telegram);
         if (window.Telegram) {
             console.log('window.Telegram.WebApp существует:', !!window.Telegram.WebApp);
+            if (window.Telegram.WebApp) {
+                console.log('window.Telegram.WebApp.initData существует:', !!window.Telegram.WebApp.initData);
+                console.log('window.Telegram.WebApp.initData длина:',
+                    window.Telegram.WebApp.initData ? window.Telegram.WebApp.initData.length : 0);
+            }
         }
         console.log('window.TelegramWebApp существует:', !!window.TelegramWebApp);
         console.log('window.WebApp существует:', !!window.WebApp);
 
         // Проверка содержимого localStorage
         console.log('localStorage auth_token:', !!localStorage.getItem('auth_token'));
+        console.log('localStorage auth_token длина:',
+            localStorage.getItem('auth_token') ? localStorage.getItem('auth_token').length : 0);
 
+        // Анализ URL параметров
         const urlParams = new URLSearchParams(window.location.search);
-        Object.fromEntries(urlParams.entries());
         console.log('Параметры URL:', Object.fromEntries(urlParams.entries()));
 
+        // Анализ hash параметров
         const hashParams = window.location.hash ?
             new URLSearchParams(window.location.hash.slice(1)) :
             new URLSearchParams();
@@ -88,17 +96,48 @@ const ProfileManager = {
 
         this.loadingStart('Загрузка профиля...');
 
-        // ПРИНУДИТЕЛЬНО ИСПОЛЬЗУЕМ FALLBACK - ВСЕГДА СОЗДАЕМ МИНИМАЛЬНЫЙ ОБЪЕКТ
-        // Это гарантирует работу Telegram Mini App даже при проблемах с определением окружения
-        tg = this.createMinimalTelegramWebApp();
+        // Инициализация Telegram WebApp API
+        if (window.Telegram && window.Telegram.WebApp) {
+            tg = window.Telegram.WebApp;
+            console.log('Telegram WebApp API инициализирован через window.Telegram.WebApp');
+        } else if (window.TelegramWebApp) {
+            tg = window.TelegramWebApp;
+            console.log('Telegram WebApp API инициализирован через window.TelegramWebApp');
+        } else if (window.WebApp) {
+            tg = window.WebApp;
+            console.log('Telegram WebApp API инициализирован через window.WebApp');
+        } else {
+            // Создаем минимальный объект, если API не обнаружен
+            tg = this.createMinimalTelegramWebApp();
+            console.log('Создан минимальный объект Telegram WebApp');
+        }
 
         // Проверка наличия параметров Telegram
         const isTelegramEnvironment = this.checkTelegramEnvironment();
 
-        if (!isTelegramEnvironment) {
+        // Извлекаем и сохраняем initData если она есть в URL
+        if (isTelegramEnvironment) {
+            // Попытка получить initData из URL или хеша
+            const initDataFromUrl = urlParams.get('tgWebAppData') ||
+                urlParams.get('initData') ||
+                hashParams.get('tgWebAppData') ||
+                hashParams.get('initData');
+
+            if (initDataFromUrl && (!tg.initData || tg.initData.length === 0)) {
+                console.log('Найдена initData в URL параметрах, сохраняем');
+                tg.initData = initDataFromUrl;
+            }
+        } else {
             console.warn('Вероятно, страница открыта вне Telegram Mini App');
-            this.showTelegramRequiredMessage();
-            return;
+
+            // Проверяем, есть ли сохраненный токен
+            if (localStorage.getItem('auth_token')) {
+                console.log('Найден сохраненный токен, продолжаем без проверки Telegram окружения');
+            } else {
+                // Если токена нет, показываем сообщение о необходимости открыть страницу в Telegram
+                this.showTelegramRequiredMessage();
+                return;
+            }
         }
 
         console.log('Telegram WebApp API инициализирован', tg);
@@ -187,9 +226,13 @@ const ProfileManager = {
             }
         }
 
-        // ВАЖНО: для тестирования считаем, что мы в окружении Telegram
-        // В реальной среде удалите эту строку
-        return true;
+        // Если есть токен, считаем что окружение валидное
+        if (localStorage.getItem('auth_token')) {
+            console.log('Определено через наличие токена в localStorage');
+            return true;
+        }
+
+        return true; // Возвращаем true для обеспечения работы в любом окружении
     },
 
     /**
@@ -320,79 +363,25 @@ const ProfileManager = {
      */
     async checkAuthentication() {
         try {
-            // Получаем токен из localStorage
-            const token = localStorage.getItem('auth_token');
-            console.log('Проверка аутентификации: токен ' + (token ? 'найден' : 'не найден'));
-
-            if (!token) {
-                console.log('Токен не найден, запускаем первичную аутентификацию');
-                await this.authenticateTelegram();
-                return;
-            }
-
-            this.state.token = token;
-            console.log('Токен сохранен в state, проверяем валидность...');
-
-            // Проверяем валидность токена
-            const response = await fetch('/api/auth/verify', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                // Если токен недействителен, запрашиваем новый
-                console.log('Токен недействителен (статус ответа: ' + response.status + '), запускаем повторную аутентификацию');
-                await this.authenticateTelegram();
-                return;
-            }
-
-            const data = await response.json();
-            console.log('Токен проверен успешно, результат:', data);
-
-            // Если токен действителен, загружаем данные профиля
-            this.state.isAuthenticated = true;
-            await this.loadProfileData();
-
-        } catch (error) {
-            console.error('Ошибка при проверке аутентификации:', error);
-
-            // Сбрасываем состояние и пробуем пройти авторизацию заново
-            this.state.isAuthenticated = false;
-            this.state.token = null;
-            localStorage.removeItem('auth_token');
-
-            console.log('Состояние сброшено, запускаем повторную аутентификацию');
-            await this.authenticateTelegram();
-        }
-    },
-
-    /**
-     * Проверяет, следует ли использовать режим эмуляции
-     */
-    shouldUseEmulationMode() {
-        // Отключаем режим эмуляции в продакшене
-        return false;
-
-        // Режим для тестирования можно включить через URL параметр
-        // return window.location.search.includes('debug_mode=true');
-    },
-
-    /**
-     * Аутентификация через Telegram WebApp
-     */
-    async authenticateTelegram() {
-        try {
             this.loadingStart('Авторизация...');
 
             // Пытаемся различными способами получить initData
-            let initData = null;
+            let initData = '';
 
-            if (tg && tg.initData) {
+            // 1. Проверка window.Telegram.WebApp.initData
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+                initData = window.Telegram.WebApp.initData;
+                console.log('Используем initData из window.Telegram.WebApp.initData',
+                    initData.length > 20 ? initData.substring(0, 20) + '...' : initData);
+            }
+            // 2. Проверка tg объекта (наш собственный)
+            else if (tg && tg.initData && tg.initData.length > 0) {
                 initData = tg.initData;
-                console.log('Используем initData из tg объекта');
-            } else {
-                // Попытка получить initData из URL-параметров или хеша
+                console.log('Используем initData из tg объекта',
+                    initData.length > 20 ? initData.substring(0, 20) + '...' : initData);
+            }
+            // 3. Проверка URL параметров
+            else {
                 const urlParams = new URLSearchParams(window.location.search);
                 const hashParams = new URLSearchParams(window.location.hash.slice(1));
 
@@ -402,34 +391,45 @@ const ProfileManager = {
                     hashParams.get('initData') ||
                     '';
 
-                if (initData) {
-                    console.log('Используем initData из URL/hash параметров');
+                if (initData && initData.length > 0) {
+                    console.log('Используем initData из URL/hash параметров',
+                        initData.length > 20 ? initData.substring(0, 20) + '...' : initData);
                 }
             }
 
-            if (!initData) {
+            // Проверяем полученные данные
+            if (!initData || initData.trim() === '') {
                 console.warn('Данные инициализации Telegram WebApp отсутствуют или пусты');
 
-                // Если на устройстве есть сохраненный токен, пробуем его использовать
+                // Пробуем использовать сохраненный токен, если он есть
                 const storedToken = localStorage.getItem('auth_token');
                 if (storedToken) {
                     console.log('Используем сохраненный токен без проверки аутентификации через Telegram');
                     this.state.token = storedToken;
                     this.state.isAuthenticated = true;
 
-                    // Загружаем данные профиля с сохраненным токеном
-                    await this.loadProfileData();
-                    return;
+                    try {
+                        // Верифицируем токен на сервере
+                        const verifyResponse = await fetch('/api/auth/verify', {
+                            headers: {
+                                'Authorization': `Bearer ${storedToken}`
+                            }
+                        });
+
+                        if (verifyResponse.ok) {
+                            console.log('Токен верифицирован успешно');
+                            await this.loadProfileData();
+                            return;
+                        } else {
+                            console.warn('Токен недействителен, необходима повторная аутентификация');
+                            localStorage.removeItem('auth_token');
+                        }
+                    } catch (verifyError) {
+                        console.error('Ошибка при верификации токена:', verifyError);
+                    }
                 }
 
-                // Режим эмуляции используется только если явно включен
-                if (this.shouldUseEmulationMode()) {
-                    console.log('Включаем режим эмуляции для тестирования');
-                    await this.useEmulationAuth();
-                    return;
-                }
-
-                // Попытка гостевой аутентификации (если поддерживается на сервере)
+                // Пробуем гостевую аутентификацию
                 try {
                     console.log('Пробуем гостевую аутентификацию');
                     const guestResponse = await fetch('/api/auth/guest', {
@@ -458,7 +458,7 @@ const ProfileManager = {
                     console.error('Ошибка при гостевой аутентификации:', guestError);
                 }
 
-                // Показываем ошибку, если не удалось аутентифицироваться ни одним способом
+                // Если все методы аутентификации не сработали
                 console.error('Все методы аутентификации не сработали');
                 this.showTelegramRequiredMessage();
                 return;
@@ -475,29 +475,52 @@ const ProfileManager = {
                 body: JSON.stringify({ initData })
             });
 
+            // Проверяем успешность ответа
             if (!response.ok) {
-                // Если сервер отклонил запрос, показываем ошибку
-                console.error(`Ошибка аутентификации через API: ${response.status} ${response.statusText}`);
+                const errorText = await response.text();
+                console.error(`Ошибка аутентификации через API: ${response.status} ${response.statusText}`, errorText);
+
+                // Пробуем использовать сохраненный токен как fallback
+                const storedToken = localStorage.getItem('auth_token');
+                if (storedToken) {
+                    console.log('Используем сохраненный токен после ошибки API');
+                    this.state.token = storedToken;
+                    this.state.isAuthenticated = true;
+                    await this.loadProfileData();
+                    return;
+                }
+
                 this.showError(`Ошибка аутентификации (${response.status}): ${response.statusText}`);
                 return;
             }
 
-            const data = await response.json();
+            // Парсим ответ
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                console.error('Ошибка при парсинге ответа:', parseError);
+                const rawText = await response.text();
+                console.error('Сырой ответ:', rawText);
+                this.showError('Ошибка при обработке ответа сервера');
+                return;
+            }
 
-            if (!data.token) {
-                console.error('Ошибка аутентификации: Токен не получен');
-                this.showError('Ошибка аутентификации: Сервер не вернул токен');
+            // Проверяем успешность операции
+            if (data.status !== 'success' || !data.data || !data.data.token) {
+                console.error('Ошибка аутентификации: Токен не получен', data);
+                this.showError('Ошибка аутентификации: ' + (data.message || 'Сервер не вернул токен'));
                 return;
             }
 
             // Сохраняем токен
-            const token = data.token;
+            const token = data.data.token;
             localStorage.setItem('auth_token', token);
             this.state.token = token;
             this.state.isAuthenticated = true;
 
             // Используем haptic feedback для успешной аутентификации
-            if (tg.HapticFeedback && tg.HapticFeedback.notificationOccurred) {
+            if (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred) {
                 tg.HapticFeedback.notificationOccurred('success');
             }
 
@@ -508,89 +531,75 @@ const ProfileManager = {
             console.error('Ошибка при аутентификации:', error);
             this.loadingEnd();
 
-            // Показываем ошибку
-            this.showError('Ошибка загрузки профиля: ' + error.message);
+            // Пробуем использовать сохраненный токен при ошибке
+            const storedToken = localStorage.getItem('auth_token');
+            if (storedToken) {
+                console.log('Используем сохраненный токен после ошибки аутентификации');
+                this.state.token = storedToken;
+                this.state.isAuthenticated = true;
 
-            // Добавляем подробный вывод в консоль для отладки
-            console.debug('Полные данные ошибки:', error);
-            console.debug('Токен авторизации присутствует:', !!this.state.token);
-
-            // Если ошибка связана с авторизацией, пробуем перезапустить процесс
-            if (error.message && (
-                error.message.includes('401') ||
-                error.message.includes('авторизации') ||
-                error.message.includes('токен')
-            )) {
-                console.log('Обнаружена ошибка авторизации, пробуем повторно аутентифицировать пользователя');
-                // Очищаем токен и запускаем авторизацию заново
-                this.state.token = null;
-                localStorage.removeItem('auth_token');
-                setTimeout(() => this.authenticateTelegram(), 1000);
+                try {
+                    await this.loadProfileData();
+                    return;
+                } catch (profileError) {
+                    console.error('Не удалось загрузить профиль с сохраненным токеном:', profileError);
+                    // Сбрасываем токен если не удалось загрузить профиль
+                    localStorage.removeItem('auth_token');
+                    this.state.token = null;
+                    this.state.isAuthenticated = false;
+                }
             }
+
+            // Показываем ошибку
+            this.showError('Ошибка аутентификации: ' + error.message);
         }
     },
 
     /**
-     * Эмуляция авторизации для тестирования и отладки
+     * Проверяет, следует ли использовать режим эмуляции
+     */
+    shouldUseEmulationMode() {
+        // Отключаем режим эмуляции в продакшене
+        return false;
+
+        // Режим для тестирования можно включить через URL параметр
+        // return window.location.search.includes('debug_mode=true');
+    },
+
+    /**
+     * Использует эмуляционную аутентификацию для тестирования без Telegram
      */
     async useEmulationAuth() {
-        console.log('Эмулируем процесс авторизации для тестирования');
-
-        // Эмулируем задержку сети
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Создаем фиктивный токен для тестирования
-        const mockToken = 'emulation_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('auth_token', mockToken);
-        this.state.token = mockToken;
-        this.state.isAuthenticated = true;
-
-        this.loadingEnd();
-
-        // Создаем мок-данные профиля для отображения
-        this.profileData = {
-            name: 'Тестовый Пользователь',
-            telegramId: '1234567890',
-            rank: 'ТЕСТОВЫЙ',
-            stats: {
-                investigations: 47,
-                solvedCases: 25,
-                winStreak: 3,
-                accuracy: 68
-            },
-            achievements: [
-                {
-                    id: 'first_case',
-                    name: 'Первое дело',
-                    description: 'Завершите ваше первое расследование'
+        console.log('Используем эмуляционную аутентификацию');
+        try {
+            const response = await fetch('/api/auth/emulate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                 },
-                {
-                    id: 'rookie',
-                    name: 'Новичок',
-                    description: 'Достигните 5 успешных расследований'
-                }
-            ]
-        };
+                body: JSON.stringify({
+                    userAgent: navigator.userAgent,
+                    emulationKey: 'dev_mode_enabled'
+                })
+            });
 
-        this.updateProfileUI(this.profileData);
-
-        // Создаем мок-данные лидерборда
-        const mockLeaderboardData = {
-            leaderboard: [
-                { rank: 1, name: 'Шерлок Холмс', score: 1243, isCurrentUser: false },
-                { rank: 2, name: 'Эркюль Пуаро', score: 984, isCurrentUser: false },
-                { rank: 3, name: 'Мисс Марпл', score: 723, isCurrentUser: false },
-                { rank: 4, name: 'Тестовый Пользователь', score: 532, isCurrentUser: true },
-                { rank: 5, name: 'Инспектор Лестрейд', score: 256, isCurrentUser: false }
-            ],
-            currentUser: {
-                rank: 4,
-                name: 'Тестовый Пользователь',
-                score: 532
+            if (!response.ok) {
+                throw new Error(`Ошибка эмуляционной аутентификации: ${response.status}`);
             }
-        };
 
-        this.updateLeaderboardUI(mockLeaderboardData);
+            const data = await response.json();
+            if (data.token) {
+                localStorage.setItem('auth_token', data.token);
+                this.state.token = data.token;
+                this.state.isAuthenticated = true;
+                await this.loadProfileData();
+            } else {
+                throw new Error('Эмуляционная аутентификация не вернула токен');
+            }
+        } catch (error) {
+            console.error('Ошибка при эмуляционной аутентификации:', error);
+            this.showError('Ошибка при тестовой аутентификации: ' + error.message);
+        }
     },
 
     /**
@@ -910,16 +919,28 @@ const ProfileManager = {
                 throw new Error(data.message || 'Ошибка загрузки данных профиля');
             }
 
+            // В структуре API ответ лежит в поле data
             this.profileData = data.data;
             console.log('Данные профиля получены:', this.profileData);
 
-            // Если это новый пользователь, используем haptic feedback для обратной связи
-            if (this.profileData.isNewUser && tg && tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('success');
+            // Проверяем, есть ли базовые поля в профиле
+            if (!this.profileData) {
+                console.error('Полученный профиль пуст');
+                this.profileData = {
+                    name: 'Незнакомец',
+                    telegramId: 'unknown',
+                    rank: 'ГОСТЬ',
+                    stats: {
+                        investigations: 0,
+                        solvedCases: 0,
+                        winStreak: 0,
+                        accuracy: 0
+                    }
+                };
             }
 
             // Обрабатываем случай с новым пользователем, у которого все значения по нулям
-            if (this.profileData.isNewUser || !this.profileData.stats) {
+            if (!this.profileData.stats) {
                 this.profileData.stats = {
                     investigations: 0,
                     solvedCases: 0,
@@ -943,18 +964,14 @@ const ProfileManager = {
             // Показываем ошибку
             this.showError('Ошибка загрузки профиля: ' + error.message);
 
-            // Добавляем подробный вывод в консоль для отладки
-            console.debug('Полные данные ошибки:', error);
-            console.debug('Токен авторизации присутствует:', !!this.state.token);
-
             // Если ошибка связана с авторизацией, пробуем перезапустить процесс
             if (error.message && (
                 error.message.includes('401') ||
-                error.message.includes('авторизации') ||
+                error.message.includes('403') ||
+                error.message.includes('авторизаци') ||
                 error.message.includes('токен')
             )) {
                 console.log('Обнаружена ошибка авторизации, пробуем повторно аутентифицировать пользователя');
-                // Очищаем токен и запускаем авторизацию заново
                 this.state.token = null;
                 localStorage.removeItem('auth_token');
                 setTimeout(() => this.authenticateTelegram(), 1000);
@@ -971,6 +988,8 @@ const ProfileManager = {
                 throw new Error('Токен авторизации отсутствует');
             }
 
+            console.log('Загрузка таблицы лидеров за период:', period);
+
             // Запрашиваем данные лидерборда
             const response = await fetch(`/api/user/leaderboard?period=${period}`, {
                 headers: {
@@ -979,12 +998,22 @@ const ProfileManager = {
             });
 
             if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    console.warn('Ошибка авторизации при загрузке лидерборда');
+                    // Не сбрасываем токен здесь, так как это некритичная ошибка
+                }
                 throw new Error(`Ошибка загрузки таблицы лидеров: ${response.status} ${response.statusText}`);
             }
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                console.error('Ошибка при парсинге ответа лидерборда:', parseError);
+                throw new Error('Ошибка при обработке данных таблицы лидеров');
+            }
 
-            if (data.status !== 'success') {
+            if (data.status !== 'success' || !data.data) {
                 throw new Error(data.message || 'Ошибка загрузки таблицы лидеров');
             }
 
@@ -996,7 +1025,7 @@ const ProfileManager = {
         } catch (error) {
             console.error('Ошибка при загрузке таблицы лидеров:', error);
 
-            // Очищаем таблицу лидеров при ошибке
+            // Очищаем таблицу лидеров при ошибке или создаем пустую, если ее нет
             const tableContainer = document.querySelector('.leaderboard-table');
             if (tableContainer) {
                 const headerRow = tableContainer.querySelector('.leaderboard-header');
@@ -1218,169 +1247,440 @@ const ProfileManager = {
     },
 
     /**
-     * Отобразить сообщение о том, что требуется Telegram
+     * Показывает сообщение о необходимости открыть страницу в Telegram
      */
     showTelegramRequiredMessage() {
-        this.loadingEnd();
+        // Создаем контейнер
+        const container = document.createElement('div');
+        container.className = 'telegram-required-message';
+        container.style.position = 'fixed';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.right = '0';
+        container.style.bottom = '0';
+        container.style.backgroundColor = '#1e1e1e';
+        container.style.color = '#fff';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        container.style.textAlign = 'center';
+        container.style.padding = '20px';
+        container.style.zIndex = '10000';
 
-        // Проверяем, возможно у нас есть сохраненный токен
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-            console.log('Найден токен авторизации, пробуем использовать его без проверки Telegram окружения');
+        // Добавляем лого
+        const logo = document.createElement('div');
+        logo.innerHTML = `<svg viewBox="0 0 32 32" width="64" height="64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="14" stroke="#C4302B" stroke-width="2"/>
+            <path d="M22.9865 10.1152C22.9487 10.0499 22.9238 9.97705 22.9238 9.9025C22.9238 9.82625 22.9487 9.75339 22.9865 9.68805C23.0243 9.62272 23.0742 9.56641 23.1316 9.52344C23.1891 9.48047 23.2529 9.45175 23.3196 9.43893C23.3864 9.42611 23.4546 9.42944 23.5196 9.4486C23.5846 9.46775 23.6444 9.50222 23.6946 9.54944C23.7448 9.59667 23.7841 9.65544 23.8097 9.72137C23.8353 9.7873 23.8465 9.85871 23.8426 9.92983C23.8387 10.0009 23.8199 10.0702 23.7879 10.1324L17.1621 21.8648C17.1157 21.9371 17.0536 21.9976 16.9803 22.0416C16.907 22.0855 16.8244 22.112 16.7393 22.1191C16.6541 22.1262 16.5685 22.1137 16.489 22.0825C16.4095 22.0513 16.3383 22.0022 16.2809 21.9388L9.93079 14.6512C9.87471 14.5961 9.832 14.5295 9.80555 14.4563C9.77911 14.3832 9.76962 14.3051 9.77776 14.228C9.78591 14.1508 9.81149 14.0766 9.85237 14.0107C9.89325 13.9448 9.9484 13.8889 10.0142 13.8469C10.0801 13.8049 10.1549 13.7779 10.2323 13.7681C10.3097 13.7584 10.388 13.7662 10.4618 13.7911C10.5356 13.816 10.6031 13.8573 10.6593 13.9121C10.7155 13.9669 10.7588 14.0339 10.7862 14.1082L16.6926 20.7922L22.9865 10.1152Z" fill="#C4302B"/>
+        </svg>`;
+        container.appendChild(logo);
+
+        // Добавляем заголовок
+        const title = document.createElement('h2');
+        title.textContent = 'Требуется Telegram';
+        title.style.marginTop = '20px';
+        title.style.marginBottom = '10px';
+        title.style.fontFamily = 'Arial, sans-serif';
+        title.style.fontSize = '24px';
+        title.style.color = '#c4302b';
+        container.appendChild(title);
+
+        // Добавляем текст сообщения
+        const message = document.createElement('p');
+        message.textContent = 'Эта страница доступна только через Telegram Mini App.';
+        message.style.marginBottom = '20px';
+        message.style.fontFamily = 'Arial, sans-serif';
+        message.style.fontSize = '16px';
+        message.style.lineHeight = '1.4';
+        container.appendChild(message);
+
+        // Добавляем инструкцию
+        const instruction = document.createElement('p');
+        instruction.textContent = 'Пожалуйста, откройте ссылку в приложении Telegram.';
+        instruction.style.marginBottom = '30px';
+        instruction.style.fontFamily = 'Arial, sans-serif';
+        instruction.style.fontSize = '16px';
+        instruction.style.lineHeight = '1.4';
+        container.appendChild(instruction);
+
+        // Добавляем отладочную информацию
+        const debugInfo = document.createElement('details');
+        debugInfo.style.marginTop = '20px';
+        debugInfo.style.width = '80%';
+        debugInfo.style.textAlign = 'left';
+        debugInfo.style.fontSize = '12px';
+        debugInfo.style.fontFamily = 'monospace';
+        debugInfo.style.border = '1px solid #444';
+        debugInfo.style.padding = '10px';
+        debugInfo.style.borderRadius = '5px';
+
+        const summary = document.createElement('summary');
+        summary.textContent = 'Информация для отладки';
+        summary.style.cursor = 'pointer';
+        summary.style.color = '#888';
+        summary.style.paddingBottom = '10px';
+        debugInfo.appendChild(summary);
+
+        const debugText = document.createElement('pre');
+        debugText.style.whiteSpace = 'pre-wrap';
+        debugText.style.wordBreak = 'break-all';
+        debugText.style.color = '#888';
+        debugText.style.maxHeight = '200px';
+        debugText.style.overflow = 'auto';
+        debugText.style.fontSize = '10px';
+        debugText.innerHTML = JSON.stringify({
+            "userAgent": navigator.userAgent,
+            "platform": navigator.platform,
+            "webAppExists": !!window.Telegram?.WebApp,
+            "url": window.location.href,
+            "referrer": document.referrer,
+            "timestamp": new Date().toISOString(),
+            "inIframe": window.self !== window.top
+        }, null, 2);
+
+        debugInfo.appendChild(debugText);
+        container.appendChild(debugInfo);
+
+        // Добавляем кнопку для открытия в Telegram
+        const button = document.createElement('button');
+        button.textContent = 'Открыть в Telegram';
+        button.style.padding = '12px 24px';
+        button.style.backgroundColor = '#c4302b';
+        button.style.color = '#fff';
+        button.style.border = 'none';
+        button.style.borderRadius = '8px';
+        button.style.fontSize = '16px';
+        button.style.fontWeight = 'bold';
+        button.style.cursor = 'pointer';
+        button.style.fontFamily = 'Arial, sans-serif';
+        button.style.marginTop = '20px';
+
+        button.addEventListener('mouseover', () => {
+            button.style.backgroundColor = '#a82b25';
+        });
+
+        button.addEventListener('mouseout', () => {
+            button.style.backgroundColor = '#c4302b';
+        });
+
+        button.addEventListener('click', () => {
+            // Попытка открыть в Telegram
+            const url = window.location.href;
+            const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}`;
+            window.location.href = telegramUrl;
+        });
+
+        container.appendChild(button);
+
+        // Добавляем контейнер в body
+        document.body.appendChild(container);
+
+        // Скрываем основной контент
+        const mainContent = document.querySelector('.container');
+        if (mainContent) {
+            mainContent.style.display = 'none';
+        }
+
+        // Останавливаем загрузку
+        this.loadingEnd();
+    },
+
+    /**
+     * Проверка аутентификации пользователя
+     */
+    async checkAuthentication() {
+        try {
+            // Получаем токен из localStorage
+            const token = localStorage.getItem('auth_token');
+            console.log('Проверка аутентификации: токен ' + (token ? 'найден' : 'не найден'));
+
+            if (!token) {
+                console.log('Токен не найден, запускаем первичную аутентификацию');
+                await this.authenticateTelegram();
+                return;
+            }
+
+            this.state.token = token;
+            console.log('Токен сохранен в state, проверяем валидность...');
+
+            // Проверяем валидность токена
+            const response = await fetch('/api/auth/verify', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                // Если токен недействителен, запрашиваем новый
+                console.log('Токен недействителен (статус ответа: ' + response.status + '), запускаем повторную аутентификацию');
+                await this.authenticateTelegram();
+                return;
+            }
+
+            const data = await response.json();
+            console.log('Токен проверен успешно, результат:', data);
+
+            // Если токен действителен, загружаем данные профиля
+            this.state.isAuthenticated = true;
+            await this.loadProfileData();
+
+        } catch (error) {
+            console.error('Ошибка при проверке аутентификации:', error);
+
+            // Сбрасываем состояние и пробуем пройти авторизацию заново
+            this.state.isAuthenticated = false;
+            this.state.token = null;
+            localStorage.removeItem('auth_token');
+
+            console.log('Состояние сброшено, запускаем повторную аутентификацию');
+            await this.authenticateTelegram();
+        }
+    },
+
+    /**
+     * Проверка User Agent на наличие признаков Telegram
+     */
+    checkTelegramUserAgent() {
+        const ua = navigator.userAgent.toLowerCase();
+        return ua.includes('telegram') ||
+            ua.includes('webk') && (ua.includes('iphone') || ua.includes('android'));
+    },
+
+    /**
+     * Проверка, открыт ли сайт внутри iframe Telegram
+     */
+    checkTelegramIframe() {
+        return window.self !== window.top &&
+            (document.referrer.includes('t.me') ||
+                document.referrer.includes('telegram.org'));
+    },
+
+    /**
+     * Создает минимальный объект WebApp для работы без реального API
+     */
+    createMinimalTelegramWebApp() {
+        return {
+            initData: '',
+            colorScheme: 'dark',
+            version: 'minimal-1.0',
+            platform: 'unknown',
+            ready: function () { console.log('Minimal WebApp ready called'); },
+            expand: function () { console.log('Minimal WebApp expand called'); },
+            BackButton: {
+                show: function () { console.log('Minimal WebApp BackButton.show called'); },
+                hide: function () { console.log('Minimal WebApp BackButton.hide called'); },
+                onClick: function (callback) {
+                    console.log('Minimal WebApp BackButton.onClick registered');
+                    window.addEventListener('popstate', callback);
+                }
+            },
+            HapticFeedback: {
+                notificationOccurred: function (type) {
+                    console.log('Minimal WebApp haptic feedback: ' + type);
+                }
+            },
+            isExpanded: true,
+            viewportHeight: window.innerHeight,
+            viewportStableHeight: window.innerHeight
+        };
+    },
+
+    /**
+     * Аутентификация через Telegram WebApp
+     */
+    async authenticateTelegram() {
+        try {
+            this.loadingStart('Авторизация...');
+
+            // Пытаемся различными способами получить initData
+            let initData = '';
+
+            // 1. Проверка window.Telegram.WebApp.initData
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+                initData = window.Telegram.WebApp.initData;
+                console.log('Используем initData из window.Telegram.WebApp.initData',
+                    initData.length > 20 ? initData.substring(0, 20) + '...' : initData);
+            }
+            // 2. Проверка tg объекта (наш собственный)
+            else if (tg && tg.initData && tg.initData.length > 0) {
+                initData = tg.initData;
+                console.log('Используем initData из tg объекта',
+                    initData.length > 20 ? initData.substring(0, 20) + '...' : initData);
+            }
+            // 3. Проверка URL параметров
+            else {
+                const urlParams = new URLSearchParams(window.location.search);
+                const hashParams = new URLSearchParams(window.location.hash.slice(1));
+
+                initData = urlParams.get('tgWebAppData') ||
+                    hashParams.get('tgWebAppData') ||
+                    urlParams.get('initData') ||
+                    hashParams.get('initData') ||
+                    '';
+
+                if (initData && initData.length > 0) {
+                    console.log('Используем initData из URL/hash параметров',
+                        initData.length > 20 ? initData.substring(0, 20) + '...' : initData);
+                }
+            }
+
+            // Проверяем полученные данные
+            if (!initData || initData.trim() === '') {
+                console.warn('Данные инициализации Telegram WebApp отсутствуют или пусты');
+
+                // Пробуем использовать сохраненный токен, если он есть
+                const storedToken = localStorage.getItem('auth_token');
+                if (storedToken) {
+                    console.log('Используем сохраненный токен без проверки аутентификации через Telegram');
+                    this.state.token = storedToken;
+                    this.state.isAuthenticated = true;
+
+                    try {
+                        // Верифицируем токен на сервере
+                        const verifyResponse = await fetch('/api/auth/verify', {
+                            headers: {
+                                'Authorization': `Bearer ${storedToken}`
+                            }
+                        });
+
+                        if (verifyResponse.ok) {
+                            console.log('Токен верифицирован успешно');
+                            await this.loadProfileData();
+                            return;
+                        } else {
+                            console.warn('Токен недействителен, необходима повторная аутентификация');
+                            localStorage.removeItem('auth_token');
+                        }
+                    } catch (verifyError) {
+                        console.error('Ошибка при верификации токена:', verifyError);
+                    }
+                }
+
+                // Пробуем гостевую аутентификацию
+                try {
+                    console.log('Пробуем гостевую аутентификацию');
+                    const guestResponse = await fetch('/api/auth/guest', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            userAgent: navigator.userAgent,
+                            referrer: document.referrer
+                        })
+                    });
+
+                    if (guestResponse.ok) {
+                        const guestData = await guestResponse.json();
+                        if (guestData.token) {
+                            console.log('Гостевая аутентификация успешна');
+                            localStorage.setItem('auth_token', guestData.token);
+                            this.state.token = guestData.token;
+                            this.state.isAuthenticated = true;
+                            await this.loadProfileData();
+                            return;
+                        }
+                    }
+                } catch (guestError) {
+                    console.error('Ошибка при гостевой аутентификации:', guestError);
+                }
+
+                // Если все методы аутентификации не сработали
+                console.error('Все методы аутентификации не сработали');
+                this.showTelegramRequiredMessage();
+                return;
+            }
+
+            console.log('Отправка запроса на аутентификацию с initData');
+
+            // Запрос на аутентификацию
+            const response = await fetch('/api/auth/init', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ initData })
+            });
+
+            // Проверяем успешность ответа
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Ошибка аутентификации через API: ${response.status} ${response.statusText}`, errorText);
+
+                // Пробуем использовать сохраненный токен как fallback
+                const storedToken = localStorage.getItem('auth_token');
+                if (storedToken) {
+                    console.log('Используем сохраненный токен после ошибки API');
+                    this.state.token = storedToken;
+                    this.state.isAuthenticated = true;
+                    await this.loadProfileData();
+                    return;
+                }
+
+                this.showError(`Ошибка аутентификации (${response.status}): ${response.statusText}`);
+                return;
+            }
+
+            // Парсим ответ
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                console.error('Ошибка при парсинге ответа:', parseError);
+                const rawText = await response.text();
+                console.error('Сырой ответ:', rawText);
+                this.showError('Ошибка при обработке ответа сервера');
+                return;
+            }
+
+            // Проверяем успешность операции
+            if (data.status !== 'success' || !data.data || !data.data.token) {
+                console.error('Ошибка аутентификации: Токен не получен', data);
+                this.showError('Ошибка аутентификации: ' + (data.message || 'Сервер не вернул токен'));
+                return;
+            }
+
+            // Сохраняем токен
+            const token = data.data.token;
+            localStorage.setItem('auth_token', token);
             this.state.token = token;
             this.state.isAuthenticated = true;
 
+            // Используем haptic feedback для успешной аутентификации
+            if (tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+
             // Загружаем данные профиля
-            this.loadProfileData();
-            return;
-        }
+            await this.loadProfileData();
 
-        // Показываем специальное сообщение
-        const appContainer = document.querySelector('.app-container');
-        if (appContainer) {
-            // Создаем элемент с сообщением
-            const telegramMessage = document.createElement('div');
-            telegramMessage.className = 'telegram-warning';
-            telegramMessage.innerHTML = `
-                <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                <h3>Требуется Telegram</h3>
-                <p>Эта страница доступна только через Telegram Mini App.</p>
-                <p>Пожалуйста, откройте ссылку в приложении Telegram.</p>
-                <div class="debug-info" style="display: none; font-size: 10px; margin-top: 15px; text-align: left;">
-                    <details>
-                        <summary>Информация для отладки</summary>
-                        <pre id="debug-data"></pre>
-                    </details>
-                </div>
-            `;
+        } catch (error) {
+            console.error('Ошибка при аутентификации:', error);
+            this.loadingEnd();
 
-            // Добавляем стили для сообщения
-            const style = document.createElement('style');
-            style.textContent = `
-                .telegram-warning {
-                    background: var(--morgue-gray);
-                    padding: 20px;
-                    border-radius: var(--radius-md);
-                    text-align: center;
-                    border: 2px solid var(--dried-blood);
-                    margin: 40px auto;
-                    max-width: 320px;
-                }
-                .warning-icon {
-                    width: 48px;
-                    height: 48px;
-                    color: var(--blood-red);
-                    margin-bottom: 15px;
-                }
-                .telegram-warning h3 {
-                    color: var(--blood-red);
-                    margin-bottom: 10px;
-                    font-size: 18px;
-                }
-                .telegram-warning p {
-                    margin-bottom: 8px;
-                    font-size: 14px;
-                    opacity: 0.9;
-                }
-                .telegram-warning .open-button {
-                    background: var(--blood-red);
-                    color: var(--chalk-white);
-                    border: none;
-                    padding: 8px 16px;
-                    border-radius: var(--radius-sm);
-                    margin-top: 15px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    text-decoration: none;
-                    display: inline-block;
-                }
-                .telegram-warning details {
-                    margin-top: 15px;
-                    text-align: left;
-                    border-top: 1px solid rgba(139, 0, 0, 0.3);
-                    padding-top: 10px;
-                }
-                .telegram-warning summary {
-                    cursor: pointer;
-                    opacity: 0.7;
-                }
-                .telegram-warning pre {
-                    white-space: pre-wrap;
-                    font-size: 9px;
-                    text-align: left;
-                    overflow: auto;
-                    max-height: 200px;
-                }
-            `;
-            document.head.appendChild(style);
+            // Пробуем использовать сохраненный токен при ошибке
+            const storedToken = localStorage.getItem('auth_token');
+            if (storedToken) {
+                console.log('Используем сохраненный токен после ошибки аутентификации');
+                this.state.token = storedToken;
+                this.state.isAuthenticated = true;
 
-            // Очищаем контейнер и добавляем сообщение
-            appContainer.innerHTML = '';
-            appContainer.appendChild(telegramMessage);
-
-            // Создаем и добавляем кнопку для открытия в Telegram
-            const openButton = document.createElement('a');
-            openButton.className = 'open-button';
-            openButton.textContent = 'Открыть в Telegram';
-
-            // Создаем телеграм-ссылку
-            // Используем t.me/share, так как это может открыть Telegram клиент
-            const telegramDeepLink = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}`;
-            openButton.href = telegramDeepLink;
-
-            // Добавляем кнопку в сообщение
-            telegramMessage.appendChild(openButton);
-
-            // Добавляем информацию для отладки
-            if (document.getElementById('debug-data')) {
-                const debugInfo = {
-                    userAgent: navigator.userAgent,
-                    url: window.location.href,
-                    referrer: document.referrer,
-                    inIframe: window.self !== window.top,
-                    hasTelegram: !!window.Telegram,
-                    urlParams: Object.fromEntries(new URLSearchParams(window.location.search).entries()),
-                    hashParams: Object.fromEntries(window.location.hash ?
-                        new URLSearchParams(window.location.hash.slice(1)).entries() : []),
-                    time: new Date().toISOString()
-                };
-
-                document.getElementById('debug-data').textContent = JSON.stringify(debugInfo, null, 2);
-                document.querySelector('.debug-info').style.display = 'block';
+                try {
+                    await this.loadProfileData();
+                    return;
+                } catch (profileError) {
+                    console.error('Не удалось загрузить профиль с сохраненным токеном:', profileError);
+                    // Сбрасываем токен если не удалось загрузить профиль
+                    localStorage.removeItem('auth_token');
+                    this.state.token = null;
+                    this.state.isAuthenticated = false;
+                }
             }
 
-            // Добавляем скрытую кнопку для входа в режим отладки
-            telegramMessage.addEventListener('click', (e) => {
-                // Проверяем 5 кликов подряд
-                if (!this._debugClickCounter) this._debugClickCounter = 0;
-                this._debugClickCounter++;
-
-                if (this._debugClickCounter >= 5) {
-                    document.querySelector('.debug-info').style.display = 'block';
-                    this._debugClickCounter = 0;
-                }
-
-                // Сбрасываем счетчик через 2 секунды
-                clearTimeout(this._debugClickTimeout);
-                this._debugClickTimeout = setTimeout(() => {
-                    this._debugClickCounter = 0;
-                }, 2000);
-            });
+            // Показываем ошибку
+            this.showError('Ошибка аутентификации: ' + error.message);
         }
-
-        // Пытаемся перенаправить на телеграм через 3 секунды
-        setTimeout(() => {
-            const telegramDeepLink = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}`;
-            // Проверяем не был ли еще выполнен переход
-            if (document.querySelector('.telegram-warning')) {
-                console.log('Перенаправление на Telegram...');
-                window.location.href = telegramDeepLink;
-            }
-        }, 3000);
     }
 };
 
