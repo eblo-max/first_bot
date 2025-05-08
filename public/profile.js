@@ -389,76 +389,44 @@ const ProfileManager = {
                     }
                 }
 
-                // Пробуем гостевую аутентификацию
+                // Прямой доступ без авторизации через dedicated API endpoint
+                console.log('Прямой доступ без данных Telegram - пытаемся получить токен через прямой доступ');
                 try {
-                    console.log('Пробуем гостевую аутентификацию');
-                    const guestResponse = await fetch('/api/auth/guest', {
+                    const directAccessResponse = await fetch('/api/auth/direct-access', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
                             userAgent: navigator.userAgent,
-                            referrer: document.referrer
+                            timestamp: new Date().toISOString()
                         })
                     });
 
-                    if (guestResponse.ok) {
-                        const guestData = await guestResponse.json();
-                        if (guestData.token) {
-                            console.log('Гостевая аутентификация успешна');
-                            localStorage.setItem('auth_token', guestData.token);
-                            this.state.token = guestData.token;
-                            this.state.isAuthenticated = true;
-                            await this.loadProfileData();
-                            return;
-                        }
+                    if (!directAccessResponse.ok) {
+                        console.error('Ошибка прямого доступа:', directAccessResponse.status, directAccessResponse.statusText);
+                        throw new Error(`Ошибка прямого доступа: ${directAccessResponse.status}`);
                     }
-                } catch (guestError) {
-                    console.error('Ошибка при гостевой аутентификации:', guestError);
-                }
 
-                // Прямой доступ без авторизации
-                console.log('Прямой доступ без данных Telegram - пытаемся загрузить базовые данные');
-                const directAccessResponse = await fetch('/api/auth/direct-access', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        userAgent: navigator.userAgent,
-                        timestamp: new Date().toISOString()
-                    })
-                }).catch(e => {
-                    console.error("Ошибка запроса прямого доступа:", e);
-                    return null;
-                });
+                    const accessData = await directAccessResponse.json();
+                    console.log('Ответ на запрос прямого доступа:', accessData);
 
-                if (directAccessResponse && directAccessResponse.ok) {
-                    try {
-                        const accessData = await directAccessResponse.json();
-                        if (accessData.token) {
-                            console.log('Получен токен прямого доступа');
-                            localStorage.setItem('auth_token', accessData.token);
-                            this.state.token = accessData.token;
-                            this.state.isAuthenticated = true;
-                            await this.loadProfileData();
-                            return;
-                        }
-                    } catch (parseError) {
-                        console.error('Ошибка при парсинге ответа прямого доступа:', parseError);
+                    if (accessData.status === 'success' && accessData.data && accessData.data.token) {
+                        console.log('Получен токен прямого доступа');
+                        localStorage.setItem('auth_token', accessData.data.token);
+                        this.state.token = accessData.data.token;
+                        this.state.isAuthenticated = true;
+                        await this.loadProfileData();
+                        return;
+                    } else {
+                        console.error('Некорректный ответ от API прямого доступа:', accessData);
+                        throw new Error('Ошибка получения токена прямого доступа');
                     }
-                }
-
-                // Если все методы аутентификации не сработали, просто пробуем загрузить профиль
-                try {
-                    await this.loadProfileData();
+                } catch (directAccessError) {
+                    console.error('Ошибка при получении прямого доступа:', directAccessError);
+                    this.showError('Не удалось получить гостевой доступ: ' + directAccessError.message);
                     return;
-                } catch (finalError) {
-                    console.error('Все методы аутентификации и прямого доступа не сработали:', finalError);
-                    this.showError('Не удалось загрузить данные профиля');
                 }
-                return;
             }
 
             console.log('Отправка запроса на аутентификацию с initData');
@@ -547,7 +515,9 @@ const ProfileManager = {
             }
 
             // Показываем ошибку
-            this.showError('Ошибка аутентификации: ' + error.message);
+            this.showError('Ошибка при аутентификации: ' + error.message);
+        } finally {
+            this.loadingEnd();
         }
     },
 
