@@ -3,9 +3,6 @@
  * Этот файл отвечает за отображение и взаимодействие с данными профиля пользователя
  */
 
-// Константа для режима отладки (true - только для локальной разработки)
-const DEBUG_MODE = false;
-
 // Объект Telegram WebApp для доступа к API Telegram Mini Apps
 let tg = null;
 
@@ -125,74 +122,7 @@ const ProfileManager = {
             this.checkAuthentication();
         } else {
             console.warn('Telegram WebApp API недоступен');
-
-            // В режиме отладки загружаем тестовые данные
-            if (DEBUG_MODE) {
-                console.log('Режим отладки активирован, загружаем тестовые данные');
-                this.loadTestData();
-                return;
-            }
-
-            this.loadingEnd();
-
-            // Показываем специальное сообщение вместо загрузки тестовых данных
-            const appContainer = document.querySelector('.app-container');
-            if (appContainer) {
-                // Создаем элемент с сообщением
-                const telegramMessage = document.createElement('div');
-                telegramMessage.className = 'telegram-warning';
-                telegramMessage.innerHTML = `
-                    <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                    <h3>Требуется Telegram</h3>
-                    <p>Эта страница доступна только через Telegram Mini App.</p>
-                    <p>Пожалуйста, откройте ссылку в приложении Telegram.</p>
-                `;
-
-                // Добавляем стили для сообщения
-                const style = document.createElement('style');
-                style.textContent = `
-                    .telegram-warning {
-                        background: var(--morgue-gray);
-                        padding: 20px;
-                        border-radius: var(--radius-md);
-                        text-align: center;
-                        border: 2px solid var(--dried-blood);
-                        margin: 40px auto;
-                        max-width: 320px;
-                    }
-                    .warning-icon {
-                        width: 48px;
-                        height: 48px;
-                        color: var(--blood-red);
-                        margin-bottom: 15px;
-                    }
-                    .telegram-warning h3 {
-                        color: var(--blood-red);
-                        margin-bottom: 10px;
-                        font-size: 18px;
-                    }
-                    .telegram-warning p {
-                        margin-bottom: 8px;
-                        font-size: 14px;
-                        opacity: 0.9;
-                    }
-                `;
-                document.head.appendChild(style);
-
-                // Очищаем контейнер и добавляем сообщение
-                appContainer.innerHTML = '';
-                appContainer.appendChild(telegramMessage);
-            }
-
-            // Пытаемся перенаправить на телеграм
-            setTimeout(() => {
-                const telegramDeepLink = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}`;
-                window.location.href = telegramDeepLink;
-            }, 3000);
+            this.showTelegramRequiredMessage();
         }
 
         // Настраиваем обработчики событий
@@ -248,7 +178,7 @@ const ProfileManager = {
     },
 
     /**
-     * Проверка аутентификации
+     * Проверка и обработка аутентификации пользователя
      */
     async checkAuthentication() {
         try {
@@ -257,8 +187,8 @@ const ProfileManager = {
             console.log('Проверка аутентификации: токен ' + (token ? 'найден' : 'не найден'));
 
             if (!token) {
-                console.log('Токен не найден, перенаправляем на авторизацию');
-                this.authenticateTelegram();
+                console.log('Токен не найден, запускаем первичную аутентификацию');
+                await this.authenticateTelegram();
                 return;
             }
 
@@ -274,8 +204,8 @@ const ProfileManager = {
 
             if (!response.ok) {
                 // Если токен недействителен, запрашиваем новый
-                console.log('Токен недействителен (статус ответа: ' + response.status + '), запрашиваем новый');
-                this.authenticateTelegram();
+                console.log('Токен недействителен (статус ответа: ' + response.status + '), запускаем повторную аутентификацию');
+                await this.authenticateTelegram();
                 return;
             }
 
@@ -284,7 +214,7 @@ const ProfileManager = {
 
             // Если токен действителен, загружаем данные профиля
             this.state.isAuthenticated = true;
-            this.loadProfileData();
+            await this.loadProfileData();
 
         } catch (error) {
             console.error('Ошибка при проверке аутентификации:', error);
@@ -294,8 +224,8 @@ const ProfileManager = {
             this.state.token = null;
             localStorage.removeItem('auth_token');
 
-            console.log('Состояние сброшено, перенаправляем на авторизацию');
-            this.authenticateTelegram();
+            console.log('Состояние сброшено, запускаем повторную аутентификацию');
+            await this.authenticateTelegram();
         }
     },
 
@@ -304,16 +234,10 @@ const ProfileManager = {
      */
     async authenticateTelegram() {
         try {
+            this.loadingStart('Авторизация...');
+
             if (!tg) {
                 console.error('Telegram WebApp API недоступен');
-
-                // В режиме отладки используем тестовые данные
-                if (DEBUG_MODE) {
-                    console.log('Режим отладки активирован, загружаем тестовые данные вместо аутентификации');
-                    this.loadTestData();
-                    return;
-                }
-
                 this.showError('Ошибка аутентификации: Telegram WebApp API недоступен');
                 return;
             }
@@ -323,42 +247,24 @@ const ProfileManager = {
             if (!initData) {
                 console.warn('Данные инициализации Telegram WebApp отсутствуют или пусты');
 
-                // Проверяем наличие тестового токена (временное решение для запуска без initData)
+                // Если на устройстве есть сохраненный токен, пробуем его использовать
                 const storedToken = localStorage.getItem('auth_token');
                 if (storedToken) {
                     console.log('Используем сохраненный токен без проверки аутентификации через Telegram');
                     this.state.token = storedToken;
                     this.state.isAuthenticated = true;
 
-                    // Загружаем данные профиля
+                    // Загружаем данные профиля с сохраненным токеном
                     await this.loadProfileData();
-                    return;
-                }
-
-                // В режиме отладки используем тестовые данные
-                if (DEBUG_MODE) {
-                    console.log('Режим отладки активирован, загружаем тестовые данные вместо аутентификации');
-                    this.loadTestData();
                     return;
                 }
 
                 this.showError('Ошибка аутентификации: Данные инициализации отсутствуют');
-
-                // Создаем тестовый токен для отладки
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    console.warn('Работаем на localhost: создаем тестовый токен');
-                    const testToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWxlZ3JhbUlkIjoiOTk5OTk5OTk5IiwiaWF0IjoxNjE2MTYxNjE2fQ.signature';
-                    localStorage.setItem('auth_token', testToken);
-                    this.state.token = testToken;
-                    this.state.isAuthenticated = true;
-                    await this.loadProfileData();
-                }
-
                 return;
             }
 
             // Запрос на аутентификацию
-            const response = await fetch('/api/auth/telegram', {
+            const response = await fetch('/api/auth/init', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -367,39 +273,38 @@ const ProfileManager = {
             });
 
             if (!response.ok) {
-                throw new Error('Ошибка аутентификации');
+                throw new Error(`Ошибка аутентификации: ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
 
-            if (data.status !== 'success') {
-                throw new Error(data.message || 'Ошибка аутентификации');
+            if (!data.token) {
+                throw new Error('Ошибка аутентификации: Токен не получен');
             }
 
             // Сохраняем токен
-            const token = data.data.token;
+            const token = data.token;
             localStorage.setItem('auth_token', token);
             this.state.token = token;
             this.state.isAuthenticated = true;
+
+            // Используем haptic feedback для успешной аутентификации
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
 
             // Загружаем данные профиля
             await this.loadProfileData();
 
         } catch (error) {
             console.error('Ошибка при аутентификации:', error);
-
-            // В режиме отладки используем тестовые данные
-            if (DEBUG_MODE) {
-                console.log('Режим отладки активирован, загружаем тестовые данные после ошибки аутентификации');
-                this.loadTestData();
-                return;
-            }
-
             this.loadingEnd();
             this.showError('Ошибка аутентификации: ' + error.message);
 
-            // Добавляем подробную информацию об ошибке в консоль для отладки
-            console.debug('Детали ошибки аутентификации:', error);
+            // Используем haptic feedback для ошибки
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('error');
+            }
 
             // Показываем сообщение о необходимости перезапустить приложение
             const appContainer = document.querySelector('.app-container');
@@ -418,7 +323,7 @@ const ProfileManager = {
                     <button class="retry-button">Попробовать снова</button>
                 `;
 
-                // Добавляем стили для сообщения об ошибке
+                // Добавляем стили и обработчик для кнопки повтора
                 const style = document.createElement('style');
                 style.textContent = `
                     .auth-error {
@@ -452,9 +357,10 @@ const ProfileManager = {
                         border: none;
                         padding: 8px 16px;
                         border-radius: var(--radius-sm);
-                        margin-top: 10px;
+                        margin-top: 12px;
                         cursor: pointer;
                         font-weight: bold;
+                        transition: background-color 0.2s ease;
                     }
                     .retry-button:hover {
                         background: var(--fresh-blood);
@@ -462,12 +368,12 @@ const ProfileManager = {
                 `;
                 document.head.appendChild(style);
 
-                // Очищаем содержимое контейнера и добавляем сообщение об ошибке
+                // Очищаем контейнер и добавляем сообщение
                 appContainer.innerHTML = '';
                 appContainer.appendChild(authErrorMessage);
 
-                // Добавляем обработчик для кнопки повторной попытки
-                const retryButton = document.querySelector('.retry-button');
+                // Добавляем обработчик для кнопки повтора
+                const retryButton = authErrorMessage.querySelector('.retry-button');
                 if (retryButton) {
                     retryButton.addEventListener('click', () => {
                         window.location.reload();
@@ -641,7 +547,7 @@ const ProfileManager = {
     },
 
     /**
-     * Загрузка данных профиля с сервера
+     * Загрузка данных профиля пользователя
      */
     async loadProfileData() {
         try {
@@ -662,12 +568,21 @@ const ProfileManager = {
             });
 
             if (!response.ok) {
+                // Если ошибка 401 - проблема с авторизацией, нужно повторно авторизоваться
+                if (response.status === 401) {
+                    console.log('Ошибка авторизации (401), запускаем повторную аутентификацию');
+                    this.state.token = null;
+                    localStorage.removeItem('auth_token');
+                    await this.authenticateTelegram();
+                    return;
+                }
+
                 console.error('Ошибка HTTP при загрузке профиля:', response.status, response.statusText);
                 throw new Error(`Ошибка загрузки данных профиля: ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
-            console.log('Ответ API профиля (статус):', data.status);
+            console.log('Ответ API профиля:', data);
 
             if (data.status !== 'success') {
                 console.error('Ошибка API при загрузке профиля:', data.message);
@@ -676,6 +591,21 @@ const ProfileManager = {
 
             this.profileData = data.data;
             console.log('Данные профиля получены:', this.profileData);
+
+            // Если это новый пользователь, используем haptic feedback для обратной связи
+            if (this.profileData.isNewUser && tg && tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+
+            // Обрабатываем случай с новым пользователем, у которого все значения по нулям
+            if (this.profileData.isNewUser || !this.profileData.stats) {
+                this.profileData.stats = {
+                    investigations: 0,
+                    solvedCases: 0,
+                    winStreak: 0,
+                    accuracy: 0
+                };
+            }
 
             // Обновляем UI с полученными данными
             this.updateProfileUI(this.profileData);
@@ -687,14 +617,6 @@ const ProfileManager = {
 
         } catch (error) {
             console.error('Ошибка при загрузке данных профиля:', error);
-
-            // В режиме отладки используем тестовые данные
-            if (DEBUG_MODE) {
-                console.log('Режим отладки активирован, загружаем тестовые данные профиля');
-                this.loadTestData();
-                return;
-            }
-
             this.loadingEnd();
             this.showError('Ошибка загрузки профиля: ' + error.message);
 
@@ -702,7 +624,7 @@ const ProfileManager = {
             console.debug('Полные данные ошибки:', error);
             console.debug('Токен авторизации присутствует:', !!this.state.token);
 
-            // Если ошибка связана с авторизацией (401), пробуем перезапустить процесс
+            // Если ошибка связана с авторизацией, пробуем перезапустить процесс
             if (error.message && (
                 error.message.includes('401') ||
                 error.message.includes('авторизации') ||
@@ -734,7 +656,7 @@ const ProfileManager = {
             });
 
             if (!response.ok) {
-                throw new Error('Ошибка загрузки таблицы лидеров');
+                throw new Error(`Ошибка загрузки таблицы лидеров: ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
@@ -751,20 +673,7 @@ const ProfileManager = {
         } catch (error) {
             console.error('Ошибка при загрузке таблицы лидеров:', error);
 
-            // В режиме отладки используем тестовые данные
-            if (DEBUG_MODE) {
-                console.log('Режим отладки активирован, загружаем тестовые данные лидерборда');
-                this.loadTestLeaderboard();
-                return;
-            }
-
-            this.showError('Ошибка загрузки таблицы лидеров: ' + error.message);
-
-            // Добавляем подробный вывод в консоль для отладки
-            console.debug('Полные данные ошибки лидерборда:', error);
-            console.debug('Запрошенный период:', period);
-
-            // Очищаем таблицу лидеров при ошибке вместо показа тестовых данных
+            // Очищаем таблицу лидеров при ошибке
             const tableContainer = document.querySelector('.leaderboard-table');
             if (tableContainer) {
                 const headerRow = tableContainer.querySelector('.leaderboard-header');
@@ -787,103 +696,78 @@ const ProfileManager = {
     },
 
     /**
-     * Загрузка тестовых данных (для отладки или при отсутствии API)
+     * Обновление интерфейса таблицы лидеров
+     * @param {Object} data - Данные таблицы лидеров
      */
-    loadTestData() {
-        console.log('Загрузка тестовых данных профиля');
+    updateLeaderboardUI(data) {
+        if (!data || !data.leaderboard) return;
 
-        // Тестовые данные профиля
-        this.profileData = {
-            name: "Александр К.",
-            rank: "ДЕТЕКТИВ",
-            telegramId: "9273551428",
-            stats: {
-                investigations: 47,
-                solvedCases: 32,
-                winStreak: 5,
-                accuracy: 68
-            },
-            achievements: [
-                {
-                    id: "first_case",
-                    name: "Первое дело",
-                    description: "Проведено первое расследование",
-                    unlockedAt: new Date()
-                },
-                {
-                    id: "rookie",
-                    name: "Новичок",
-                    description: "Проведено 5 расследований",
-                    unlockedAt: new Date()
-                },
-                {
-                    id: "expert",
-                    name: "Эксперт",
-                    description: "Проведено 50 расследований",
-                    unlockedAt: new Date()
-                }
-            ]
-        };
+        console.log('Обновление UI лидерборда с данными:', data);
 
-        // Обновляем UI
-        this.updateProfileUI(this.profileData);
+        const leaderboard = data.leaderboard;
+        const currentUser = data.currentUser;
 
-        // Загружаем тестовые данные для лидерборда
-        this.loadTestLeaderboard();
+        // Получаем контейнер для таблицы лидеров
+        const tableContainer = document.querySelector('.leaderboard-table');
+        if (!tableContainer) return;
 
-        this.loadingEnd();
-    },
+        // Очищаем текущие строки (кроме заголовка)
+        const headerRow = tableContainer.querySelector('.leaderboard-header');
+        tableContainer.innerHTML = '';
+        if (headerRow) {
+            tableContainer.appendChild(headerRow);
+        }
 
-    /**
-     * Загрузка тестовых данных таблицы лидеров
-     */
-    loadTestLeaderboard() {
-        console.log('Загрузка тестовых данных лидерборда');
+        // Если список лидеров пуст, показываем сообщение
+        if (leaderboard.length === 0) {
+            const emptyRow = document.createElement('div');
+            emptyRow.className = 'leaderboard-row';
+            emptyRow.innerHTML = `
+                <div class="rank-cell">-</div>
+                <div class="user-cell">Данные пока отсутствуют</div>
+                <div class="score-cell">-</div>
+            `;
+            tableContainer.appendChild(emptyRow);
+            return;
+        }
 
-        // Тестовые данные лидерборда
-        const leaderboardData = {
-            leaderboard: [
-                {
-                    rank: 1,
-                    name: "Марина С.",
-                    score: 8450,
-                    userRank: "ЭКСПЕРТ",
-                    isCurrentUser: false
-                },
-                {
-                    rank: 2,
-                    name: "Виктор П.",
-                    score: 7820,
-                    userRank: "СЛЕДОВАТЕЛЬ",
-                    isCurrentUser: false
-                },
-                {
-                    rank: 3,
-                    name: "Александр К.",
-                    score: 6250,
-                    userRank: "ДЕТЕКТИВ",
-                    isCurrentUser: true
-                },
-                {
-                    rank: 4,
-                    name: "Дмитрий Н.",
-                    score: 5890,
-                    userRank: "ИНСПЕКТОР",
-                    isCurrentUser: false
-                },
-                {
-                    rank: 5,
-                    name: "Анна О.",
-                    score: 4120,
-                    userRank: "ДЕТЕКТИВ",
-                    isCurrentUser: false
-                }
-            ],
-            currentUser: null // Текущий пользователь уже в списке топ-5
-        };
+        // Добавляем новые строки
+        leaderboard.forEach(entry => {
+            const row = document.createElement('div');
+            row.className = 'leaderboard-row';
 
-        // Обновляем UI с тестовыми данными
-        this.updateLeaderboardUI(leaderboardData);
+            // Если это текущий пользователь, добавляем соответствующий класс
+            if (entry.isCurrentUser) {
+                row.classList.add('current-user');
+            }
+
+            row.innerHTML = `
+                <div class="rank-cell">${entry.rank}</div>
+                <div class="user-cell">${entry.name}</div>
+                <div class="score-cell">${entry.score ? entry.score.toLocaleString() : '0'}</div>
+            `;
+
+            tableContainer.appendChild(row);
+        });
+
+        // Если текущий пользователь не в топе, добавляем его отдельно
+        if (currentUser && !leaderboard.some(entry => entry.isCurrentUser)) {
+            // Добавляем разделитель
+            const divider = document.createElement('div');
+            divider.className = 'leaderboard-divider';
+            divider.innerHTML = '...';
+            tableContainer.appendChild(divider);
+
+            // Добавляем строку текущего пользователя
+            const userRow = document.createElement('div');
+            userRow.className = 'leaderboard-row current-user';
+            userRow.innerHTML = `
+                <div class="rank-cell">${currentUser.rank}</div>
+                <div class="user-cell">${currentUser.name}</div>
+                <div class="score-cell">${currentUser.score ? currentUser.score.toLocaleString() : '0'}</div>
+            `;
+            tableContainer.appendChild(userRow);
+        }
     },
 
     /**
@@ -897,37 +781,52 @@ const ProfileManager = {
 
         // Обновляем информацию о профиле
         if (this.elements.profileName) {
-            this.elements.profileName.textContent = data.name;
+            this.elements.profileName.textContent = data.name || 'Новый детектив';
         }
 
         if (this.elements.profileBadge) {
-            this.elements.profileBadge.textContent = data.rank;
+            this.elements.profileBadge.textContent = data.rank || 'НОВИЧОК';
         }
 
         if (this.elements.profileId) {
-            this.elements.profileId.textContent = data.telegramId;
+            this.elements.profileId.textContent = data.telegramId || '-';
         }
 
-        // Обновляем статистику
-        if (this.elements.investigationsCount && data.stats) {
-            this.elements.investigationsCount.textContent = data.stats.investigations || 0;
+        // Обновляем статистику (обеспечиваем корректное отображение нулевых значений)
+        if (this.elements.investigationsCount) {
+            this.elements.investigationsCount.textContent = data.stats?.investigations !== undefined ?
+                data.stats.investigations : '0';
         }
 
-        if (this.elements.solvedCases && data.stats) {
-            this.elements.solvedCases.textContent = data.stats.solvedCases || 0;
+        if (this.elements.solvedCases) {
+            this.elements.solvedCases.textContent = data.stats?.solvedCases !== undefined ?
+                data.stats.solvedCases : '0';
         }
 
-        if (this.elements.winStreak && data.stats) {
-            this.elements.winStreak.textContent = data.stats.winStreak || 0;
+        if (this.elements.winStreak) {
+            this.elements.winStreak.textContent = data.stats?.winStreak !== undefined ?
+                data.stats.winStreak : '0';
         }
 
-        if (this.elements.accuracy && data.stats) {
-            this.elements.accuracy.textContent = data.stats.accuracy ? `${data.stats.accuracy}%` : '0%';
+        if (this.elements.accuracy) {
+            const accuracyValue = data.stats?.accuracy !== undefined ? data.stats.accuracy : 0;
+            this.elements.accuracy.textContent = `${accuracyValue}%`;
+        }
+
+        // Если это новый пользователь, добавляем особый класс
+        if (data.isNewUser) {
+            document.body.classList.add('new-user');
+        } else {
+            document.body.classList.remove('new-user');
         }
 
         // Обновляем достижения
         if (data.achievements) {
             this.updateAchievementsUI(data.achievements);
+        } else {
+            // Для новых пользователей без достижений показываем все как заблокированные
+            const emptyAchievements = [];
+            this.updateAchievementsUI(emptyAchievements);
         }
     },
 
@@ -996,65 +895,69 @@ const ProfileManager = {
     },
 
     /**
-     * Обновление интерфейса таблицы лидеров
-     * @param {Object} data - Данные таблицы лидеров
+     * Отобразить сообщение о том, что требуется Telegram
      */
-    updateLeaderboardUI(data) {
-        if (!data || !data.leaderboard) return;
+    showTelegramRequiredMessage() {
+        this.loadingEnd();
 
-        console.log('Обновление UI лидерборда с данными:', data);
-
-        const leaderboard = data.leaderboard;
-        const currentUser = data.currentUser;
-
-        // Получаем контейнер для таблицы лидеров
-        const tableContainer = document.querySelector('.leaderboard-table');
-        if (!tableContainer) return;
-
-        // Очищаем текущие строки (кроме заголовка)
-        const headerRow = tableContainer.querySelector('.leaderboard-header');
-        tableContainer.innerHTML = '';
-        if (headerRow) {
-            tableContainer.appendChild(headerRow);
-        }
-
-        // Добавляем новые строки
-        leaderboard.forEach(entry => {
-            const row = document.createElement('div');
-            row.className = 'leaderboard-row';
-
-            // Если это текущий пользователь, добавляем соответствующий класс
-            if (entry.isCurrentUser) {
-                row.classList.add('current-user');
-            }
-
-            row.innerHTML = `
-                <div class="rank-cell">${entry.rank}</div>
-                <div class="user-cell">${entry.name}</div>
-                <div class="score-cell">${entry.score ? entry.score.toLocaleString() : '0'}</div>
+        // Показываем специальное сообщение
+        const appContainer = document.querySelector('.app-container');
+        if (appContainer) {
+            // Создаем элемент с сообщением
+            const telegramMessage = document.createElement('div');
+            telegramMessage.className = 'telegram-warning';
+            telegramMessage.innerHTML = `
+                <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <h3>Требуется Telegram</h3>
+                <p>Эта страница доступна только через Telegram Mini App.</p>
+                <p>Пожалуйста, откройте ссылку в приложении Telegram.</p>
             `;
 
-            tableContainer.appendChild(row);
-        });
-
-        // Если текущий пользователь не в топе, добавляем его отдельно
-        if (currentUser && !leaderboard.some(entry => entry.isCurrentUser)) {
-            // Добавляем разделитель
-            const divider = document.createElement('div');
-            divider.className = 'leaderboard-divider';
-            divider.innerHTML = '...';
-            tableContainer.appendChild(divider);
-
-            // Добавляем строку текущего пользователя
-            const userRow = document.createElement('div');
-            userRow.className = 'leaderboard-row current-user';
-            userRow.innerHTML = `
-                <div class="rank-cell">${currentUser.rank}</div>
-                <div class="user-cell">${currentUser.name}</div>
-                <div class="score-cell">${currentUser.score ? currentUser.score.toLocaleString() : '0'}</div>
+            // Добавляем стили для сообщения
+            const style = document.createElement('style');
+            style.textContent = `
+                .telegram-warning {
+                    background: var(--morgue-gray);
+                    padding: 20px;
+                    border-radius: var(--radius-md);
+                    text-align: center;
+                    border: 2px solid var(--dried-blood);
+                    margin: 40px auto;
+                    max-width: 320px;
+                }
+                .warning-icon {
+                    width: 48px;
+                    height: 48px;
+                    color: var(--blood-red);
+                    margin-bottom: 15px;
+                }
+                .telegram-warning h3 {
+                    color: var(--blood-red);
+                    margin-bottom: 10px;
+                    font-size: 18px;
+                }
+                .telegram-warning p {
+                    margin-bottom: 8px;
+                    font-size: 14px;
+                    opacity: 0.9;
+                }
             `;
-            tableContainer.appendChild(userRow);
+            document.head.appendChild(style);
+
+            // Очищаем контейнер и добавляем сообщение
+            appContainer.innerHTML = '';
+            appContainer.appendChild(telegramMessage);
         }
+
+        // Пытаемся перенаправить на телеграм
+        setTimeout(() => {
+            const telegramDeepLink = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}`;
+            window.location.href = telegramDeepLink;
+        }, 3000);
     }
 };
 
