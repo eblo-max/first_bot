@@ -8,6 +8,7 @@ const User = require('../models/User');
 exports.authenticateTelegram = async (req, res) => {
     try {
         const { initData } = req.body;
+        console.log('Получен запрос на аутентификацию с initData:', initData ? `${initData.substring(0, 30)}...` : 'отсутствует');
 
         if (!initData) {
             return res.status(400).json({
@@ -35,6 +36,7 @@ exports.authenticateTelegram = async (req, res) => {
 
         // Проверяем совпадение хэшей
         if (calculatedHash !== hash) {
+            console.error('Неверная подпись данных Telegram WebApp. Ожидалось:', calculatedHash, 'Получено:', hash);
             return res.status(401).json({
                 status: 'error',
                 message: 'Неверная подпись данных Telegram WebApp'
@@ -43,19 +45,52 @@ exports.authenticateTelegram = async (req, res) => {
 
         // Извлекаем данные пользователя
         let user;
+        let userStr = '';
         try {
-            const userStr = params.get('user');
+            userStr = params.get('user');
+            console.log('Данные пользователя из Telegram params:', userStr);
+
             if (userStr) {
                 user = JSON.parse(userStr);
+            } else {
+                // Попытка извлечь данные из другого параметра (startParam или initDataUnsafe)
+                const startParam = params.get('start_param');
+                if (startParam && startParam.startsWith('{')) {
+                    try {
+                        user = JSON.parse(startParam);
+                        console.log('Извлечены данные пользователя из start_param');
+                    } catch (e) {
+                        console.error('Ошибка при парсинге start_param:', e);
+                    }
+                }
             }
         } catch (e) {
-            console.error('Ошибка при парсинге данных пользователя:', e);
+            console.error('Ошибка при парсинге данных пользователя:', e, 'Исходная строка:', userStr);
         }
 
         if (!user || !user.id) {
+            console.error('Отсутствуют данные пользователя Telegram после парсинга.');
+
+            // Проверка доп. данных из запроса, если есть
+            if (req.body.telegramUser) {
+                user = req.body.telegramUser;
+                console.log('Используем данные из req.body.telegramUser:', user);
+            } else if (req.body.user) {
+                user = req.body.user;
+                console.log('Используем данные из req.body.user:', user);
+            } else {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Отсутствуют данные пользователя Telegram'
+                });
+            }
+        }
+
+        // Проверяем, что id пользователя существует и конвертируем в строку
+        if (!user.id) {
             return res.status(400).json({
                 status: 'error',
-                message: 'Отсутствуют данные пользователя Telegram'
+                message: 'Отсутствует ID пользователя Telegram'
             });
         }
 
@@ -67,6 +102,8 @@ exports.authenticateTelegram = async (req, res) => {
             lastName: user.last_name || null,
             languageCode: user.language_code || 'ru'
         };
+
+        console.log('Данные пользователя Telegram для сохранения:', userInfo);
 
         // Создаем или обновляем пользователя в базе данных
         let dbUser = await User.findOne({ telegramId: userInfo.telegramId });
@@ -83,6 +120,7 @@ exports.authenticateTelegram = async (req, res) => {
             });
 
             await dbUser.save();
+            console.log(`Создан новый пользователь Telegram: ${userInfo.telegramId}`);
         } else {
             // Обновляем данные пользователя
             dbUser.username = userInfo.username;
@@ -91,6 +129,7 @@ exports.authenticateTelegram = async (req, res) => {
             dbUser.lastVisit = new Date();
 
             await dbUser.save();
+            console.log(`Обновлен существующий пользователь Telegram: ${userInfo.telegramId}`);
         }
 
         // Генерируем JWT токен
@@ -105,6 +144,11 @@ exports.authenticateTelegram = async (req, res) => {
             { expiresIn: '7d' }
         );
 
+        // Формируем имя пользователя для отображения
+        const displayName = userInfo.firstName
+            ? `${userInfo.firstName} ${userInfo.lastName || ''}`.trim()
+            : (dbUser.nickname || userInfo.username || 'Аноним');
+
         // Возвращаем токен и данные пользователя
         return res.status(200).json({
             status: 'success',
@@ -112,7 +156,10 @@ exports.authenticateTelegram = async (req, res) => {
                 token,
                 user: {
                     telegramId: dbUser.telegramId,
-                    name: userInfo.firstName ? `${userInfo.firstName} ${userInfo.lastName || ''}`.trim() : (dbUser.nickname || userInfo.username || 'Аноним'),
+                    name: displayName,
+                    firstName: userInfo.firstName,
+                    lastName: userInfo.lastName,
+                    username: userInfo.username,
                     rank: dbUser.rank,
                     stats: dbUser.stats,
                     totalScore: dbUser.stats.totalScore

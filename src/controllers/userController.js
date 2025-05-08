@@ -6,12 +6,14 @@ const User = require('../models/User');
 exports.getProfile = async (req, res) => {
     try {
         const telegramId = req.user.telegramId;
+        console.log(`Запрос профиля для пользователя с telegramId: ${telegramId}`);
 
         // Находим пользователя в базе данных
         let user = await User.findOne({ telegramId });
 
         // Если пользователь не найден, возвращаем ошибку
         if (!user) {
+            console.error(`Пользователь с telegramId ${telegramId} не найден в базе данных`);
             return res.status(404).json({
                 status: 'error',
                 message: 'Пользователь не найден'
@@ -22,10 +24,43 @@ exports.getProfile = async (req, res) => {
         user.lastVisit = new Date();
         await user.save();
 
+        // Информация из JWT токена для подстраховки
+        const firstName = req.user.firstName || user.firstName;
+        const lastName = req.user.lastName || user.lastName;
+        const username = req.user.username || user.username;
+
+        // Если в БД не сохранены имя/фамилия, но они есть в токене, обновляем
+        if (req.user.firstName && (!user.firstName || user.firstName !== req.user.firstName)) {
+            user.firstName = req.user.firstName;
+            console.log(`Обновлено имя пользователя из токена: ${req.user.firstName}`);
+            await user.save();
+        }
+
+        if (req.user.lastName && (!user.lastName || user.lastName !== req.user.lastName)) {
+            user.lastName = req.user.lastName;
+            console.log(`Обновлена фамилия пользователя из токена: ${req.user.lastName}`);
+            await user.save();
+        }
+
+        if (req.user.username && (!user.username || user.username !== req.user.username)) {
+            user.username = req.user.username;
+            console.log(`Обновлен username пользователя из токена: ${req.user.username}`);
+            await user.save();
+        }
+
+        // Формируем отображаемое имя
+        const displayName = firstName ?
+            `${firstName} ${lastName || ''}`.trim() :
+            (user.nickname || username || `Гость ${telegramId.substring(0, 5)}`);
+
         // Формируем ответ
         const profile = {
             telegramId: user.telegramId,
-            name: user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user.nickname || user.username || 'Аноним'),
+            name: displayName,
+            firstName: firstName,
+            lastName: lastName,
+            username: username,
+            nickname: user.nickname,
             rank: user.rank,
             stats: {
                 investigations: user.stats.investigations,
@@ -43,6 +78,8 @@ exports.getProfile = async (req, res) => {
             registeredAt: user.registeredAt,
             lastVisit: user.lastVisit
         };
+
+        console.log(`Профиль успешно загружен для пользователя ${displayName} (${telegramId})`);
 
         return res.status(200).json({
             status: 'success',
