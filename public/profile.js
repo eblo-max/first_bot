@@ -84,46 +84,65 @@ const ProfileManager = {
             // Создаем минимальный объект для WebView в Telegram
             console.log('Обнаружен WebView Telegram клиента, используем минимальный API');
             tg = this.createMinimalTelegramWebApp();
+        } else if (this.checkTelegramIframe()) {
+            // Если открыто внутри iframe от Telegram
+            console.log('Обнаружен iframe Telegram, используем минимальный API');
+            tg = this.createMinimalTelegramWebApp();
         }
 
         // Дополнительное логирование для отладки
         console.log('User Agent:', navigator.userAgent);
         console.log('Referrer:', document.referrer);
         console.log('URL параметры:', window.location.search);
+        console.log('URL hash:', window.location.hash);
+        console.log('Внутри iframe:', window.self !== window.top);
 
-        if (tg) {
-            console.log('Telegram WebApp API инициализирован успешно, версия:', tg.version || 'неизвестно');
-            console.log('Тема клиента:', tg.colorScheme || 'не определена');
+        // Всегда создаем минимальный объект, даже если предыдущие проверки не прошли
+        // Это позволит работать приложению даже в нестандартном окружении Telegram
+        if (!tg) {
+            console.log('Создаем запасной минимальный Telegram WebApp объект');
+            tg = this.createMinimalTelegramWebApp();
 
-            // Расширяем WebApp на весь экран
-            if (tg.expand) {
-                tg.expand();
+            // Проверка является ли это прямым открытием в браузере вне Telegram
+            const isBrowserDirect = !document.referrer.includes('telegram') &&
+                !navigator.userAgent.toLowerCase().includes('telegram') &&
+                window.self === window.top;
+
+            if (isBrowserDirect) {
+                console.warn('Вероятно, страница открыта напрямую в браузере');
+                this.showTelegramRequiredMessage();
+                return;
             }
-
-            // Показываем кнопку "Назад" при открытии профиля
-            if (tg.BackButton && tg.BackButton.show) {
-                tg.BackButton.show();
-
-                // Настраиваем обработчик кнопки "Назад"
-                tg.BackButton.onClick(() => {
-                    window.location.href = '/';
-                });
-            }
-
-            // Применяем тему Telegram
-            document.body.setAttribute('data-theme', tg.colorScheme || 'dark');
-
-            // Сообщаем Telegram, что приложение готово
-            if (tg.ready) {
-                tg.ready();
-            }
-
-            // Получаем и проверяем токен из localStorage
-            this.checkAuthentication();
-        } else {
-            console.warn('Telegram WebApp API недоступен');
-            this.showTelegramRequiredMessage();
         }
+
+        console.log('Telegram WebApp API инициализирован успешно, версия:', tg.version || 'неизвестно');
+        console.log('Тема клиента:', tg.colorScheme || 'не определена');
+
+        // Расширяем WebApp на весь экран
+        if (tg.expand) {
+            tg.expand();
+        }
+
+        // Показываем кнопку "Назад" при открытии профиля
+        if (tg.BackButton && tg.BackButton.show) {
+            tg.BackButton.show();
+
+            // Настраиваем обработчик кнопки "Назад"
+            tg.BackButton.onClick(() => {
+                window.location.href = '/';
+            });
+        }
+
+        // Применяем тему Telegram
+        document.body.setAttribute('data-theme', tg.colorScheme || 'dark');
+
+        // Сообщаем Telegram, что приложение готово
+        if (tg.ready) {
+            tg.ready();
+        }
+
+        // Получаем и проверяем токен из localStorage
+        this.checkAuthentication();
 
         // Настраиваем обработчики событий
         this.setupEventListeners();
@@ -135,9 +154,17 @@ const ProfileManager = {
     checkTelegramUrlParams() {
         // Проверяем, есть ли в URL параметры Telegram WebApp
         const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+
+        // Проверяем параметры в URL и в хеше
         return urlParams.has('tgWebAppData') ||
             urlParams.has('tgWebAppStartParam') ||
-            urlParams.has('tgWebAppVersion');
+            urlParams.has('tgWebAppVersion') ||
+            urlParams.has('tgWebAppPlatform') ||
+            hashParams.has('tgWebAppData') ||
+            hashParams.has('tgWebAppStartParam') ||
+            hashParams.has('tgWebAppVersion') ||
+            hashParams.has('tgWebAppPlatform');
     },
 
     /**
@@ -149,7 +176,16 @@ const ProfileManager = {
             userAgent.includes('webview') ||
             userAgent.includes('tgweb') ||
             document.referrer.includes('telegram') ||
+            document.referrer.includes('t.me') ||
             window.parent !== window;
+    },
+
+    /**
+     * Проверка открытия в iframe от Telegram
+     */
+    checkTelegramIframe() {
+        return window.self !== window.top &&
+            (document.referrer.includes('telegram') || document.referrer.includes('t.me'));
     },
 
     /**
@@ -157,22 +193,46 @@ const ProfileManager = {
      */
     createMinimalTelegramWebApp() {
         const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+
+        // Попытаемся извлечь данные как из URL параметров, так и из хеша
+        const getParam = (name) => {
+            return urlParams.get(name) || hashParams.get(name) || '';
+        };
+
         return {
-            initData: urlParams.get('tgWebAppData') || '',
-            colorScheme: urlParams.get('tgWebAppTheme') === 'dark' ? 'dark' : 'light',
-            version: urlParams.get('tgWebAppVersion') || '1.0',
-            ready: function () { console.log('Minimal Telegram WebApp ready'); },
-            expand: function () { console.log('Minimal Telegram WebApp expand'); },
+            initData: getParam('tgWebAppData') || '',
+            colorScheme: getParam('tgWebAppTheme') === 'dark' ? 'dark' : 'light',
+            version: getParam('tgWebAppVersion') || '1.0',
+            ready: function () {
+                console.log('Minimal Telegram WebApp ready');
+                // Отправляем событие готовности в родительское окно (если оно есть)
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ event: 'web_app_ready' }, '*');
+                }
+            },
+            expand: function () {
+                console.log('Minimal Telegram WebApp expand');
+                // Попытка сделать окно максимальным
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ event: 'web_app_expand' }, '*');
+                }
+            },
             BackButton: {
                 show: function () { console.log('BackButton show'); },
                 onClick: function (callback) {
                     if (callback) {
                         document.addEventListener('backbutton', callback);
+                        // Добавляем обработчик для ESC клавиши
+                        document.addEventListener('keydown', (e) => {
+                            if (e.key === 'Escape') callback();
+                        });
                     }
                 }
             },
             HapticFeedback: {
-                impactOccurred: function () { /* No-op */ }
+                impactOccurred: function () { /* No-op */ },
+                notificationOccurred: function () { /* No-op */ }
             }
         };
     },
@@ -945,18 +1005,46 @@ const ProfileManager = {
                     font-size: 14px;
                     opacity: 0.9;
                 }
+                .telegram-warning .open-button {
+                    background: var(--blood-red);
+                    color: var(--chalk-white);
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: var(--radius-sm);
+                    margin-top: 15px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    text-decoration: none;
+                    display: inline-block;
+                }
             `;
             document.head.appendChild(style);
 
             // Очищаем контейнер и добавляем сообщение
             appContainer.innerHTML = '';
             appContainer.appendChild(telegramMessage);
+
+            // Создаем и добавляем кнопку для открытия в Telegram
+            const openButton = document.createElement('a');
+            openButton.className = 'open-button';
+            openButton.textContent = 'Открыть в Telegram';
+
+            // Создаем телеграм-ссылку
+            const telegramDeepLink = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}`;
+            openButton.href = telegramDeepLink;
+
+            // Добавляем кнопку в сообщение
+            telegramMessage.appendChild(openButton);
         }
 
-        // Пытаемся перенаправить на телеграм
+        // Пытаемся перенаправить на телеграм через 3 секунды
         setTimeout(() => {
             const telegramDeepLink = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}`;
-            window.location.href = telegramDeepLink;
+            // Проверяем не был ли еще выполнен переход
+            if (document.querySelector('.telegram-warning')) {
+                console.log('Перенаправление на Telegram...');
+                window.location.href = telegramDeepLink;
+            }
         }, 3000);
     }
 };
