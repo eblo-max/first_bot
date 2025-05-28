@@ -219,13 +219,22 @@ function handleTestMode() {
  */
 async function authorize() {
     try {
+        console.log('Начинаем авторизацию через Telegram WebApp...');
+
+        // Получаем данные пользователя из Telegram
+        const telegramUser = tg.initDataUnsafe.user;
+        console.log('Данные пользователя из Telegram:', telegramUser);
+
         // Отправляем запрос на авторизацию
         const response = await fetch('/api/auth/init', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ initData: tg.initData })
+            body: JSON.stringify({
+                initData: tg.initData,
+                telegramUser: telegramUser // Передаем данные пользователя отдельно для большей надежности
+            })
         });
 
         if (!response.ok) {
@@ -233,17 +242,40 @@ async function authorize() {
         }
 
         const data = await response.json();
+        console.log('Ответ сервера при авторизации:', data);
 
-        // Сохраняем токен
-        GameState.data.token = data.token;
-        localStorage.setItem('token', data.token);
+        if (data.status === 'success') {
+            // Сохраняем токен
+            GameState.data.token = data.data.token;
+            localStorage.setItem('token', data.data.token);
 
-        // Отмечаем, что инициализация завершена
-        isInitialized = true;
+            // Сохраняем данные пользователя в состоянии
+            GameState.data.user = {
+                telegramId: data.data.user.telegramId,
+                name: data.data.user.name,
+                firstName: data.data.user.firstName,
+                lastName: data.data.user.lastName,
+                username: data.data.user.username,
+                rank: data.data.user.rank,
+                stats: data.data.user.stats,
+                totalScore: data.data.user.totalScore
+            };
 
-        // Прячем экран загрузки
-        showContent();
-        console.log('Авторизация успешна, токен получен');
+            console.log('Пользователь авторизован:', GameState.data.user.name);
+
+            // Отмечаем, что инициализация завершена
+            isInitialized = true;
+
+            // Прячем экран загрузки
+            showContent();
+
+            // Обновляем отображение информации о пользователе
+            if (typeof updateUserInfo === 'function') {
+                updateUserInfo();
+            }
+        } else {
+            throw new Error(data.message || 'Неизвестная ошибка авторизации');
+        }
     } catch (error) {
         console.error('Ошибка авторизации:', error);
 

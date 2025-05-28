@@ -162,245 +162,31 @@ const seedDatabase = async () => {
     try {
         console.log('Проверяем необходимость заполнения базы тестовыми данными...');
 
-        // Проверяем наличие пользователей в базе
-        const userCount = await User.countDocuments();
+        // Удаляем всех тестовых пользователей при запуске
+        console.log('Очищаем базу от тестовых пользователей...');
+        await User.deleteMany({}); // Удаляем всех пользователей - реальные будут создаваться через Telegram
+        console.log('Тестовые пользователи удалены из базы данных');
 
-        // Если пользователей нет, создаем их
-        if (userCount === 0) {
-            console.log('База данных пуста, создаем тестовых пользователей...');
+        // Проверяем количество историй в базе
+        const storyCount = await Story.countDocuments();
+        console.log(`Найдено историй в базе: ${storyCount}`);
 
-            // Массив тестовых пользователей
-            const testUsers = [
-                {
-                    telegramId: '123456789',
-                    username: 'marina_s',
-                    firstName: 'Марина',
-                    lastName: 'С.',
-                    rank: 'ЭКСПЕРТ',
-                    stats: {
-                        investigations: 87,
-                        solvedCases: 71,
-                        winStreak: 4,
-                        maxWinStreak: 7,
-                        accuracy: 82,
-                        totalScore: 8450
-                    },
-                    achievements: [
-                        {
-                            id: 'first_case',
-                            name: 'Первое дело',
-                            description: 'Проведено первое расследование',
-                            unlockedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // 30 дней назад
-                        },
-                        {
-                            id: 'rookie',
-                            name: 'Новичок',
-                            description: 'Проведено 5 расследований',
-                            unlockedAt: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000)
-                        },
-                        {
-                            id: 'expert',
-                            name: 'Эксперт',
-                            description: 'Проведено 50 расследований',
-                            unlockedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
-                        },
-                        {
-                            id: 'sharp_eye',
-                            name: 'Меткий глаз',
-                            description: 'Достигнута точность 80% минимум в 10 играх',
-                            unlockedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-                        },
-                        {
-                            id: 'maniac',
-                            name: 'Маньяк',
-                            description: 'Набрано 1000 очков',
-                            unlockedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)
-                        }
-                    ]
-                },
-                {
-                    telegramId: '987654321',
-                    username: 'viktor_p',
-                    firstName: 'Виктор',
-                    lastName: 'П.',
-                    rank: 'СЛЕДОВАТЕЛЬ',
-                    stats: {
-                        investigations: 73,
-                        solvedCases: 54,
-                        winStreak: 2,
-                        maxWinStreak: 5,
-                        accuracy: 74,
-                        totalScore: 7820
-                    },
-                    achievements: [
-                        {
-                            id: 'first_case',
-                            name: 'Первое дело',
-                            description: 'Проведено первое расследование',
-                            unlockedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000)
-                        },
-                        {
-                            id: 'rookie',
-                            name: 'Новичок',
-                            description: 'Проведено 5 расследований',
-                            unlockedAt: new Date(Date.now() - 24 * 24 * 60 * 60 * 1000)
-                        },
-                        {
-                            id: 'expert',
-                            name: 'Эксперт',
-                            description: 'Проведено 50 расследований',
-                            unlockedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
-                        },
-                        {
-                            id: 'maniac',
-                            name: 'Маньяк',
-                            description: 'Набрано 1000 очков',
-                            unlockedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000)
-                        }
-                    ]
-                },
-                {
-                    telegramId: '555666777',
-                    username: 'alex_k',
-                    firstName: 'Александр',
-                    lastName: 'К.',
-                    rank: 'ДЕТЕКТИВ',
-                    stats: {
-                        investigations: 47,
-                        solvedCases: 32,
-                        winStreak: 5,
-                        maxWinStreak: 5,
-                        accuracy: 68,
-                        totalScore: 6250
-                    },
-                    achievements: [
-                        {
-                            id: 'first_case',
-                            name: 'Первое дело',
-                            description: 'Проведено первое расследование',
-                            unlockedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)
-                        },
-                        {
-                            id: 'rookie',
-                            name: 'Новичок',
-                            description: 'Проведено 5 расследований',
-                            unlockedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
-                        }
-                    ]
-                },
-                {
-                    telegramId: '111222333',
-                    username: 'dmitry_n',
-                    firstName: 'Дмитрий',
-                    lastName: 'Н.',
-                    rank: 'ИНСПЕКТОР',
-                    stats: {
-                        investigations: 52,
-                        solvedCases: 38,
-                        winStreak: 1,
-                        maxWinStreak: 4,
-                        accuracy: 73,
-                        totalScore: 5890
-                    },
-                    achievements: [
-                        {
-                            id: 'first_case',
-                            name: 'Первое дело',
-                            description: 'Проведено первое расследование',
-                            unlockedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000)
-                        },
-                        {
-                            id: 'rookie',
-                            name: 'Новичок',
-                            description: 'Проведено 5 расследований',
-                            unlockedAt: new Date(Date.now() - 19 * 24 * 60 * 60 * 1000)
-                        },
-                        {
-                            id: 'expert',
-                            name: 'Эксперт',
-                            description: 'Проведено 50 расследований',
-                            unlockedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-                        }
-                    ]
-                },
-                {
-                    telegramId: '444555666',
-                    username: 'anna_o',
-                    firstName: 'Анна',
-                    lastName: 'О.',
-                    rank: 'ДЕТЕКТИВ',
-                    stats: {
-                        investigations: 38,
-                        solvedCases: 25,
-                        winStreak: 0,
-                        maxWinStreak: 3,
-                        accuracy: 66,
-                        totalScore: 4120
-                    },
-                    achievements: [
-                        {
-                            id: 'first_case',
-                            name: 'Первое дело',
-                            description: 'Проведено первое расследование',
-                            unlockedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000)
-                        },
-                        {
-                            id: 'rookie',
-                            name: 'Новичок',
-                            description: 'Проведено 5 расследований',
-                            unlockedAt: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000)
-                        }
-                    ]
-                }
-            ];
+        // Если историй мало, загружаем новые
+        if (storyCount < 20) {
+            console.log('Загружаем истории в базу данных...');
 
-            // Добавляем регистрационные данные и историю игр для каждого пользователя
-            testUsers.forEach(user => {
-                user.registeredAt = new Date(Date.now() - (Math.floor(Math.random() * 30) + 10) * 24 * 60 * 60 * 1000);
-                user.lastVisit = new Date(Date.now() - Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000);
+            // Загружаем истории из отдельного файла
+            await seedStories();
 
-                // Добавляем историю игр
-                user.gameHistory = [];
-                const gamesCount = user.stats.investigations;
-
-                for (let i = 0; i < Math.min(gamesCount, 20); i++) {
-                    // Расчет примерной даты игры, чтобы они были распределены равномерно
-                    const gameDate = new Date(
-                        user.registeredAt.getTime() +
-                        (user.lastVisit.getTime() - user.registeredAt.getTime()) * (i / gamesCount)
-                    );
-
-                    // Расчет случайного количества правильных ответов и общего счета
-                    const totalQuestions = Math.floor(Math.random() * 3) + 3; // От 3 до 5 вопросов
-                    const correctAnswers = Math.floor(Math.random() * (totalQuestions + 1)); // От 0 до totalQuestions
-                    const score = correctAnswers * (Math.floor(Math.random() * 50) + 150); // 150-200 очков за правильный ответ
-
-                    user.gameHistory.push({
-                        gameId: `game_${Date.now() - Math.floor(Math.random() * 1000000)}_${Math.floor(Math.random() * 10000)}`,
-                        date: gameDate,
-                        score,
-                        correctAnswers,
-                        totalQuestions
-                    });
-                }
-
-                // Сортируем историю игр по дате (от новых к старым)
-                user.gameHistory.sort((a, b) => b.date - a.date);
-            });
-
-            // Создаем пользователей в базе данных
-            await User.insertMany(testUsers);
-
-            console.log(`Успешно создано ${testUsers.length} тестовых пользователей.`);
+            console.log('Истории успешно загружены в базу данных');
         } else {
-            console.log(`База данных уже содержит ${userCount} пользователей, пропускаем создание тестовых данных.`);
+            console.log('База данных уже содержит достаточное количество историй');
         }
 
-        // Заполняем базу данных историями
-        await seedStories();
+        console.log('Инициализация базы данных завершена');
 
     } catch (error) {
-        console.error('Ошибка при заполнении базы данных тестовыми данными:', error);
+        console.error('Ошибка при заполнении базы тестовыми данными:', error);
     }
 };
 

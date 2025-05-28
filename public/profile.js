@@ -849,99 +849,64 @@ const ProfileManager = {
         try {
             this.loadingStart('Загрузка профиля...');
 
-            if (!this.state.token) {
-                console.error('Ошибка загрузки профиля: токен авторизации отсутствует');
-                throw new Error('Токен авторизации отсутствует');
-            }
+            // Получаем токен из localStorage
+            const token = localStorage.getItem('auth_token');
 
-            console.log('Запрос данных профиля с токеном:', this.state.token.substring(0, 10) + '...');
+            if (!token) {
+                throw new Error('Отсутствует токен авторизации');
+            }
 
             // Запрашиваем данные профиля с сервера
             const response = await fetch('/api/user/profile', {
+                method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${this.state.token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
             });
 
-            if (!response.ok) {
-                // Если ошибка 401 - проблема с авторизацией, нужно повторно авторизоваться
-                if (response.status === 401) {
-                    console.log('Ошибка авторизации (401), запускаем повторную аутентификацию');
-                    this.state.token = null;
-                    localStorage.removeItem('auth_token');
-                    await this.authenticateTelegram();
-                    return;
-                }
+            if (response.status === 401) {
+                // Токен недействителен, перенаправляем на авторизацию
+                localStorage.removeItem('auth_token');
+                window.location.href = '/';
+                return;
+            }
 
-                console.error('Ошибка HTTP при загрузке профиля:', response.status, response.statusText);
-                throw new Error(`Ошибка загрузки данных профиля: ${response.status} ${response.statusText}`);
+            if (!response.ok) {
+                throw new Error(`Ошибка сервера: ${response.status}`);
             }
 
             const data = await response.json();
-            console.log('Ответ API профиля:', data);
 
-            if (data.status !== 'success') {
-                console.error('Ошибка API при загрузке профиля:', data.message);
-                throw new Error(data.message || 'Ошибка загрузки данных профиля');
+            if (data.status === 'success') {
+                // Сохраняем данные профиля
+                this.profileData = data.data;
+                console.log('Данные профиля загружены:', this.profileData);
+
+                // Обновляем интерфейс профиля
+                this.updateProfileUI(this.profileData);
+
+                // Загружаем таблицу лидеров
+                await this.loadLeaderboard();
+
+            } else {
+                throw new Error(data.message || 'Ошибка при загрузке профиля');
             }
-
-            // В структуре API ответ лежит в поле data
-            this.profileData = data.data;
-            console.log('Данные профиля получены:', this.profileData);
-
-            // Проверяем, есть ли базовые поля в профиле
-            if (!this.profileData) {
-                console.error('Полученный профиль пуст');
-                this.profileData = {
-                    name: 'Незнакомец',
-                    telegramId: 'unknown',
-                    rank: 'ГОСТЬ',
-                    stats: {
-                        investigations: 0,
-                        solvedCases: 0,
-                        winStreak: 0,
-                        accuracy: 0
-                    }
-                };
-            }
-
-            // Обрабатываем случай с новым пользователем, у которого все значения по нулям
-            if (!this.profileData.stats) {
-                this.profileData.stats = {
-                    investigations: 0,
-                    solvedCases: 0,
-                    winStreak: 0,
-                    accuracy: 0
-                };
-            }
-
-            // Обновляем UI с полученными данными
-            this.updateProfileUI(this.profileData);
-
-            // Загружаем данные лидерборда
-            await this.loadLeaderboard(this.state.currentLeaderboardPeriod);
-
-            this.loadingEnd();
 
         } catch (error) {
-            console.error('Ошибка при загрузке данных профиля:', error);
-            this.loadingEnd();
+            console.error('Ошибка загрузки профиля:', error);
 
-            // Показываем ошибку
-            this.showError('Ошибка загрузки профиля: ' + error.message);
+            // Показываем сообщение об ошибке
+            this.showError('Не удалось загрузить данные профиля. Проверьте подключение к интернету.');
 
-            // Если ошибка связана с авторизацией, пробуем перезапустить процесс
-            if (error.message && (
-                error.message.includes('401') ||
-                error.message.includes('403') ||
-                error.message.includes('авторизаци') ||
-                error.message.includes('токен')
-            )) {
-                console.log('Обнаружена ошибка авторизации, пробуем повторно аутентифицировать пользователя');
-                this.state.token = null;
-                localStorage.removeItem('auth_token');
-                setTimeout(() => this.authenticateTelegram(), 1000);
+            // Если это ошибка авторизации, возвращаемся на главную
+            if (error.message.includes('токен') || error.message.includes('401')) {
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 3000);
             }
+        } finally {
+            this.loadingEnd();
         }
     },
 

@@ -1,7 +1,7 @@
 # Test info
 
-- Name: Базовая загрузка приложения
-- Location: C:\Users\user\first_bot\tests\e2e\app.test.js:20:1
+- Name: Частичный игровой цикл
+- Location: C:\Users\user\first_bot\tests\e2e\app.test.js:75:1
 
 # Error details
 
@@ -12,7 +12,7 @@ Call log:
     - waiting for" https://firstbot-production-87c1.up.railway.app/game.html" navigation to finish...
     - navigated to "https://firstbot-production-87c1.up.railway.app/game.html"
 
-    at C:\Users\user\first_bot\tests\e2e\app.test.js:24:16
+    at C:\Users\user\first_bot\tests\e2e\app.test.js:80:16
 ```
 
 # Page snapshot
@@ -26,14 +26,16 @@ Call log:
   - button:
     - img
 - img
-- text: "ВРЕМЯ НА РАЗГАДКУ 14 : 00 ВРЕМЯ ИДЕТ УЛИКА #01"
+- text: "ВРЕМЯ НА РАЗГАДКУ 15 : 00 ВРЕМЯ ИДЕТ УЛИКА #01"
 - heading "ОГРАБЛЕНИЕ ЮВЕЛИРНОГО МАГАЗИНА" [level=2]
 - img
 - text: 12.04.2024
 - img
 - text: "СЛОЖНОСТЬ: СРЕДНЯЯ Преступник взломал заднюю дверь ювелирного магазина в 3 часа ночи. Он отключил камеры видеонаблюдения, но не заметил скрытую камеру над сейфом. На записи видно, как он без перчаток открывает витрины и собирает украшения в рюкзак. Перед уходом преступник воспользовался раковиной в подсобке, чтобы смыть кровь с пореза на руке. Какую роковую ошибку допустил преступник?"
 - img
-- text: ВАРИАНТЫ ОТВЕТОВ A Неправильно отключил систему видеонаблюдения, не заметив скрытую камеру B Работал без перчаток, оставив отпечатки пальцев на витринах и украшениях C Оставил свои биологические следы, смыв кровь в раковине, что позволило получить его ДНК
+- text: ВАРИАНТЫ ОТВЕТОВ A Неправильно отключил систему видеонаблюдения, не заметив скрытую камеру B Работал без перчаток, оставив отпечатки пальцев на витринах и украшениях C Оставил свои биологические следы, смыв кровь в раковине, что позволило получить его ДНК ОШИБКА
+- heading "Неправильно!" [level=3]
+- text: Преступник оставил биологический материал (кровь), который попал в слив раковины. Даже после смывания, следы ДНК остаются на сантехнике и в трубах. Криминалисты легко извлекают такие образцы и используют для идентификации. Современные методы могут выделить ДНК-профиль даже из микроскопических следов крови. +0 ОЧКОВ
 - contentinfo:
   - button "СЛЕДУЮЩЕЕ ДЕЛО"
 ```
@@ -64,8 +66,7 @@ Call log:
    21 |     await page.goto(TEST_URL);
    22 |
    23 |     // Ожидаем загрузки приложения
->  24 |     await page.waitForSelector('.container', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
-      |                ^ TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.
+   24 |     await page.waitForSelector('.container', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
    25 |
    26 |     // Проверяем, что стартовый экран отображается
    27 |     const startScreen = await page.$('#start-screen.active');
@@ -121,7 +122,8 @@ Call log:
    77 |     await page.goto(TEST_URL);
    78 |
    79 |     // Ожидаем загрузки приложения
-   80 |     await page.waitForSelector('.container', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
+>  80 |     await page.waitForSelector('.container', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
+      |                ^ TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.
    81 |
    82 |     // Нажимаем на кнопку "Играть" вручную
    83 |     await page.click('button[data-action="startGame"]');

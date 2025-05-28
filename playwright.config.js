@@ -1,24 +1,22 @@
 // playwright.config.js
-let defineConfig;
-try {
-    const playwright = require('@playwright/test');
-    defineConfig = playwright.defineConfig;
-} catch (error) {
-    console.error('Ошибка импорта @playwright/test:', error.message);
-    // Резервная реализация, если модуль не найден
-    defineConfig = (config) => config;
-}
+const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
     testDir: './tests/e2e',
     timeout: 30000,
     use: {
         baseURL: 'http://localhost:3000',
-        headless: false,
+        headless: true,
         viewport: { width: 428, height: 926 },
         ignoreHTTPSErrors: true,
         screenshot: 'only-on-failure',
         trace: 'on-first-retry',
     },
-    reporter: 'list'
+    reporter: 'list',
+    // Запуск локального сервера перед тестами
+    webServer: {
+        command: 'npm start',
+        port: 3000,
+        reuseExistingServer: !process.env.CI,
+    },
 }); 

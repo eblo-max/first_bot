@@ -22,8 +22,7 @@
     "devDependencies": {
         "@playwright/test": "^1.52.0",
         "assert": "^2.0.0",
-        "nodemon": "^3.0.1",
-        "playwright": "^1.39.0"
+        "nodemon": "^3.0.1"
     },
     "engines": {
         "node": ">=16.0.0"

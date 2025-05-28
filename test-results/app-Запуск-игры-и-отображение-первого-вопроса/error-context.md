@@ -1,7 +1,7 @@
 # Test info
 
-- Name: Базовая загрузка приложения
-- Location: C:\Users\user\first_bot\tests\e2e\app.test.js:20:1
+- Name: Запуск игры и отображение первого вопроса
+- Location: C:\Users\user\first_bot\tests\e2e\app.test.js:38:1
 
 # Error details
 
@@ -9,10 +9,8 @@
 TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.
 Call log:
   - waiting for locator('.container') to be visible
-    - waiting for" https://firstbot-production-87c1.up.railway.app/game.html" navigation to finish...
-    - navigated to "https://firstbot-production-87c1.up.railway.app/game.html"
 
-    at C:\Users\user\first_bot\tests\e2e\app.test.js:24:16
+    at C:\Users\user\first_bot\tests\e2e\app.test.js:42:16
 ```
 
 # Page snapshot
@@ -20,22 +18,31 @@ Call log:
 ```yaml
 - banner:
   - img
-  - text: ДЕЛО 1/5
+  - text: ОТДЕЛ УБИЙСТВ
+  - heading "КРИМИНАЛЬНЫЙ БЛЕФ" [level=1]
+  - paragraph: НАЙДИ СЛЕД УБИЙЦЫ
+- main:
   - img
-  - text: 0 ОЧКОВ
-  - button:
+  - heading "ДЕЛО ОБ УБИЙСТВЕ" [level=2]
+  - paragraph: Погрузись в мир жестоких преступлений. Анализируй улики на местах преступлений, выявляй роковые ошибки убийц. 5 кровавых дел ждут твоего расследования.
+  - text: "EVIDENCE #001"
+  - img
+  - heading "УРОВНИ ЖЕСТОКОСТИ" [level=2]
+  - paragraph: От случайных убийств до изощренных серийных преступлений. Время истекает - у тебя 15 секунд, чтобы найти ключевую улику до того, как след простынет.
+  - text: "EVIDENCE #002 CRIME SCENE - DO NOT CROSS"
+  - img
+  - paragraph: 15 СЕКУНД
+  - img
+  - paragraph: 5 ЖЕРТВ
+  - img
+  - paragraph: ПРИГОВОР
+  - img
+  - paragraph: ПРОФИЛЬ
+  - button "ВСКРЫТЬ ДЕЛО":
+    - text: ВСКРЫТЬ ДЕЛО
     - img
-- img
-- text: "ВРЕМЯ НА РАЗГАДКУ 14 : 00 ВРЕМЯ ИДЕТ УЛИКА #01"
-- heading "ОГРАБЛЕНИЕ ЮВЕЛИРНОГО МАГАЗИНА" [level=2]
-- img
-- text: 12.04.2024
-- img
-- text: "СЛОЖНОСТЬ: СРЕДНЯЯ Преступник взломал заднюю дверь ювелирного магазина в 3 часа ночи. Он отключил камеры видеонаблюдения, но не заметил скрытую камеру над сейфом. На записи видно, как он без перчаток открывает витрины и собирает украшения в рюкзак. Перед уходом преступник воспользовался раковиной в подсобке, чтобы смыть кровь с пореза на руке. Какую роковую ошибку допустил преступник?"
-- img
-- text: ВАРИАНТЫ ОТВЕТОВ A Неправильно отключил систему видеонаблюдения, не заметив скрытую камеру B Работал без перчаток, оставив отпечатки пальцев на витринах и украшениях C Оставил свои биологические следы, смыв кровь в раковине, что позволило получить его ДНК
 - contentinfo:
-  - button "СЛЕДУЮЩЕЕ ДЕЛО"
+  - paragraph: "CASE FILE #2024 • CLASSIFIED"
 ```
 
 # Test source
@@ -64,8 +71,7 @@ Call log:
    21 |     await page.goto(TEST_URL);
    22 |
    23 |     // Ожидаем загрузки приложения
->  24 |     await page.waitForSelector('.container', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
-      |                ^ TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.
+   24 |     await page.waitForSelector('.container', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
    25 |
    26 |     // Проверяем, что стартовый экран отображается
    27 |     const startScreen = await page.$('#start-screen.active');
@@ -83,7 +89,8 @@ Call log:
    39 |     await page.goto(TEST_URL);
    40 |
    41 |     // Ожидаем загрузки приложения
-   42 |     await page.waitForSelector('.container', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
+>  42 |     await page.waitForSelector('.container', { state: 'visible', timeout: APP_LOAD_TIMEOUT });
+      |                ^ TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.
    43 |
    44 |     // Нажимаем на кнопку "Играть"
    45 |     await page.click('button[data-action="startGame"]');

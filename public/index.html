@@ -532,6 +532,77 @@
                 transition: none !important;
             }
         }
+
+        /* Стили для информации о пользователе */
+        .user-info {
+            margin: 20px 0;
+            padding: 0 20px;
+        }
+
+        .user-card {
+            background: var(--card-bg-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--text-color);
+            margin-bottom: 2px;
+        }
+
+        .user-rank {
+            font-size: 12px;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .user-score {
+            font-size: 14px;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        /* Адаптивность */
+        @media screen and (max-width: 400px) {
+            .user-card {
+                padding: 12px;
+                gap: 12px;
+            }
+
+            .user-avatar {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+
+            .user-name {
+                font-size: 14px;
+            }
+        }
     </style>
 
     <!-- Инициализация объекта TG и проверка наличия Telegram WebApp API -->
@@ -736,6 +807,10 @@
             });
         });
     </script>
+
+    <!-- Основные скрипты -->
+    <script src="game-state.js"></script>
+    <script src="app.js"></script>
 </body>
 
 </html>
