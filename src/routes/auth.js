@@ -13,52 +13,88 @@ const authMiddleware = require('../middleware/authMiddleware');
  */
 router.post('/init', verifyTelegramWebAppData, async (req, res) => {
     try {
+        console.log('Запрос на /api/auth/init получен');
+        console.log('Данные telegramUser из middleware:', req.telegramUser);
+
         const telegramUser = req.telegramUser;
-        if (!telegramUser || !telegramUser.id) {
-            return res.status(400).json({ error: 'Не удалось получить данные пользователя' });
+        if (!telegramUser || !telegramUser.telegramId) {
+            console.error('Не удалось получить telegramId из middleware');
+            return res.status(400).json({
+                status: 'error',
+                message: 'Не удалось получить данные пользователя'
+            });
         }
 
-        const telegramId = telegramUser.id.toString();
+        const telegramId = telegramUser.telegramId;
+        console.log('Поиск пользователя с telegramId:', telegramId);
 
         // Ищем пользователя в базе или создаем нового
         let user = await User.findOne({ telegramId });
         let isNewUser = false;
 
         if (!user) {
+            console.log('Пользователь не найден, создаем нового');
             isNewUser = true;
             user = new User({
                 telegramId,
-                username: telegramUser.username || '',
-                firstName: telegramUser.first_name || '',
-                lastName: telegramUser.last_name || ''
+                username: telegramUser.username || null,
+                firstName: telegramUser.firstName || null,
+                lastName: telegramUser.lastName || null,
+                registeredAt: new Date(),
+                lastVisit: new Date()
             });
+            await user.save();
+            console.log('Новый пользователь создан:', telegramId);
+        } else {
+            console.log('Найден существующий пользователь:', telegramId);
+            // Обновляем дату последнего визита
+            user.lastVisit = new Date();
             await user.save();
         }
 
-        // Создаем JWT токен
+        // Создаем JWT токен с правильной структурой
         const token = jwt.sign(
             {
-                id: user.telegramId,
-                username: user.username
+                telegramId: user.telegramId, // Используем telegramId вместо id
+                username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName
             },
             process.env.JWT_SECRET || 'default_secret_key',
             { expiresIn: '7d' }
         );
 
-        // Отправляем токен и данные пользователя
+        console.log('JWT токен создан для пользователя:', telegramId);
+
+        // Формируем имя пользователя для отображения
+        const displayName = user.firstName
+            ? `${user.firstName} ${user.lastName || ''}`.trim()
+            : (user.username || 'Аноним');
+
+        // Отправляем токен и данные пользователя в формате совместимом с authController
         res.json({
-            token,
-            user: {
-                telegramId: user.telegramId,
-                username: user.username,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                isNew: isNewUser
+            status: 'success',
+            data: {
+                token,
+                user: {
+                    telegramId: user.telegramId,
+                    name: displayName,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    username: user.username,
+                    rank: user.rank,
+                    stats: user.stats,
+                    totalScore: user.stats.totalScore,
+                    isNew: isNewUser
+                }
             }
         });
     } catch (error) {
-        console.error('Ошибка аутентификации:', error);
-        res.status(500).json({ error: 'Ошибка сервера при аутентификации' });
+        console.error('Ошибка аутентификации в /api/auth/init:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Ошибка сервера при аутентификации'
+        });
     }
 });
 

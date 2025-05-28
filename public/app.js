@@ -15,6 +15,19 @@ let isInitialized = false;
 function initApp() {
     console.log('Инициализация приложения начата...');
 
+    // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ВСЕХ СОХРАНЕННЫХ ДАННЫХ ПРИ ИНИЦИАЛИЗАЦИИ
+    console.log('ПРИНУДИТЕЛЬНАЯ ОЧИСТКА: удаляем все сохраненные данные');
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Сбрасываем состояние приложения
+    if (window.GameState) {
+        GameState.data.token = null;
+        GameState.data.user = null;
+        GameState.data.isTestMode = false;
+    }
+    isInitialized = false;
+
     // Создаем глобальный объект для доступа к приложению из тестов
     window.CriminalBluffApp = {
         getData: () => GameState.data,
@@ -55,28 +68,15 @@ function initApp() {
         // Настраиваем обработчик кнопки "Назад"
         tg.BackButton.onClick(() => handleBackButton());
 
-        // Пытаемся получить токен из localStorage
-        const token = localStorage.getItem('token');
-        GameState.data.token = token;
-        console.log('Токен из localStorage:', token ? 'Найден' : 'Не найден');
-
-        // Если токен есть, отмечаем инициализацию
-        if (token) {
-            isInitialized = true;
-        }
-
         // Проверяем данные пользователя
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             console.log('Данные пользователя получены:', tg.initDataUnsafe.user.username);
-            if (!token) {
-                // Проходим процесс авторизации
-                console.log('Начинаем процесс авторизации...');
-                authorize();
-            } else {
-                // Просто отображаем главный экран
-                console.log('Переход на главный экран...');
-                showContent();
-            }
+            console.log('Полные данные пользователя:', tg.initDataUnsafe.user);
+            console.log('initData:', tg.initData ? 'присутствует' : 'отсутствует');
+
+            // Проходим процесс авторизации с реальными данными
+            console.log('Начинаем процесс авторизации с реальными данными Telegram...');
+            authorize();
         } else {
             // Если данные пользователя отсутствуют, показываем заглушку для тестирования
             console.warn('Telegram WebApp: initDataUnsafe не содержит данных пользователя. Режим разработки.');

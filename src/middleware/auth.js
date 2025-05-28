@@ -33,14 +33,24 @@ const authMiddleware = (req, res, next) => {
  */
 const verifyTelegramWebAppData = (req, res, next) => {
     try {
+        console.log('Middleware verifyTelegramWebAppData: проверка данных Telegram WebApp');
         const { initData } = req.body;
         if (!initData) {
+            console.error('initData не предоставлены в запросе');
             return res.status(401).json({ error: 'initData не предоставлены' });
         }
+
+        console.log('initData получены, длина:', initData.length);
 
         // Парсинг данных
         const data = new URLSearchParams(initData);
         const hash = data.get('hash');
+
+        if (!hash) {
+            console.error('Отсутствует hash в initData');
+            return res.status(401).json({ error: 'Отсутствует hash в данных авторизации' });
+        }
+
         data.delete('hash');
 
         // Сортировка параметров
@@ -49,6 +59,8 @@ const verifyTelegramWebAppData = (req, res, next) => {
             dataCheckArr.push(`${key}=${value}`);
         }
         const dataCheckString = dataCheckArr.join('\n');
+
+        console.log('dataCheckString создан:', dataCheckString.substring(0, 100) + '...');
 
         // Создание секретного ключа на основе токена бота
         const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -69,12 +81,36 @@ const verifyTelegramWebAppData = (req, res, next) => {
             .digest('hex');
 
         if (generatedHash !== hash) {
+            console.error('Недействительный hash. Ожидается:', generatedHash, 'Получен:', hash);
             return res.status(401).json({ error: 'Недействительный hash' });
         }
 
+        console.log('Hash валиден, извлекаем данные пользователя');
+
         // Получение данных пользователя
         if (data.has('user')) {
-            req.telegramUser = JSON.parse(data.get('user'));
+            try {
+                const userRaw = JSON.parse(data.get('user'));
+                console.log('Данные пользователя из initData:', userRaw);
+
+                // Преобразуем данные пользователя в правильный формат
+                req.telegramUser = {
+                    telegramId: userRaw.id.toString(), // Преобразуем id в telegramId
+                    username: userRaw.username || null,
+                    firstName: userRaw.first_name || null,
+                    lastName: userRaw.last_name || null,
+                    languageCode: userRaw.language_code || 'ru',
+                    isPremium: userRaw.is_premium || false
+                };
+
+                console.log('telegramUser установлен:', req.telegramUser);
+            } catch (parseError) {
+                console.error('Ошибка парсинга данных пользователя:', parseError);
+                return res.status(400).json({ error: 'Некорректные данные пользователя' });
+            }
+        } else {
+            console.error('Отсутствуют данные пользователя в initData');
+            return res.status(400).json({ error: 'Отсутствуют данные пользователя' });
         }
 
         next();
