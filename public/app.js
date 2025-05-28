@@ -836,7 +836,19 @@ async function finishGame() {
     console.log('Завершение игры...');
 
     try {
-        // Отправляем запрос на завершение игры
+        // Подсчитываем статистику игры
+        const correctAnswers = GameState.data.stories ? GameState.data.stories.filter(story => story.correct).length : 0;
+        const totalQuestions = GameState.data.stories ? GameState.data.stories.length : 5;
+        const totalScore = GameState.data.score || 0;
+
+        console.log('Статистика игры:', {
+            gameId: GameState.data.gameId,
+            totalScore,
+            correctAnswers,
+            totalQuestions
+        });
+
+        // Отправляем запрос на завершение игры с полной статистикой
         const response = await fetch('/api/game/finish', {
             method: 'POST',
             headers: {
@@ -844,7 +856,10 @@ async function finishGame() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                gameId: GameState.data.gameId
+                gameId: GameState.data.gameId,
+                totalScore,
+                correctAnswers,
+                totalQuestions
             })
         });
 
@@ -856,7 +871,13 @@ async function finishGame() {
         console.log('Получены результаты игры:', data);
 
         // Сохраняем результаты игры
-        GameState.data.gameResult = data;
+        GameState.data.gameResult = {
+            totalScore,
+            correctAnswers,
+            totalQuestions,
+            accuracy: Math.round((correctAnswers / totalQuestions) * 100),
+            serverResponse: data
+        };
 
         // Переключаемся на экран результатов
         GameState.transition('finish');
