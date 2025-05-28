@@ -76,16 +76,18 @@ userSchema.virtual('calculatedAccuracy').get(function () {
 
 // Обновление статистики после игры
 userSchema.methods.updateStatsAfterGame = function (gameResult) {
-    // Увеличиваем количество расследований
-    this.stats.investigations += gameResult.totalQuestions;
+    // Увеличиваем количество проведенных расследований (игр)
+    this.stats.investigations += 1;
 
-    // Увеличиваем количество успешных расследований
-    this.stats.solvedCases += gameResult.correctAnswers;
+    // Увеличиваем количество полностью раскрытых дел (только если все ответы правильные)
+    if (gameResult.correctAnswers === gameResult.totalQuestions) {
+        this.stats.solvedCases += 1;
+    }
 
     // Обновляем счет
     this.stats.totalScore += gameResult.totalScore;
 
-    // Обновляем серию побед
+    // Обновляем серию побед (только полностью правильные игры)
     if (gameResult.correctAnswers === gameResult.totalQuestions) {
         this.stats.winStreak += 1;
 
@@ -97,7 +99,7 @@ userSchema.methods.updateStatsAfterGame = function (gameResult) {
         this.stats.winStreak = 0;
     }
 
-    // Пересчитываем точность
+    // Пересчитываем точность (процент полностью раскрытых дел)
     this.stats.accuracy = this.calculatedAccuracy;
 
     // Обновляем ранг на основе счета
