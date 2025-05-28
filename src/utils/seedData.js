@@ -162,10 +162,25 @@ const seedDatabase = async () => {
     try {
         console.log('Проверяем необходимость заполнения базы тестовыми данными...');
 
-        // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ВСЕХ ПОЛЬЗОВАТЕЛЕЙ ПРИ ЗАПУСКЕ
-        console.log('Очищаем базу от всех пользователей (тестовых и старых данных)...');
-        const deletedUsers = await User.deleteMany({});
-        console.log(`Удалено пользователей из базы данных: ${deletedUsers.deletedCount}`);
+        // УДАЛЯЕМ ТОЛЬКО ТЕСТОВЫХ ПОЛЬЗОВАТЕЛЕЙ, А НЕ ВСЕХ!
+        console.log('Очищаем базу от тестовых пользователей...');
+
+        // Удаляем только пользователей с тестовыми данными (гостевые аккаунты и тестовые пользователи)
+        const testUserQuery = {
+            $or: [
+                { telegramId: { $regex: /^guest_/ } },  // Гостевые пользователи
+                { telegramId: { $regex: /^test_/ } },   // Тестовые пользователи  
+                { firstName: 'Test' },                  // Тестовые пользователи по имени
+                { firstName: 'Гость' }                  // Гостевые пользователи
+            ]
+        };
+
+        const deletedTestUsers = await User.deleteMany(testUserQuery);
+        console.log(`Удалено тестовых пользователей из базы данных: ${deletedTestUsers.deletedCount}`);
+
+        // Показываем количество реальных пользователей, которые остались
+        const realUsersCount = await User.countDocuments();
+        console.log(`Реальных пользователей в базе данных: ${realUsersCount}`);
 
         // Проверяем количество историй в базе
         const storyCount = await Story.countDocuments();
