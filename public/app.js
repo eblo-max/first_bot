@@ -765,6 +765,19 @@ async function selectAnswer(mistakeId) {
             // Обновляем счет
             GameState.setData('score', GameState.data.score + (result.pointsEarned || 0));
 
+            // Сохраняем результат ответа в текущую историю
+            const currentIndex = GameState.data.currentStoryIndex;
+            if (GameState.data.stories && GameState.data.stories[currentIndex]) {
+                GameState.data.stories[currentIndex].correct = result.correct;
+                GameState.data.stories[currentIndex].answered = true;
+                GameState.data.stories[currentIndex].selectedMistakeId = mistakeId;
+                console.log(`Обновлена история ${currentIndex}:`, {
+                    correct: result.correct,
+                    answered: true,
+                    selectedMistakeId: mistakeId
+                });
+            }
+
             // Сохраняем результат ответа
             GameState.setData('result', result);
 
@@ -840,6 +853,19 @@ async function finishGame() {
         const correctAnswers = GameState.data.stories ? GameState.data.stories.filter(story => story.correct).length : 0;
         const totalQuestions = GameState.data.stories ? GameState.data.stories.length : 5;
         const totalScore = GameState.data.score || 0;
+
+        // Детальный лог для отладки
+        console.log('Детальная статистика историй:');
+        if (GameState.data.stories) {
+            GameState.data.stories.forEach((story, index) => {
+                console.log(`История ${index}:`, {
+                    id: story.id,
+                    answered: story.answered,
+                    correct: story.correct,
+                    selectedMistakeId: story.selectedMistakeId
+                });
+            });
+        }
 
         console.log('Статистика игры:', {
             gameId: GameState.data.gameId,
