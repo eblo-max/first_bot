@@ -85,47 +85,42 @@ const ProfileManager = {
      */
     async checkAuthentication() {
         try {
-            // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА СТАРЫХ ТОКЕНОВ И ПЕРЕЗАПИСЬ
+            // Проверяем данные из URL (переданные с главной страницы)
             const urlParams = new URLSearchParams(window.location.search);
             const tokenFromUrl = urlParams.get('token');
             const initDataFromUrl = urlParams.get('initData');
 
-            // Если есть данные из URL, принудительно перезаписываем localStorage
+            // Если есть данные из URL, используем их
             if (tokenFromUrl && initDataFromUrl) {
-                console.log('Найдены данные из URL - принудительно перезаписываем localStorage');
-                localStorage.clear(); // Полная очистка
+                console.log('Найдены данные из URL - используем их');
                 localStorage.setItem('token', tokenFromUrl);
                 localStorage.setItem('auth_token', tokenFromUrl);
                 localStorage.setItem('initData', initDataFromUrl);
                 this.state.token = tokenFromUrl;
                 this.state.isAuthenticated = true;
-                console.log('localStorage перезаписан новыми данными из URL');
+                console.log('Данные из URL сохранены в localStorage');
+                return;
             }
 
-            // Проверяем, есть ли реальные данные Telegram
+            // Проверяем, есть ли реальные данные Telegram для новой авторизации
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
                 const realInitData = window.Telegram.WebApp.initData;
-                if (realInitData && realInitData.includes('user=') && !realInitData.includes('guest_')) {
-                    console.log('Найдены РЕАЛЬНЫЕ данные Telegram - принудительная переавторизация');
-
-                    // Очищаем все старые данные
+                if (realInitData && realInitData.includes('user=')) {
+                    console.log('Найдены РЕАЛЬНЫЕ данные Telegram - проходим новую авторизацию');
                     localStorage.clear();
                     this.state.token = null;
                     this.state.isAuthenticated = false;
-
-                    // Проходим новую авторизацию с реальными данными
                     await this.authenticateTelegram();
                     return;
                 }
             }
 
-            // Получаем токен из localStorage только если нет данных из URL
-            let token = this.state.token || localStorage.getItem('token') || localStorage.getItem('auth_token');
+            // Получаем сохраненный токен
+            let token = localStorage.getItem('token') || localStorage.getItem('auth_token');
 
             console.log('Проверка аутентификации:', {
                 'токен найден': token ? 'да' : 'нет',
-                'длина токена': token ? token.length : 0,
-                'источник': this.state.token ? 'state' : 'localStorage'
+                'длина токена': token ? token.length : 0
             });
 
             if (!token) {
@@ -149,16 +144,6 @@ const ProfileManager = {
             if (response.ok) {
                 const data = await response.json();
                 console.log('Токен валиден, данные:', data);
-
-                // Проверяем, не гостевой ли это пользователь
-                if (data.telegramId && data.telegramId.startsWith('guest_')) {
-                    console.log('ВНИМАНИЕ: Токен содержит данные гостевого пользователя - переавторизация');
-                    localStorage.clear();
-                    this.state.token = null;
-                    this.state.isAuthenticated = false;
-                    await this.authenticateTelegram();
-                    return;
-                }
 
                 this.state.token = token;
                 this.state.isAuthenticated = true;
@@ -312,21 +297,8 @@ const ProfileManager = {
 
             // Проверяем полученные данные
             if (!initData || initData.trim() === '') {
-                console.warn('Данные инициализации Telegram WebApp отсутствуют или пусты');
-
-                // НЕ СОЗДАЕМ ГОСТЕВЫХ ПОЛЬЗОВАТЕЛЕЙ - отключено
-                console.log('Создание гостевых пользователей отключено');
+                console.error('Данные инициализации Telegram WebApp отсутствуют или пусты');
                 this.showError('Невозможно загрузить профиль без авторизации Telegram. Перенаправление на главную...');
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 2000);
-                return;
-            }
-
-            // Проверяем, что данные не содержат гостевой информации
-            if (initData.includes('guest_')) {
-                console.warn('Обнаружены данные гостевого пользователя - отклоняем');
-                this.showError('Обнаружен гостевой режим. Переход на главную для правильной авторизации...');
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 2000);
@@ -357,29 +329,26 @@ const ProfileManager = {
             const data = await response.json();
             console.log('Данные авторизации получены:', {
                 status: data.status,
-                hasToken: !!data.token,
-                hasUser: !!data.user,
-                telegramId: data.user ? data.user.telegramId : 'нет'
+                hasToken: !!data.token || !!(data.data && data.data.token),
+                hasUser: !!data.user || !!(data.data && data.data.user)
             });
 
-            if (data.status === 'success' && data.token) {
-                // Проверяем, что токен не содержит данные гостевого пользователя
-                if (data.user && data.user.telegramId && data.user.telegramId.startsWith('guest_')) {
-                    console.error('Сервер вернул токен гостевого пользователя - отклоняем');
-                    this.showError('Ошибка авторизации: получен гостевой токен. Перенаправление...');
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 2000);
-                    return;
-                }
+            if (data.status === 'success' && (data.token || (data.data && data.data.token))) {
+                // Получаем токен
+                const token = data.token || data.data.token;
 
                 // Сохраняем токен и данные пользователя
-                this.state.token = data.token;
+                this.state.token = token;
                 this.state.isAuthenticated = true;
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('auth_token', data.token);
+                localStorage.setItem('token', token);
+                localStorage.setItem('auth_token', token);
 
-                console.log('Авторизация успешна для пользователя:', data.user.firstName || data.user.username);
+                const userData = data.user || data.data.user;
+                if (userData && userData.telegramId) {
+                    console.log('Авторизация успешна для пользователя:', userData.firstName || userData.username || userData.telegramId);
+                } else {
+                    console.log('Авторизация успешна, токен получен');
+                }
 
                 // Загружаем данные профиля
                 await this.loadProfileData();

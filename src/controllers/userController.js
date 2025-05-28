@@ -8,15 +8,44 @@ exports.getProfile = async (req, res) => {
         const telegramId = req.user.telegramId;
         console.log(`Запрос профиля для пользователя с telegramId: ${telegramId}`);
 
+        // Проверяем, что это не гостевой пользователь
+        if (telegramId && telegramId.startsWith('guest_')) {
+            console.log('Отклоняем запрос профиля для гостевого пользователя:', telegramId);
+            return res.status(403).json({
+                status: 'error',
+                message: 'Профиль недоступен для гостевых пользователей. Требуется авторизация через Telegram.',
+                code: 'GUEST_NOT_ALLOWED'
+            });
+        }
+
         // Находим пользователя в базе данных
         let user = await User.findOne({ telegramId });
 
-        // Если пользователь не найден, возвращаем ошибку
+        // Если пользователь не найден, но токен валидный с реальными данными Telegram - создаем пользователя
+        if (!user && telegramId && !telegramId.startsWith('guest_')) {
+            console.log(`Пользователь ${telegramId} не найден в БД, создаем нового пользователя из данных токена`);
+
+            // Создаем нового пользователя из данных токена
+            user = new User({
+                telegramId: telegramId,
+                username: req.user.username || null,
+                firstName: req.user.firstName || null,
+                lastName: req.user.lastName || null,
+                registeredAt: new Date(),
+                lastVisit: new Date()
+            });
+
+            await user.save();
+            console.log(`Создан новый пользователь в БД: ${telegramId} (${req.user.firstName || 'без имени'})`);
+        }
+
+        // Если пользователь все еще не найден (что не должно происходить после создания)
         if (!user) {
-            console.error(`Пользователь с telegramId ${telegramId} не найден в базе данных`);
+            console.error(`Пользователь с telegramId ${telegramId} не найден в базе данных и не может быть создан`);
             return res.status(404).json({
                 status: 'error',
-                message: 'Пользователь не найден'
+                message: 'Пользователь не найден в базе данных',
+                code: 'USER_NOT_FOUND'
             });
         }
 
@@ -51,7 +80,7 @@ exports.getProfile = async (req, res) => {
         // Формируем отображаемое имя
         const displayName = firstName ?
             `${firstName} ${lastName || ''}`.trim() :
-            (user.nickname || username || `Гость ${telegramId.substring(0, 5)}`);
+            (user.nickname || username || `Пользователь ${telegramId.substring(0, 8)}`);
 
         // Формируем ответ
         const profile = {
@@ -76,7 +105,8 @@ exports.getProfile = async (req, res) => {
                 unlockedAt: a.unlockedAt
             })),
             registeredAt: user.registeredAt,
-            lastVisit: user.lastVisit
+            lastVisit: user.lastVisit,
+            isNewUser: user.stats.investigations === 0 // Пометка для новых пользователей
         };
 
         console.log(`Профиль успешно загружен для пользователя ${displayName} (${telegramId})`);
