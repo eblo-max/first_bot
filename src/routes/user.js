@@ -11,15 +11,36 @@ router.use(authMiddleware);
 /**
  * Получение профиля пользователя
  */
-router.get('/profile', authMiddlewareAlias, async (req, res) => {
+router.get('/profile', async (req, res) => {
     try {
+        console.log('=== ЗАПРОС ПРОФИЛЯ ===');
+        console.log('Headers:', req.headers);
+        console.log('User from middleware:', req.user);
+
         // Получаем пользователя из middleware
+        if (!req.user || !req.user.telegramId) {
+            console.log('Ошибка: пользователь не найден в req.user');
+            return res.status(401).json({
+                status: 'error',
+                message: 'Пользователь не авторизован'
+            });
+        }
+
         const telegramId = req.user.telegramId;
+        console.log('Ищем пользователя с telegramId:', telegramId);
 
         // Находим пользователя в базе данных
         const user = await User.findOne({ telegramId });
+        console.log('Найденный пользователь в БД:', user ? {
+            telegramId: user.telegramId,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            stats: user.stats
+        } : 'не найден');
 
         if (!user) {
+            console.log('Пользователь не найден в базе данных');
             return res.status(404).json({
                 status: 'error',
                 message: 'Пользователь не найден'
@@ -31,31 +52,38 @@ router.get('/profile', authMiddlewareAlias, async (req, res) => {
             ? `${user.firstName} ${user.lastName || ''}`.trim()
             : (user.username || 'Детектив');
 
+        console.log('Отображаемое имя:', displayName);
+
+        // Формируем данные профиля
+        const profileData = {
+            telegramId: user.telegramId,
+            name: displayName,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            rank: user.rank || 'НОВИЧОК',
+            stats: {
+                investigations: user.stats?.totalGames || 0,
+                solvedCases: user.stats?.correctAnswers || 0,
+                winStreak: user.stats?.currentStreak || 0,
+                maxWinStreak: user.stats?.maxStreak || 0,
+                accuracy: user.stats?.totalGames > 0
+                    ? Math.round((user.stats.correctAnswers / user.stats.totalGames) * 100)
+                    : 0,
+                totalScore: user.stats?.totalScore || 0
+            },
+            achievements: user.achievements || [],
+            registeredAt: user.registeredAt,
+            lastVisit: user.lastVisit,
+            gameHistory: user.gameHistory || []
+        };
+
+        console.log('Отправляем данные профиля:', JSON.stringify(profileData, null, 2));
+
         // Возвращаем данные профиля
         res.json({
             status: 'success',
-            data: {
-                telegramId: user.telegramId,
-                name: displayName,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                username: user.username,
-                rank: user.rank || 'НОВИЧОК',
-                stats: {
-                    investigations: user.stats?.totalGames || 0,
-                    solvedCases: user.stats?.correctAnswers || 0,
-                    winStreak: user.stats?.currentStreak || 0,
-                    maxWinStreak: user.stats?.maxStreak || 0,
-                    accuracy: user.stats?.totalGames > 0
-                        ? Math.round((user.stats.correctAnswers / user.stats.totalGames) * 100)
-                        : 0,
-                    totalScore: user.stats?.totalScore || 0
-                },
-                achievements: user.achievements || [],
-                registeredAt: user.registeredAt,
-                lastVisit: user.lastVisit,
-                gameHistory: user.gameHistory || []
-            }
+            data: profileData
         });
 
     } catch (error) {

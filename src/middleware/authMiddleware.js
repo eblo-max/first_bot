@@ -4,9 +4,14 @@ const crypto = require('crypto');
 // Middleware для проверки аутентификации по JWT токену
 const authMiddleware = (req, res, next) => {
     try {
+        console.log('=== AUTH MIDDLEWARE ===');
+        console.log('URL:', req.url);
+        console.log('Headers authorization:', req.headers.authorization);
+
         // Получаем токен из заголовка авторизации
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            console.log('Токен отсутствует или неверный формат');
             return res.status(401).json({
                 status: 'error',
                 message: 'Необходима авторизация, токен не предоставлен'
@@ -15,13 +20,16 @@ const authMiddleware = (req, res, next) => {
 
         // Извлекаем токен
         const token = authHeader.split(' ')[1];
+        console.log('Извлеченный токен:', token.substring(0, 20) + '...');
 
         // Проверяем токен
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('Декодированный токен:', decoded);
 
         // Добавляем информацию о пользователе в запрос
         req.user = decoded;
 
+        console.log('Авторизация успешна, пользователь:', req.user);
         next();
     } catch (error) {
         console.error('Ошибка аутентификации:', error.message);
