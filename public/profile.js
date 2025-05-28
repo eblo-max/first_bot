@@ -566,25 +566,33 @@ const ProfileManager = {
             });
         });
 
-        // Обработчик для кнопки возврата на главную
-        if (this.elements.mainButton) {
-            this.elements.mainButton.addEventListener('click', () => {
-                if (tg && tg.HapticFeedback) {
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
-                window.location.href = '/';
-            });
-        }
+        // Универсальный обработчик кликов с делегированием событий для data-action
+        document.addEventListener('click', (event) => {
+            const actionElement = event.target.closest('[data-action]');
+            if (!actionElement) return;
 
-        // Обработчик для кнопки новой игры
-        if (this.elements.newGameButton) {
-            this.elements.newGameButton.addEventListener('click', () => {
-                if (tg && tg.HapticFeedback) {
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
-                window.location.href = '/game';
-            });
-        }
+            const action = actionElement.getAttribute('data-action');
+            console.log('Клик по действию в профиле:', action);
+
+            // Тактильный отклик
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+
+            // Обрабатываем различные действия
+            switch (action) {
+                case 'goToMain':
+                    console.log('Переход на главную страницу');
+                    window.location.href = '/';
+                    break;
+                case 'startNewGame':
+                    console.log('Запуск новой игры');
+                    window.location.href = '/';
+                    break;
+                default:
+                    console.warn('Неизвестное действие в профиле:', action);
+            }
+        });
     },
 
     /**
