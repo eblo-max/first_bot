@@ -229,11 +229,25 @@ async function authorize() {
             localStorage.removeItem('auth_token');
         }
 
+        // Проверяем наличие данных Telegram WebApp
+        if (!tg || !tg.initData || tg.initData.trim() === '') {
+            console.error('Telegram WebApp initData отсутствует или пуст');
+            console.log('tg объект:', tg);
+            console.log('initData:', tg ? tg.initData : 'tg не определен');
+            throw new Error('Отсутствуют данные Telegram WebApp');
+        }
+
         // Получаем данные пользователя из Telegram
-        const telegramUser = tg.initDataUnsafe.user;
+        const telegramUser = tg.initDataUnsafe ? tg.initDataUnsafe.user : null;
         console.log('Данные пользователя из Telegram:', telegramUser);
 
+        if (!telegramUser || !telegramUser.id) {
+            console.error('Telegram WebApp не содержит данных пользователя');
+            throw new Error('Отсутствуют данные пользователя Telegram');
+        }
+
         // Отправляем запрос на авторизацию
+        console.log('Отправляем запрос авторизации с initData длиной:', tg.initData.length);
         const response = await fetch('/api/auth/init', {
             method: 'POST',
             headers: {
@@ -295,11 +309,11 @@ async function authorize() {
     } catch (error) {
         console.error('Ошибка авторизации:', error);
 
-        // Очищаем все токены при ошибке
-        localStorage.removeItem('token');
-        localStorage.removeItem('auth_token');
-        GameState.data.token = null;
+        // НЕ СОЗДАЕМ ГОСТЕВЫХ ПОЛЬЗОВАТЕЛЕЙ - отключено для исправления проблемы с тестовыми данными
+        console.log('Создание гостевых пользователей отключено. Переходим в тестовый режим.');
+        handleTestMode();
 
+        /* ЗАКОММЕНТИРОВАНО - НЕ СОЗДАЕМ ГОСТЕВЫХ ПОЛЬЗОВАТЕЛЕЙ
         // Проверка доступности сервера или сети
         try {
             const healthResponse = await fetch('/api/health');
@@ -340,6 +354,7 @@ async function authorize() {
 
         // Включаем тестовый режим в случае ошибки авторизации
         handleTestMode();
+        */
     }
 }
 
@@ -1213,6 +1228,14 @@ function clearAppCache() {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('gameData');
     localStorage.removeItem('userData');
+    // Добавляем очистку всех возможных ключей
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('guest_') || key.includes('token') || key.includes('auth'))) {
+            localStorage.removeItem(key);
+            console.log('Удален ключ localStorage:', key);
+        }
+    }
 
     // Очищаем sessionStorage
     sessionStorage.clear();
@@ -1223,7 +1246,7 @@ function clearAppCache() {
     GameState.data.isTestMode = false;
     isInitialized = false;
 
-    console.log('Кэш очищен. Перезапуск приложения...');
+    console.log('Кэш очищен полностью. Перезапуск приложения...');
 
     // Перезапускаем приложение
     location.reload();
