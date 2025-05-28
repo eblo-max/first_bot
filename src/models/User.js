@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema({
             type: Number,
             default: 0
         },
+        totalQuestions: {
+            type: Number,
+            default: 0
+        },
         winStreak: {
             type: Number,
             default: 0
@@ -70,8 +74,8 @@ const userSchema = new mongoose.Schema({
 
 // Виртуальное свойство для расчета точности ответов
 userSchema.virtual('calculatedAccuracy').get(function () {
-    if (this.stats.investigations === 0) return 0;
-    return Math.round((this.stats.solvedCases / this.stats.investigations) * 100);
+    if (this.stats.totalQuestions === 0) return 0;
+    return Math.round((this.stats.solvedCases / this.stats.totalQuestions) * 100);
 });
 
 // Обновление статистики после игры
@@ -79,15 +83,16 @@ userSchema.methods.updateStatsAfterGame = function (gameResult) {
     // Увеличиваем количество проведенных расследований (игр)
     this.stats.investigations += 1;
 
-    // Увеличиваем количество полностью раскрытых дел (только если все ответы правильные)
-    if (gameResult.correctAnswers === gameResult.totalQuestions) {
-        this.stats.solvedCases += 1;
-    }
+    // Увеличиваем количество правильно решенных дел (правильные ответы)
+    this.stats.solvedCases += gameResult.correctAnswers;
+
+    // Увеличиваем общее количество вопросов
+    this.stats.totalQuestions += gameResult.totalQuestions;
 
     // Обновляем счет
     this.stats.totalScore += gameResult.totalScore;
 
-    // Обновляем серию побед (только полностью правильные игры)
+    // Обновляем серию побед (только полностью правильные игры 5/5)
     if (gameResult.correctAnswers === gameResult.totalQuestions) {
         this.stats.winStreak += 1;
 
@@ -99,7 +104,7 @@ userSchema.methods.updateStatsAfterGame = function (gameResult) {
         this.stats.winStreak = 0;
     }
 
-    // Пересчитываем точность (процент полностью раскрытых дел)
+    // Пересчитываем точность (процент правильных ответов от всех вопросов)
     this.stats.accuracy = this.calculatedAccuracy;
 
     // Обновляем ранг на основе счета

@@ -156,11 +156,91 @@ const sampleStories = [
 ];
 
 /**
+ * Миграция для пересчета статистики всех пользователей
+ */
+const migrateUserStats = async () => {
+    try {
+        console.log('Запуск миграции для пересчета статистики пользователей...');
+
+        const users = await User.find({});
+        console.log(`Найдено пользователей для миграции: ${users.length}`);
+
+        for (const user of users) {
+            if (!user.gameHistory || user.gameHistory.length === 0) {
+                console.log(`Пользователь ${user.telegramId} не имеет истории игр - пропускаем`);
+                continue;
+            }
+
+            console.log(`Мигрируем пользователя: ${user.telegramId}, игр в истории: ${user.gameHistory.length}`);
+
+            // Пересчитываем статистику с нуля на основе gameHistory
+            let totalCorrectAnswers = 0;
+            let totalQuestions = 0;
+            let totalScore = 0;
+            let currentStreak = 0;
+            let maxStreak = 0;
+
+            // Проходим по всем играм в хронологическом порядке
+            const sortedGames = user.gameHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            for (const game of sortedGames) {
+                totalCorrectAnswers += game.correctAnswers || 0;
+                totalQuestions += game.totalQuestions || 0;
+                totalScore += game.score || 0;
+
+                // Считаем серии побед (только идеальные игры)
+                if (game.correctAnswers === game.totalQuestions) {
+                    currentStreak += 1;
+                    if (currentStreak > maxStreak) {
+                        maxStreak = currentStreak;
+                    }
+                } else {
+                    currentStreak = 0;
+                }
+            }
+
+            // Обновляем статистику
+            user.stats.investigations = user.gameHistory.length;
+            user.stats.solvedCases = totalCorrectAnswers;
+            user.stats.totalQuestions = totalQuestions;
+            user.stats.totalScore = totalScore;
+            user.stats.winStreak = currentStreak;
+            user.stats.maxWinStreak = maxStreak;
+            user.stats.accuracy = totalQuestions > 0 ? Math.round((totalCorrectAnswers / totalQuestions) * 100) : 0;
+
+            // Обновляем ранг
+            user.updateRank();
+
+            // Сохраняем
+            await user.save();
+
+            console.log(`Пользователь ${user.telegramId} обновлен:`, {
+                investigations: user.stats.investigations,
+                solvedCases: user.stats.solvedCases,
+                totalQuestions: user.stats.totalQuestions,
+                accuracy: user.stats.accuracy,
+                winStreak: user.stats.winStreak,
+                maxWinStreak: user.stats.maxWinStreak,
+                totalScore: user.stats.totalScore
+            });
+        }
+
+        console.log('Миграция завершена успешно!');
+    } catch (error) {
+        console.error('Ошибка при миграции:', error);
+    }
+};
+
+/**
  * Заполнение базы данных тестовыми данными
  */
 const seedDatabase = async () => {
     try {
         console.log('Проверяем необходимость заполнения базы тестовыми данными...');
+
+        // ЗАПУСКАЕМ МИГРАЦИЮ ДЛЯ ПЕРЕСЧЕТА СТАТИСТИКИ
+        console.log('Запускаем миграцию для пересчета статистики...');
+        await migrateUserStats();
 
         // УДАЛЯЕМ ТОЛЬКО ТЕСТОВЫХ ПОЛЬЗОВАТЕЛЕЙ, А НЕ ВСЕХ!
         console.log('Очищаем базу от тестовых пользователей...');
@@ -175,8 +255,8 @@ const seedDatabase = async () => {
             ]
         };
 
-        const deletedTestUsers = await User.deleteMany(testUserQuery);
-        console.log(`Удалено тестовых пользователей из базы данных: ${deletedTestUsers.deletedCount}`);
+        const deletedUsers = await User.deleteMany(testUserQuery);
+        console.log(`Удалено тестовых пользователей из базы данных: ${deletedUsers.deletedCount}`);
 
         // Показываем количество реальных пользователей, которые остались
         const realUsersCount = await User.countDocuments();
