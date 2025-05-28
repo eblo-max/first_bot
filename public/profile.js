@@ -160,9 +160,25 @@ const ProfileManager = {
      */
     async checkAuthentication() {
         try {
-            // Получаем токен из localStorage (проверяем оба ключа)
-            let token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-            console.log('Проверка аутентификации: токен ' + (token ? 'найден' : 'не найден'));
+            // Сначала проверяем URL параметры (если переход с главной страницы)
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenFromUrl = urlParams.get('token');
+
+            // Получаем токен из URL или localStorage (проверяем оба ключа)
+            let token = tokenFromUrl || localStorage.getItem('token') || localStorage.getItem('auth_token');
+
+            console.log('Проверка аутентификации:', {
+                'токен из URL': tokenFromUrl ? 'найден' : 'нет',
+                'токен из localStorage': (localStorage.getItem('token') || localStorage.getItem('auth_token')) ? 'найден' : 'нет',
+                'итоговый токен': token ? 'найден' : 'не найден'
+            });
+
+            // Если токен найден в URL, сохраняем его в localStorage для дальнейшего использования
+            if (tokenFromUrl) {
+                localStorage.setItem('token', tokenFromUrl);
+                localStorage.setItem('auth_token', tokenFromUrl);
+                console.log('Токен из URL сохранен в localStorage');
+            }
 
             if (!token) {
                 console.log('Токен не найден, запускаем аутентификацию');
@@ -330,8 +346,16 @@ const ProfileManager = {
             // Пытаемся различными способами получить initData
             let initData = '';
 
+            // Сначала проверяем URL параметры (если переход с главной страницы)
+            const urlParams = new URLSearchParams(window.location.search);
+            const initDataFromUrl = urlParams.get('tgWebAppData');
+
+            if (initDataFromUrl) {
+                initData = initDataFromUrl;
+                console.log('Используем initData из URL параметров:', initData.length > 20 ? initData.substring(0, 20) + '...' : initData);
+            }
             // 1. Проверка window.Telegram.WebApp.initData
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+            else if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
                 initData = window.Telegram.WebApp.initData;
                 console.log('Используем initData из window.Telegram.WebApp.initData',
                     initData.length > 20 ? initData.substring(0, 20) + '...' : initData);
@@ -342,19 +366,17 @@ const ProfileManager = {
                 console.log('Используем initData из tg объекта',
                     initData.length > 20 ? initData.substring(0, 20) + '...' : initData);
             }
-            // 3. Проверка URL параметров
+            // 3. Проверка других URL параметров
             else {
-                const urlParams = new URLSearchParams(window.location.search);
                 const hashParams = new URLSearchParams(window.location.hash.slice(1));
 
-                initData = urlParams.get('tgWebAppData') ||
+                initData = urlParams.get('initData') ||
                     hashParams.get('tgWebAppData') ||
-                    urlParams.get('initData') ||
                     hashParams.get('initData') ||
                     '';
 
                 if (initData && initData.length > 0) {
-                    console.log('Используем initData из URL/hash параметров',
+                    console.log('Используем initData из других URL/hash параметров',
                         initData.length > 20 ? initData.substring(0, 20) + '...' : initData);
                 }
             }

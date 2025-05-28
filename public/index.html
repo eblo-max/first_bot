@@ -802,8 +802,25 @@
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
                 }
 
+                // Передаем данные пользователя и токен в URL для профиля
+                const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+                let profileUrl = '/profile.html';
+
+                // Если есть токен, добавляем его в URL
+                if (token) {
+                    profileUrl += `?token=${encodeURIComponent(token)}`;
+                }
+
+                // Если есть данные Telegram WebApp, добавляем их тоже
+                if (window.Telegram?.WebApp?.initData) {
+                    const separator = profileUrl.includes('?') ? '&' : '?';
+                    profileUrl += `${separator}tgWebAppData=${encodeURIComponent(window.Telegram.WebApp.initData)}`;
+                }
+
+                console.log('Переход в профиль с URL:', profileUrl);
+
                 // Переход на экран профиля
-                window.location.href = '/profile.html';
+                window.location.href = profileUrl;
             });
         });
     </script>
