@@ -414,8 +414,17 @@ const ProfileManager = {
                     }
                 }
 
-                // Прямой доступ без авторизации через dedicated API endpoint
-                console.log('Прямой доступ без данных Telegram - пытаемся получить токен через прямой доступ');
+                // Прямой доступ без авторизации через dedicated API endpoint - ОТКЛЮЧЕНО
+                // console.log('Прямой доступ без данных Telegram - пытаемся получить токен через прямой доступ');
+                // Отключаем создание гостевых пользователей для исправления проблемы с показом тестовых данных
+                console.log('Прямой доступ отключен - перенаправляем на главную');
+                this.showError('Невозможно загрузить профиль без авторизации. Перенаправление на главную...');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+                return;
+
+                /* ЗАКОММЕНТИРОВАНО - НЕ СОЗДАЕМ ГОСТЕВЫХ ПОЛЬЗОВАТЕЛЕЙ
                 try {
                     const directAccessResponse = await fetch('/api/auth/direct-access', {
                         method: 'POST',
@@ -453,6 +462,7 @@ const ProfileManager = {
                     this.showError('Не удалось получить гостевой доступ: ' + directAccessError.message);
                     return;
                 }
+                */
             }
 
             console.log('Отправка запроса на аутентификацию с initData');
