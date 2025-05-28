@@ -221,10 +221,20 @@ async function authorize() {
     try {
         console.log('Начинаем авторизацию через Telegram WebApp...');
 
+        // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ВСЕХ ГОСТЕВЫХ ТОКЕНОВ И ДАННЫХ
+        console.log('Очистка всех потенциальных гостевых токенов...');
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && (key.includes('guest_') || key.includes('test_token'))) {
+                localStorage.removeItem(key);
+                console.log('Удален гостевой ключ:', key);
+            }
+        }
+
         // Очищаем старые токены, если они есть
         const oldToken = localStorage.getItem('token');
-        if (oldToken) {
-            console.log('Найден старый токен, очищаем localStorage...');
+        if (oldToken && (oldToken.includes('guest_') || oldToken.includes('test_'))) {
+            console.log('Найден старый гостевой токен, очищаем localStorage:', oldToken);
             localStorage.removeItem('token');
             localStorage.removeItem('auth_token');
         }
@@ -1223,27 +1233,27 @@ GameState.updateAnswers = function () {
 function clearAppCache() {
     console.log('Очистка кэша приложения...');
 
-    // Очищаем localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('gameData');
-    localStorage.removeItem('userData');
-    // Добавляем очистку всех возможных ключей
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-        const key = localStorage.key(i);
-        if (key && (key.includes('guest_') || key.includes('token') || key.includes('auth'))) {
-            localStorage.removeItem(key);
-            console.log('Удален ключ localStorage:', key);
-        }
-    }
+    // Очищаем localStorage полностью
+    console.log('Очистка localStorage...');
+    localStorage.clear();
+
+    // Также проверяем и удаляем специфичные ключи
+    const keysToRemove = ['token', 'auth_token', 'gameData', 'userData', 'initData'];
+    keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+        console.log('Удален ключ:', key);
+    });
 
     // Очищаем sessionStorage
     sessionStorage.clear();
 
     // Сбрасываем состояние приложения
-    GameState.data.token = null;
-    GameState.data.user = null;
-    GameState.data.isTestMode = false;
+    if (window.GameState) {
+        GameState.data.token = null;
+        GameState.data.user = null;
+        GameState.data.isTestMode = false;
+    }
     isInitialized = false;
 
     console.log('Кэш очищен полностью. Перезапуск приложения...');

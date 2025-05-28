@@ -814,7 +814,7 @@
                 // Если есть данные Telegram WebApp, добавляем их тоже
                 if (window.Telegram?.WebApp?.initData) {
                     const separator = profileUrl.includes('?') ? '&' : '?';
-                    profileUrl += `${separator}tgWebAppData=${encodeURIComponent(window.Telegram.WebApp.initData)}`;
+                    profileUrl += `${separator}initData=${encodeURIComponent(window.Telegram.WebApp.initData)}`;
                 }
 
                 console.log('Переход в профиль с URL:', profileUrl);

@@ -85,6 +85,26 @@ const ProfileManager = {
      */
     async checkAuthentication() {
         try {
+            // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ВСЕХ ГОСТЕВЫХ ТОКЕНОВ И ДАННЫХ
+            console.log('Очистка всех потенциальных гостевых токенов...');
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('guest_') || key.includes('test_token'))) {
+                    localStorage.removeItem(key);
+                    console.log('Удален гостевой ключ:', key);
+                }
+            }
+
+            // Проверяем существующие токены на гостевые данные
+            const existingToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
+            if (existingToken && (existingToken.includes('guest_') || existingToken.includes('test_'))) {
+                console.log('Найден гостевой токен в localStorage - удаляем:', existingToken);
+                localStorage.removeItem('token');
+                localStorage.removeItem('auth_token');
+                this.state.token = null;
+                this.state.isAuthenticated = false;
+            }
+
             // Проверяем данные из URL (переданные с главной страницы)
             const urlParams = new URLSearchParams(window.location.search);
             const tokenFromUrl = urlParams.get('token');
