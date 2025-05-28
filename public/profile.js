@@ -72,6 +72,10 @@ const ProfileManager = {
                 this.showError('Не удалось выполнить аутентификацию');
             }
 
+            // Настраиваем обработчики событий после успешной инициализации
+            console.log('Настройка обработчиков событий...');
+            this.setupEventListeners();
+
         } catch (error) {
             console.error('Ошибка инициализации профиля:', error);
             this.showError('Ошибка инициализации: ' + error.message);
@@ -566,31 +570,65 @@ const ProfileManager = {
             });
         });
 
-        // Универсальный обработчик кликов с делегированием событий для data-action
+        // Прямые обработчики для кнопок навигации
+        const mainButton = document.querySelector('[data-action="goToMain"]');
+        const newGameButton = document.querySelector('[data-action="startNewGame"]');
+
+        if (mainButton) {
+            console.log('Найдена кнопка "Главная", добавляем обработчик');
+            mainButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                console.log('Клик по кнопке "Главная"');
+
+                // Тактильный отклик
+                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+                }
+
+                console.log('Переход на главную страницу...');
+                window.location.href = '/';
+            });
+        } else {
+            console.error('Кнопка "Главная" не найдена!');
+        }
+
+        if (newGameButton) {
+            console.log('Найдена кнопка "Новое дело", добавляем обработчик');
+            newGameButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                console.log('Клик по кнопке "Новое дело"');
+
+                // Тактильный отклик
+                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+                }
+
+                console.log('Переход на новую игру...');
+                window.location.href = '/';
+            });
+        } else {
+            console.error('Кнопка "Новое дело" не найдена!');
+        }
+
+        // Дополнительный универсальный обработчик как fallback
         document.addEventListener('click', (event) => {
             const actionElement = event.target.closest('[data-action]');
             if (!actionElement) return;
 
             const action = actionElement.getAttribute('data-action');
-            console.log('Клик по действию в профиле:', action);
 
-            // Тактильный отклик
-            if (tg && tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
+            // Избегаем дублирования для кнопок навигации
+            if (action === 'goToMain' || action === 'startNewGame') {
+                return; // Эти кнопки уже обрабатываются выше
             }
 
-            // Обрабатываем различные действия
-            switch (action) {
-                case 'goToMain':
-                    console.log('Переход на главную страницу');
-                    window.location.href = '/';
-                    break;
-                case 'startNewGame':
-                    console.log('Запуск новой игры');
-                    window.location.href = '/';
-                    break;
-                default:
-                    console.warn('Неизвестное действие в профиле:', action);
+            console.log('Универсальный обработчик - действие:', action);
+
+            // Тактильный отклик
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
             }
         });
     },
