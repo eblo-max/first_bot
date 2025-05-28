@@ -30,7 +30,7 @@ router.get('/profile', async (req, res) => {
         console.log('Ищем пользователя с telegramId:', telegramId);
 
         // Находим пользователя в базе данных
-        const user = await User.findOne({ telegramId });
+        let user = await User.findOne({ telegramId });
         console.log('Найденный пользователь в БД:', user ? {
             telegramId: user.telegramId,
             firstName: user.firstName,
@@ -39,12 +39,44 @@ router.get('/profile', async (req, res) => {
             stats: user.stats
         } : 'не найден');
 
+        // Если пользователь не найден, создаем его с данными из JWT токена
         if (!user) {
-            console.log('Пользователь не найден в базе данных');
-            return res.status(404).json({
-                status: 'error',
-                message: 'Пользователь не найден'
+            console.log('Пользователь не найден в базе данных, создаем нового...');
+
+            user = new User({
+                telegramId: req.user.telegramId,
+                username: req.user.username,
+                firstName: req.user.firstName,
+                lastName: req.user.lastName,
+                rank: 'НОВИЧОК',
+                stats: {
+                    totalGames: 0,
+                    correctAnswers: 0,
+                    totalScore: 0,
+                    currentStreak: 0,
+                    maxStreak: 0,
+                    accuracy: 0
+                },
+                achievements: [],
+                registeredAt: new Date(),
+                lastVisit: new Date(),
+                gameHistory: []
             });
+
+            try {
+                await user.save();
+                console.log('Новый пользователь создан:', telegramId);
+            } catch (saveError) {
+                console.error('Ошибка создания пользователя:', saveError);
+                return res.status(500).json({
+                    status: 'error',
+                    message: 'Ошибка создания профиля пользователя'
+                });
+            }
+        } else {
+            // Обновляем время последнего визита
+            user.lastVisit = new Date();
+            await user.save();
         }
 
         // Формируем имя пользователя для отображения
