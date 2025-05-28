@@ -184,6 +184,7 @@ exports.verifyToken = async (req, res) => {
         const token = req.headers.authorization?.split(' ')[1];
 
         if (!token) {
+            console.log('Запрос без токена авторизации');
             return res.status(401).json({
                 status: 'error',
                 message: 'Отсутствует токен авторизации'
@@ -191,40 +192,61 @@ exports.verifyToken = async (req, res) => {
         }
 
         // Проверяем токен
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (jwtError) {
+            console.log('Ошибка JWT:', jwtError.name, jwtError.message);
+
+            if (jwtError.name === 'TokenExpiredError') {
+                console.log('Токен истек, требуется повторная авторизация');
+                return res.status(401).json({
+                    status: 'error',
+                    message: 'Токен истек',
+                    code: 'TOKEN_EXPIRED'
+                });
+            } else if (jwtError.name === 'JsonWebTokenError') {
+                console.log('Недействительный токен');
+                return res.status(401).json({
+                    status: 'error',
+                    message: 'Недействительный токен',
+                    code: 'INVALID_TOKEN'
+                });
+            }
+
+            throw jwtError;
+        }
 
         // Проверяем существование пользователя в базе
-        const user = await User.findOne({ telegramId: decoded.telegramId });
+        const user = await User.findOne({ telegramId: decoded.telegramId || decoded.id });
 
         if (!user) {
+            console.log('Пользователь не найден в базе данных:', decoded.telegramId || decoded.id);
             return res.status(401).json({
                 status: 'error',
-                message: 'Пользователь не найден'
+                message: 'Пользователь не найден',
+                code: 'USER_NOT_FOUND'
             });
         }
+
+        console.log('Токен проверен успешно для пользователя:', user.telegramId);
 
         return res.status(200).json({
             status: 'success',
             data: {
                 telegramId: user.telegramId,
                 name: decoded.firstName ? `${decoded.firstName} ${decoded.lastName || ''}`.trim() : (user.nickname || decoded.username || 'Аноним'),
-                rank: user.rank
+                rank: user.rank,
+                stats: user.stats
             }
         });
 
     } catch (error) {
         console.error('Ошибка проверки токена:', error);
-
-        if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({
-                status: 'error',
-                message: 'Токен истек'
-            });
-        }
-
         return res.status(401).json({
             status: 'error',
-            message: 'Недействительный токен'
+            message: 'Ошибка проверки токена',
+            code: 'VERIFICATION_ERROR'
         });
     }
 };

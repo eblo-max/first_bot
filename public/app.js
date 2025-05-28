@@ -221,6 +221,14 @@ async function authorize() {
     try {
         console.log('Начинаем авторизацию через Telegram WebApp...');
 
+        // Очищаем старые токены, если они есть
+        const oldToken = localStorage.getItem('token');
+        if (oldToken) {
+            console.log('Найден старый токен, очищаем localStorage...');
+            localStorage.removeItem('token');
+            localStorage.removeItem('auth_token');
+        }
+
         // Получаем данные пользователя из Telegram
         const telegramUser = tg.initDataUnsafe.user;
         console.log('Данные пользователя из Telegram:', telegramUser);
@@ -238,30 +246,38 @@ async function authorize() {
         });
 
         if (!response.ok) {
+            // Логируем детали ошибки
+            const errorText = await response.text();
+            console.error(`Ошибка авторизации: ${response.status} - ${errorText}`);
             throw new Error(`Ошибка авторизации: ${response.status}`);
         }
 
         const data = await response.json();
         console.log('Ответ сервера при авторизации:', data);
 
-        if (data.status === 'success') {
+        if (data.status === 'success' || data.token) {
             // Сохраняем токен
-            GameState.data.token = data.data.token;
-            localStorage.setItem('token', data.data.token);
+            const token = data.token || data.data?.token;
+            GameState.data.token = token;
+            localStorage.setItem('token', token);
+            localStorage.setItem('auth_token', token); // Дублируем для совместимости
 
             // Сохраняем данные пользователя в состоянии
-            GameState.data.user = {
-                telegramId: data.data.user.telegramId,
-                name: data.data.user.name,
-                firstName: data.data.user.firstName,
-                lastName: data.data.user.lastName,
-                username: data.data.user.username,
-                rank: data.data.user.rank,
-                stats: data.data.user.stats,
-                totalScore: data.data.user.totalScore
-            };
+            const userData = data.user || data.data?.user;
+            if (userData) {
+                GameState.data.user = {
+                    telegramId: userData.telegramId,
+                    name: userData.name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+                    firstName: userData.firstName,
+                    lastName: userData.lastName,
+                    username: userData.username,
+                    rank: userData.rank,
+                    stats: userData.stats,
+                    totalScore: userData.totalScore
+                };
+            }
 
-            console.log('Пользователь авторизован:', GameState.data.user.name);
+            console.log('Пользователь авторизован:', GameState.data.user?.name || 'Неизвестно');
 
             // Отмечаем, что инициализация завершена
             isInitialized = true;
@@ -279,10 +295,45 @@ async function authorize() {
     } catch (error) {
         console.error('Ошибка авторизации:', error);
 
+        // Очищаем все токены при ошибке
+        localStorage.removeItem('token');
+        localStorage.removeItem('auth_token');
+        GameState.data.token = null;
+
         // Проверка доступности сервера или сети
         try {
-            await fetch('/api/health');
-            console.log('API сервер доступен, проблема с авторизацией');
+            const healthResponse = await fetch('/api/health');
+            if (healthResponse.ok) {
+                console.log('API сервер доступен, проблема с авторизацией Telegram');
+
+                // Пробуем получить прямой доступ
+                try {
+                    const directResponse = await fetch('/api/auth/direct-access', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            userAgent: navigator.userAgent,
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+
+                    if (directResponse.ok) {
+                        const directData = await directResponse.json();
+                        if (directData.status === 'success' && directData.data?.token) {
+                            console.log('Получен токен прямого доступа');
+                            GameState.data.token = directData.data.token;
+                            localStorage.setItem('token', directData.data.token);
+                            isInitialized = true;
+                            showContent();
+                            return;
+                        }
+                    }
+                } catch (directError) {
+                    console.error('Ошибка прямого доступа:', directError);
+                }
+            }
         } catch (e) {
             console.error('API сервер недоступен:', e);
         }
@@ -1148,4 +1199,37 @@ GameState.updateAnswers = function () {
         // Добавляем вариант ответа в контейнер
         container.appendChild(answerOption);
     });
-}; 
+};
+
+/**
+ * Очистка всех сохраненных данных и перезапуск приложения
+ * Можно вызвать из консоли браузера: window.clearAppCache()
+ */
+function clearAppCache() {
+    console.log('Очистка кэша приложения...');
+
+    // Очищаем localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('gameData');
+    localStorage.removeItem('userData');
+
+    // Очищаем sessionStorage
+    sessionStorage.clear();
+
+    // Сбрасываем состояние приложения
+    GameState.data.token = null;
+    GameState.data.user = null;
+    GameState.data.isTestMode = false;
+    isInitialized = false;
+
+    console.log('Кэш очищен. Перезапуск приложения...');
+
+    // Перезапускаем приложение
+    location.reload();
+}
+
+// Делаем функцию доступной глобально
+window.clearAppCache = clearAppCache;
+window.CriminalBluffApp = window.CriminalBluffApp || {};
+window.CriminalBluffApp.clearCache = clearAppCache; 
