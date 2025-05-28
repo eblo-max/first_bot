@@ -410,6 +410,20 @@ function timeExpired() {
         // Находим правильный ответ
         const correctMistake = GameData.currentStory.mistakes.find(m => m.isCorrect);
 
+        // ========== СОХРАНЯЕМ РЕЗУЛЬТАТ ПРИ ИСТЕЧЕНИИ ВРЕМЕНИ ==========
+        // Обновляем результат ответа в текущую историю (неправильный ответ)
+        const currentIndex = GameData.currentStoryIndex;
+        if (GameData.stories && GameData.stories[currentIndex]) {
+            GameData.stories[currentIndex].correct = false; // Время истекло = неправильный ответ
+            GameData.stories[currentIndex].answered = true;
+            GameData.stories[currentIndex].selectedMistakeId = null; // Нет выбранного ответа
+            console.log(`⏰ Обновлена история ${currentIndex} (время истекло):`, {
+                correct: false,
+                answered: true,
+                selectedMistakeId: null
+            });
+        }
+
         // Выделяем правильный ответ
         if (correctMistake) {
             setTimeout(() => {
@@ -494,6 +508,20 @@ function selectAnswer(mistakeId) {
 
     // Проверяем правильность ответа
     const isCorrect = selectedMistake && selectedMistake.isCorrect;
+
+    // ========== СОХРАНЯЕМ РЕЗУЛЬТАТ В ТЕКУЩУЮ ИСТОРИЮ ==========
+    // Обновляем результат ответа в текущую историю
+    const currentIndex = GameData.currentStoryIndex;
+    if (GameData.stories && GameData.stories[currentIndex]) {
+        GameData.stories[currentIndex].correct = isCorrect;
+        GameData.stories[currentIndex].answered = true;
+        GameData.stories[currentIndex].selectedMistakeId = mistakeId;
+        console.log(`✅ Обновлена история ${currentIndex}:`, {
+            correct: isCorrect,
+            answered: true,
+            selectedMistakeId: mistakeId
+        });
+    }
 
     // Если ответ неправильный, выделяем правильный вариант
     if (!isCorrect && correctMistake) {
@@ -627,16 +655,46 @@ function nextQuestion() {
 async function finishGame() {
     console.log('Завершение игры...');
 
-    // Создаем объект с результатами игры
+    // ========== МАТЕМАТИЧЕСКИ ТОЧНЫЙ РАСЧЕТ СТАТИСТИКИ ==========
+
+    // 1. ПОДСЧЕТ ПРАВИЛЬНЫХ ОТВЕТОВ (только из реальных данных)
+    let actualCorrectAnswers = 0;
+    const totalQuestions = 5; // Всегда 5 вопросов в игре
+
+    console.log('🔍 Анализ результатов по каждому вопросу:');
+
+    if (GameData.stories && GameData.stories.length > 0) {
+        GameData.stories.forEach((story, index) => {
+            const isCorrect = story.correct === true;
+            if (isCorrect) {
+                actualCorrectAnswers++;
+            }
+
+            console.log(`Вопрос ${index + 1}:`, {
+                id: story.id,
+                answered: story.answered,
+                correct: isCorrect,
+                selectedMistakeId: story.selectedMistakeId
+            });
+        });
+    }
+
+    // 2. МАТЕМАТИЧЕСКИЕ ФОРМУЛЫ ДЛЯ РАСЧЕТА
+    const totalScore = GameData.score || 0;
+
+    // Формула точности: (Правильные ответы / Общее количество вопросов) × 100%
+    const accuracy = Math.round((actualCorrectAnswers / totalQuestions) * 100);
+
+    console.log('📊 ФИНАЛЬНАЯ СТАТИСТИКА:');
+    console.log(`• Правильных ответов: ${actualCorrectAnswers} из ${totalQuestions}`);
+    console.log(`• Точность: ${accuracy}%`);
+    console.log(`• Общий счет: ${totalScore} очков`);
+
+    // Создаем объект с результатами игры (ИСПОЛЬЗУЕМ ТОЛЬКО РЕАЛЬНЫЕ ДАННЫЕ)
     const gameResult = {
-        totalScore: GameData.score,
-        correctAnswers: GameData.stories.filter((_, index) => {
-            // Предполагаем, что история была отвечена правильно, если в результате correct=true
-            return index <= GameData.currentStoryIndex &&
-                (index < GameData.currentStoryIndex ||
-                    (GameData.result && GameData.result.correct));
-        }).length,
-        totalQuestions: GameData.stories.length
+        totalScore: totalScore,
+        correctAnswers: actualCorrectAnswers,
+        totalQuestions: totalQuestions
     };
 
     // Сохраняем результаты
@@ -648,6 +706,16 @@ async function finishGame() {
         const token = localStorage.getItem('auth_token');
 
         if (token) {
+            // 3. ОТПРАВКА НА СЕРВЕР с точной статистикой
+            const gameStatistics = {
+                gameId: GameData.gameId,
+                totalScore: totalScore,
+                correctAnswers: actualCorrectAnswers,
+                totalQuestions: totalQuestions
+            };
+
+            console.log('📤 Отправляем статистику на сервер:', gameStatistics);
+
             // Отправляем результаты на сервер
             const response = await fetch('/api/game/finish', {
                 method: 'POST',
@@ -655,21 +723,15 @@ async function finishGame() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    gameId: GameData.gameId,
-                    totalScore: gameResult.totalScore,
-                    correctAnswers: gameResult.correctAnswers,
-                    totalQuestions: gameResult.totalQuestions
-                })
+                body: JSON.stringify(gameStatistics)
             });
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('Результаты игры успешно сохранены на сервере:', data);
+                console.log('✅ Результаты игры успешно сохранены на сервере:', data);
 
                 // Обновляем информацию о новых достижениях, если они есть
                 if (data.status === 'success' && data.data.newAchievements && data.data.newAchievements.length > 0) {
-                    // Можно показать уведомление о новых достижениях
                     console.log('Получены новые достижения:', data.data.newAchievements);
                 }
             } else {
@@ -679,7 +741,12 @@ async function finishGame() {
             console.warn('Невозможно сохранить результаты игры - отсутствует токен авторизации');
         }
     } catch (error) {
-        console.error('Ошибка при отправке результатов игры:', error);
+        console.error('❌ Ошибка при отправке результатов игры:', error);
+
+        // ДАЖЕ В СЛУЧАЕ ОШИБКИ - ИСПОЛЬЗУЕМ ТОЛЬКО РЕАЛЬНЫЕ ДАННЫЕ
+        console.log('🔧 Резервный расчет статистики:');
+        console.log(`• Правильных ответов: ${actualCorrectAnswers} из ${totalQuestions}`);
+        console.log(`• Счет: ${totalScore}`);
     }
 
     // Показываем экран завершения
