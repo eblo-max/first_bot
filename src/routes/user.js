@@ -95,13 +95,13 @@ router.get('/profile', async (req, res) => {
             username: user.username,
             rank: user.rank || 'НОВИЧОК',
             stats: {
-                investigations: user.stats?.totalGames || 0,
-                solvedCases: user.stats?.correctAnswers || 0,
-                winStreak: user.stats?.currentStreak || 0,
-                maxWinStreak: user.stats?.maxStreak || 0,
-                accuracy: user.stats?.totalGames > 0
+                investigations: user.stats?.investigations || user.stats?.totalGames || 0,
+                solvedCases: user.stats?.solvedCases || user.stats?.correctAnswers || 0,
+                winStreak: user.stats?.winStreak || user.stats?.currentStreak || 0,
+                maxWinStreak: user.stats?.maxWinStreak || user.stats?.maxStreak || 0,
+                accuracy: user.stats?.accuracy || (user.stats?.totalGames > 0
                     ? Math.round((user.stats.correctAnswers / user.stats.totalGames) * 100)
-                    : 0,
+                    : 0),
                 totalScore: user.stats?.totalScore || 0
             },
             achievements: user.achievements || [],
