@@ -715,11 +715,47 @@ async function selectAnswer(mistakeId) {
 
         // В тестовом режиме генерируем моковый ответ
         if (GameState.data.isTestMode) {
-            console.log('Тестовый режим: генерируем моковый ответ');
+            console.log('🎮 Тестовый режим: проверка ответа');
 
             // Находим правильный ответ
             const correctMistake = GameState.data.currentStory.mistakes.find(m => m.isCorrect);
             const isCorrect = correctMistake && correctMistake.id === mistakeId;
+
+            console.log('📝 Анализ ответа:', {
+                selectedMistakeId: mistakeId,
+                correctMistakeId: correctMistake?.id,
+                isCorrect: isCorrect
+            });
+
+            // ========== МАТЕМАТИЧЕСКИЕ ФОРМУЛЫ НАЧИСЛЕНИЯ ОЧКОВ ==========
+            let pointsEarned = 0;
+            let details = {
+                base: 0,
+                timeBonus: 0,
+                difficultyBonus: 0,
+                total: 0
+            };
+
+            if (isCorrect) {
+                // Базовые очки за правильный ответ
+                details.base = 100;
+
+                // Бонус за скорость: от 0 до 50 очков
+                // Формула: 50 × (осталось_времени / 15_секунд)
+                details.timeBonus = Math.round(50 * (timeLeft / 15));
+
+                // Бонус за сложность
+                const difficulty = GameState.data.currentStory.difficulty || 'medium';
+                if (difficulty === 'easy') details.difficultyBonus = 10;
+                else if (difficulty === 'medium') details.difficultyBonus = 20;
+                else if (difficulty === 'hard') details.difficultyBonus = 30;
+
+                // Общий счет = Базовые + Скорость + Сложность
+                details.total = details.base + details.timeBonus + details.difficultyBonus;
+                pointsEarned = details.total;
+            }
+
+            console.log('💰 Начисление очков:', details);
 
             response = {
                 ok: true,
@@ -729,13 +765,8 @@ async function selectAnswer(mistakeId) {
                     explanation: isCorrect
                         ? "Правильно! Преступник оставил биологический материал (кровь), который попал в слив раковины. Даже после смывания, следы ДНК остаются на сантехнике и в трубах. Криминалисты легко извлекают такие образцы и используют для идентификации."
                         : "Неправильно. Преступник оставил биологический материал (кровь), который попал в слив раковины. Даже после смывания, следы ДНК остаются на сантехнике и в трубах. Криминалисты легко извлекают такие образцы и используют для идентификации.",
-                    pointsEarned: isCorrect ? 120 : 0,
-                    details: {
-                        base: isCorrect ? 100 : 0,
-                        timeBonus: isCorrect ? Math.floor(timeLeft * 5) : 0,
-                        difficultyBonus: isCorrect ? 20 : 0,
-                        total: isCorrect ? 120 : 0
-                    }
+                    pointsEarned: pointsEarned,
+                    details: details
                 }
             };
 
@@ -846,94 +877,111 @@ function nextQuestion() {
  */
 async function finishGame() {
     document.querySelector('.loading-container').style.display = 'flex';
-    console.log('Завершение игры...');
+    console.log('=== ЗАВЕРШЕНИЕ ИГРЫ ===');
 
     try {
-        // Подсчитываем статистику игры
-        const correctAnswers = GameState.data.stories ? GameState.data.stories.filter(story => story.correct).length : 0;
-        const totalQuestions = GameState.data.stories ? GameState.data.stories.length : 5;
-        const totalScore = GameState.data.score || 0;
+        // ========== МАТЕМАТИЧЕСКИ ТОЧНЫЙ РАСЧЕТ СТАТИСТИКИ ==========
 
-        // Детальный лог для отладки
-        console.log('Детальная статистика историй:');
-        if (GameState.data.stories) {
+        // 1. ПОДСЧЕТ ПРАВИЛЬНЫХ ОТВЕТОВ (только из реальных данных)
+        let actualCorrectAnswers = 0;
+        const totalQuestions = 5; // Всегда 5 вопросов в игре
+
+        console.log('🔍 Анализ результатов по каждому вопросу:');
+
+        if (GameState.data.stories && GameState.data.stories.length > 0) {
             GameState.data.stories.forEach((story, index) => {
-                console.log(`История ${index}:`, {
+                const isCorrect = story.correct === true;
+                if (isCorrect) {
+                    actualCorrectAnswers++;
+                }
+
+                console.log(`Вопрос ${index + 1}:`, {
                     id: story.id,
                     answered: story.answered,
-                    correct: story.correct,
+                    correct: isCorrect,
                     selectedMistakeId: story.selectedMistakeId
                 });
             });
         }
 
-        console.log('Статистика игры:', {
-            gameId: GameState.data.gameId,
-            totalScore,
-            correctAnswers,
-            totalQuestions
-        });
+        // 2. МАТЕМАТИЧЕСКИЕ ФОРМУЛЫ ДЛЯ РАСЧЕТА
+        const totalScore = GameState.data.score || 0;
 
-        // Отправляем запрос на завершение игры с полной статистикой
+        // Формула точности: (Правильные ответы / Общее количество вопросов) × 100%
+        const accuracy = Math.round((actualCorrectAnswers / totalQuestions) * 100);
+
+        console.log('📊 ФИНАЛЬНАЯ СТАТИСТИКА:');
+        console.log(`• Правильных ответов: ${actualCorrectAnswers} из ${totalQuestions}`);
+        console.log(`• Точность: ${accuracy}%`);
+        console.log(`• Общий счет: ${totalScore} очков`);
+
+        // 3. ОТПРАВКА НА СЕРВЕР
+        const gameStatistics = {
+            gameId: GameState.data.gameId,
+            totalScore: totalScore,
+            correctAnswers: actualCorrectAnswers,
+            totalQuestions: totalQuestions
+        };
+
+        console.log('📤 Отправляем статистику на сервер:', gameStatistics);
+
+        // Отправляем запрос на завершение игры с точной статистикой
         const response = await fetch('/api/game/finish', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${GameState.data.token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                gameId: GameState.data.gameId,
-                totalScore,
-                correctAnswers,
-                totalQuestions
-            })
+            body: JSON.stringify(gameStatistics)
         });
 
         if (!response.ok) {
-            throw new Error('Ошибка завершения игры');
+            throw new Error(`Ошибка сервера: ${response.status}`);
         }
 
-        const data = await response.json();
-        console.log('Получены результаты игры:', data);
+        const serverData = await response.json();
+        console.log('✅ Ответ сервера:', serverData);
 
-        // Сохраняем результаты игры
+        // 4. СОХРАНЕНИЕ РЕЗУЛЬТАТОВ (ТОЛЬКО РЕАЛЬНЫХ ДАННЫХ)
         GameState.data.gameResult = {
-            totalScore,
-            correctAnswers,
-            totalQuestions,
-            accuracy: Math.round((correctAnswers / totalQuestions) * 100),
-            serverResponse: data
+            totalScore: totalScore,
+            correctAnswers: actualCorrectAnswers,
+            totalQuestions: totalQuestions,
+            accuracy: accuracy,
+            serverResponse: serverData
         };
 
         // Переключаемся на экран результатов
         GameState.transition('finish');
 
     } catch (error) {
-        console.error('Ошибка завершения игры:', error);
-        alert('Не удалось завершить игру. Результаты могут быть не сохранены.');
+        console.error('❌ Ошибка завершения игры:', error);
 
-        // В тестовом режиме создаем моковые результаты
-        if (GameState.data.isTestMode) {
-            console.log('Генерация тестовых результатов игры...');
-            const correctAnswers = Math.floor(Math.random() * 5) + 3; // 3-7 правильных ответов
-            const totalQuestions = 10;
-
-            GameState.data.gameResult = {
-                totalScore: GameState.data.score,
-                correctAnswers: correctAnswers,
-                totalQuestions: totalQuestions,
-                accuracy: Math.floor((correctAnswers / totalQuestions) * 100),
-                stats: {
-                    totalGames: 5,
-                    totalScore: 1250,
-                    maxStreak: 3
-                }
-            };
-
-            GameState.transition('finish');
-        } else {
-            goToMain();
+        // ДАЖЕ В СЛУЧАЕ ОШИБКИ - ИСПОЛЬЗУЕМ ТОЛЬКО РЕАЛЬНЫЕ ДАННЫЕ
+        let failsafeCorrectAnswers = 0;
+        if (GameState.data.stories) {
+            failsafeCorrectAnswers = GameState.data.stories.filter(story => story.correct === true).length;
         }
+
+        console.log('🔧 Резервный расчет статистики:');
+        console.log(`• Правильных ответов: ${failsafeCorrectAnswers} из 5`);
+        console.log(`• Счет: ${GameState.data.score || 0}`);
+
+        // Создаем результаты на основе РЕАЛЬНЫХ данных (без рандома)
+        GameState.data.gameResult = {
+            totalScore: GameState.data.score || 0,
+            correctAnswers: failsafeCorrectAnswers,
+            totalQuestions: 5,
+            accuracy: Math.round((failsafeCorrectAnswers / 5) * 100),
+            serverResponse: null,
+            isOffline: true
+        };
+
+        // Показываем предупреждение, но продолжаем с локальными данными
+        alert('Не удалось сохранить результаты на сервере. Отображаем локальную статистику.');
+
+        // Переходим к экрану результатов с локальными данными
+        GameState.transition('finish');
     } finally {
         document.querySelector('.loading-container').style.display = 'none';
     }
