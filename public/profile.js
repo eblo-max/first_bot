@@ -160,8 +160,8 @@ const ProfileManager = {
      */
     async checkAuthentication() {
         try {
-            // Получаем токен из localStorage
-            const token = localStorage.getItem('auth_token');
+            // Получаем токен из localStorage (проверяем оба ключа)
+            let token = localStorage.getItem('token') || localStorage.getItem('auth_token');
             console.log('Проверка аутентификации: токен ' + (token ? 'найден' : 'не найден'));
 
             if (!token) {
@@ -185,6 +185,7 @@ const ProfileManager = {
                 console.log('Токен недействителен (статус ответа: ' + response.status + '), запускаем повторную аутентификацию');
                 this.state.token = null;
                 localStorage.removeItem('auth_token');
+                localStorage.removeItem('token');
                 await this.authenticateTelegram();
                 return;
             }
@@ -203,6 +204,7 @@ const ProfileManager = {
             this.state.isAuthenticated = false;
             this.state.token = null;
             localStorage.removeItem('auth_token');
+            localStorage.removeItem('token');
 
             console.log('Состояние сброшено, запускаем повторную аутентификацию');
             await this.authenticateTelegram();
@@ -362,7 +364,7 @@ const ProfileManager = {
                 console.warn('Данные инициализации Telegram WebApp отсутствуют или пусты');
 
                 // Пробуем использовать сохраненный токен, если он есть
-                const storedToken = localStorage.getItem('auth_token');
+                const storedToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
                 if (storedToken) {
                     console.log('Используем сохраненный токен без проверки аутентификации через Telegram');
                     this.state.token = storedToken;
@@ -383,6 +385,7 @@ const ProfileManager = {
                         } else {
                             console.warn('Токен недействителен, необходима повторная аутентификация');
                             localStorage.removeItem('auth_token');
+                            localStorage.removeItem('token');
                         }
                     } catch (verifyError) {
                         console.error('Ошибка при верификации токена:', verifyError);
@@ -413,6 +416,7 @@ const ProfileManager = {
 
                     if (accessData.status === 'success' && accessData.data && accessData.data.token) {
                         console.log('Получен токен прямого доступа');
+                        localStorage.setItem('token', accessData.data.token);
                         localStorage.setItem('auth_token', accessData.data.token);
                         this.state.token = accessData.data.token;
                         this.state.isAuthenticated = true;
@@ -446,7 +450,7 @@ const ProfileManager = {
                 console.error(`Ошибка аутентификации через API: ${response.status} ${response.statusText}`, errorText);
 
                 // Пробуем использовать сохраненный токен как fallback
-                const storedToken = localStorage.getItem('auth_token');
+                const storedToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
                 if (storedToken) {
                     console.log('Используем сохраненный токен после ошибки API');
                     this.state.token = storedToken;
@@ -478,8 +482,9 @@ const ProfileManager = {
                 return;
             }
 
-            // Сохраняем токен
+            // Сохраняем токен в оба ключа для совместимости
             const token = data.data.token;
+            localStorage.setItem('token', token);
             localStorage.setItem('auth_token', token);
             this.state.token = token;
             this.state.isAuthenticated = true;
@@ -849,12 +854,14 @@ const ProfileManager = {
         try {
             this.loadingStart('Загрузка профиля...');
 
-            // Получаем токен из localStorage
-            const token = localStorage.getItem('auth_token');
+            // Получаем токен из localStorage (проверяем оба ключа)
+            const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
 
             if (!token) {
                 throw new Error('Отсутствует токен авторизации');
             }
+
+            console.log('Отправляем запрос профиля с токеном:', token.substring(0, 20) + '...');
 
             // Запрашиваем данные профиля с сервера
             const response = await fetch('/api/user/profile', {
@@ -865,23 +872,30 @@ const ProfileManager = {
                 }
             });
 
+            console.log('Ответ от сервера профиля:', response.status, response.statusText);
+
             if (response.status === 401) {
                 // Токен недействителен, перенаправляем на авторизацию
+                console.log('Токен недействителен (401), очищаем и перенаправляем');
                 localStorage.removeItem('auth_token');
+                localStorage.removeItem('token');
                 window.location.href = '/';
                 return;
             }
 
             if (!response.ok) {
-                throw new Error(`Ошибка сервера: ${response.status}`);
+                const errorText = await response.text();
+                console.error('Ошибка ответа сервера:', response.status, errorText);
+                throw new Error(`Ошибка сервера: ${response.status} - ${errorText}`);
             }
 
             const data = await response.json();
+            console.log('Получены данные профиля:', data);
 
             if (data.status === 'success') {
                 // Сохраняем данные профиля
                 this.profileData = data.data;
-                console.log('Данные профиля загружены:', this.profileData);
+                console.log('Данные профиля сохранены:', this.profileData);
 
                 // Обновляем интерфейс профиля
                 this.updateProfileUI(this.profileData);
