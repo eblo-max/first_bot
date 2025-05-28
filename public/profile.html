@@ -1074,9 +1074,9 @@
                 <div class="badge-decor bottom-right"></div>
             </div>
             <div class="profile-info">
-                <h2 class="profile-name">Александр К.</h2>
-                <div class="profile-badge">ДЕТЕКТИВ</div>
-                <div class="profile-id">ID: <span>9273551428</span></div>
+                <h2 class="profile-name" id="profile-name">Загрузка...</h2>
+                <div class="profile-badge" id="profile-rank">НОВИЧОК</div>
+                <div class="profile-id">ID: <span id="profile-id">-</span></div>
             </div>
         </section>
 
@@ -1093,22 +1093,22 @@
             <div class="stats-grid">
                 <div class="stat-card" data-tag="ОПЫТ">
                     <div class="stat-label">Расследований</div>
-                    <div class="stat-value">47</div>
+                    <div class="stat-value" id="investigations-count">0</div>
                 </div>
 
                 <div class="stat-card" data-tag="УСПЕХ">
                     <div class="stat-label">Раскрыто дел</div>
-                    <div class="stat-value success">32</div>
+                    <div class="stat-value success" id="solved-cases">0</div>
                 </div>
 
                 <div class="stat-card" data-tag="СЕРИЯ">
                     <div class="stat-label">Серия успехов</div>
-                    <div class="stat-value">5</div>
+                    <div class="stat-value" id="win-streak">0</div>
                 </div>
 
                 <div class="stat-card" data-tag="ТОЧНОСТЬ">
                     <div class="stat-label">Точность</div>
-                    <div class="stat-value percentage">68</div>
+                    <div class="stat-value percentage" id="accuracy">0</div>
                 </div>
             </div>
         </section>
@@ -1197,34 +1197,8 @@
                     <div class="header-cell">ОЧКИ</div>
                 </div>
 
-                <div class="leaderboard-row">
-                    <div class="rank-cell">1</div>
-                    <div class="user-cell">Марина С.</div>
-                    <div class="score-cell">8,450</div>
-                </div>
-
-                <div class="leaderboard-row">
-                    <div class="rank-cell">2</div>
-                    <div class="user-cell">Виктор П.</div>
-                    <div class="score-cell">7,820</div>
-                </div>
-
-                <div class="leaderboard-row current-user">
-                    <div class="rank-cell">3</div>
-                    <div class="user-cell">Александр К.</div>
-                    <div class="score-cell">6,250</div>
-                </div>
-
-                <div class="leaderboard-row">
-                    <div class="rank-cell">4</div>
-                    <div class="user-cell">Дмитрий Н.</div>
-                    <div class="score-cell">5,890</div>
-                </div>
-
-                <div class="leaderboard-row">
-                    <div class="rank-cell">5</div>
-                    <div class="user-cell">Анна О.</div>
-                    <div class="score-cell">4,120</div>
+                <div id="leaderboard-content">
+                    <div class="loading-message">Загрузка рейтинга...</div>
                 </div>
             </div>
         </section>

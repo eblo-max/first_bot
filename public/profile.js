@@ -849,78 +849,57 @@ const ProfileManager = {
     },
 
     /**
-     * Обновление интерфейса таблицы лидеров
-     * @param {Object} data - Данные таблицы лидеров
+     * Обновление интерфейса лидерборда
+     * @param {Object} data - Данные лидерборда
      */
     updateLeaderboardUI(data) {
-        if (!data || !data.leaderboard) return;
-
-        console.log('Обновление UI лидерборда с данными:', data);
-
-        const leaderboard = data.leaderboard;
-        const currentUser = data.currentUser;
-
-        // Получаем контейнер для таблицы лидеров
-        const tableContainer = document.querySelector('.leaderboard-table');
-        if (!tableContainer) return;
-
-        // Очищаем текущие строки (кроме заголовка)
-        const headerRow = tableContainer.querySelector('.leaderboard-header');
-        tableContainer.innerHTML = '';
-        if (headerRow) {
-            tableContainer.appendChild(headerRow);
-        }
-
-        // Если список лидеров пуст, показываем сообщение
-        if (leaderboard.length === 0) {
-            const emptyRow = document.createElement('div');
-            emptyRow.className = 'leaderboard-row';
-            emptyRow.innerHTML = `
-                <div class="rank-cell">-</div>
-                <div class="user-cell">Данные пока отсутствуют</div>
-                <div class="score-cell">-</div>
-            `;
-            tableContainer.appendChild(emptyRow);
+        const leaderboardContent = document.getElementById('leaderboard-content');
+        if (!leaderboardContent) {
+            console.error('Контейнер лидерборда не найден');
             return;
         }
 
-        // Добавляем новые строки
-        leaderboard.forEach(entry => {
+        // Если данных нет или список пуст
+        if (!data || !data.entries || data.entries.length === 0) {
+            leaderboardContent.innerHTML = `
+                <div class="empty-leaderboard">
+                    <div class="empty-leaderboard-icon">🏆</div>
+                    <div class="empty-leaderboard-text">Рейтинг пуст</div>
+                    <div class="empty-leaderboard-subtext">Станьте первым детективом!</div>
+                </div>
+            `;
+            return;
+        }
+
+        // Очищаем контейнер
+        leaderboardContent.innerHTML = '';
+
+        // Получаем текущего пользователя для выделения
+        const currentUserTelegramId = this.profileData?.telegramId;
+
+        // Создаем строки лидерборда
+        data.entries.forEach((entry, index) => {
             const row = document.createElement('div');
             row.className = 'leaderboard-row';
 
-            // Если это текущий пользователь, добавляем соответствующий класс
-            if (entry.isCurrentUser) {
+            // Выделяем текущего пользователя
+            if (entry.telegramId === currentUserTelegramId) {
                 row.classList.add('current-user');
             }
 
+            // Форматируем очки
+            const formattedScore = new Intl.NumberFormat('ru-RU').format(entry.totalScore || 0);
+
             row.innerHTML = `
-                <div class="rank-cell">${entry.rank}</div>
-                <div class="user-cell">${entry.name}</div>
-                <div class="score-cell">${entry.score ? entry.score.toLocaleString() : '0'}</div>
+                <div class="rank-cell">${entry.rank || (index + 1)}</div>
+                <div class="user-cell">${entry.name || entry.username || 'Анонимный детектив'}</div>
+                <div class="score-cell">${formattedScore}</div>
             `;
 
-            tableContainer.appendChild(row);
+            leaderboardContent.appendChild(row);
         });
 
-        // Если текущий пользователь не в топе, добавляем его отдельно
-        if (currentUser && !leaderboard.some(entry => entry.isCurrentUser)) {
-            // Добавляем разделитель
-            const divider = document.createElement('div');
-            divider.className = 'leaderboard-divider';
-            divider.innerHTML = '...';
-            tableContainer.appendChild(divider);
-
-            // Добавляем строку текущего пользователя
-            const userRow = document.createElement('div');
-            userRow.className = 'leaderboard-row current-user';
-            userRow.innerHTML = `
-                <div class="rank-cell">${currentUser.rank}</div>
-                <div class="user-cell">${currentUser.name}</div>
-                <div class="score-cell">${currentUser.score ? currentUser.score.toLocaleString() : '0'}</div>
-            `;
-            tableContainer.appendChild(userRow);
-        }
+        console.log(`Отображен лидерборд с ${data.entries.length} участниками`);
     },
 
     /**

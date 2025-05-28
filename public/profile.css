@@ -1,0 +1,45 @@
+/* Стили для загрузки и пустых состояний */
+.loading-message {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.empty-leaderboard {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-secondary);
+}
+
+.empty-leaderboard-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.empty-leaderboard-text {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.empty-leaderboard-subtext {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* Анимация загрузки */
+.loading-spinner {
+    border: 3px solid var(--bg-secondary);
+    border-top: 3px solid var(--accent-primary);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+} 

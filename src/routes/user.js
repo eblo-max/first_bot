@@ -146,12 +146,17 @@ router.get('/history', userController.getGameHistory);
 router.get('/leaderboard', async (req, res) => {
     try {
         const { period = 'all', limit = 20 } = req.query;
+        const currentUserTelegramId = req.user?.telegramId;
+
+        console.log(`Запрос лидерборда: period=${period}, limit=${limit}, currentUser=${currentUserTelegramId}`);
 
         // Получаем топ пользователей по общему счету
-        const leaders = await User.find()
+        const leaders = await User.find({ 'stats.totalScore': { $gt: 0 } })
             .sort({ 'stats.totalScore': -1 })
             .limit(parseInt(limit))
             .select('telegramId firstName lastName username stats.totalScore rank');
+
+        console.log(`Найдено пользователей с очками: ${leaders.length}`);
 
         // Форматируем данные для ответа
         const formattedLeaders = leaders.map((user, index) => {
@@ -162,7 +167,9 @@ router.get('/leaderboard', async (req, res) => {
             return {
                 rank: index + 1,
                 name: displayName,
-                score: user.stats?.totalScore || 0,
+                username: user.username,
+                telegramId: user.telegramId,
+                totalScore: user.stats?.totalScore || 0,
                 userRank: user.rank || 'НОВИЧОК'
             };
         });
@@ -170,9 +177,12 @@ router.get('/leaderboard', async (req, res) => {
         res.json({
             status: 'success',
             data: {
-                leaders: formattedLeaders,
+                entries: formattedLeaders,
                 period,
-                total: leaders.length
+                total: formattedLeaders.length,
+                currentUser: {
+                    telegramId: currentUserTelegramId
+                }
             }
         });
 
