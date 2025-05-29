@@ -375,7 +375,7 @@
                     rgba(210, 50, 50, 0.95) 75%,
                     rgba(230, 65, 65, 0.9) 100%);
             animation:
-                timer-countdown-ltr 15s linear forwards,
+                timer-countdown-ltr 60s linear forwards,
                 blood-flow 3s ease-in-out infinite,
                 blood-pulse 2s ease-in-out infinite;
             z-index: 3;
@@ -503,6 +503,28 @@
             to {
                 width: 0%;
             }
+        }
+
+        /* Timer reset animation for new questions */
+        @keyframes timer-reset {
+            from {
+                width: 0%;
+            }
+
+            to {
+                width: calc(75% - 2px);
+            }
+        }
+
+        .timer-fill.reset {
+            animation: timer-reset 0.3s ease-out forwards;
+        }
+
+        .timer-fill.countdown {
+            animation:
+                timer-countdown-ltr 60s linear forwards,
+                blood-flow 3s ease-in-out infinite,
+                blood-pulse 2s ease-in-out infinite;
         }
 
         /* Compact timer display */
@@ -1181,7 +1203,7 @@
                         <div class="timer-notch"></div>
                     </div>
                     <div class="timer-glow"></div>
-                    <div class="timer-fill" id="timer-bar"></div>
+                    <div class="timer-fill countdown" id="timer-bar"></div>
                     <div class="timer-ripple"></div>
                     <div class="timer-particles">
                         <div class="particle"></div>
@@ -1194,7 +1216,7 @@
                     <div class="timer-scanline"></div>
                     <div class="laser-sight"></div>
                     <div class="timer-value-container">
-                        <div class="timer-value"><span id="timer-value">15</span><span class="timer-blink">:</span>00
+                        <div class="timer-value"><span id="timer-value">60</span><span class="timer-blink">:</span>00
                         </div>
                     </div>
                 </div>
@@ -1360,30 +1382,77 @@
             document.getElementById('action-button').addEventListener('click', function () {
                 // В реальном приложении здесь был бы переход к следующему делу
 
+                // Сбрасываем таймер для следующего дела
+                resetTimer();
+
+                // Сбрасываем результаты
+                document.getElementById('result-section').style.display = 'none';
+
+                // Сбрасываем выбранные ответы
+                document.querySelectorAll('.answer-option').forEach(function (option) {
+                    option.classList.remove('selected', 'disabled', 'correct-answer');
+                });
+
                 // или window.location.href = '/game?next=true';
             });
 
             // Запускаем таймер
-            let secondsLeft = 15;
-            const timer = setInterval(function () {
-                secondsLeft--;
-                document.getElementById('timer-value').textContent = secondsLeft;
-                document.getElementById('timer-bar').style.width = (secondsLeft / 15 * 100) + '%';
+            let secondsLeft = 60;
+            let timer;
 
-                if (secondsLeft <= 5) {
-                    document.querySelector('.timer-container').classList.add('urgent');
+            function startTimer() {
+                timer = setInterval(function () {
+                    secondsLeft--;
+                    document.getElementById('timer-value').textContent = secondsLeft;
 
-                    // Тактильный отклик при низком времени
-                    if (window.Telegram?.WebApp?.HapticFeedback) {
-                        window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
+                    if (secondsLeft <= 10) {
+                        document.querySelector('.timer-container').classList.add('urgent');
+
+                        // Тактильный отклик при низком времени
+                        if (window.Telegram?.WebApp?.HapticFeedback) {
+                            window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
+                        }
                     }
-                }
 
-                if (secondsLeft <= 0) {
+                    if (secondsLeft <= 0) {
+                        clearInterval(timer);
+                        // Время истекло - показываем правильный ответ
+                        document.querySelectorAll('.answer-option').forEach(function (option) {
+                            option.classList.add('disabled');
+                            if (option.getAttribute('data-mistake-id') === 'mistake-3') {
+                                option.classList.add('correct-answer');
+                            }
+                        });
+                    }
+                }, 1000);
+            }
+
+            function resetTimer() {
+                // Останавливаем старый таймер
+                if (timer) {
                     clearInterval(timer);
-
                 }
-            }, 1000);
+
+                // Сбрасываем значения
+                secondsLeft = 60;
+                document.getElementById('timer-value').textContent = secondsLeft;
+                document.querySelector('.timer-container').classList.remove('urgent');
+
+                // Сбрасываем анимацию полоски
+                const timerBar = document.getElementById('timer-bar');
+                timerBar.classList.remove('countdown');
+                timerBar.classList.add('reset');
+
+                // Через короткую задержку запускаем новую анимацию
+                setTimeout(function () {
+                    timerBar.classList.remove('reset');
+                    timerBar.classList.add('countdown');
+                    startTimer();
+                }, 300);
+            }
+
+            // Запускаем таймер при загрузке
+            startTimer();
 
             // Сообщаем Telegram, что приложение готово
             if (window.Telegram?.WebApp) {
