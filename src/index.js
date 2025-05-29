@@ -6,6 +6,9 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 require('dotenv').config();
 
+// Подключение системы логирования в самом начале
+const { logger, error, warn, info, debug, httpMiddleware } = require('./utils/logger');
+
 // Импорт маршрутов
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/game');
@@ -58,6 +61,9 @@ app.use((req, res, next) => {
     res.set('Expires', '0');
     next();
 });
+
+// Подключаем middleware для логирования HTTP запросов
+app.use(httpMiddleware());
 
 // Корневой маршрут показывает главное меню - ставим перед статическими файлами
 app.get('/', (req, res) => {

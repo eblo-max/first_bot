@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="description" content="Интерактивная игра-викторина с криминальными историями">
 
     <!-- Подключение Telegram WebApp API ПЕРВЫМ -->
     <script src="https://telegram.org/js/telegram-web-app.js" crossorigin="anonymous"></script>
@@ -657,11 +660,17 @@
     </script>
 </head>
 
-<body>
-    <!-- Контейнер для сообщения загрузки -->
+<body data-theme="dark">
+    <!-- Экран загрузки -->
     <div class="loading-container">
-        <div class="loader"></div>
-        <p>Загрузка преступного досье...</p>
+        <div class="loading-content">
+            <div class="loading-icon">🔍</div>
+            <div class="loading-text">Загрузка игры...</div>
+            <div class="loading-subtext">Подготавливаем дела для расследования</div>
+            <div class="loading-progress">
+                <div class="loading-progress-bar"></div>
+            </div>
+        </div>
     </div>
 
     <div class="app-container" style="display: none;">
@@ -825,10 +834,33 @@
         });
     </script>
 
-    <!-- Основные скрипты -->
-    <script src="achievement-system.js"></script>
+    <!-- Подключение системы логирования ПЕРВЫМ -->
+    <script src="logger.js"></script>
+
+    <!-- Подключение основных скриптов -->
     <script src="game-state.js"></script>
+    <script src="game-interface.js"></script>
+    <script src="achievement-system.js"></script>
     <script src="app.js"></script>
+
+    <!-- Инициализация приложения -->
+    <script>
+        // Инициализация приложения после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function () {
+            // Первым делом инициализируем логгер
+            if (window.Logger) {
+                // В development можно включить debug режим через URL параметр
+                if (window.location.search.includes('debug=true')) {
+                    window.Logger.enableDebug();
+                }
+            }
+
+            // Инициализируем приложение
+            if (typeof initApp === 'function') {
+                initApp();
+            }
+        });
+    </script>
 </body>
 
 </html>
