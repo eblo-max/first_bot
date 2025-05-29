@@ -3,16 +3,19 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const mongoose = require('mongoose');
+const compression = require('compression');
 require('dotenv').config();
 
 // Импорт маршрутов
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/game');
 const userRoutes = require('./routes/user'); // Добавляем маршруты пользователя
-// const leaderboardRoutes = require('./routes/leaderboard'); // Будет добавлено в фазе 2
+const leaderboardRoutes = require('./routes/leaderboard'); // Будет добавлено в фазе 2
 
 // Импорт функции для заполнения базы тестовыми данными
 const seedDatabase = require('./utils/seedData');
+
+const leaderboardService = require('./services/leaderboardService');
 
 // Создание приложения Express
 const app = express();
@@ -87,7 +90,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/user', userRoutes); // Подключаем маршруты пользователя
-// app.use('/api/leaderboard', leaderboardRoutes); // Будет добавлено в фазе 2
+app.use('/api/leaderboard', leaderboardRoutes); // Будет добавлено в фазе 2
 
 // Маршрут для проверки здоровья приложения
 app.get('/api/health', (req, res) => {
@@ -118,7 +121,7 @@ const startServer = async () => {
 
     // Запускаем сервер независимо от подключения к MongoDB
     const server = app.listen(PORT, () => {
-        console.log(`Сервер запущен на порту ${PORT}`);
+        console.log(`🚀 Сервер запущен на порту ${PORT}`);
     });
 
     // Пытаемся подключиться к MongoDB (попробуем все строки подключения)
@@ -134,10 +137,13 @@ const startServer = async () => {
                 serverSelectionTimeoutMS: 5000 // 5 секунд таймаут для быстрого фолбэка
             });
 
-            console.log('Подключено к MongoDB успешно!');
+            console.log('✅ Подключение к MongoDB установлено');
 
             // Заполнение базы тестовыми данными
             await seedDatabase();
+
+            // Запускаем службу рейтингов после подключения к БД
+            leaderboardService.start();
 
             isConnected = true;
             break; // Выходим из цикла, так как подключение успешно
@@ -152,9 +158,35 @@ const startServer = async () => {
         console.log('⚠️ API запросы к базе данных будут возвращать ошибки.');
     }
 
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+        console.log('💤 SIGTERM получен, выключаем сервер...');
+        leaderboardService.stop();
+        server.close(() => {
+            console.log('🛑 HTTP сервер остановлен');
+            mongoose.connection.close(false, () => {
+                console.log('🔌 MongoDB соединение закрыто');
+                process.exit(0);
+            });
+        });
+    });
+
+    process.on('SIGINT', () => {
+        console.log('💤 SIGINT получен, выключаем сервер...');
+        leaderboardService.stop();
+        server.close(() => {
+            console.log('🛑 HTTP сервер остановлен');
+            mongoose.connection.close(false, () => {
+                console.log('🔌 MongoDB соединение закрыто');
+                process.exit(0);
+            });
+        });
+    });
+
     return server;
 };
 
 startServer().catch(error => {
     console.error('Критическая ошибка запуска сервера:', error);
+    process.exit(1);
 }); 

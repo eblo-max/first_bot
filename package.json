@@ -6,9 +6,11 @@
     "scripts": {
         "start": "node src/index.js",
         "dev": "nodemon src/index.js",
-        "test": "node tests/unit/tma-auth.test.js",
-        "test:e2e": "npx playwright test",
-        "test:unit": "node tests/unit/tma-auth.test.js"
+        "seed": "node src/utils/seedData.js",
+        "migrate-leaderboard": "node src/utils/migrateLeaderboard.js",
+        "test": "playwright test",
+        "test:headed": "playwright test --headed",
+        "test:ui": "playwright test --ui"
     },
     "dependencies": {
         "cors": "^2.8.5",

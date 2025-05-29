@@ -245,87 +245,41 @@ exports.getGameHistory = async (req, res) => {
 };
 
 /**
- * Получение таблицы лидеров
+ * Получение таблицы лидеров (оптимизированная версия с кэшированием)
  */
 exports.getLeaderboard = async (req, res) => {
     try {
-        const { period = 'all' } = req.query;
+        const { period = 'all', limit = 20 } = req.query;
         const telegramId = req.user.telegramId;
 
-        let dateFilter = {};
-        const now = new Date();
+        console.log(`Запрос лидерборда: period=${period}, limit=${limit}, currentUser=${telegramId}`);
 
-        // Настраиваем фильтр по периоду
-        if (period === 'day') {
-            const yesterday = new Date(now);
-            yesterday.setDate(yesterday.getDate() - 1);
-            dateFilter = { createdAt: { $gte: yesterday } };
-        } else if (period === 'week') {
-            const lastWeek = new Date(now);
-            lastWeek.setDate(lastWeek.getDate() - 7);
-            dateFilter = { createdAt: { $gte: lastWeek } };
-        } else if (period === 'month') {
-            const lastMonth = new Date(now);
-            lastMonth.setMonth(lastMonth.getMonth() - 1);
-            dateFilter = { createdAt: { $gte: lastMonth } };
-        }
+        // Используем новую службу рейтингов
+        const leaderboardService = require('../services/leaderboardService');
+        const result = await leaderboardService.getLeaderboard(period, parseInt(limit), telegramId);
 
-        // Получаем топ игроков и добавляем ранг к каждому
-        const topUsers = await User.find(dateFilter)
-            .sort({ 'stats.totalScore': -1 })
-            .limit(20)
-            .select('telegramId firstName lastName username nickname stats.totalScore rank')
-            .lean(); // используем lean() для лучшей производительности
-
-        // Форматируем результаты
-        const leaderboard = topUsers.map((user, index) => {
-            const displayName = user.nickname ||
-                (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() :
-                    (user.username || `Игрок ${user.telegramId.slice(-4)}`));
-
-            return {
-                rank: index + 1,
-                isCurrentUser: user.telegramId === telegramId,
-                name: displayName,
-                score: user.stats.totalScore,
-                userRank: user.rank
-            };
+        console.log(`📊 Рейтинг ${period} получен:`, {
+            entries: result.leaderboard.length,
+            hasCurrentUser: !!result.currentUser,
+            cached: result.cached,
+            fallback: result.fallback
         });
-
-        // Проверяем, вошел ли текущий пользователь в топ
-        const currentUserInTop = leaderboard.some(entry => entry.isCurrentUser);
-
-        // Если текущий пользователь не в топе, получаем его данные и позицию
-        let currentUserData = null;
-        if (!currentUserInTop) {
-            const user = await User.findOne({ telegramId });
-
-            if (user) {
-                // Получаем количество пользователей с большим счетом
-                const higherScoreCount = await User.countDocuments({
-                    'stats.totalScore': { $gt: user.stats.totalScore },
-                    ...dateFilter
-                });
-
-                const displayName = user.nickname ||
-                    (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() :
-                        (user.username || `Игрок ${user.telegramId.slice(-4)}`));
-
-                currentUserData = {
-                    rank: higherScoreCount + 1,
-                    isCurrentUser: true,
-                    name: displayName,
-                    score: user.stats.totalScore,
-                    userRank: user.rank
-                };
-            }
-        }
 
         return res.status(200).json({
             status: 'success',
             data: {
-                leaderboard,
-                currentUser: currentUserData
+                leaderboard: result.leaderboard,
+                currentUser: result.currentUser,
+                pagination: {
+                    page: 1,
+                    limit: parseInt(limit),
+                    total: result.leaderboard.length
+                },
+                meta: {
+                    cached: result.cached,
+                    fallback: result.fallback,
+                    updatedAt: result.updatedAt
+                }
             }
         });
 
