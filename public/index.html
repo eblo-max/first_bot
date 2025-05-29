@@ -616,7 +616,7 @@
         // Для тестирования - создаем заглушку если в тестовом режиме
         if ((!window.Telegram || !window.Telegram.WebApp) &&
             (window.location.host.includes('localhost') || window.location.search.includes('test=true'))) {
-            console.log('Создаем заглушку для тестирования');
+            
             window.Telegram = {
                 WebApp: {
                     ready: function () { console.log('WebApp.ready() вызван'); },
@@ -825,8 +825,6 @@
                     const separator = profileUrl.includes('?') ? '&' : '?';
                     profileUrl += `${separator}initData=${encodeURIComponent(window.Telegram.WebApp.initData)}`;
                 }
-
-                console.log('Переход в профиль с URL:', profileUrl);
 
                 // Переход на экран профиля
                 window.location.href = profileUrl;

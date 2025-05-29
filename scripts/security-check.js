@@ -371,8 +371,7 @@ class SecurityScanner {
      * Основной метод сканирования
      */
     async scan() {
-        console.log('🔒 Начинаем проверку безопасности...\n');
-
+        
         const startTime = Date.now();
 
         // Сканируем файлы проекта
@@ -401,24 +400,13 @@ class SecurityScanner {
     printReport(report, duration) {
         const { summary, issues } = report;
 
-        console.log('📊 ОТЧЕТ ПО БЕЗОПАСНОСТИ');
         console.log('═'.repeat(50));
-        console.log(`⏱️  Время сканирования: ${duration}с`);
-        console.log(`📁 Просканировано файлов: ${summary.scannedFiles}/${summary.totalFiles}`);
-        console.log(`🚨 Всего проблем: ${summary.totalIssues}`);
-        console.log('');
 
         // Статистика по критичности
-        console.log('🎯 По критичности:');
-        console.log(`   🔴 Критичные: ${summary.critical}`);
-        console.log(`   🟠 Высокие: ${summary.high}`);
-        console.log(`   🟡 Средние: ${summary.medium}`);
-        console.log(`   🟢 Низкие: ${summary.low}`);
-        console.log('');
 
         // Детали проблем
         if (issues.length > 0) {
-            console.log('🔍 НАЙДЕННЫЕ ПРОБЛЕМЫ:');
+            
             console.log('─'.repeat(50));
 
             issues.forEach((issue, index) => {
@@ -430,26 +418,21 @@ class SecurityScanner {
                 };
 
                 console.log(`${index + 1}. ${severityEmoji[issue.severity]} [${issue.severity.toUpperCase()}] ${issue.type}`);
-                console.log(`   💬 ${issue.message}`);
+                
                 if (issue.file) {
-                    console.log(`   📍 ${issue.file}${issue.line ? `:${issue.line}` : ''}`);
+                    
                 }
-                console.log('');
+                
             });
         } else {
-            console.log('✅ Проблем безопасности не найдено!');
+            
         }
 
         // Рекомендации
         if (summary.critical > 0 || summary.high > 0) {
-            console.log('⚠️  РЕКОМЕНДАЦИИ:');
+            
             console.log('─'.repeat(50));
-            console.log('1. Немедленно исправьте критичные и высокие проблемы');
-            console.log('2. Проведите code review для средних проблем');
-            console.log('3. Настройте автоматические проверки безопасности');
-            console.log('4. Регулярно обновляйте зависимости');
-            console.log('5. Используйте инструменты статического анализа');
-            console.log('');
+
         }
     }
 }

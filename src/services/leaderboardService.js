@@ -12,8 +12,7 @@ class LeaderboardService {
      * Запуск службы автоматического обновления рейтингов
      */
     start() {
-        console.log('🚀 Запуск службы обновления рейтингов...');
-
+        
         // Первое обновление сразу при старте
         this.updateLeaderboards();
 
@@ -22,7 +21,6 @@ class LeaderboardService {
             this.updateLeaderboards();
         }, this.updateIntervalMs);
 
-        console.log(`⏰ Служба рейтингов запущена. Обновление каждые ${this.updateIntervalMs / 60000} минут`);
     }
 
     /**
@@ -32,7 +30,7 @@ class LeaderboardService {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
             this.updateInterval = null;
-            console.log('⏹️ Служба обновления рейтингов остановлена');
+            
         }
     }
 
@@ -41,7 +39,7 @@ class LeaderboardService {
      */
     async updateLeaderboards() {
         if (this.isUpdating) {
-            console.log('⏳ Обновление рейтингов уже выполняется, пропускаем...');
+            
             return;
         }
 
@@ -49,8 +47,7 @@ class LeaderboardService {
         const startTime = Date.now();
 
         try {
-            console.log('🔄 Начало обновления всех рейтингов...');
-
+            
             // Сначала очищаем старые записи
             await Leaderboard.cleanupOldEntries();
 
@@ -59,9 +56,6 @@ class LeaderboardService {
 
             this.lastUpdateTime = new Date();
             const duration = Date.now() - startTime;
-
-            console.log(`✅ Обновление рейтингов завершено за ${duration}ms`);
-            console.log('📊 Результаты обновления:', results);
 
             return results;
         } catch (error) {
@@ -77,9 +71,9 @@ class LeaderboardService {
      */
     async forceUpdatePeriod(period) {
         try {
-            console.log(`🔄 Принудительное обновление рейтинга для периода: ${period}`);
+            
             const count = await Leaderboard.updatePeriodLeaderboard(period);
-            console.log(`✅ Рейтинг ${period} обновлен: ${count} записей`);
+            
             return count;
         } catch (error) {
             console.error(`❌ Ошибка принудительного обновления рейтинга ${period}:`, error);
@@ -111,8 +105,7 @@ class LeaderboardService {
             const cachedLeaderboard = await Leaderboard.getLeaderboard(period, limit);
 
             if (cachedLeaderboard && cachedLeaderboard.length > 0) {
-                console.log(`📋 Получен кэшированный рейтинг ${period}: ${cachedLeaderboard.length} записей`);
-
+                
                 // Ищем текущего пользователя в рейтинге
                 let currentUserData = null;
                 const currentUserInTop = cachedLeaderboard.find(entry => entry.userId === currentUserId);
@@ -155,7 +148,7 @@ class LeaderboardService {
                     updatedAt: cachedLeaderboard[0]?.updatedAt
                 };
             } else {
-                console.log(`⚠️ Кэшированный рейтинг ${period} пуст, используем fallback`);
+                
                 return await this.getFallbackLeaderboard(period, limit, currentUserId);
             }
         } catch (error) {
@@ -168,8 +161,7 @@ class LeaderboardService {
      * Fallback - получение рейтинга из коллекции users (старая система)
      */
     async getFallbackLeaderboard(period = 'all', limit = 20, currentUserId = null) {
-        console.log(`🔄 Fallback: получение рейтинга ${period} из коллекции users`);
-
+        
         const User = require('../models/User');
 
         let dateFilter = {};

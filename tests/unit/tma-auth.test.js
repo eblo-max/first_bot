@@ -17,8 +17,7 @@ const TEST_BOT_TOKEN = 'TEST_BOT_TOKEN';
  * Тест генерации и валидации Telegram initData
  */
 (function testInitDataValidation() {
-    console.log('Запуск тестов валидации initData');
-
+    
     // Генерируем initData с тестовыми данными
     const initData = generateTelegramInitData({
         user: { id: 12345678, first_name: 'Test', username: 'testuser' },
@@ -34,15 +33,13 @@ const TEST_BOT_TOKEN = 'TEST_BOT_TOKEN';
     const isInvalid = validateTelegramInitData(invalidData, TEST_BOT_TOKEN);
     assert.strictEqual(isInvalid, false, 'Невалидные данные не должны проходить проверку');
 
-    console.log('✓ Тесты валидации initData пройдены успешно');
 })();
 
 /**
  * Тест создания заглушки Telegram WebApp
  */
 (function testTelegramWebAppStub() {
-    console.log('Запуск тестов создания заглушки Telegram WebApp');
-
+    
     // Создаем заглушку с пользовательскими параметрами
     const customStub = createTelegramWebAppStub({
         userId: 87654321,
@@ -67,15 +64,13 @@ const TEST_BOT_TOKEN = 'TEST_BOT_TOKEN';
     assert.strictEqual(defaultStub.WebApp.initDataUnsafe.user.first_name, 'Test', 'Имя пользователя должно иметь дефолтное значение');
     assert.strictEqual(defaultStub.WebApp.colorScheme, 'dark', 'Цветовая схема должна иметь дефолтное значение');
 
-    console.log('✓ Тесты создания заглушки Telegram WebApp пройдены успешно');
 })();
 
 /**
  * Тест формата initData
  */
 (function testInitDataFormat() {
-    console.log('Запуск тестов формата initData');
-
+    
     // Генерируем initData
     const initData = generateTelegramInitData({
         botToken: TEST_BOT_TOKEN
@@ -87,8 +82,6 @@ const TEST_BOT_TOKEN = 'TEST_BOT_TOKEN';
     assert.ok(initData.includes('hash='), 'initData должен содержать параметр hash');
     assert.ok(initData.includes('query_id='), 'initData должен содержать параметр query_id');
 
-    console.log('✓ Тесты формата initData пройдены успешно');
 })();
 
 // Вывод общего результата
-console.log('Все тесты пройдены успешно!'); 

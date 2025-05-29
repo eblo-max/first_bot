@@ -12,13 +12,10 @@ router.use(authMiddleware);
  */
 router.get('/profile', async (req, res) => {
     try {
-        console.log('=== ЗАПРОС ПРОФИЛЯ ===');
-        console.log('Headers:', req.headers);
-        console.log('User from middleware:', req.user);
 
         // Получаем пользователя из middleware
         if (!req.user || !req.user.telegramId) {
-            console.log('Ошибка: пользователь не найден в req.user');
+            
             return res.status(401).json({
                 status: 'error',
                 message: 'Пользователь не авторизован'
@@ -26,22 +23,13 @@ router.get('/profile', async (req, res) => {
         }
 
         const telegramId = req.user.telegramId;
-        console.log('Ищем пользователя с telegramId:', telegramId);
-
+        
         // Находим пользователя в базе данных
         let user = await User.findOne({ telegramId });
-        console.log('Найденный пользователь в БД:', user ? {
-            telegramId: user.telegramId,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            username: user.username,
-            stats: user.stats
-        } : 'не найден');
-
+        
         // Если пользователь не найден, создаем его с данными из JWT токена
         if (!user) {
-            console.log('Пользователь не найден в базе данных, создаем нового...');
-
+            
             user = new User({
                 telegramId: req.user.telegramId,
                 username: req.user.username,
@@ -64,7 +52,7 @@ router.get('/profile', async (req, res) => {
 
             try {
                 await user.save();
-                console.log('Новый пользователь создан:', telegramId);
+                
             } catch (saveError) {
                 console.error('Ошибка создания пользователя:', saveError);
                 return res.status(500).json({
@@ -82,8 +70,6 @@ router.get('/profile', async (req, res) => {
         const displayName = user.firstName
             ? `${user.firstName} ${user.lastName || ''}`.trim()
             : (user.username || 'Детектив');
-
-        console.log('Отображаемое имя:', displayName);
 
         // Формируем данные профиля
         const profileData = {
@@ -179,15 +165,11 @@ router.get('/leaderboard', async (req, res) => {
         const { period = 'all', limit = 20 } = req.query;
         const currentUserTelegramId = req.user?.telegramId;
 
-        console.log(`Запрос лидерборда: period=${period}, limit=${limit}, currentUser=${currentUserTelegramId}`);
-
         // Получаем топ пользователей по общему счету
         const leaders = await User.find({ 'stats.totalScore': { $gt: 0 } })
             .sort({ 'stats.totalScore': -1 })
             .limit(parseInt(limit))
             .select('telegramId firstName lastName username stats.totalScore rank');
-
-        console.log(`Найдено пользователей с очками: ${leaders.length}`);
 
         // Форматируем данные для ответа
         const formattedLeaders = leaders.map((user, index) => {

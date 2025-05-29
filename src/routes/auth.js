@@ -12,8 +12,6 @@ const authController = require('../controllers/authController');
  */
 router.post('/init', verifyTelegramWebAppData, async (req, res) => {
     try {
-        console.log('Запрос на /api/auth/init получен');
-        console.log('Данные telegramUser из middleware:', req.telegramUser);
 
         const telegramUser = req.telegramUser;
         if (!telegramUser || !telegramUser.telegramId) {
@@ -25,14 +23,13 @@ router.post('/init', verifyTelegramWebAppData, async (req, res) => {
         }
 
         const telegramId = telegramUser.telegramId;
-        console.log('Поиск пользователя с telegramId:', telegramId);
-
+        
         // Ищем пользователя в базе или создаем нового
         let user = await User.findOne({ telegramId });
         let isNewUser = false;
 
         if (!user) {
-            console.log('Пользователь не найден, создаем нового');
+            
             isNewUser = true;
             user = new User({
                 telegramId,
@@ -43,9 +40,9 @@ router.post('/init', verifyTelegramWebAppData, async (req, res) => {
                 lastVisit: new Date()
             });
             await user.save();
-            console.log('Новый пользователь создан:', telegramId);
+            
         } else {
-            console.log('Найден существующий пользователь:', telegramId);
+            
             // Обновляем дату последнего визита
             user.lastVisit = new Date();
             await user.save();
@@ -62,8 +59,6 @@ router.post('/init', verifyTelegramWebAppData, async (req, res) => {
             process.env.JWT_SECRET || 'default_secret_key',
             { expiresIn: '7d' }
         );
-
-        console.log('JWT токен создан для пользователя:', telegramId);
 
         // Формируем имя пользователя для отображения
         const displayName = user.firstName

@@ -42,4 +42,9 @@ Thumbs.db
 # Временные файлы
 *.tmp
 *.temp
-.cache 
+.cache
+
+# Backup и оптимизация
+/backup_debug
+/dist
+bundle-analysis.json 

@@ -6,11 +6,10 @@ const User = require('../models/User');
 exports.getProfile = async (req, res) => {
     try {
         const telegramId = req.user.telegramId;
-        console.log(`Запрос профиля для пользователя с telegramId: ${telegramId}`);
-
+        
         // Проверяем, что это не гостевой пользователь
         if (telegramId && telegramId.startsWith('guest_')) {
-            console.log('Отклоняем запрос профиля для гостевого пользователя:', telegramId);
+            
             return res.status(403).json({
                 status: 'error',
                 message: 'Профиль недоступен для гостевых пользователей. Требуется авторизация через Telegram.',
@@ -23,8 +22,7 @@ exports.getProfile = async (req, res) => {
 
         // Если пользователь не найден, но токен валидный с реальными данными Telegram - создаем пользователя
         if (!user && telegramId && !telegramId.startsWith('guest_')) {
-            console.log(`Пользователь ${telegramId} не найден в БД, создаем нового пользователя из данных токена`);
-
+            
             // Создаем нового пользователя из данных токена
             user = new User({
                 telegramId: telegramId,
@@ -61,19 +59,19 @@ exports.getProfile = async (req, res) => {
         // Если в БД не сохранены имя/фамилия, но они есть в токене, обновляем
         if (req.user.firstName && (!user.firstName || user.firstName !== req.user.firstName)) {
             user.firstName = req.user.firstName;
-            console.log(`Обновлено имя пользователя из токена: ${req.user.firstName}`);
+            
             await user.save();
         }
 
         if (req.user.lastName && (!user.lastName || user.lastName !== req.user.lastName)) {
             user.lastName = req.user.lastName;
-            console.log(`Обновлена фамилия пользователя из токена: ${req.user.lastName}`);
+            
             await user.save();
         }
 
         if (req.user.username && (!user.username || user.username !== req.user.username)) {
             user.username = req.user.username;
-            console.log(`Обновлен username пользователя из токена: ${req.user.username}`);
+            
             await user.save();
         }
 
@@ -252,18 +250,9 @@ exports.getLeaderboard = async (req, res) => {
         const { period = 'all', limit = 20 } = req.query;
         const telegramId = req.user.telegramId;
 
-        console.log(`Запрос лидерборда: period=${period}, limit=${limit}, currentUser=${telegramId}`);
-
         // Используем новую службу рейтингов
         const leaderboardService = require('../services/leaderboardService');
         const result = await leaderboardService.getLeaderboard(period, parseInt(limit), telegramId);
-
-        console.log(`📊 Рейтинг ${period} получен:`, {
-            entries: result.leaderboard.length,
-            hasCurrentUser: !!result.currentUser,
-            cached: result.cached,
-            fallback: result.fallback
-        });
 
         return res.status(200).json({
             status: 'success',

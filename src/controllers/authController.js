@@ -48,8 +48,7 @@ exports.authenticateTelegram = async (req, res) => {
         let userStr = '';
         try {
             userStr = params.get('user');
-            console.log('Данные пользователя из Telegram params:', userStr);
-
+            
             if (userStr) {
                 user = JSON.parse(userStr);
             } else {
@@ -58,7 +57,7 @@ exports.authenticateTelegram = async (req, res) => {
                 if (startParam && startParam.startsWith('{')) {
                     try {
                         user = JSON.parse(startParam);
-                        console.log('Извлечены данные пользователя из start_param');
+                        
                     } catch (e) {
                         console.error('Ошибка при парсинге start_param:', e);
                     }
@@ -74,10 +73,10 @@ exports.authenticateTelegram = async (req, res) => {
             // Проверка доп. данных из запроса, если есть
             if (req.body.telegramUser) {
                 user = req.body.telegramUser;
-                console.log('Используем данные из req.body.telegramUser:', user);
+                
             } else if (req.body.user) {
                 user = req.body.user;
-                console.log('Используем данные из req.body.user:', user);
+                
             } else {
                 return res.status(400).json({
                     status: 'error',
@@ -103,8 +102,6 @@ exports.authenticateTelegram = async (req, res) => {
             languageCode: user.language_code || 'ru'
         };
 
-        console.log('Данные пользователя Telegram для сохранения:', userInfo);
-
         // Создаем или обновляем пользователя в базе данных
         let dbUser = await User.findOne({ telegramId: userInfo.telegramId });
 
@@ -120,7 +117,7 @@ exports.authenticateTelegram = async (req, res) => {
             });
 
             await dbUser.save();
-            console.log(`Создан новый пользователь Telegram: ${userInfo.telegramId}`);
+            
         } else {
             // Обновляем данные пользователя
             dbUser.username = userInfo.username;
@@ -129,7 +126,7 @@ exports.authenticateTelegram = async (req, res) => {
             dbUser.lastVisit = new Date();
 
             await dbUser.save();
-            console.log(`Обновлен существующий пользователь Telegram: ${userInfo.telegramId}`);
+            
         }
 
         // Генерируем JWT токен
@@ -184,7 +181,7 @@ exports.verifyToken = async (req, res) => {
         const token = req.headers.authorization?.split(' ')[1];
 
         if (!token) {
-            console.log('Запрос без токена авторизации');
+            
             return res.status(401).json({
                 status: 'error',
                 message: 'Отсутствует токен авторизации'
@@ -196,17 +193,16 @@ exports.verifyToken = async (req, res) => {
         try {
             decoded = jwt.verify(token, process.env.JWT_SECRET);
         } catch (jwtError) {
-            console.log('Ошибка JWT:', jwtError.name, jwtError.message);
-
+            
             if (jwtError.name === 'TokenExpiredError') {
-                console.log('Токен истек, требуется повторная авторизация');
+                
                 return res.status(401).json({
                     status: 'error',
                     message: 'Токен истек',
                     code: 'TOKEN_EXPIRED'
                 });
             } else if (jwtError.name === 'JsonWebTokenError') {
-                console.log('Недействительный токен');
+                
                 return res.status(401).json({
                     status: 'error',
                     message: 'Недействительный токен',
@@ -221,15 +217,13 @@ exports.verifyToken = async (req, res) => {
         const user = await User.findOne({ telegramId: decoded.telegramId || decoded.id });
 
         if (!user) {
-            console.log('Пользователь не найден в базе данных:', decoded.telegramId || decoded.id);
+            
             return res.status(401).json({
                 status: 'error',
                 message: 'Пользователь не найден',
                 code: 'USER_NOT_FOUND'
             });
         }
-
-        console.log('Токен проверен успешно для пользователя:', user.telegramId);
 
         return res.status(200).json({
             status: 'success',
@@ -256,8 +250,7 @@ exports.verifyToken = async (req, res) => {
  */
 exports.directAccess = async (req, res) => {
     try {
-        console.log('Запрос на прямой доступ без Telegram авторизации - ОТКЛОНЕН');
-
+        
         // Больше не создаем гостевых пользователей - требуем авторизацию через Telegram
         return res.status(403).json({
             status: 'error',

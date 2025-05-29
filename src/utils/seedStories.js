@@ -145,8 +145,7 @@ const seedStories = async () => {
         const count = await Story.countDocuments();
 
         if (count === 0) {
-            console.log('Заполнение базы данных тестовыми историями...');
-
+            
             // Преобразуем истории, чтобы добавить уникальные идентификаторы
             const storiesWithIds = sampleStories.map((story, index) => ({
                 ...story,
@@ -157,9 +156,8 @@ const seedStories = async () => {
             // Вставляем тестовые истории
             await Story.insertMany(storiesWithIds);
 
-            console.log(`Добавлено ${storiesWithIds.length} историй`);
         } else {
-            console.log(`База данных уже содержит ${count} историй`);
+            
         }
     } catch (error) {
         console.error('Ошибка при заполнении базы данных историями:', error);

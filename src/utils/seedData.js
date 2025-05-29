@@ -160,18 +160,14 @@ const sampleStories = [
  */
 const migrateUserStats = async () => {
     try {
-        console.log('Запуск миграции для пересчета статистики пользователей...');
-
+        
         const users = await User.find({});
-        console.log(`Найдено пользователей для миграции: ${users.length}`);
-
+        
         for (const user of users) {
             if (!user.gameHistory || user.gameHistory.length === 0) {
-                console.log(`Пользователь ${user.telegramId} не имеет истории игр - пропускаем`);
+                
                 continue;
             }
-
-            console.log(`Мигрируем пользователя: ${user.telegramId}, игр в истории: ${user.gameHistory.length}`);
 
             // Пересчитываем статистику с нуля на основе gameHistory
             let totalCorrectAnswers = 0;
@@ -214,18 +210,8 @@ const migrateUserStats = async () => {
             // Сохраняем
             await user.save();
 
-            console.log(`Пользователь ${user.telegramId} обновлен:`, {
-                investigations: user.stats.investigations,
-                solvedCases: user.stats.solvedCases,
-                totalQuestions: user.stats.totalQuestions,
-                accuracy: user.stats.accuracy,
-                winStreak: user.stats.winStreak,
-                maxWinStreak: user.stats.maxWinStreak,
-                totalScore: user.stats.totalScore
-            });
         }
 
-        console.log('Миграция завершена успешно!');
     } catch (error) {
         console.error('Ошибка при миграции:', error);
     }
@@ -236,15 +222,13 @@ const migrateUserStats = async () => {
  */
 const seedDatabase = async () => {
     try {
-        console.log('Проверяем необходимость заполнения базы тестовыми данными...');
-
+        
         // ЗАПУСКАЕМ МИГРАЦИЮ ДЛЯ ПЕРЕСЧЕТА СТАТИСТИКИ
-        console.log('Запускаем миграцию для пересчета статистики...');
+        
         await migrateUserStats();
 
         // УДАЛЯЕМ ТОЛЬКО ТЕСТОВЫХ ПОЛЬЗОВАТЕЛЕЙ, А НЕ ВСЕХ!
-        console.log('Очищаем базу от тестовых пользователей...');
-
+        
         // Удаляем только пользователей с тестовыми данными (гостевые аккаунты и тестовые пользователи)
         const testUserQuery = {
             $or: [
@@ -256,29 +240,22 @@ const seedDatabase = async () => {
         };
 
         const deletedUsers = await User.deleteMany(testUserQuery);
-        console.log(`Удалено тестовых пользователей из базы данных: ${deletedUsers.deletedCount}`);
-
+        
         // Показываем количество реальных пользователей, которые остались
         const realUsersCount = await User.countDocuments();
-        console.log(`Реальных пользователей в базе данных: ${realUsersCount}`);
-
+        
         // Проверяем количество историй в базе
         const storyCount = await Story.countDocuments();
-        console.log(`Найдено историй в базе: ${storyCount}`);
-
+        
         // Если историй мало, загружаем новые
         if (storyCount < 20) {
-            console.log('Загружаем истории в базу данных...');
-
+            
             // Загружаем истории из отдельного файла
             await seedStories();
 
-            console.log('Истории успешно загружены в базу данных');
         } else {
-            console.log('База данных уже содержит достаточное количество историй');
+            
         }
-
-        console.log('Инициализация базы данных завершена');
 
     } catch (error) {
         console.error('Ошибка при заполнении базы тестовыми данными:', error);

@@ -17,7 +17,7 @@
         // Для тестирования - создаем заглушку если в тестовом режиме
         if ((!window.Telegram || !window.Telegram.WebApp) &&
             (window.location.host.includes('localhost') || window.location.search.includes('test=true'))) {
-            console.log('Создаем заглушку для тестирования');
+            
             window.Telegram = {
                 WebApp: {
                     ready: function () { console.log('WebApp.ready() вызван'); },
@@ -1515,7 +1515,7 @@
             // Обработчик кнопки "Следующее дело"
             document.getElementById('action-button').addEventListener('click', function () {
                 // В реальном приложении здесь был бы переход к следующему делу
-                alert('Переход к следующему делу!');
+                
                 // или window.location.href = '/game?next=true';
             });
 
@@ -1537,7 +1537,7 @@
 
                 if (secondsLeft <= 0) {
                     clearInterval(timer);
-                    alert('Время истекло! Вы не успели выбрать ответ.');
+                    
                 }
             }, 1000);
 

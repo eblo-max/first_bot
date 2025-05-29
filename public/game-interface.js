@@ -86,7 +86,7 @@ const GameInterface = {
 
                 // Явная остановка таймера через обращение к GameData
                 if (window.GameData && window.GameData.timer) {
-                    console.log('GameInterface: Явная остановка таймера при выборе ответа');
+                    
                     clearInterval(window.GameData.timer);
                     window.GameData.timer = null;
                     window.GameData.answerSelected = true;
@@ -305,7 +305,7 @@ const GameInterface = {
     showGameFinish(gameResult) {
         // В текущей версии просто перенаправляем на главную страницу
         // В полной реализации здесь должен быть код для отображения экрана с результатами
-        alert(`Игра завершена! Ваш счет: ${gameResult.totalScore || 0} очков`);
+        
         window.location.href = '/';
     },
 

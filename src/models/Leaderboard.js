@@ -71,8 +71,7 @@ leaderboardSchema.index({ updatedAt: 1 });
  * Обновление рейтинга для конкретного периода
  */
 leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
-    console.log(`🔄 Обновление рейтинга для периода: ${period}`);
-
+    
     const User = mongoose.model('User');
     let dateFilter = {};
     const now = new Date();
@@ -107,8 +106,6 @@ leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
             .select('telegramId firstName lastName username nickname stats rank lastVisit')
             .lean();
 
-        console.log(`📊 Найдено пользователей для рейтинга ${period}: ${users.length}`);
-
         // Удаляем старые записи для этого периода
         await this.deleteMany({ period });
 
@@ -139,7 +136,7 @@ leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
         // Вставляем новые записи пакетом
         if (leaderboardEntries.length > 0) {
             await this.insertMany(leaderboardEntries);
-            console.log(`✅ Рейтинг ${period} обновлен: ${leaderboardEntries.length} записей`);
+            
         }
 
         return leaderboardEntries.length;
@@ -153,8 +150,7 @@ leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
  * Обновление всех рейтингов
  */
 leaderboardSchema.statics.updateAllLeaderboards = async function () {
-    console.log('🚀 Запуск полного обновления рейтингов...');
-
+    
     const periods = ['day', 'week', 'month', 'all'];
     const results = {};
 
@@ -168,7 +164,6 @@ leaderboardSchema.statics.updateAllLeaderboards = async function () {
         }
     }
 
-    console.log('🏁 Обновление рейтингов завершено:', results);
     return results;
 };
 
@@ -182,7 +177,6 @@ leaderboardSchema.statics.getLeaderboard = async function (period = 'all', limit
             .limit(limit)
             .lean();
 
-        console.log(`📋 Получен рейтинг ${period}: ${entries.length} записей`);
         return entries;
     } catch (error) {
         console.error(`❌ Ошибка получения рейтинга ${period}:`, error);
@@ -216,7 +210,7 @@ leaderboardSchema.statics.cleanupOldEntries = async function () {
         });
 
         if (result.deletedCount > 0) {
-            console.log(`🧹 Очищено старых записей рейтинга: ${result.deletedCount}`);
+            
         }
 
         return result.deletedCount;

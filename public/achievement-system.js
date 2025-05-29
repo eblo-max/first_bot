@@ -113,8 +113,6 @@ class AchievementSystem {
     init() {
         if (this.isInitialized) return;
 
-        console.log('🏆 Инициализация системы достижений...');
-
         // Создаем стили для анимаций и уведомлений
         this.injectStyles();
 
@@ -125,7 +123,7 @@ class AchievementSystem {
         this.initSoundEffects();
 
         this.isInitialized = true;
-        console.log('✅ Система достижений инициализирована');
+        
     }
 
     /**
@@ -993,15 +991,13 @@ class AchievementSystem {
      */
     updateUserStats(stats) {
         this.userStats = stats;
-        console.log('📊 Статистика пользователя обновлена:', stats);
+        
     }
 
     /**
      * Получение прогресса достижения
      */
     getAchievementProgress(achievementId) {
-        console.log(`🔍 Получение прогресса для достижения: ${achievementId}`);
-        console.log('📊 Текущая статистика пользователя:', this.userStats);
 
         if (!this.userStats) {
             console.warn('⚠️ Статистика пользователя отсутствует');
@@ -1014,8 +1010,6 @@ class AchievementSystem {
             return { current: 0, required: 1, percentage: 0 };
         }
 
-        console.log(`📋 Конфигурация достижения ${achievementId}:`, config.requirement);
-
         const req = config.requirement;
         let current = 0;
         let required = req.value;
@@ -1023,7 +1017,7 @@ class AchievementSystem {
         switch (req.type) {
             case 'investigations':
                 current = this.userStats.investigations || 0;
-                console.log(`🔎 Расследования: current=${current}, required=${required}`);
+                
                 break;
             case 'accuracy':
                 current = this.userStats.accuracy || 0;
@@ -1033,20 +1027,20 @@ class AchievementSystem {
                     current = 0;
                     console.log(`🎯 Точность: недостаточно игр (${this.userStats.investigations || 0} < ${req.minGames}), current=0`);
                 } else {
-                    console.log(`🎯 Точность: current=${current}%, required=${required}%`);
+                    
                 }
                 break;
             case 'winStreak':
                 current = this.userStats.winStreak || 0;
-                console.log(`🔥 Серия побед: current=${current}, required=${required}`);
+                
                 break;
             case 'totalScore':
                 current = this.userStats.totalScore || 0;
-                console.log(`💯 Общий счет: current=${current}, required=${required}`);
+                
                 break;
             case 'perfectGames':
                 current = this.userStats.perfectGames || 0;
-                console.log(`⭐ Идеальные игры: current=${current}, required=${required}`);
+                
                 break;
             case 'fastGame':
                 current = this.userStats.fastestGame || 999;
@@ -1056,13 +1050,13 @@ class AchievementSystem {
                     required,
                     percentage: current <= required ? 100 : ((required / current) * 100)
                 };
-                console.log(`⚡ Быстрая игра: fastestGame=${current}s, required=${required}s, result=`, result);
+                
                 return result;
         }
 
         const percentage = Math.min(100, (current / required) * 100);
         const result = { current, required, percentage };
-        console.log(`📈 Итоговый прогресс для ${achievementId}:`, result);
+        
         return result;
     }
 
@@ -1075,8 +1069,6 @@ class AchievementSystem {
             console.warn('Неизвестное достижение:', achievement.id);
             return;
         }
-
-        console.log('🏆 Показываем уведомление о достижении:', achievement.name);
 
         // Добавляем в очередь
         this.notificationQueue.push({ achievement, config });
@@ -1150,8 +1142,6 @@ class AchievementSystem {
      */
     handleNewAchievements(newAchievements) {
         if (!Array.isArray(newAchievements) || newAchievements.length === 0) return;
-
-        console.log('🎉 Получены новые достижения:', newAchievements);
 
         newAchievements.forEach(achievement => {
             this.showAchievementNotification(achievement);
@@ -1273,8 +1263,6 @@ class AchievementSystem {
     showAchievementModal(achievementId, isUnlocked, userAchievements = []) {
         const config = this.achievementConfig[achievementId];
         if (!config) return;
-
-        console.log(`🔍 Показываем модальное окно для достижения: ${achievementId}`);
 
         // Создаем модальное окно, если его нет
         let modal = document.getElementById('achievement-modal');

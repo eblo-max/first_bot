@@ -687,16 +687,13 @@ function nextQuestion() {
  */
 async function finishGame() {
     document.querySelector('.loading-container').style.display = 'flex';
-    console.log('=== ЗАВЕРШЕНИЕ ИГРЫ ===');
-
+    
     try {
         // ========== МАТЕМАТИЧЕСКИ ТОЧНЫЙ РАСЧЕТ СТАТИСТИКИ ==========
 
         // 1. ПОДСЧЕТ ПРАВИЛЬНЫХ ОТВЕТОВ (только из реальных данных)
         let actualCorrectAnswers = 0;
         const totalQuestions = 5; // Всегда 5 вопросов в игре
-
-        console.log('🔍 Анализ результатов по каждому вопросу:');
 
         if (GameState.data.stories && GameState.data.stories.length > 0) {
             GameState.data.stories.forEach((story, index) => {
@@ -705,12 +702,6 @@ async function finishGame() {
                     actualCorrectAnswers++;
                 }
 
-                console.log(`Вопрос ${index + 1}:`, {
-                    id: story.id,
-                    answered: story.answered,
-                    correct: isCorrect,
-                    selectedMistakeId: story.selectedMistakeId
-                });
             });
         }
 
@@ -720,11 +711,6 @@ async function finishGame() {
         // Формула точности: (Правильные ответы / Общее количество вопросов) × 100%
         const accuracy = Math.round((actualCorrectAnswers / totalQuestions) * 100);
 
-        console.log('📊 ФИНАЛЬНАЯ СТАТИСТИКА:');
-        console.log(`• Правильных ответов: ${actualCorrectAnswers} из ${totalQuestions}`);
-        console.log(`• Точность: ${accuracy}%`);
-        console.log(`• Общий счет: ${totalScore} очков`);
-
         // 3. ОТПРАВКА НА СЕРВЕР
         const gameStatistics = {
             gameId: GameState.data.gameId,
@@ -732,8 +718,6 @@ async function finishGame() {
             correctAnswers: actualCorrectAnswers,
             totalQuestions: totalQuestions
         };
-
-        console.log('📤 Отправляем статистику на сервер:', gameStatistics);
 
         // Отправляем запрос на завершение игры с точной статистикой
         const response = await fetch('/api/game/finish', {
@@ -750,8 +734,7 @@ async function finishGame() {
         }
 
         const serverData = await response.json();
-        console.log('✅ Ответ сервера:', serverData);
-
+        
         // 4. СОХРАНЕНИЕ РЕЗУЛЬТАТОВ (ТОЛЬКО РЕАЛЬНЫХ ДАННЫХ)
         GameState.data.gameResult = {
             totalScore: totalScore,
@@ -773,10 +756,6 @@ async function finishGame() {
             failsafeCorrectAnswers = GameState.data.stories.filter(story => story.correct === true).length;
         }
 
-        console.log('🔧 Резервный расчет статистики:');
-        console.log(`• Правильных ответов: ${failsafeCorrectAnswers} из 5`);
-        console.log(`• Счет: ${GameState.data.score || 0}`);
-
         // Создаем результаты на основе РЕАЛЬНЫХ данных (без рандома)
         GameState.data.gameResult = {
             totalScore: GameState.data.score || 0,
@@ -788,8 +767,7 @@ async function finishGame() {
         };
 
         // Показываем предупреждение, но продолжаем с локальными данными
-        alert('Не удалось сохранить результаты на сервере. Отображаем локальную статистику.');
-
+        
         // Переходим к экрану результатов с локальными данными
         GameState.transition('finish');
     } finally {
@@ -802,8 +780,7 @@ async function finishGame() {
  */
 async function abandonGame() {
     document.querySelector('.loading-container').style.display = 'flex';
-    console.log('Прерывание игры...');
-
+    
     try {
         // Отправляем запрос на завершение игры с пометкой о прерывании
         await fetch('/api/game/finish', {
@@ -832,7 +809,7 @@ async function abandonGame() {
  * Начать новую игру
  */
 function restartGame() {
-    console.log('Запуск новой игры...');
+    
     startGame();
 }
 
@@ -840,7 +817,7 @@ function restartGame() {
  * Вернуться на главный экран
  */
 function goToMain() {
-    console.log('Переход на главный экран...');
+    
     GameState.transition('goToMain');
 
     if (tg) {
@@ -879,7 +856,7 @@ function provideFeedback(type) {
         }
     } catch (error) {
         // Fallback для тестирования вне Telegram
-        console.log('Haptic feedback не доступен:', error);
+        
     }
 }
 
@@ -894,8 +871,7 @@ function handleButtonClick(event) {
 
     // Получаем название действия
     const action = actionElement.getAttribute('data-action');
-    console.log('Клик по действию:', action);
-
+    
     // Тактильный отклик
     if (tg && tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('light');
@@ -932,8 +908,7 @@ function handleButtonClick(event) {
  * Устанавливает слушатели событий для элементов интерфейса
  */
 function setupEventListeners() {
-    console.log('Настройка обработчиков событий');
-
+    
     // Обработка кликов по всему документу с делегированием событий
     document.addEventListener('click', handleButtonClick);
 
@@ -941,7 +916,7 @@ function setupEventListeners() {
     if (tg && tg.colorScheme) {
         const onThemeChanged = () => {
             const newTheme = tg.colorScheme;
-            console.log('Изменение темы Telegram:', newTheme);
+            
             GameState.data.theme = newTheme;
             document.body.setAttribute('data-theme', newTheme);
         };
@@ -996,21 +971,20 @@ function setupEventListeners() {
  * Инициализация приложения при загрузке страницы
  */
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOM загружен. Инициализируем GameState');
+    
     GameState.init();
 
-    console.log('Настраиваем обработчики событий');
     setupEventListeners();
 
     // Проверяем параметры URL для тестирования
     if (window.location.search.includes('test=true')) {
-        console.log('Тестовый режим активирован через URL параметр');
+        
         GameState.data.isTestMode = true;
     }
 
     // Автоматический запуск игры, если указано в URL
     if (window.location.search.includes('autostart=true')) {
-        console.log('Автозапуск активирован через URL параметр');
+        
         setTimeout(() => {
             startGame();
         }, 500);
@@ -1136,10 +1110,9 @@ GameState.updateAnswers = function () {
  * Можно вызвать из консоли браузера: window.clearAppCache()
  */
 function clearAppCache() {
-    console.log('Очистка кэша приложения...');
-
+    
     // Очищаем localStorage полностью
-    console.log('Очистка localStorage...');
+    
     localStorage.clear();
 
     // Также проверяем и удаляем специфичные ключи
@@ -1147,7 +1120,7 @@ function clearAppCache() {
     keysToRemove.forEach(key => {
         localStorage.removeItem(key);
         sessionStorage.removeItem(key);
-        console.log('Удален ключ:', key);
+        
     });
 
     // Очищаем sessionStorage
@@ -1160,8 +1133,6 @@ function clearAppCache() {
         GameState.data.isTestMode = false;
     }
     isInitialized = false;
-
-    console.log('Кэш очищен полностью. Перезапуск приложения...');
 
     // Перезапускаем приложение
     location.reload();

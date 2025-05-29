@@ -196,7 +196,7 @@ class Logger {
             if (this.originalConsole?.log) {
                 this.originalConsole.log('⚪ [DEBUG]', ...filteredArgs);
             } else {
-                console.log('⚪ [DEBUG]', ...filteredArgs);
+                
             }
         }
     }

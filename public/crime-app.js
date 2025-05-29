@@ -33,8 +33,7 @@ window.GameData = GameData;
  * Инициализация приложения
  */
 function initApp() {
-    console.log('Инициализация приложения начата...');
-
+    
     try {
         // Проверяем наличие Telegram WebApp API
         if (!window.Telegram || !window.Telegram.WebApp) {
@@ -45,14 +44,12 @@ function initApp() {
 
         // Получаем объект Telegram WebApp
         tg = window.Telegram.WebApp;
-        console.log('Telegram WebApp API найден, инициализация...');
-
+        
         // Применяем тему Telegram
         const theme = tg.colorScheme || 'dark';
         GameData.theme = theme;
         document.body.setAttribute('data-theme', theme);
-        console.log('Применена тема:', theme);
-
+        
         // Раскрываем приложение на весь экран
         tg.expand();
 
@@ -63,12 +60,12 @@ function initApp() {
         if (typeof GameInterface === 'undefined') {
             console.warn('GameInterface не определен, ожидаем загрузку DOM');
             document.addEventListener('DOMContentLoaded', () => {
-                console.log('DOM загружен, запуск загрузки данных...');
+                
                 loadGameData();
             });
         } else {
             // Запускаем загрузку тестовых данных или обращаемся к серверу
-            console.log('GameInterface уже определен, запуск загрузки данных...');
+            
             loadGameData();
         }
 
@@ -132,11 +129,10 @@ function handleBackButton() {
  * @param {boolean} testMode - Флаг тестового режима
  */
 async function loadGameData(testMode = false) {
-    console.log('Загрузка данных для игры...');
-
+    
     try {
         if (testMode || GameData.isTestMode) {
-            console.log('Загрузка тестовых данных...');
+            
             loadTestData();
             return;
         }
@@ -148,7 +144,7 @@ async function loadGameData(testMode = false) {
 
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-        alert('Произошла ошибка при загрузке данных. Игра продолжится в тестовом режиме.');
+        
         loadTestData();
     }
 }
@@ -157,8 +153,7 @@ async function loadGameData(testMode = false) {
  * Загрузка тестовых данных для игры
  */
 function loadTestData() {
-    console.log('Загрузка тестовых данных для игры');
-
+    
     // Создаем тестовые истории для игры
     const testStories = [
         {
@@ -332,8 +327,7 @@ function loadTestData() {
  * Запуск таймера для текущего вопроса
  */
 function startTimer() {
-    console.log('Запуск таймера...');
-
+    
     // Сбрасываем состояние таймера
     clearInterval(GameData.timer);
     GameData.secondsLeft = GameData.timerDuration;
@@ -376,20 +370,19 @@ function startTimer() {
  * Обработка истечения времени
  */
 function timeExpired() {
-    console.log('Время на ответ истекло');
-
+    
     // Останавливаем таймер
     if (GameData.timer) {
         clearInterval(GameData.timer);
         GameData.timer = null;
-        console.log('Таймер успешно остановлен при истечении времени');
+        
     } else {
         console.warn('Таймер не был найден для остановки в timeExpired');
     }
 
     // Если ответ уже был выбран, пропускаем обработку истечения времени
     if (GameData.answerSelected) {
-        console.log('Пропускаем обработку истечения времени, так как ответ уже выбран');
+        
         return;
     }
 
@@ -467,21 +460,20 @@ function timeExpired() {
 function selectAnswer(mistakeId) {
     // Если уже выбираем ответ, игнорируем повторные клики
     if (GameData.isAnswering) {
-        console.log('Игнорируем повторный выбор ответа, так как уже в процессе выбора');
+        
         return;
     }
 
-    console.log('Выбран ответ:', mistakeId);
     GameData.isAnswering = true;
     GameData.answerSelected = true;
 
     // Останавливаем таймер - двойная проверка для надежности
-    console.log('Остановка таймера в selectAnswer');
+    
     if (GameData.timer) {
-        console.log('Таймер найден, останавливаем...');
+        
         clearInterval(GameData.timer);
         GameData.timer = null;
-        console.log('Таймер успешно остановлен после выбора ответа');
+        
     } else {
         console.warn('Таймер не был найден для остановки. GameData.secondsLeft =', GameData.secondsLeft);
         // Пытаемся остановить все интервалы, которые могут быть связаны с таймером
@@ -489,7 +481,7 @@ function selectAnswer(mistakeId) {
         for (let i = 0; i < highestIntervalId; i++) {
             clearInterval(i);
         }
-        console.log('Попытка остановить все возможные интервалы');
+        
     }
 
     // Визуальная и тактильная обратная связь
@@ -516,11 +508,7 @@ function selectAnswer(mistakeId) {
         GameData.stories[currentIndex].correct = isCorrect;
         GameData.stories[currentIndex].answered = true;
         GameData.stories[currentIndex].selectedMistakeId = mistakeId;
-        console.log(`✅ Обновлена история ${currentIndex}:`, {
-            correct: isCorrect,
-            answered: true,
-            selectedMistakeId: mistakeId
-        });
+        
     }
 
     // Если ответ неправильный, выделяем правильный вариант
@@ -613,11 +601,10 @@ function calculatePoints(isCorrect, timeSpent, difficulty) {
  * Переход к следующему вопросу
  */
 function nextQuestion() {
-    console.log('Переход к следующему вопросу');
-
+    
     // Если это была последняя история, завершаем игру
     if (GameData.currentStoryIndex >= GameData.stories.length - 1) {
-        console.log('Это был последний вопрос. Завершаем игру.');
+        
         finishGame();
         return;
     }
@@ -653,15 +640,12 @@ function nextQuestion() {
  * Завершение игры
  */
 async function finishGame() {
-    console.log('Завершение игры...');
-
+    
     // ========== МАТЕМАТИЧЕСКИ ТОЧНЫЙ РАСЧЕТ СТАТИСТИКИ ==========
 
     // 1. ПОДСЧЕТ ПРАВИЛЬНЫХ ОТВЕТОВ (только из реальных данных)
     let actualCorrectAnswers = 0;
     const totalQuestions = 5; // Всегда 5 вопросов в игре
-
-    console.log('🔍 Анализ результатов по каждому вопросу:');
 
     if (GameData.stories && GameData.stories.length > 0) {
         GameData.stories.forEach((story, index) => {
@@ -670,12 +654,6 @@ async function finishGame() {
                 actualCorrectAnswers++;
             }
 
-            console.log(`Вопрос ${index + 1}:`, {
-                id: story.id,
-                answered: story.answered,
-                correct: isCorrect,
-                selectedMistakeId: story.selectedMistakeId
-            });
         });
     }
 
@@ -684,11 +662,6 @@ async function finishGame() {
 
     // Формула точности: (Правильные ответы / Общее количество вопросов) × 100%
     const accuracy = Math.round((actualCorrectAnswers / totalQuestions) * 100);
-
-    console.log('📊 ФИНАЛЬНАЯ СТАТИСТИКА:');
-    console.log(`• Правильных ответов: ${actualCorrectAnswers} из ${totalQuestions}`);
-    console.log(`• Точность: ${accuracy}%`);
-    console.log(`• Общий счет: ${totalScore} очков`);
 
     // Создаем объект с результатами игры (ИСПОЛЬЗУЕМ ТОЛЬКО РЕАЛЬНЫЕ ДАННЫЕ)
     const gameResult = {
@@ -714,8 +687,6 @@ async function finishGame() {
                 totalQuestions: totalQuestions
             };
 
-            console.log('📤 Отправляем статистику на сервер:', gameStatistics);
-
             // Отправляем результаты на сервер
             const response = await fetch('/api/game/finish', {
                 method: 'POST',
@@ -728,12 +699,10 @@ async function finishGame() {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('✅ Результаты игры успешно сохранены на сервере:', data);
-
+                
                 // Обновляем информацию о новых достижениях, если они есть
                 if (data.status === 'success' && data.data.newAchievements && data.data.newAchievements.length > 0) {
-                    console.log('🎉 Получены новые достижения от сервера:', data.data.newAchievements);
-
+                    
                     // Используем новую систему достижений для показа уведомлений
                     if (window.AchievementSystem) {
                         // Обновляем статистику пользователя для корректного отображения прогресса
@@ -757,7 +726,7 @@ async function finishGame() {
                             if (window.Telegram?.WebApp?.showAlert) {
                                 window.Telegram.WebApp.showAlert(`🏆 Новое достижение: ${achievement.name}`);
                             } else {
-                                alert(`🏆 Новое достижение: ${achievement.name}`);
+                                
                             }
                         });
                     }
@@ -772,9 +741,7 @@ async function finishGame() {
         console.error('❌ Ошибка при отправке результатов игры:', error);
 
         // ДАЖЕ В СЛУЧАЕ ОШИБКИ - ИСПОЛЬЗУЕМ ТОЛЬКО РЕАЛЬНЫЕ ДАННЫЕ
-        console.log('🔧 Резервный расчет статистики:');
-        console.log(`• Правильных ответов: ${actualCorrectAnswers} из ${totalQuestions}`);
-        console.log(`• Счет: ${totalScore}`);
+
     }
 
     // Показываем экран завершения
@@ -886,7 +853,7 @@ async function finishGame() {
             document.head.appendChild(style);
         }
     } else {
-        alert(`Игра завершена! Ваш счет: ${gameResult.totalScore}`);
+        
         window.location.href = '/';
     }
 }

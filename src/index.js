@@ -149,7 +149,7 @@ app.get('/profile', staticLimiter, (req, res) => {
 
 // Редирект для старых ссылок на index.html (больше не требуется)
 // app.get('/index.html', (req, res) => {
-//     console.log('Обнаружен запрос к старому index.html - редиректим на главную');
+//     
 //     res.redirect(301, '/');
 // });
 
@@ -230,7 +230,7 @@ const startServer = async () => {
 
     // Запускаем сервер независимо от подключения к MongoDB
     const server = app.listen(PORT, () => {
-        console.log(`🚀 Сервер запущен на порту ${PORT}`);
+        
     });
 
     // Пытаемся подключиться к MongoDB (попробуем все строки подключения)
@@ -245,8 +245,6 @@ const startServer = async () => {
                 useUnifiedTopology: true,
                 serverSelectionTimeoutMS: 5000 // 5 секунд таймаут для быстрого фолбэка
             });
-
-            console.log('✅ Подключение к MongoDB установлено');
 
             // Заполнение базы тестовыми данными
             await seedDatabase();
@@ -263,30 +261,29 @@ const startServer = async () => {
 
     if (!isConnected) {
         console.error('❌ Не удалось подключиться ни к одной базе данных MongoDB!');
-        console.log('⚠️ Приложение запущено в режиме с ограниченной функциональностью.');
-        console.log('⚠️ API запросы к базе данных будут возвращать ошибки.');
+
     }
 
     // Graceful shutdown
     process.on('SIGTERM', () => {
-        console.log('💤 SIGTERM получен, выключаем сервер...');
+        
         leaderboardService.stop();
         server.close(() => {
-            console.log('🛑 HTTP сервер остановлен');
+            
             mongoose.connection.close(false, () => {
-                console.log('🔌 MongoDB соединение закрыто');
+                
                 process.exit(0);
             });
         });
     });
 
     process.on('SIGINT', () => {
-        console.log('💤 SIGINT получен, выключаем сервер...');
+        
         leaderboardService.stop();
         server.close(() => {
-            console.log('🛑 HTTP сервер остановлен');
+            
             mongoose.connection.close(false, () => {
-                console.log('🔌 MongoDB соединение закрыто');
+                
                 process.exit(0);
             });
         });

@@ -78,8 +78,7 @@
         // При клике выводим отладочную информацию
         debugButton.addEventListener('click', function () {
             const state = debugAppState();
-            console.log('Состояние приложения:', state);
-            alert('Отладочная информация выведена в консоль');
+
         });
 
         // Добавляем кнопку в DOM
