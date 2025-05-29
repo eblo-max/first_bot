@@ -29,7 +29,8 @@
                             first_name: "Test",
                             last_name: "User",
                             username: "testuser",
-                            language_code: "ru"
+                            language_code: "ru",
+                            photo_url: "https://t.me/i/userpic/320/4FPEE4tmP3ATHa57u6MqTDih13LTOiMoKoLDRG4PnSA.svg"
                         }
                     },
                     BackButton: {
@@ -229,6 +230,15 @@
             width: 20px;
             height: 20px;
             color: var(--accent-yellow);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-yellow);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         /* Compact Blood Capsule Timer */
@@ -1145,8 +1155,10 @@
                 <span class="score-value"><span id="score-display">0</span> ОЧКОВ</span>
             </div>
 
-            <button class="profile-link">
-                <svg class="profile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="profile-link" id="profile-button">
+                <img id="user-avatar" class="user-avatar" style="display: none;" alt="Профиль пользователя">
+                <svg class="profile-icon" id="profile-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
                     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
                 </svg>
@@ -1330,6 +1342,34 @@
                         window.location.href = '/';
                     }
                 });
+
+                // Загружаем аватарку пользователя
+                loadUserAvatar();
+            }
+
+            // Функция для загрузки аватарки пользователя
+            function loadUserAvatar() {
+                try {
+                    const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
+                    if (user && user.photo_url) {
+                        const avatarImg = document.getElementById('user-avatar');
+                        const profileIcon = document.getElementById('profile-icon');
+
+                        if (avatarImg && profileIcon) {
+                            avatarImg.src = user.photo_url;
+                            avatarImg.style.display = 'block';
+                            profileIcon.style.display = 'none';
+
+                            // Обработчик ошибки загрузки изображения
+                            avatarImg.onerror = function () {
+                                avatarImg.style.display = 'none';
+                                profileIcon.style.display = 'block';
+                            };
+                        }
+                    }
+                } catch (error) {
+                    console.log('Не удалось загрузить аватарку пользователя:', error);
+                }
             }
 
             // Обработчики событий для элементов игрового интерфейса
