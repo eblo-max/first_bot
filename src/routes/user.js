@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const authMiddleware = require('../middleware/authMiddleware');
-const { authMiddleware: authMiddlewareAlias } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const User = require('../models/User');
 
-// Все маршруты требуют авторизации
+// Все маршруты требуют аутентификации
 router.use(authMiddleware);
 
 /**
@@ -130,7 +129,7 @@ router.get('/profile', async (req, res) => {
 /**
  * Обновление профиля пользователя
  */
-router.put('/profile', authMiddlewareAlias, async (req, res) => {
+router.put('/profile', authMiddleware, async (req, res) => {
     try {
         const telegramId = req.user.telegramId;
         const { nickname } = req.body;

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const gameController = require('../controllers/gameController');
-const authMiddleware = require('../middleware/authMiddleware');
+const { authMiddleware } = require('../middleware/auth');
 const userMiddleware = require('../middleware/userMiddleware');
 
 // Маршрут без аутентификации для получения тестовых данных (в продакшене будет защищен)

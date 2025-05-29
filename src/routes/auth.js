@@ -1,10 +1,9 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
-const { verifyTelegramWebAppData } = require('../middleware/auth');
+const { verifyTelegramWebAppData, authMiddleware } = require('../middleware/auth');
 const User = require('../models/User');
 const authController = require('../controllers/authController');
-const authMiddleware = require('../middleware/authMiddleware');
 
 /**
  * @route   POST /api/auth/init
