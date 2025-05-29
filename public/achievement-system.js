@@ -647,7 +647,6 @@ class AchievementSystem {
                 ${config.icon}
             </svg>
             <div class="achievement-notification-content">
-                <div class="achievement-notification-category">${config.category}</div>
                 <div class="achievement-notification-title">${achievement.name}</div>
                 <div class="achievement-notification-desc">${achievement.description}</div>
             </div>
@@ -751,7 +750,6 @@ class AchievementSystem {
                     ${isUnlocked ? config.icon : '<path d="M6 10h12M6 14h12M6 18h12" stroke="currentColor" opacity="0.3"/>'}
                 </svg>
                 <div class="achievement-name">${isUnlocked ? config.name : '???'}</div>
-                <div class="achievement-category">${isUnlocked ? config.category : 'Заблокировано'}</div>
                 ${!isUnlocked ? `
                     <div class="achievement-progress">
                         <div class="achievement-progress-bar" style="width: ${progress.percentage}%"></div>
