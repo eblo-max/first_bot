@@ -732,7 +732,35 @@ async function finishGame() {
 
                 // Обновляем информацию о новых достижениях, если они есть
                 if (data.status === 'success' && data.data.newAchievements && data.data.newAchievements.length > 0) {
-                    console.log('Получены новые достижения:', data.data.newAchievements);
+                    console.log('🎉 Получены новые достижения от сервера:', data.data.newAchievements);
+
+                    // Используем новую систему достижений для показа уведомлений
+                    if (window.AchievementSystem) {
+                        // Обновляем статистику пользователя для корректного отображения прогресса
+                        if (data.data.user && data.data.user.stats) {
+                            window.AchievementSystem.updateUserStats({
+                                investigations: data.data.user.stats.totalGames || 0,
+                                accuracy: data.data.user.stats.accuracy || 0,
+                                totalScore: data.data.user.stats.totalScore || 0,
+                                winStreak: data.data.user.stats.maxStreak || 0,
+                                perfectGames: data.data.user.stats.perfectGames || 0,
+                                fastestGame: data.data.user.stats.fastestGame || 999
+                            });
+                        }
+
+                        // Показываем уведомления о новых достижениях
+                        window.AchievementSystem.handleNewAchievements(data.data.newAchievements);
+                    } else {
+                        console.warn('AchievementSystem не инициализирована');
+                        // Fallback: показываем простое уведомление
+                        data.data.newAchievements.forEach(achievement => {
+                            if (window.Telegram?.WebApp?.showAlert) {
+                                window.Telegram.WebApp.showAlert(`🏆 Новое достижение: ${achievement.name}`);
+                            } else {
+                                alert(`🏆 Новое достижение: ${achievement.name}`);
+                            }
+                        });
+                    }
                 }
             } else {
                 console.error('Ошибка при сохранении результатов на сервере:', await response.text());

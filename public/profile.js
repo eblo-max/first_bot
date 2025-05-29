@@ -1009,11 +1009,50 @@ const ProfileManager = {
     },
 
     /**
-     * Обновление раздела достижений
-     * @param {Array} achievements - Массив с данными достижений
+     * Обновление интерфейса достижений
+     * @param {Array} achievements - Массив достижений пользователя
      */
     updateAchievementsUI(achievements) {
-        if (!achievements || !this.elements.achievements) return;
+        if (!achievements) return;
+
+        console.log('🏆 Обновление интерфейса достижений:', achievements);
+
+        // Используем новую систему достижений, если она доступна
+        if (window.AchievementSystem) {
+            console.log('Используем новую систему достижений');
+
+            // Обновляем статистику пользователя для корректного расчета прогресса
+            if (this.profileData && this.profileData.stats) {
+                window.AchievementSystem.updateUserStats({
+                    investigations: this.profileData.stats.totalGames || 0,
+                    accuracy: this.profileData.stats.accuracy || 0,
+                    totalScore: this.profileData.stats.totalScore || 0,
+                    winStreak: this.profileData.stats.maxStreak || 0,
+                    perfectGames: this.profileData.stats.perfectGames || 0,
+                    fastestGame: this.profileData.stats.fastestGame || 999
+                });
+            }
+
+            // Рендерим достижения через новую систему
+            window.AchievementSystem.renderEnhancedAchievements(achievements);
+
+            // Обновляем прогресс-бары
+            window.AchievementSystem.updateAchievementProgress();
+
+            return;
+        }
+
+        // Fallback: старая логика для совместимости
+        console.log('Используем старую систему достижений (fallback)');
+        this.updateAchievementsUILegacy(achievements);
+    },
+
+    /**
+     * Старая логика обновления достижений (для совместимости)
+     * @param {Array} achievements - Массив достижений пользователя  
+     */
+    updateAchievementsUILegacy(achievements) {
+        if (!this.elements.achievements) return;
 
         // Определяем известные достижения и их иконки
         const achievementIcons = {
