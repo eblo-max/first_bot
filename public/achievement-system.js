@@ -528,10 +528,21 @@ class AchievementSystem {
      * Получение прогресса достижения
      */
     getAchievementProgress(achievementId) {
-        if (!this.userStats) return { current: 0, required: 1, percentage: 0 };
+        console.log(`🔍 Получение прогресса для достижения: ${achievementId}`);
+        console.log('📊 Текущая статистика пользователя:', this.userStats);
+
+        if (!this.userStats) {
+            console.warn('⚠️ Статистика пользователя отсутствует');
+            return { current: 0, required: 1, percentage: 0 };
+        }
 
         const config = this.achievementConfig[achievementId];
-        if (!config) return { current: 0, required: 1, percentage: 0 };
+        if (!config) {
+            console.warn(`⚠️ Конфигурация для достижения ${achievementId} не найдена`);
+            return { current: 0, required: 1, percentage: 0 };
+        }
+
+        console.log(`📋 Конфигурация достижения ${achievementId}:`, config.requirement);
 
         const req = config.requirement;
         let current = 0;
@@ -540,36 +551,47 @@ class AchievementSystem {
         switch (req.type) {
             case 'investigations':
                 current = this.userStats.investigations || 0;
+                console.log(`🔎 Расследования: current=${current}, required=${required}`);
                 break;
             case 'accuracy':
                 current = this.userStats.accuracy || 0;
                 required = req.value;
                 // Проверяем минимальное количество игр
-                if (req.minGames && this.userStats.investigations < req.minGames) {
+                if (req.minGames && (this.userStats.investigations || 0) < req.minGames) {
                     current = 0;
+                    console.log(`🎯 Точность: недостаточно игр (${this.userStats.investigations || 0} < ${req.minGames}), current=0`);
+                } else {
+                    console.log(`🎯 Точность: current=${current}%, required=${required}%`);
                 }
                 break;
             case 'winStreak':
                 current = this.userStats.winStreak || 0;
+                console.log(`🔥 Серия побед: current=${current}, required=${required}`);
                 break;
             case 'totalScore':
                 current = this.userStats.totalScore || 0;
+                console.log(`💯 Общий счет: current=${current}, required=${required}`);
                 break;
             case 'perfectGames':
                 current = this.userStats.perfectGames || 0;
+                console.log(`⭐ Идеальные игры: current=${current}, required=${required}`);
                 break;
             case 'fastGame':
                 current = this.userStats.fastestGame || 999;
                 // Для времени - инвертируем логику
-                return {
+                const result = {
                     current: Math.max(0, required - current),
                     required,
                     percentage: current <= required ? 100 : ((required / current) * 100)
                 };
+                console.log(`⚡ Быстрая игра: fastestGame=${current}s, required=${required}s, result=`, result);
+                return result;
         }
 
         const percentage = Math.min(100, (current / required) * 100);
-        return { current, required, percentage };
+        const result = { current, required, percentage };
+        console.log(`📈 Итоговый прогресс для ${achievementId}:`, result);
+        return result;
     }
 
     /**

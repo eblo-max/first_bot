@@ -1020,16 +1020,32 @@ const ProfileManager = {
         // Используем новую систему достижений, если она доступна
         if (window.AchievementSystem) {
             console.log('Используем новую систему достижений');
+            console.log('Данные профиля для системы достижений:', this.profileData);
 
             // Обновляем статистику пользователя для корректного расчета прогресса
             if (this.profileData && this.profileData.stats) {
-                window.AchievementSystem.updateUserStats({
-                    investigations: this.profileData.stats.totalGames || 0,
+                console.log('Статистика пользователя из профиля:', this.profileData.stats);
+
+                const userStats = {
+                    investigations: this.profileData.stats.investigations || this.profileData.stats.totalGames || 0,
                     accuracy: this.profileData.stats.accuracy || 0,
                     totalScore: this.profileData.stats.totalScore || 0,
-                    winStreak: this.profileData.stats.maxStreak || 0,
+                    winStreak: this.profileData.stats.winStreak || this.profileData.stats.maxWinStreak || this.profileData.stats.maxStreak || 0,
                     perfectGames: this.profileData.stats.perfectGames || 0,
                     fastestGame: this.profileData.stats.fastestGame || 999
+                };
+
+                console.log('Передаем в систему достижений статистику:', userStats);
+                window.AchievementSystem.updateUserStats(userStats);
+            } else {
+                console.warn('Статистика профиля отсутствует, передаем нулевые значения');
+                window.AchievementSystem.updateUserStats({
+                    investigations: 0,
+                    accuracy: 0,
+                    totalScore: 0,
+                    winStreak: 0,
+                    perfectGames: 0,
+                    fastestGame: 999
                 });
             }
 
