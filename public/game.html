@@ -30,7 +30,7 @@
                             last_name: "User",
                             username: "testuser",
                             language_code: "ru",
-                            photo_url: "https://t.me/i/userpic/320/4FPEE4tmP3ATHa57u6MqTDih13LTOiMoKoLDRG4PnSA.svg"
+                            photo_url: "https://avatars.githubusercontent.com/u/1?v=4"
                         }
                     },
                     BackButton: {
@@ -213,6 +213,8 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
             box-shadow: var(--shadow-sm);
             transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
         }
 
         .profile-link:hover {
@@ -230,15 +232,22 @@
             width: 20px;
             height: 20px;
             color: var(--accent-yellow);
+            display: block;
         }
 
         .user-avatar {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--accent-yellow);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
         }
 
         /* Compact Blood Capsule Timer */
@@ -1328,6 +1337,96 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Функция для загрузки аватарки пользователя
+            function loadUserAvatar() {
+                console.log('=== ЗАГРУЗКА АВАТАРКИ ===');
+                try {
+                    console.log('Telegram объект:', window.Telegram);
+                    console.log('WebApp объект:', window.Telegram?.WebApp);
+                    console.log('initDataUnsafe:', window.Telegram?.WebApp?.initDataUnsafe);
+
+                    const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
+                    console.log('Данные пользователя:', user);
+
+                    const avatarImg = document.getElementById('user-avatar');
+                    const profileIcon = document.getElementById('profile-icon');
+
+                    console.log('Элемент аватарки:', avatarImg);
+                    console.log('Элемент иконки:', profileIcon);
+
+                    if (!avatarImg || !profileIcon) {
+                        console.log('Не найдены элементы DOM для аватарки или иконки');
+                        return;
+                    }
+
+                    // Функция для показа иконки (fallback)
+                    function showIcon() {
+                        console.log('Показываю SVG иконку (fallback)');
+                        avatarImg.style.display = 'none';
+                        profileIcon.style.display = 'block';
+                    }
+
+                    // Функция для показа аватарки
+                    function showAvatar(photoUrl) {
+                        console.log('Пытаюсь загрузить аватарку:', photoUrl);
+
+                        // Обработчик успешной загрузки
+                        avatarImg.onload = function () {
+                            console.log('✅ Аватарка успешно загружена!');
+                            avatarImg.style.display = 'block';
+                            profileIcon.style.display = 'none';
+                        };
+
+                        // Обработчик ошибки загрузки изображения
+                        avatarImg.onerror = function () {
+                            console.log('❌ Ошибка загрузки аватарки, возвращаюсь к иконке');
+                            showIcon();
+                        };
+
+                        // Устанавливаем src последним
+                        avatarImg.src = photoUrl;
+
+                        // Тестируем загрузку через 3 секунды
+                        setTimeout(() => {
+                            if (avatarImg.style.display === 'none') {
+                                console.log('⚠️ Аватарка не загрузилась за 3 секунды, показываю иконку');
+                                showIcon();
+                            }
+                        }, 3000);
+                    }
+
+                    if (user) {
+                        console.log('photo_url пользователя:', user.photo_url);
+
+                        if (user.photo_url) {
+                            showAvatar(user.photo_url);
+                        } else {
+                            console.log('У пользователя нет photo_url');
+                            showIcon();
+                        }
+                    } else {
+                        console.log('Данные пользователя не найдены');
+                        // Попробуем альтернативные источники для тестирования
+                        const testAvatars = [
+                            'https://avatars.githubusercontent.com/u/1?v=4',
+                            'https://via.placeholder.com/64x64/d32f2f/ffffff?text=T'
+                        ];
+
+                        console.log('Пробую тестовую аватарку:', testAvatars[0]);
+                        showAvatar(testAvatars[0]);
+                    }
+                } catch (error) {
+                    console.log('Ошибка при загрузке аватарки:', error);
+                    // В случае ошибки показываем иконку
+                    const avatarImg = document.getElementById('user-avatar');
+                    const profileIcon = document.getElementById('profile-icon');
+                    if (avatarImg && profileIcon) {
+                        avatarImg.style.display = 'none';
+                        profileIcon.style.display = 'block';
+                    }
+                }
+            }
+
             // Инициализация Telegram WebApp
             if (window.Telegram?.WebApp) {
                 // Расширяем WebApp
@@ -1342,35 +1441,10 @@
                         window.location.href = '/';
                     }
                 });
-
-                // Загружаем аватарку пользователя
-                loadUserAvatar();
             }
 
-            // Функция для загрузки аватарки пользователя
-            function loadUserAvatar() {
-                try {
-                    const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
-                    if (user && user.photo_url) {
-                        const avatarImg = document.getElementById('user-avatar');
-                        const profileIcon = document.getElementById('profile-icon');
-
-                        if (avatarImg && profileIcon) {
-                            avatarImg.src = user.photo_url;
-                            avatarImg.style.display = 'block';
-                            profileIcon.style.display = 'none';
-
-                            // Обработчик ошибки загрузки изображения
-                            avatarImg.onerror = function () {
-                                avatarImg.style.display = 'none';
-                                profileIcon.style.display = 'block';
-                            };
-                        }
-                    }
-                } catch (error) {
-                    console.log('Не удалось загрузить аватарку пользователя:', error);
-                }
-            }
+            // Загружаем аватарку пользователя (независимо от Telegram WebApp)
+            loadUserAvatar();
 
             // Обработчики событий для элементов игрового интерфейса
             document.querySelectorAll('.answer-option').forEach(function (option) {
