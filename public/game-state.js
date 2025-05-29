@@ -12,7 +12,7 @@ const GameState = {
         currentStory: null,
         currentStoryIndex: 0,
         stories: [],
-        secondsLeft: 15,
+        secondsLeft: 60,
         timer: null,
         startTime: null,
         result: null,

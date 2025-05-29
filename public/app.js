@@ -412,7 +412,7 @@ function startTimer() {
         clearInterval(GameState.data.timerId);
     }
 
-    const timerDuration = 15; // секунд
+    const timerDuration = 60; // секунд
     GameState.data.secondsLeft = timerDuration;
     GameState.data.isAnswering = true;
 
@@ -514,7 +514,7 @@ function timeExpired() {
                 storyId: currentStory.id,
                 mistakeId: null,
                 timeExpired: true,
-                responseTime: 15000
+                responseTime: 60000
             })
         });
     } catch (error) {
@@ -550,7 +550,7 @@ async function selectAnswer(mistakeId) {
     }
 
     // Рассчитываем затраченное время
-    const timeTaken = 15 - GameState.data.secondsLeft;
+    const timeTaken = 60 - GameState.data.secondsLeft;
     const timeLeft = GameState.data.secondsLeft;
 
     // Находим выбранный вариант
@@ -660,7 +660,7 @@ function calculateTestPoints(isCorrect, timeSpent, difficulty = 'medium') {
 
     const basePoints = 100;
     const maxTimeBonus = 50;
-    const timeBonus = Math.max(0, Math.round(maxTimeBonus * (1 - timeSpent / 15)));
+    const timeBonus = Math.max(0, Math.round(maxTimeBonus * (1 - timeSpent / 60)));
 
     let difficultyBonus = 0;
     switch (difficulty) {
