@@ -13,9 +13,28 @@ let isInitialized = false;
  * Инициализация приложения
  */
 function initApp() {
-    // Сбрасываем состояние приложения
-    localStorage.clear();
+    // НЕ ОЧИЩАЕМ ВЕСЬ localStorage - только сбрасываем игровое состояние
+    // Сохраняем токены авторизации перед сбросом
+    const savedToken = localStorage.getItem('token');
+    const savedAuthToken = localStorage.getItem('auth_token');
+    const savedInitData = localStorage.getItem('initData');
+
+    // Очищаем только sessionStorage и игровые данные
     sessionStorage.clear();
+
+    // Удаляем только игровые ключи из localStorage, сохраняя авторизацию
+    const keysToKeep = ['token', 'auth_token', 'initData'];
+    const allKeys = Object.keys(localStorage);
+    allKeys.forEach(key => {
+        if (!keysToKeep.includes(key)) {
+            localStorage.removeItem(key);
+        }
+    });
+
+    // Восстанавливаем токены если они были
+    if (savedToken) localStorage.setItem('token', savedToken);
+    if (savedAuthToken) localStorage.setItem('auth_token', savedAuthToken);
+    if (savedInitData) localStorage.setItem('initData', savedInitData);
 
     if (window.GameState) {
         GameState.data.token = null;
@@ -687,7 +706,7 @@ function nextQuestion() {
  */
 async function finishGame() {
     document.querySelector('.loading-container').style.display = 'flex';
-    
+
     try {
         // ========== МАТЕМАТИЧЕСКИ ТОЧНЫЙ РАСЧЕТ СТАТИСТИКИ ==========
 
@@ -734,7 +753,7 @@ async function finishGame() {
         }
 
         const serverData = await response.json();
-        
+
         // 4. СОХРАНЕНИЕ РЕЗУЛЬТАТОВ (ТОЛЬКО РЕАЛЬНЫХ ДАННЫХ)
         GameState.data.gameResult = {
             totalScore: totalScore,
@@ -767,7 +786,7 @@ async function finishGame() {
         };
 
         // Показываем предупреждение, но продолжаем с локальными данными
-        
+
         // Переходим к экрану результатов с локальными данными
         GameState.transition('finish');
     } finally {
@@ -780,7 +799,7 @@ async function finishGame() {
  */
 async function abandonGame() {
     document.querySelector('.loading-container').style.display = 'flex';
-    
+
     try {
         // Отправляем запрос на завершение игры с пометкой о прерывании
         await fetch('/api/game/finish', {
@@ -809,7 +828,7 @@ async function abandonGame() {
  * Начать новую игру
  */
 function restartGame() {
-    
+
     startGame();
 }
 
@@ -817,7 +836,7 @@ function restartGame() {
  * Вернуться на главный экран
  */
 function goToMain() {
-    
+
     GameState.transition('goToMain');
 
     if (tg) {
@@ -856,7 +875,7 @@ function provideFeedback(type) {
         }
     } catch (error) {
         // Fallback для тестирования вне Telegram
-        
+
     }
 }
 
@@ -871,7 +890,7 @@ function handleButtonClick(event) {
 
     // Получаем название действия
     const action = actionElement.getAttribute('data-action');
-    
+
     // Тактильный отклик
     if (tg && tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('light');
@@ -908,7 +927,7 @@ function handleButtonClick(event) {
  * Устанавливает слушатели событий для элементов интерфейса
  */
 function setupEventListeners() {
-    
+
     // Обработка кликов по всему документу с делегированием событий
     document.addEventListener('click', handleButtonClick);
 
@@ -916,7 +935,7 @@ function setupEventListeners() {
     if (tg && tg.colorScheme) {
         const onThemeChanged = () => {
             const newTheme = tg.colorScheme;
-            
+
             GameState.data.theme = newTheme;
             document.body.setAttribute('data-theme', newTheme);
         };
@@ -971,20 +990,20 @@ function setupEventListeners() {
  * Инициализация приложения при загрузке страницы
  */
 document.addEventListener('DOMContentLoaded', function () {
-    
+
     GameState.init();
 
     setupEventListeners();
 
     // Проверяем параметры URL для тестирования
     if (window.location.search.includes('test=true')) {
-        
+
         GameState.data.isTestMode = true;
     }
 
     // Автоматический запуск игры, если указано в URL
     if (window.location.search.includes('autostart=true')) {
-        
+
         setTimeout(() => {
             startGame();
         }, 500);
@@ -1110,9 +1129,9 @@ GameState.updateAnswers = function () {
  * Можно вызвать из консоли браузера: window.clearAppCache()
  */
 function clearAppCache() {
-    
+
     // Очищаем localStorage полностью
-    
+
     localStorage.clear();
 
     // Также проверяем и удаляем специфичные ключи
@@ -1120,7 +1139,7 @@ function clearAppCache() {
     keysToRemove.forEach(key => {
         localStorage.removeItem(key);
         sessionStorage.removeItem(key);
-        
+
     });
 
     // Очищаем sessionStorage

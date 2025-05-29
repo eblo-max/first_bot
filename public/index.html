@@ -616,7 +616,7 @@
         // Для тестирования - создаем заглушку если в тестовом режиме
         if ((!window.Telegram || !window.Telegram.WebApp) &&
             (window.location.host.includes('localhost') || window.location.search.includes('test=true'))) {
-            
+
             window.Telegram = {
                 WebApp: {
                     ready: function () { console.log('WebApp.ready() вызван'); },
@@ -813,17 +813,32 @@
 
                 // Передаем данные пользователя и токен в URL для профиля
                 const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+                const initData = window.Telegram?.WebApp?.initData;
+
+                console.log('🔍 Отладка перехода к профилю:', {
+                    token: token ? `${token.substring(0, 20)}...` : 'НЕТ',
+                    initData: initData ? `${initData.substring(0, 50)}...` : 'НЕТ',
+                    localStorageKeys: Object.keys(localStorage),
+                    telegramWebApp: !!window.Telegram?.WebApp
+                });
+
                 let profileUrl = '/profile.html';
 
                 // Если есть токен, добавляем его в URL
                 if (token) {
                     profileUrl += `?token=${encodeURIComponent(token)}`;
+                    
+                } else {
+                    console.warn('⚠️ Токен отсутствует в localStorage');
                 }
 
                 // Если есть данные Telegram WebApp, добавляем их тоже
-                if (window.Telegram?.WebApp?.initData) {
+                if (initData) {
                     const separator = profileUrl.includes('?') ? '&' : '?';
-                    profileUrl += `${separator}initData=${encodeURIComponent(window.Telegram.WebApp.initData)}`;
+                    profileUrl += `${separator}initData=${encodeURIComponent(initData)}`;
+                    
+                } else {
+                    console.warn('⚠️ InitData отсутствуют в Telegram WebApp');
                 }
 
                 // Переход на экран профиля
