@@ -106,10 +106,8 @@ ${report.recommendations.map(rec => `- ${rec}`).join('\n')}
     await fs.writeFile('OPTIMIZATION_REPORT.md', reportText);
     await fs.writeFile('optimization-report.json', JSON.stringify(report, null, 2));
 
-    console.log('🎉 ФИНАЛЬНЫЙ ОТЧЕТ СГЕНЕРИРОВАН');
     console.log('═'.repeat(50));
-    console.log(reportText);
-    console.log('📁 Файлы отчета:');
+
     console.log('   - OPTIMIZATION_REPORT.md (читаемый формат)');
     console.log('   - optimization-report.json (данные)');
 }

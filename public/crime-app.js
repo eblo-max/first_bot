@@ -33,7 +33,7 @@ window.GameData = GameData;
  * Инициализация приложения
  */
 function initApp() {
-    
+
     try {
         // Проверяем наличие Telegram WebApp API
         if (!window.Telegram || !window.Telegram.WebApp) {
@@ -44,12 +44,12 @@ function initApp() {
 
         // Получаем объект Telegram WebApp
         tg = window.Telegram.WebApp;
-        
+
         // Применяем тему Telegram
         const theme = tg.colorScheme || 'dark';
         GameData.theme = theme;
         document.body.setAttribute('data-theme', theme);
-        
+
         // Раскрываем приложение на весь экран
         tg.expand();
 
@@ -60,12 +60,12 @@ function initApp() {
         if (typeof GameInterface === 'undefined') {
             console.warn('GameInterface не определен, ожидаем загрузку DOM');
             document.addEventListener('DOMContentLoaded', () => {
-                
+
                 loadGameData();
             });
         } else {
             // Запускаем загрузку тестовых данных или обращаемся к серверу
-            
+
             loadGameData();
         }
 
@@ -129,10 +129,10 @@ function handleBackButton() {
  * @param {boolean} testMode - Флаг тестового режима
  */
 async function loadGameData(testMode = false) {
-    
+
     try {
         if (testMode || GameData.isTestMode) {
-            
+
             loadTestData();
             return;
         }
@@ -144,7 +144,7 @@ async function loadGameData(testMode = false) {
 
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-        
+
         loadTestData();
     }
 }
@@ -153,7 +153,7 @@ async function loadGameData(testMode = false) {
  * Загрузка тестовых данных для игры
  */
 function loadTestData() {
-    
+
     // Создаем тестовые истории для игры
     const testStories = [
         {
@@ -327,7 +327,7 @@ function loadTestData() {
  * Запуск таймера для текущего вопроса
  */
 function startTimer() {
-    
+
     // Сбрасываем состояние таймера
     clearInterval(GameData.timer);
     GameData.secondsLeft = GameData.timerDuration;
@@ -370,19 +370,19 @@ function startTimer() {
  * Обработка истечения времени
  */
 function timeExpired() {
-    
+
     // Останавливаем таймер
     if (GameData.timer) {
         clearInterval(GameData.timer);
         GameData.timer = null;
-        
+
     } else {
         console.warn('Таймер не был найден для остановки в timeExpired');
     }
 
     // Если ответ уже был выбран, пропускаем обработку истечения времени
     if (GameData.answerSelected) {
-        
+
         return;
     }
 
@@ -460,7 +460,7 @@ function timeExpired() {
 function selectAnswer(mistakeId) {
     // Если уже выбираем ответ, игнорируем повторные клики
     if (GameData.isAnswering) {
-        
+
         return;
     }
 
@@ -468,12 +468,12 @@ function selectAnswer(mistakeId) {
     GameData.answerSelected = true;
 
     // Останавливаем таймер - двойная проверка для надежности
-    
+
     if (GameData.timer) {
-        
+
         clearInterval(GameData.timer);
         GameData.timer = null;
-        
+
     } else {
         console.warn('Таймер не был найден для остановки. GameData.secondsLeft =', GameData.secondsLeft);
         // Пытаемся остановить все интервалы, которые могут быть связаны с таймером
@@ -481,7 +481,7 @@ function selectAnswer(mistakeId) {
         for (let i = 0; i < highestIntervalId; i++) {
             clearInterval(i);
         }
-        
+
     }
 
     // Визуальная и тактильная обратная связь
@@ -508,7 +508,7 @@ function selectAnswer(mistakeId) {
         GameData.stories[currentIndex].correct = isCorrect;
         GameData.stories[currentIndex].answered = true;
         GameData.stories[currentIndex].selectedMistakeId = mistakeId;
-        
+
     }
 
     // Если ответ неправильный, выделяем правильный вариант
@@ -601,10 +601,10 @@ function calculatePoints(isCorrect, timeSpent, difficulty) {
  * Переход к следующему вопросу
  */
 function nextQuestion() {
-    
+
     // Если это была последняя история, завершаем игру
     if (GameData.currentStoryIndex >= GameData.stories.length - 1) {
-        
+
         finishGame();
         return;
     }
@@ -640,7 +640,7 @@ function nextQuestion() {
  * Завершение игры
  */
 async function finishGame() {
-    
+
     // ========== МАТЕМАТИЧЕСКИ ТОЧНЫЙ РАСЧЕТ СТАТИСТИКИ ==========
 
     // 1. ПОДСЧЕТ ПРАВИЛЬНЫХ ОТВЕТОВ (только из реальных данных)
@@ -699,10 +699,10 @@ async function finishGame() {
 
             if (response.ok) {
                 const data = await response.json();
-                
+
                 // Обновляем информацию о новых достижениях, если они есть
                 if (data.status === 'success' && data.data.newAchievements && data.data.newAchievements.length > 0) {
-                    
+
                     // Используем новую систему достижений для показа уведомлений
                     if (window.AchievementSystem) {
                         // Обновляем статистику пользователя для корректного отображения прогресса
@@ -726,7 +726,7 @@ async function finishGame() {
                             if (window.Telegram?.WebApp?.showAlert) {
                                 window.Telegram.WebApp.showAlert(`🏆 Новое достижение: ${achievement.name}`);
                             } else {
-                                
+
                             }
                         });
                     }
@@ -769,7 +769,22 @@ async function finishGame() {
         });
 
         document.getElementById('btnGoProfile').addEventListener('click', () => {
-            window.location.href = '/profile.html';
+            // Передаем данные пользователя и токен в URL для профиля
+            const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+            let profileUrl = '/profile.html';
+
+            // Если есть токен, добавляем его в URL
+            if (token) {
+                profileUrl += `?token=${encodeURIComponent(token)}`;
+            }
+
+            // Если есть данные Telegram WebApp, добавляем их тоже
+            if (window.Telegram?.WebApp?.initData) {
+                const separator = profileUrl.includes('?') ? '&' : '?';
+                profileUrl += `${separator}initData=${encodeURIComponent(window.Telegram.WebApp.initData)}`;
+            }
+
+            window.location.href = profileUrl;
         });
 
         // Добавляем стили для диалога, если их нет
@@ -853,7 +868,7 @@ async function finishGame() {
             document.head.appendChild(style);
         }
     } else {
-        
+
         window.location.href = '/';
     }
 }

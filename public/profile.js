@@ -7,6 +7,27 @@
 let tg = null;
 
 /**
+ * Вспомогательная функция для создания URL с параметрами авторизации
+ */
+function createAuthenticatedUrl(baseUrl) {
+    const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+    let url = baseUrl;
+
+    // Если есть токен, добавляем его в URL
+    if (token) {
+        url += `?token=${encodeURIComponent(token)}`;
+    }
+
+    // Если есть данные Telegram WebApp, добавляем их тоже
+    if (window.Telegram?.WebApp?.initData) {
+        const separator = url.includes('?') ? '&' : '?';
+        url += `${separator}initData=${encodeURIComponent(window.Telegram.WebApp.initData)}`;
+    }
+
+    return url;
+}
+
+/**
  * Объект для работы с профилем пользователя
  */
 const ProfileManager = {
@@ -57,7 +78,7 @@ const ProfileManager = {
      */
     async init() {
         try {
-            
+
             this.loadingStart('Загрузка профиля...');
 
             // Проверяем аутентификацию
@@ -65,15 +86,15 @@ const ProfileManager = {
 
             // Если аутентификация прошла успешно, загружаем данные
             if (this.state.isAuthenticated && this.state.token) {
-                
+
                 await this.loadProfileData();
             } else {
-                
+
                 this.showError('Не удалось выполнить аутентификацию');
             }
 
             // Настраиваем обработчики событий после успешной инициализации
-            
+
             this.setupEventListeners();
 
         } catch (error) {
@@ -89,20 +110,20 @@ const ProfileManager = {
      */
     async checkAuthentication() {
         try {
-            // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ВСЕХ ГОСТЕВЫХ ТОКЕНОВ И ДАННЫХ
-            
+            // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ТОЛЬКО ГОСТЕВЫХ ТОКЕНОВ И ДАННЫХ (НЕ ВСЕХ!)
+
             for (let i = localStorage.length - 1; i >= 0; i--) {
                 const key = localStorage.key(i);
                 if (key && (key.includes('guest_') || key.includes('test_token'))) {
                     localStorage.removeItem(key);
-                    
+
                 }
             }
 
             // Проверяем существующие токены на гостевые данные
             const existingToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
             if (existingToken && (existingToken.includes('guest_') || existingToken.includes('test_'))) {
-                
+
                 localStorage.removeItem('token');
                 localStorage.removeItem('auth_token');
                 this.state.token = null;
@@ -116,63 +137,63 @@ const ProfileManager = {
 
             // Если есть данные из URL, используем их
             if (tokenFromUrl && initDataFromUrl) {
-                
+
                 localStorage.setItem('token', tokenFromUrl);
                 localStorage.setItem('auth_token', tokenFromUrl);
                 localStorage.setItem('initData', initDataFromUrl);
                 this.state.token = tokenFromUrl;
                 this.state.isAuthenticated = true;
-                
-                return;
-            }
 
-            // Проверяем, есть ли реальные данные Telegram для новой авторизации
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
-                const realInitData = window.Telegram.WebApp.initData;
-                if (realInitData && realInitData.includes('user=')) {
-                    
-                    localStorage.clear();
-                    this.state.token = null;
-                    this.state.isAuthenticated = false;
-                    await this.authenticateTelegram();
-                    return;
-                }
+                return;
             }
 
             // Получаем сохраненный токен
             let token = localStorage.getItem('token') || localStorage.getItem('auth_token');
 
-            if (!token) {
-                
-                await this.authenticateTelegram();
-                return;
-            }
+            if (token) {
+                // Проверяем валидность токена на сервере
 
-            // Проверяем валидность токена на сервере
-            
-            const response = await fetch('/api/auth/verify', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                const response = await fetch('/api/auth/verify', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    this.state.token = token;
+                    this.state.isAuthenticated = true;
+
+                    return;
+                } else {
+                    // Токен недействителен
+
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('auth_token');
+                    this.state.token = null;
+                    this.state.isAuthenticated = false;
                 }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                
-                this.state.token = token;
-                this.state.isAuthenticated = true;
-                
-            } else {
-                // Токен недействителен
-                
-                localStorage.removeItem('token');
-                localStorage.removeItem('auth_token');
-                this.state.token = null;
-                this.state.isAuthenticated = false;
-                await this.authenticateTelegram();
             }
+
+            // Если нет токена или он недействителен, проверяем, есть ли данные Telegram для новой авторизации
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+                const realInitData = window.Telegram.WebApp.initData;
+                if (realInitData && realInitData.includes('user=')) {
+
+                    await this.authenticateTelegram();
+                    return;
+                }
+            }
+
+            // Нет токена и нет данных Telegram - ошибка авторизации
+
+            this.state.token = null;
+            this.state.isAuthenticated = false;
+            await this.authenticateTelegram();
+
         } catch (error) {
             console.error('Ошибка проверки аутентификации:', error);
             this.showError('Ошибка проверки авторизации');
@@ -187,31 +208,31 @@ const ProfileManager = {
         // Просто логируем все проверки для отладки, но игнорируем результаты
 
         if (window.Telegram && window.Telegram.WebApp) {
-            
+
         }
 
         if (window.TelegramWebApp) {
-            
+
         }
 
         if (window.WebApp) {
-            
+
         }
 
         if (this.checkTelegramUrlParams()) {
-            
+
         }
 
         if (this.checkTelegramUserAgent()) {
-            
+
         }
 
         if (this.checkTelegramIframe()) {
-            
+
         }
 
         if (localStorage.getItem('auth_token')) {
-            
+
         }
 
         // Мы принудительно разрешаем работу без проверки окружения Telegram
@@ -273,13 +294,13 @@ const ProfileManager = {
                 show: function () { console.log('Minimal WebApp BackButton.show called'); },
                 hide: function () { console.log('Minimal WebApp BackButton.hide called'); },
                 onClick: function (callback) {
-                    
+
                     window.addEventListener('popstate', callback);
                 }
             },
             HapticFeedback: {
                 notificationOccurred: function (type) {
-                    
+
                 }
             },
             isExpanded: true,
@@ -293,12 +314,11 @@ const ProfileManager = {
      */
     async authenticateTelegram() {
         try {
-            
-            // Сначала очищаем все старые данные
-            localStorage.clear();
+
+            // НЕ ОЧИЩАЕМ ВСЕ ДАННЫЕ - только сбрасываем состояние аутентификации
             this.state.token = null;
             this.state.isAuthenticated = false;
-            
+
             // Получаем данные инициализации из URL или из Telegram WebApp
             const urlParams = new URLSearchParams(window.location.search);
             let initData = urlParams.get('initData');
@@ -306,7 +326,7 @@ const ProfileManager = {
             // Если нет данных в URL, пытаемся получить из Telegram WebApp
             if (!initData && window.Telegram && window.Telegram.WebApp) {
                 initData = window.Telegram.WebApp.initData;
-                
+
             }
 
             // Проверяем полученные данные
@@ -355,9 +375,9 @@ const ProfileManager = {
 
                 const userData = data.user || data.data.user;
                 if (userData && userData.telegramId) {
-                    
+
                 } else {
-                    
+
                 }
 
                 // Загружаем данные профиля
@@ -387,7 +407,7 @@ const ProfileManager = {
      * Использует эмуляционную аутентификацию для тестирования без Telegram
      */
     async useEmulationAuth() {
-        
+
         try {
             const response = await fetch('/api/auth/emulate', {
                 method: 'POST',
@@ -423,13 +443,13 @@ const ProfileManager = {
      * Резервный метод авторизации при ошибках
      */
     async useFallbackAuth() {
-        
+
         this.loadingEnd();
 
         // Пытаемся использовать сохраненный токен
         const storedToken = localStorage.getItem('auth_token');
         if (storedToken) {
-            
+
             this.state.token = storedToken;
             this.state.isAuthenticated = true;
 
@@ -561,34 +581,34 @@ const ProfileManager = {
         const newGameButton = document.querySelector('[data-action="startNewGame"]');
 
         if (mainButton) {
-            
+
             mainButton.addEventListener('click', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                
+
                 // Тактильный отклик
                 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
                 }
 
-                window.location.href = '/';
+                window.location.href = createAuthenticatedUrl('/');
             });
         } else {
             console.error('Кнопка "Главная" не найдена!');
         }
 
         if (newGameButton) {
-            
+
             newGameButton.addEventListener('click', (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                
+
                 // Тактильный отклик
                 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
                 }
 
-                window.location.href = '/game.html';
+                window.location.href = createAuthenticatedUrl('/game.html');
             });
         } else {
             console.error('Кнопка "Новое дело" не найдена!');
@@ -770,11 +790,11 @@ const ProfileManager = {
             }
 
             const data = await response.json();
-            
+
             if (data.status === 'success') {
                 // Сохраняем данные профиля
                 this.profileData = data.data;
-                
+
                 // Обновляем интерфейс профиля
                 this.updateProfileUI(this.profileData);
 
@@ -989,7 +1009,7 @@ const ProfileManager = {
 
             // Обновляем статистику пользователя для корректного расчета прогресса
             if (this.profileData && this.profileData.stats) {
-                
+
                 const userStats = {
                     investigations: this.profileData.stats.investigations || this.profileData.stats.totalGames || 0,
                     accuracy: this.profileData.stats.accuracy || 0,
