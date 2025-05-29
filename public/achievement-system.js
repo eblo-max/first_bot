@@ -452,6 +452,279 @@ class AchievementSystem {
                         max-width: unset;
                     }
                 }
+
+                /* Стили для модального окна достижений */
+                .achievement-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.8);
+                    backdrop-filter: blur(10px);
+                    z-index: 10001;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: all 0.3s ease;
+                    padding: 20px;
+                }
+
+                .achievement-modal.show {
+                    opacity: 1;
+                    visibility: visible;
+                }
+
+                .achievement-modal-content {
+                    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+                    border: 2px solid #FFD700;
+                    border-radius: 16px;
+                    padding: 24px;
+                    max-width: 500px;
+                    width: 100%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    position: relative;
+                    transform: scale(0.7);
+                    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                }
+
+                .achievement-modal.show .achievement-modal-content {
+                    transform: scale(1);
+                }
+
+                .achievement-modal-header {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 20px;
+                    padding-bottom: 16px;
+                    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+                    position: relative;
+                }
+
+                .achievement-modal-icon {
+                    width: 64px;
+                    height: 64px;
+                    margin-right: 16px;
+                    flex-shrink: 0;
+                    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+                    animation: achievement-modal-icon-glow 2s infinite alternate;
+                }
+
+                .achievement-modal-title {
+                    flex: 1;
+                }
+
+                .achievement-modal-name {
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #FFD700;
+                    margin-bottom: 4px;
+                    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+                }
+
+                .achievement-modal-rarity {
+                    font-size: 12px;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    font-weight: bold;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    display: inline-block;
+                }
+
+                .achievement-modal-rarity.common {
+                    background: rgba(135, 206, 235, 0.2);
+                    color: #87CEEB;
+                    border: 1px solid #87CEEB;
+                }
+
+                .achievement-modal-rarity.rare {
+                    background: rgba(153, 50, 204, 0.2);
+                    color: #9932CC;
+                    border: 1px solid #9932CC;
+                }
+
+                .achievement-modal-rarity.epic {
+                    background: rgba(255, 99, 71, 0.2);
+                    color: #FF6347;
+                    border: 1px solid #FF6347;
+                }
+
+                .achievement-modal-rarity.legendary {
+                    background: rgba(255, 215, 0, 0.2);
+                    color: #FFD700;
+                    border: 1px solid #FFD700;
+                    animation: achievement-modal-legendary-glow 2s infinite alternate;
+                }
+
+                .achievement-modal-close {
+                    position: absolute;
+                    top: -8px;
+                    right: -8px;
+                    width: 32px;
+                    height: 32px;
+                    background: #C4302B;
+                    border: none;
+                    border-radius: 50%;
+                    color: white;
+                    font-size: 18px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 4px 12px rgba(196, 48, 43, 0.3);
+                }
+
+                .achievement-modal-close:hover {
+                    background: #A02419;
+                    transform: scale(1.1);
+                }
+
+                .achievement-modal-description {
+                    color: #ccc;
+                    font-size: 16px;
+                    line-height: 1.6;
+                    margin-bottom: 20px;
+                    text-align: center;
+                }
+
+                .achievement-modal-requirement {
+                    background: rgba(0, 0, 0, 0.3);
+                    border: 1px solid rgba(255, 215, 0, 0.3);
+                    border-radius: 8px;
+                    padding: 16px;
+                    margin-bottom: 20px;
+                }
+
+                .achievement-modal-requirement-title {
+                    font-size: 14px;
+                    font-weight: bold;
+                    color: #FFD700;
+                    margin-bottom: 8px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                .achievement-modal-requirement-text {
+                    color: #fff;
+                    font-size: 16px;
+                    margin-bottom: 12px;
+                }
+
+                .achievement-modal-progress {
+                    margin-top: 16px;
+                }
+
+                .achievement-modal-progress-bar {
+                    height: 8px;
+                    background: rgba(0, 0, 0, 0.5);
+                    border-radius: 4px;
+                    overflow: hidden;
+                    margin-bottom: 8px;
+                    position: relative;
+                }
+
+                .achievement-modal-progress-fill {
+                    height: 100%;
+                    background: linear-gradient(90deg, #32CD32, #228B22);
+                    border-radius: 4px;
+                    transition: width 0.8s ease-out;
+                    position: relative;
+                }
+
+                .achievement-modal-progress-fill::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+                    animation: progress-shine 2s infinite;
+                }
+
+                .achievement-modal-progress-text {
+                    font-size: 14px;
+                    color: #ccc;
+                    text-align: center;
+                }
+
+                .achievement-modal-unlocked {
+                    text-align: center;
+                    padding: 20px;
+                    background: rgba(50, 205, 50, 0.1);
+                    border: 1px solid #32CD32;
+                    border-radius: 8px;
+                    margin-bottom: 20px;
+                }
+
+                .achievement-modal-unlocked-text {
+                    color: #32CD32;
+                    font-size: 18px;
+                    font-weight: bold;
+                    margin-bottom: 8px;
+                }
+
+                .achievement-modal-unlocked-date {
+                    color: #888;
+                    font-size: 14px;
+                }
+
+                .achievement-modal-tips {
+                    background: rgba(196, 48, 43, 0.1);
+                    border: 1px solid rgba(196, 48, 43, 0.3);
+                    border-radius: 8px;
+                    padding: 16px;
+                }
+
+                .achievement-modal-tips-title {
+                    font-size: 14px;
+                    font-weight: bold;
+                    color: #C4302B;
+                    margin-bottom: 8px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                .achievement-modal-tips-text {
+                    color: #ccc;
+                    font-size: 14px;
+                    line-height: 1.5;
+                }
+
+                /* Анимации для модального окна */
+                @keyframes achievement-modal-icon-glow {
+                    0% { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); }
+                    100% { filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)); }
+                }
+
+                @keyframes achievement-modal-legendary-glow {
+                    0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+                    100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+                }
+
+                @media (max-width: 480px) {
+                    .achievement-modal-content {
+                        margin: 10px;
+                        padding: 20px;
+                        border-radius: 12px;
+                    }
+                    
+                    .achievement-modal-icon {
+                        width: 48px;
+                        height: 48px;
+                    }
+                    
+                    .achievement-modal-name {
+                        font-size: 20px;
+                    }
+                }
             </style>
         `;
 
@@ -744,6 +1017,7 @@ class AchievementSystem {
             achievementEl.className = `achievement ${isUnlocked ? 'unlocked' : 'locked'} rarity-${config.rarity}`;
             achievementEl.dataset.achievementId = config.id;
             achievementEl.title = config.description;
+            achievementEl.style.cursor = 'pointer';
 
             achievementEl.innerHTML = `
                 <svg class="achievement-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -758,8 +1032,201 @@ class AchievementSystem {
                 ` : ''}
             `;
 
+            // Добавляем обработчик клика для показа модального окна
+            achievementEl.addEventListener('click', () => {
+                this.showAchievementModal(config.id, isUnlocked, userAchievements);
+            });
+
             container.appendChild(achievementEl);
         });
+    }
+
+    /**
+     * Показ модального окна с информацией о достижении
+     */
+    showAchievementModal(achievementId, isUnlocked, userAchievements = []) {
+        const config = this.achievementConfig[achievementId];
+        if (!config) return;
+
+        console.log(`🔍 Показываем модальное окно для достижения: ${achievementId}`);
+
+        // Создаем модальное окно, если его нет
+        let modal = document.getElementById('achievement-modal');
+        if (!modal) {
+            modal = this.createAchievementModal();
+        }
+
+        const progress = this.getAchievementProgress(achievementId);
+        const userAchievement = userAchievements.find(a => a.id === achievementId);
+
+        // Получаем текст требований
+        const requirementText = this.getRequirementText(config.requirement);
+        const tipsText = this.getTipsText(achievementId);
+
+        // Заполняем содержимое модального окна
+        modal.querySelector('.achievement-modal-icon').innerHTML = config.icon;
+        modal.querySelector('.achievement-modal-name').textContent = isUnlocked ? config.name : '???';
+        modal.querySelector('.achievement-modal-rarity').textContent = config.rarity.toUpperCase();
+        modal.querySelector('.achievement-modal-rarity').className = `achievement-modal-rarity ${config.rarity}`;
+
+        modal.querySelector('.achievement-modal-description').textContent =
+            isUnlocked ? config.description : 'Достижение заблокировано. Выполните требования для разблокировки.';
+
+        // Показываем информацию о требованиях или статус разблокировки
+        const requirementSection = modal.querySelector('.achievement-modal-requirement');
+        const unlockedSection = modal.querySelector('.achievement-modal-unlocked');
+
+        if (isUnlocked) {
+            // Скрываем требования и показываем статус разблокировки
+            requirementSection.style.display = 'none';
+            unlockedSection.style.display = 'block';
+            unlockedSection.querySelector('.achievement-modal-unlocked-text').textContent = '🏆 Достижение разблокировано!';
+            unlockedSection.querySelector('.achievement-modal-unlocked-date').textContent =
+                userAchievement?.unlockedAt ? `Получено: ${new Date(userAchievement.unlockedAt).toLocaleDateString()}` : '';
+        } else {
+            // Показываем требования и прогресс
+            requirementSection.style.display = 'block';
+            unlockedSection.style.display = 'none';
+
+            requirementSection.querySelector('.achievement-modal-requirement-text').textContent = requirementText;
+
+            // Обновляем прогресс-бар
+            const progressBar = requirementSection.querySelector('.achievement-modal-progress-fill');
+            const progressText = requirementSection.querySelector('.achievement-modal-progress-text');
+
+            progressBar.style.width = `${progress.percentage}%`;
+            progressText.textContent = `${progress.current} / ${progress.required}`;
+        }
+
+        // Обновляем советы
+        modal.querySelector('.achievement-modal-tips-text').textContent = tipsText;
+
+        // Показываем модальное окно с анимацией
+        modal.classList.add('show');
+
+        // Добавляем тактильную обратную связь
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        }
+    }
+
+    /**
+     * Создание модального окна для достижений
+     */
+    createAchievementModal() {
+        const modal = document.createElement('div');
+        modal.id = 'achievement-modal';
+        modal.className = 'achievement-modal';
+
+        modal.innerHTML = `
+            <div class="achievement-modal-content">
+                <div class="achievement-modal-header">
+                    <svg class="achievement-modal-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    </svg>
+                    <div class="achievement-modal-title">
+                        <div class="achievement-modal-name"></div>
+                        <div class="achievement-modal-rarity"></div>
+                    </div>
+                    <button class="achievement-modal-close" onclick="window.AchievementSystem.hideAchievementModal()">×</button>
+                </div>
+                
+                <div class="achievement-modal-description"></div>
+                
+                <div class="achievement-modal-unlocked" style="display: none;">
+                    <div class="achievement-modal-unlocked-text"></div>
+                    <div class="achievement-modal-unlocked-date"></div>
+                </div>
+                
+                <div class="achievement-modal-requirement">
+                    <div class="achievement-modal-requirement-title">Как получить</div>
+                    <div class="achievement-modal-requirement-text"></div>
+                    <div class="achievement-modal-progress">
+                        <div class="achievement-modal-progress-bar">
+                            <div class="achievement-modal-progress-fill"></div>
+                        </div>
+                        <div class="achievement-modal-progress-text"></div>
+                    </div>
+                </div>
+                
+                <div class="achievement-modal-tips">
+                    <div class="achievement-modal-tips-title">💡 Совет детектива</div>
+                    <div class="achievement-modal-tips-text"></div>
+                </div>
+            </div>
+        `;
+
+        // Закрытие по клику на фон
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.hideAchievementModal();
+            }
+        });
+
+        // Закрытие по клавише Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('show')) {
+                this.hideAchievementModal();
+            }
+        });
+
+        document.body.appendChild(modal);
+        return modal;
+    }
+
+    /**
+     * Скрытие модального окна
+     */
+    hideAchievementModal() {
+        const modal = document.getElementById('achievement-modal');
+        if (modal) {
+            modal.classList.remove('show');
+
+            // Тактильная обратная связь
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            }
+        }
+    }
+
+    /**
+     * Получение текста требований для достижения
+     */
+    getRequirementText(requirement) {
+        switch (requirement.type) {
+            case 'investigations':
+                return `Проведите ${requirement.value} расследований`;
+            case 'accuracy':
+                return `Достигните точности ${requirement.value}% минимум в ${requirement.minGames || 1} играх`;
+            case 'winStreak':
+                return `Проведите ${requirement.value} идеальных расследований подряд`;
+            case 'totalScore':
+                return `Наберите ${requirement.value} очков`;
+            case 'perfectGames':
+                return `Проведите ${requirement.value} идеальных расследований (5/5 ответов)`;
+            case 'fastGame':
+                return `Завершите игру менее чем за ${requirement.value} секунд`;
+            default:
+                return 'Выполните особые условия';
+        }
+    }
+
+    /**
+     * Получение советов для достижения
+     */
+    getTipsText(achievementId) {
+        const tips = {
+            'first_case': 'Просто начните играть! Ваше первое расследование автоматически разблокирует это достижение.',
+            'rookie': 'Продолжайте играть и изучать криминальные истории. Опыт приходит с практикой.',
+            'expert': 'Терпение и настойчивость - ключ к успеху. Каждое расследование делает вас опытнее.',
+            'sharp_eye': 'Внимательно читайте истории и ищите подсказки. Не торопитесь с ответами.',
+            'serial_detective': 'Концентрируйтесь на каждом вопросе. Одна ошибка прерывает серию.',
+            'maniac': 'Быстрые и правильные ответы дают больше очков. Изучайте типы преступлений.',
+            'perfectionist': 'Стремитесь к идеалу в каждой игре. Ошибки учат, но совершенство вознаграждается.',
+            'speedster': 'Тренируйтесь быстро анализировать ситуации. Интуиция детектива развивается со временем.',
+            'veteran': 'Постоянство - ваш путь к мастерству. Каждое расследование приближает к цели.'
+        };
+
+        return tips[achievementId] || 'Продолжайте исследовать мир криминалистики и достижения откроются сами собой.';
     }
 }
 
