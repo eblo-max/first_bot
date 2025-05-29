@@ -606,7 +606,7 @@ const ProfileManager = {
                 }
 
                 console.log('Переход на новую игру...');
-                window.location.href = '/';
+                window.location.href = '/game.html';
             });
         } else {
             console.error('Кнопка "Новое дело" не найдена!');
