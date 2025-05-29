@@ -392,6 +392,157 @@ class AchievementSystem {
                     animation: achievement-new-unlock 2s ease-out;
                 }
 
+                /* Современные стили для заблокированных достижений */
+                .achievement.locked {
+                    position: relative;
+                    background: linear-gradient(135deg, rgba(30, 30, 30, 0.8) 0%, rgba(20, 20, 20, 0.9) 100%);
+                    border: 1px solid rgba(80, 80, 80, 0.3);
+                    filter: grayscale(0.7) brightness(0.6);
+                    transition: all 0.3s ease;
+                }
+
+                .achievement.locked:hover {
+                    filter: grayscale(0.4) brightness(0.8);
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+                }
+
+                .achievement.close-to-unlock {
+                    background: linear-gradient(135deg, rgba(40, 40, 30, 0.8) 0%, rgba(50, 40, 20, 0.9) 100%);
+                    border: 1px solid rgba(255, 215, 0, 0.2);
+                    filter: grayscale(0.3) brightness(0.8);
+                    animation: achievement-close-glow 3s ease-in-out infinite;
+                }
+
+                .achievement-icon-container {
+                    position: relative;
+                    width: 48px;
+                    height: 48px;
+                    margin: 0 auto 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .achievement-icon-container.locked {
+                    opacity: 0.4;
+                }
+
+                .achievement-icon {
+                    width: 48px;
+                    height: 48px;
+                    transition: all 0.3s ease;
+                }
+
+                .achievement-icon.locked-icon {
+                    filter: blur(1px) brightness(0.5);
+                }
+
+                .lock-overlay {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 24px;
+                    height: 24px;
+                    background: rgba(0, 0, 0, 0.8);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    backdrop-filter: blur(4px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                }
+
+                .lock-icon {
+                    width: 14px;
+                    height: 14px;
+                    color: rgba(255, 255, 255, 0.7);
+                }
+
+                .unlock-glow {
+                    position: absolute;
+                    top: -2px;
+                    left: -2px;
+                    right: -2px;
+                    bottom: -2px;
+                    background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.3), transparent);
+                    border-radius: 50%;
+                    animation: achievement-unlock-rotate 4s linear infinite;
+                    pointer-events: none;
+                }
+
+                .achievement-name.locked-name {
+                    color: rgba(200, 200, 200, 0.7);
+                    font-weight: normal;
+                }
+
+                .achievement-unlocked-badge {
+                    font-size: 10px;
+                    color: #32CD32;
+                    background: rgba(50, 205, 50, 0.1);
+                    border: 1px solid rgba(50, 205, 50, 0.3);
+                    border-radius: 12px;
+                    padding: 2px 8px;
+                    margin-top: 4px;
+                    text-align: center;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    font-weight: bold;
+                }
+
+                .close-unlock-text {
+                    font-size: 9px;
+                    color: #FFD700;
+                    background: rgba(255, 215, 0, 0.1);
+                    border: 1px solid rgba(255, 215, 0, 0.3);
+                    border-radius: 10px;
+                    padding: 2px 6px;
+                    margin-top: 4px;
+                    text-align: center;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    font-weight: bold;
+                    animation: achievement-pulse-glow 2s ease-in-out infinite;
+                }
+
+                /* Анимации для современных эффектов */
+                @keyframes achievement-close-glow {
+                    0%, 100% { 
+                        box-shadow: 0 4px 12px rgba(255, 215, 0, 0.1);
+                    }
+                    50% { 
+                        box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+                    }
+                }
+
+                @keyframes achievement-unlock-rotate {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+
+                @keyframes achievement-pulse-glow {
+                    0%, 100% { 
+                        opacity: 0.7;
+                        transform: scale(1);
+                    }
+                    50% { 
+                        opacity: 1;
+                        transform: scale(1.05);
+                    }
+                }
+
+                @keyframes achievement-progress-pulse {
+                    0%, 100% { 
+                        box-shadow: 0 0 5px rgba(50, 205, 50, 0.5);
+                        transform: scaleY(1);
+                    }
+                    50% { 
+                        box-shadow: 0 0 15px rgba(50, 205, 50, 0.8);
+                        transform: scaleY(1.1);
+                    }
+                }
+
                 /* Анимации */
                 @keyframes achievement-shine {
                     0% { left: -100%; }
@@ -692,17 +843,6 @@ class AchievementSystem {
                     50% { 
                         transform: translateX(100%);
                         opacity: 1;
-                    }
-                }
-
-                @keyframes achievement-progress-pulse {
-                    0%, 100% { 
-                        box-shadow: 0 0 5px rgba(50, 205, 50, 0.5);
-                        transform: scaleY(1);
-                    }
-                    50% { 
-                        box-shadow: 0 0 15px rgba(50, 205, 50, 0.8);
-                        transform: scaleY(1.1);
                     }
                 }
 
@@ -1078,18 +1218,45 @@ class AchievementSystem {
             achievementEl.title = config.description;
             achievementEl.style.cursor = 'pointer';
 
-            achievementEl.innerHTML = `
-                <svg class="achievement-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    ${isUnlocked ? config.icon : '<path d="M6 10h12M6 14h12M6 18h12" stroke="currentColor" opacity="0.3"/>'}
-                </svg>
-                <div class="achievement-name">${isUnlocked ? config.name : '???'}</div>
-                ${!isUnlocked ? `
+            // Определяем, близко ли к разблокировке (больше 70% прогресса)
+            const isCloseToUnlock = !isUnlocked && progress.percentage >= 70;
+            if (isCloseToUnlock) {
+                achievementEl.classList.add('close-to-unlock');
+            }
+
+            if (isUnlocked) {
+                // Разблокированное достижение
+                achievementEl.innerHTML = `
+                    <div class="achievement-icon-container">
+                        <svg class="achievement-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            ${config.icon}
+                        </svg>
+                    </div>
+                    <div class="achievement-name">${config.name}</div>
+                    <div class="achievement-unlocked-badge">✓ Получено</div>
+                `;
+            } else {
+                // Заблокированное достижение
+                achievementEl.innerHTML = `
+                    <div class="achievement-icon-container locked">
+                        <svg class="achievement-icon locked-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            ${config.icon}
+                        </svg>
+                        <div class="lock-overlay">
+                            <svg class="lock-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 10h12v10H6V10zm4-4a4 4 0 118 0v4h-2V6a2 2 0 10-4 0v4H8V6z"/>
+                            </svg>
+                        </div>
+                        ${isCloseToUnlock ? '<div class="unlock-glow"></div>' : ''}
+                    </div>
+                    <div class="achievement-name locked-name">${config.name}</div>
                     <div class="achievement-progress">
                         <div class="achievement-progress-bar" style="width: ${progress.percentage}%"></div>
                     </div>
                     <div class="achievement-progress-text">${progress.current}/${progress.required}</div>
-                ` : ''}
-            `;
+                    ${isCloseToUnlock ? '<div class="close-unlock-text">Почти готово!</div>' : ''}
+                `;
+            }
 
             // Добавляем обработчик клика для показа модального окна
             achievementEl.addEventListener('click', () => {
