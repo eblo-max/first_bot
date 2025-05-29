@@ -628,31 +628,90 @@ class AchievementSystem {
                     overflow: hidden;
                     margin-bottom: 8px;
                     position: relative;
+                    border: 1px solid rgba(255, 215, 0, 0.2);
                 }
 
                 .achievement-modal-progress-fill {
                     height: 100%;
-                    background: linear-gradient(90deg, #32CD32, #228B22);
+                    background: linear-gradient(90deg, #32CD32, #228B22, #32CD32);
+                    background-size: 200% 100%;
                     border-radius: 4px;
-                    transition: width 0.8s ease-out;
+                    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
                     position: relative;
+                    animation: achievement-progress-gradient 3s ease-in-out infinite;
                 }
 
-                .achievement-modal-progress-fill::after {
+                .achievement-modal-progress-fill::before {
                     content: '';
                     position: absolute;
                     top: 0;
                     left: -100%;
                     width: 100%;
                     height: 100%;
-                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-                    animation: progress-shine 2s infinite;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+                    animation: achievement-progress-shine 2s infinite;
+                }
+
+                .achievement-modal-progress-fill::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent 0%, rgba(255, 215, 0, 0.3) 50%, transparent 100%);
+                    animation: achievement-progress-sparkle 4s ease-in-out infinite;
+                }
+
+                /* Улучшенные анимации */
+                @keyframes achievement-progress-gradient {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+
+                @keyframes achievement-progress-shine {
+                    0% { 
+                        left: -100%; 
+                        opacity: 0;
+                    }
+                    50% { 
+                        opacity: 1;
+                    }
+                    100% { 
+                        left: 100%; 
+                        opacity: 0;
+                    }
+                }
+
+                @keyframes achievement-progress-sparkle {
+                    0%, 100% { 
+                        transform: translateX(-100%);
+                        opacity: 0;
+                    }
+                    50% { 
+                        transform: translateX(100%);
+                        opacity: 1;
+                    }
+                }
+
+                @keyframes achievement-progress-pulse {
+                    0%, 100% { 
+                        box-shadow: 0 0 5px rgba(50, 205, 50, 0.5);
+                        transform: scaleY(1);
+                    }
+                    50% { 
+                        box-shadow: 0 0 15px rgba(50, 205, 50, 0.8);
+                        transform: scaleY(1.1);
+                    }
                 }
 
                 .achievement-modal-progress-text {
                     font-size: 14px;
                     color: #ccc;
                     text-align: center;
+                    font-weight: bold;
+                    text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
                 }
 
                 .achievement-modal-unlocked {
@@ -1094,8 +1153,20 @@ class AchievementSystem {
             const progressBar = requirementSection.querySelector('.achievement-modal-progress-fill');
             const progressText = requirementSection.querySelector('.achievement-modal-progress-text');
 
-            progressBar.style.width = `${progress.percentage}%`;
-            progressText.textContent = `${progress.current} / ${progress.required}`;
+            // Анимированное обновление прогресса
+            progressBar.style.width = '0%';
+            progressText.textContent = '0 / 0';
+
+            // Задержка для красивой анимации
+            setTimeout(() => {
+                progressBar.style.width = `${progress.percentage}%`;
+                progressText.textContent = `${progress.current} / ${progress.required}`;
+
+                // Добавляем пульсацию для активного прогресса
+                if (progress.percentage > 0 && progress.percentage < 100) {
+                    progressBar.style.animation = 'achievement-progress-gradient 3s ease-in-out infinite, achievement-progress-pulse 2s ease-in-out infinite';
+                }
+            }, 300);
         }
 
         // Обновляем советы
@@ -1127,7 +1198,7 @@ class AchievementSystem {
                         <div class="achievement-modal-name"></div>
                         <div class="achievement-modal-rarity"></div>
                     </div>
-                    <button class="achievement-modal-close" onclick="window.AchievementSystem.hideAchievementModal()">×</button>
+                    <button class="achievement-modal-close">×</button>
                 </div>
                 
                 <div class="achievement-modal-description"></div>
@@ -1154,6 +1225,12 @@ class AchievementSystem {
                 </div>
             </div>
         `;
+
+        // Добавляем обработчик для кнопки закрытия
+        const closeButton = modal.querySelector('.achievement-modal-close');
+        closeButton.addEventListener('click', () => {
+            this.hideAchievementModal();
+        });
 
         // Закрытие по клику на фон
         modal.addEventListener('click', (e) => {
