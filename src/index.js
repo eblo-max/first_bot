@@ -9,6 +9,15 @@ require('dotenv').config();
 // Подключение системы логирования в самом начале
 const { logger, error, warn, info, debug, httpMiddleware } = require('./utils/logger');
 
+// Импорт middleware безопасности
+const {
+    generalLimiter,
+    authLimiter,
+    gameLimiter,
+    apiLimiter,
+    staticLimiter
+} = require('./middleware/rateLimiter');
+
 // Импорт маршрутов
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/game');
@@ -24,7 +33,14 @@ const leaderboardService = require('./services/leaderboardService');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Настройка Helmet CSP, разрешающая загрузку необходимых скриптов
+// ====================================
+// MIDDLEWARE БЕЗОПАСНОСТИ (ПОРЯДОК ВАЖЕН!)
+// ====================================
+
+// 1. Настройка trust proxy для корректного получения IP адресов
+app.set('trust proxy', 1);
+
+// 2. Настройка Helmet CSP с улучшенной безопасностью
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -35,26 +51,61 @@ app.use(helmet({
                 "https://cdn.jsdelivr.net"],
             styleSrc: ["'self'", "'unsafe-inline'",
                 "https://unpkg.com",
-                "https://cdn.jsdelivr.net"],
+                "https://cdn.jsdelivr.net",
+                "https://fonts.googleapis.com"],
             connectSrc: ["'self'", "https://api.telegram.org", "wss://*.telegram.org"],
             imgSrc: ["'self'", "data:", "https://telegram.org", "https://*.telegram.org"],
-            fontSrc: ["'self'", "data:"],
+            fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
             objectSrc: ["'none'"],
             mediaSrc: ["'self'"],
             frameSrc: ["'self'", "https://telegram.org", "https://*.telegram.org"],
             workerSrc: ["'self'", "blob:"]
         }
     },
-    crossOriginEmbedderPolicy: false // Разрешить загрузку ресурсов из разных источников
+    crossOriginEmbedderPolicy: false,
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    }
 }));
 
-app.use(cors({
-    origin: process.env.CORS_ORIGIN || '*'
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 3. CORS с улучшенной конфигурацией
+const corsOptions = {
+    origin: process.env.CORS_ORIGIN === '*' ? true : process.env.CORS_ORIGIN?.split(','),
+    credentials: true,
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+app.use(cors(corsOptions));
 
-// Middleware для отключения кеширования
+// 4. Сжатие gzip
+app.use(compression({
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) {
+            return false;
+        }
+        return compression.filter(req, res);
+    },
+    level: 6,
+    threshold: 1024
+}));
+
+// 5. Парсинг JSON с ограничением размера
+app.use(express.json({
+    limit: process.env.MAX_JSON_SIZE || '1mb',
+    strict: true
+}));
+app.use(express.urlencoded({
+    extended: true,
+    limit: process.env.MAX_JSON_SIZE || '1mb'
+}));
+
+// 6. Базовый rate limiter для всех запросов
+app.use(generalLimiter);
+
+// 7. Middleware для отключения кеширования
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Pragma', 'no-cache');
@@ -62,24 +113,37 @@ app.use((req, res, next) => {
     next();
 });
 
-// Подключаем middleware для логирования HTTP запросов
+// 8. Подключаем middleware для логирования HTTP запросов
 app.use(httpMiddleware());
 
+// 9. Дополнительные заголовки безопасности
+app.use((req, res, next) => {
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('X-Frame-Options', 'DENY');
+    res.set('X-XSS-Protection', '1; mode=block');
+    res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+});
+
+// ====================================
+// МАРШРУТЫ С СООТВЕТСТВУЮЩИМИ ЛИМИТЕРАМИ
+// ====================================
+
 // Корневой маршрут показывает главное меню - ставим перед статическими файлами
-app.get('/', (req, res) => {
-    console.log('Запрос на корневой маршрут - отправляем index.html (главное меню)');
+app.get('/', staticLimiter, (req, res) => {
+    info('Запрос на корневой маршрут - отправляем index.html (главное меню)', { ip: req.ip });
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Игровой экран
-app.get('/game', (req, res) => {
-    console.log('Запрос на игровой экран - отправляем game.html');
+app.get('/game', staticLimiter, (req, res) => {
+    info('Запрос на игровой экран - отправляем game.html', { ip: req.ip });
     res.sendFile(path.join(__dirname, '../public/game.html'));
 });
 
 // Профиль пользователя
-app.get('/profile', (req, res) => {
-    console.log('Запрос на страницу профиля - отправляем profile.html');
+app.get('/profile', staticLimiter, (req, res) => {
+    info('Запрос на страницу профиля - отправляем profile.html', { ip: req.ip });
     res.sendFile(path.join(__dirname, '../public/profile.html'));
 });
 
@@ -89,29 +153,68 @@ app.get('/profile', (req, res) => {
 //     res.redirect(301, '/');
 // });
 
-// Статические файлы
-app.use(express.static(path.join(__dirname, '../public')));
+// Статические файлы с лимитером
+app.use(staticLimiter, express.static(path.join(__dirname, '../public'), {
+    maxAge: process.env.NODE_ENV === 'production' ? '1d' : 0,
+    etag: true,
+    lastModified: true
+}));
 
-// Маршруты API
-app.use('/api/auth', authRoutes);
-app.use('/api/game', gameRoutes);
-app.use('/api/user', userRoutes); // Подключаем маршруты пользователя
-app.use('/api/leaderboard', leaderboardRoutes); // Будет добавлено в фазе 2
+// ====================================
+// API МАРШРУТЫ С СПЕЦИФИЧНЫМИ ЛИМИТЕРАМИ
+// ====================================
+
+// Маршруты API с соответствующими лимитерами
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/game', gameLimiter, gameRoutes);
+app.use('/api/user', apiLimiter, userRoutes);
+app.use('/api/leaderboard', apiLimiter, leaderboardRoutes);
 
 // Маршрут для проверки здоровья приложения
 app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    const healthCheck = {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV,
+        memory: process.memoryUsage(),
+        mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    };
+
+    res.status(200).json(healthCheck);
 });
+
+// ====================================
+// ОБРАБОТКА ОШИБОК
+// ====================================
 
 // Обработка 404
 app.use((req, res) => {
+    warn('404 - Страница не найдена', {
+        ip: req.ip,
+        path: req.path,
+        userAgent: req.get('User-Agent')
+    });
     res.status(404).sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Обработка ошибок
+// Глобальная обработка ошибок
 app.use((err, req, res, next) => {
-    console.error('Ошибка сервера:', err);
-    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    error('Ошибка сервера', {
+        error: err.message,
+        stack: err.stack,
+        ip: req.ip,
+        path: req.path
+    });
+
+    // Не показываем стек ошибки в продакшене
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
+    res.status(err.status || 500).json({
+        error: 'Внутренняя ошибка сервера',
+        message: isDevelopment ? err.message : 'Что-то пошло не так',
+        ...(isDevelopment && { stack: err.stack })
+    });
 });
 
 // Массив строк подключения к MongoDB (основной и резервный варианты)
