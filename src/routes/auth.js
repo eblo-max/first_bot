@@ -98,17 +98,32 @@ router.post('/init', verifyTelegramWebAppData, async (req, res) => {
     }
 });
 
-// Аутентификация через Telegram WebApp
+/**
+ * @route   POST /api/auth/telegram
+ * @desc    Альтернативная точка входа через Telegram WebApp (использует authController)
+ * @access  Public
+ */
 router.post('/telegram', authController.authenticateTelegram);
 
 /**
  * @route   POST /api/auth/direct-access
- * @desc    Прямой доступ для пользователей, которые не через Telegram
+ * @desc    Прямой доступ для пользователей, которые не через Telegram (отключён)
  * @access  Public
  */
 router.post('/direct-access', authController.directAccess);
 
-// Проверка токена
+/**
+ * @route   POST /api/auth/guest
+ * @desc    Гостевая аутентификация (отключена, требуется Telegram авторизация)
+ * @access  Public
+ */
+router.post('/guest', authController.directAccess);
+
+/**
+ * @route   GET /api/auth/verify
+ * @desc    Проверка действительности JWT токена
+ * @access  Private
+ */
 router.get('/verify', authMiddleware, (req, res) => {
     res.status(200).json({
         status: 'success',
