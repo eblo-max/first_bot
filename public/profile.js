@@ -1,37 +1,74 @@
 /**
- * Управление функциональностью профиля "Криминальный Блеф"
- * Этот файл отвечает за отображение и взаимодействие с данными профиля пользователя
- * Ультра-современный дизайн с лучшими практиками UX
+ * Кибер-система управления профилем агента
+ * Футуристический интерфейс с квантовыми эффектами и голографическими анимациями
  */
 
-// Объект Telegram WebApp для доступа к API Telegram Mini Apps
+// Telegram WebApp API
 let tg = window.Telegram?.WebApp;
 
 /**
- * Вспомогательная функция для создания URL с параметрами авторизации
+ * Квантовый генератор частиц
  */
-function createAuthenticatedUrl(baseUrl) {
-    const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-    let url = baseUrl;
+function createQuantumExplosion(element, type = 'success') {
+    const colors = {
+        success: ['#00FFFF', '#FF00FF', '#39FF14'],
+        error: ['#FF0040', '#FF6600', '#FFBF00'],
+        info: ['#0066FF', '#8A2BE2', '#00FFFF']
+    };
 
-    // Если есть токен, добавляем его в URL
-    if (token) {
-        url += `?token=${encodeURIComponent(token)}`;
+    const particleCount = 12;
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.style.cssText = `
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: ${colors[type][Math.floor(Math.random() * colors[type].length)]};
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 2000;
+            box-shadow: 0 0 15px currentColor;
+        `;
+
+        const rect = element.getBoundingClientRect();
+        particle.style.left = `${rect.left + rect.width / 2}px`;
+        particle.style.top = `${rect.top + rect.height / 2}px`;
+
+        document.body.appendChild(particle);
+
+        // Квантовая анимация
+        const angle = (Math.PI * 2 * i) / particleCount;
+        const velocity = 80 + Math.random() * 40;
+        let opacity = 1;
+        let scale = 1;
+        let rotation = 0;
+
+        function animateQuantumParticle() {
+            const x = Math.cos(angle) * velocity * (1 - opacity);
+            const y = Math.sin(angle) * velocity * (1 - opacity);
+
+            particle.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${rotation}deg)`;
+            particle.style.opacity = opacity;
+
+            opacity -= 0.015;
+            scale += 0.02;
+            rotation += 8;
+
+            if (opacity > 0) {
+                requestAnimationFrame(animateQuantumParticle);
+            } else {
+                document.body.removeChild(particle);
+            }
+        }
+
+        requestAnimationFrame(animateQuantumParticle);
     }
-
-    // Если есть данные Telegram WebApp, добавляем их тоже
-    if (window.Telegram?.WebApp?.initData) {
-        const separator = url.includes('?') ? '&' : '?';
-        url += `${separator}initData=${encodeURIComponent(window.Telegram.WebApp.initData)}`;
-    }
-
-    return url;
 }
 
 /**
- * Анимированный счетчик для статистики
+ * Кибер-счетчик с голографическими эффектами
  */
-function animateCounter(element, targetValue, duration = 1000) {
+function cyberCounter(element, targetValue, duration = 1500) {
     if (!element) return;
 
     const start = parseInt(element.textContent) || 0;
@@ -42,14 +79,27 @@ function animateCounter(element, targetValue, duration = 1000) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        // Easing функция для плавной анимации
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        const currentValue = Math.round(start + (target - start) * easeOut);
+        // Кибер-easing с квантовыми флуктуациями
+        const easeOut = 1 - Math.pow(1 - progress, 4);
+        const fluctuation = Math.sin(progress * 20) * 0.1 * (1 - progress);
+        const currentValue = Math.round(start + (target - start) * (easeOut + fluctuation));
 
-        element.textContent = element.id === 'stat-accuracy' ? `${currentValue}%` : currentValue;
+        // Добавляем случайные глитчи
+        if (Math.random() < 0.1 && progress < 0.9) {
+            element.textContent = Math.random() > 0.5 ? '█'.repeat(3) : '▓'.repeat(3);
+            setTimeout(() => {
+                element.textContent = element.id === 'stat-accuracy' ? `${currentValue}%` : currentValue;
+            }, 50);
+        } else {
+            element.textContent = element.id === 'stat-accuracy' ? `${currentValue}%` : currentValue;
+        }
 
+        // Кибер-свечение при обновлении
         if (progress < 1) {
+            element.style.textShadow = `0 0 ${20 + Math.sin(progress * 10) * 10}px var(--neon-cyan)`;
             requestAnimationFrame(updateCounter);
+        } else {
+            element.style.textShadow = '0 0 20px var(--neon-cyan)';
         }
     }
 
@@ -57,83 +107,102 @@ function animateCounter(element, targetValue, duration = 1000) {
 }
 
 /**
- * Добавление частиц и эффектов
+ * Голографический эффект печати
  */
-function createParticleEffect(element, type = 'success') {
+function hologramTypewriter(element, text, speed = 80) {
     if (!element) return;
 
-    const colors = {
-        success: ['#F4C430', '#DAA520', '#FFD700'],
-        error: ['#DC143C', '#8B0000', '#E53E3E'],
-        info: ['#0F3460', '#16213E', '#39FF14']
-    };
+    element.textContent = '';
+    element.style.borderRight = '3px solid var(--neon-cyan)';
+    element.style.animation = 'name-glow 1s ease-in-out infinite';
 
-    for (let i = 0; i < 6; i++) {
-        const particle = document.createElement('div');
-        particle.style.cssText = `
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: ${colors[type][Math.floor(Math.random() * colors[type].length)]};
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 1000;
-        `;
-
-        const rect = element.getBoundingClientRect();
-        particle.style.left = `${rect.left + rect.width / 2}px`;
-        particle.style.top = `${rect.top + rect.height / 2}px`;
-
-        document.body.appendChild(particle);
-
-        // Анимация частицы
-        const angle = (Math.PI * 2 * i) / 6;
-        const velocity = 50 + Math.random() * 50;
-        let opacity = 1;
-        let scale = 1;
-
-        function animateParticle() {
-            particle.style.transform = `translate(${Math.cos(angle) * velocity}px, ${Math.sin(angle) * velocity}px) scale(${scale})`;
-            particle.style.opacity = opacity;
-
-            opacity -= 0.02;
-            scale += 0.01;
-
-            if (opacity > 0) {
-                requestAnimationFrame(animateParticle);
+    let i = 0;
+    const typeInterval = setInterval(() => {
+        if (i < text.length) {
+            // Случайные кибер-символы
+            if (Math.random() < 0.1) {
+                element.textContent = text.substring(0, i) + '█';
+                setTimeout(() => {
+                    element.textContent = text.substring(0, i + 1);
+                }, 30);
             } else {
-                document.body.removeChild(particle);
+                element.textContent = text.substring(0, i + 1);
             }
+            i++;
+        } else {
+            clearInterval(typeInterval);
+            setTimeout(() => {
+                element.style.borderRight = 'none';
+            }, 1000);
         }
+    }, speed);
 
-        requestAnimationFrame(animateParticle);
-    }
+    // Голографический мерцание
+    element.addEventListener('mouseover', () => {
+        element.style.filter = 'hue-rotate(180deg) brightness(1.3)';
+        setTimeout(() => {
+            element.style.filter = '';
+        }, 200);
+    });
 }
 
-// Состояние приложения
-const ProfileState = {
+/**
+ * Кибер-глитч эффект
+ */
+function triggerGlitch(element, duration = 300) {
+    if (!element) return;
+
+    element.classList.add('glitch');
+
+    // Случайные кибер-символы
+    const originalText = element.textContent;
+    const glitchChars = '█▓▒░▀▄▌▐▆▇';
+
+    let glitchInterval = setInterval(() => {
+        if (Math.random() < 0.3) {
+            const randomChars = Array(originalText.length).fill().map(() =>
+                glitchChars[Math.floor(Math.random() * glitchChars.length)]
+            ).join('');
+            element.textContent = randomChars;
+
+            setTimeout(() => {
+                element.textContent = originalText;
+            }, 50);
+        }
+    }, 100);
+
+    setTimeout(() => {
+        clearInterval(glitchInterval);
+        element.classList.remove('glitch');
+        element.textContent = originalText;
+    }, duration);
+}
+
+// Состояние кибер-системы
+const CyberState = {
     loading: false,
     error: false,
     errorMessage: '',
     profileData: null,
     token: null,
-    isAuthenticated: false
+    isAuthenticated: false,
+    quantumField: true
 };
 
-// DOM элементы
-const Elements = {
+// Кибер-элементы интерфейса
+const CyberElements = {
     loadingScreen: null,
     mainContent: null,
     errorScreen: null,
     errorMessage: null,
 
-    // Профиль
+    // Профиль агента
     detectiveName: null,
     detectiveRank: null,
     reputationLevel: null,
     reputationCategory: null,
 
-    // Статистика
+    // Боевая статистика
     statInvestigations: null,
     statSolved: null,
     statAccuracy: null,
@@ -144,109 +213,101 @@ const Elements = {
     leaderboardContainer: null
 };
 
-// Инициализация DOM элементов
-function initElements() {
-    Elements.loadingScreen = document.getElementById('loading-screen');
-    Elements.mainContent = document.getElementById('main-content');
-    Elements.errorScreen = document.getElementById('error-screen');
-    Elements.errorMessage = document.getElementById('error-message');
+// Инициализация кибер-элементов
+function initCyberElements() {
+    CyberElements.loadingScreen = document.getElementById('loading-screen');
+    CyberElements.mainContent = document.getElementById('main-content');
+    CyberElements.errorScreen = document.getElementById('error-screen');
+    CyberElements.errorMessage = document.getElementById('error-message');
 
     // Профиль
-    Elements.detectiveName = document.getElementById('detective-name');
-    Elements.detectiveRank = document.getElementById('detective-rank');
-    Elements.reputationLevel = document.getElementById('reputation-level');
-    Elements.reputationCategory = document.getElementById('reputation-category');
+    CyberElements.detectiveName = document.getElementById('detective-name');
+    CyberElements.detectiveRank = document.getElementById('detective-rank');
+    CyberElements.reputationLevel = document.getElementById('reputation-level');
+    CyberElements.reputationCategory = document.getElementById('reputation-category');
 
     // Статистика
-    Elements.statInvestigations = document.getElementById('stat-investigations');
-    Elements.statSolved = document.getElementById('stat-solved');
-    Elements.statAccuracy = document.getElementById('stat-accuracy');
-    Elements.statScore = document.getElementById('stat-score');
+    CyberElements.statInvestigations = document.getElementById('stat-investigations');
+    CyberElements.statSolved = document.getElementById('stat-solved');
+    CyberElements.statAccuracy = document.getElementById('stat-accuracy');
+    CyberElements.statScore = document.getElementById('stat-score');
 
     // Контейнеры
-    Elements.achievementsContainer = document.getElementById('achievements-container');
-    Elements.leaderboardContainer = document.getElementById('leaderboard-container');
+    CyberElements.achievementsContainer = document.getElementById('achievements-container');
+    CyberElements.leaderboardContainer = document.getElementById('leaderboard-container');
 }
 
 /**
- * Основной класс профиля с улучшенным UX
+ * Кибер-система управления профилем
  */
-class ProfileManager {
+class CyberProfileManager {
     constructor() {
         this.init();
     }
 
     async init() {
         try {
-            console.log('🕵️ Инициализация ультра-секретного досье агента...');
+            console.log('🤖 Активация кибер-системы профиля...');
 
-            // Инициализируем элементы DOM
-            initElements();
-
+            initCyberElements();
             this.showLoading();
 
-            // Инициализация Telegram WebApp с улучшенными настройками
+            // Инициализация Telegram WebApp с кибер-настройками
             if (tg) {
                 tg.ready();
                 tg.expand();
 
-                // Настройка цветовой схемы
+                // Кибер-тема
                 if (tg.themeParams) {
-                    document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#0A0A0F');
-                    document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#E8E8E8');
+                    document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '#000011');
+                    document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color || '#00FFFF');
                 }
 
-                // Настройка кнопки назад
+                // Квантовая кнопка назад
                 if (tg.BackButton) {
                     tg.BackButton.show();
                     tg.BackButton.onClick(() => {
+                        this.triggerQuantumTransition();
                         if (tg.HapticFeedback) {
-                            tg.HapticFeedback.impactOccurred('medium');
+                            tg.HapticFeedback.impactOccurred('heavy');
                         }
-                        window.history.back();
+                        setTimeout(() => window.history.back(), 300);
                     });
                 }
             }
 
-            // Проверяем аутентификацию
-            await this.checkAuth();
+            // Квантовая аутентификация
+            await this.quantumAuth();
 
-            if (ProfileState.isAuthenticated) {
-                // Загружаем данные профиля с эффектами
-                await this.loadProfile();
-                await this.loadAchievements();
-                await this.loadLeaderboard();
+            if (CyberState.isAuthenticated) {
+                await this.loadCyberProfile();
+                await this.loadDigitalAchievements();
+                await this.loadAgentRanking();
 
-                this.showContent();
-                this.initInteractivity();
+                this.showCyberContent();
+                this.initQuantumInteractivity();
             } else {
-                this.showError('Доступ к засекреченным данным запрещен');
+                this.showError('Квантовый доступ запрещен');
             }
 
         } catch (error) {
-            console.error('❌ Критическая ошибка системы:', error);
-            this.showError('Система безопасности недоступна: ' + error.message);
+            console.error('❌ Критическая ошибка кибер-системы:', error);
+            this.showError('Система взломана: ' + error.message);
         }
     }
 
-    async checkAuth() {
+    async quantumAuth() {
         try {
-            console.log('🔐 Верификация агента в системе...');
+            console.log('🔐 Квантовая верификация агента...');
 
-            // Получаем токен из URL или localStorage
             const urlParams = new URLSearchParams(window.location.search);
             let token = urlParams.get('token') || localStorage.getItem('token') || localStorage.getItem('auth_token');
 
             if (!token && tg?.initData) {
-                // Пытаемся аутентифицироваться через Telegram
                 const response = await fetch('/api/auth/telegram', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        initData: tg.initData
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ initData: tg.initData })
                 });
 
                 if (response.ok) {
@@ -257,204 +318,167 @@ class ProfileManager {
             }
 
             if (token) {
-                // Проверяем токен на сервере
                 const response = await fetch('/api/auth/verify', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (response.ok) {
-                    ProfileState.token = token;
-                    ProfileState.isAuthenticated = true;
-                    console.log('✅ Агент верифицирован в системе');
+                    CyberState.token = token;
+                    CyberState.isAuthenticated = true;
+                    console.log('✅ Квантовая верификация успешна');
                 } else {
-                    console.log('❌ Недействительные данные агента');
+                    console.log('❌ Недействительный квантовый ключ');
                     localStorage.removeItem('token');
                 }
             }
 
         } catch (error) {
-            console.error('❌ Ошибка системы безопасности:', error);
-            ProfileState.isAuthenticated = false;
+            console.error('❌ Ошибка квантовой системы:', error);
+            CyberState.isAuthenticated = false;
         }
     }
 
-    async loadProfile() {
+    async loadCyberProfile() {
         try {
-            console.log('📊 Загрузка секретного досье...');
+            console.log('📊 Загрузка кибер-досье агента...');
 
             const response = await fetch('/api/user/profile', {
-                headers: {
-                    'Authorization': `Bearer ${ProfileState.token}`
-                }
+                headers: { 'Authorization': `Bearer ${CyberState.token}` }
             });
 
             if (!response.ok) {
-                throw new Error('Секретные данные недоступны');
+                throw new Error('Квантовые данные недоступны');
             }
 
             const profileData = await response.json();
-            ProfileState.profileData = profileData;
+            CyberState.profileData = profileData;
 
-            console.log('✅ Засекреченное досье загружено:', profileData);
-
-            // Обновляем UI с анимациями
-            this.updateProfileUI(profileData);
+            console.log('✅ Кибер-досье загружено:', profileData);
+            this.updateCyberUI(profileData);
 
         } catch (error) {
-            console.error('❌ Ошибка доступа к досье:', error);
+            console.error('❌ Ошибка загрузки кибер-досье:', error);
             throw error;
         }
     }
 
-    updateProfileUI(data) {
-        // Основная информация с анимациями
-        if (Elements.detectiveName) {
-            const name = data.basic?.firstName || data.username || 'АГЕНТ';
-            this.typewriterEffect(Elements.detectiveName, name.toUpperCase());
+    updateCyberUI(data) {
+        // Голографическое имя
+        if (CyberElements.detectiveName) {
+            const name = (data.basic?.firstName || data.username || 'КИБЕР-АГЕНТ').toUpperCase();
+            hologramTypewriter(CyberElements.detectiveName, name);
         }
 
-        if (Elements.detectiveRank) {
-            Elements.detectiveRank.textContent = data.rank?.current || 'НОВИЧОК';
-            createParticleEffect(Elements.detectiveRank, 'success');
+        // Кибер-ранг
+        if (CyberElements.detectiveRank) {
+            CyberElements.detectiveRank.textContent = data.rank?.current || 'СИСТЕМА';
+            createQuantumExplosion(CyberElements.detectiveRank, 'success');
         }
 
-        // Репутация с эффектами
-        if (Elements.reputationLevel) {
-            animateCounter(Elements.reputationLevel, data.reputation?.level || 0, 1500);
+        // Квантовая репутация
+        if (CyberElements.reputationLevel) {
+            cyberCounter(CyberElements.reputationLevel, data.reputation?.level || 0, 2000);
         }
 
-        if (Elements.reputationCategory) {
-            Elements.reputationCategory.textContent = data.reputation?.category || 'НЕОПРЕДЕЛЕНО';
+        if (CyberElements.reputationCategory) {
+            CyberElements.reputationCategory.textContent = data.reputation?.category || 'НЕОПРЕДЕЛЕНО';
         }
 
-        // Статистика с анимированными счетчиками
+        // Боевая статистика с кибер-эффектами
         const stats = data.stats || {};
 
-        if (Elements.statInvestigations) {
-            animateCounter(Elements.statInvestigations, stats.investigations || 0);
+        if (CyberElements.statInvestigations) {
+            cyberCounter(CyberElements.statInvestigations, stats.investigations || 0);
         }
 
-        if (Elements.statSolved) {
-            animateCounter(Elements.statSolved, stats.solvedCases || 0);
+        if (CyberElements.statSolved) {
+            cyberCounter(CyberElements.statSolved, stats.solvedCases || 0);
         }
 
-        if (Elements.statAccuracy) {
-            animateCounter(Elements.statAccuracy, Math.round(stats.accuracy || 0));
+        if (CyberElements.statAccuracy) {
+            cyberCounter(CyberElements.statAccuracy, Math.round(stats.accuracy || 0));
         }
 
-        if (Elements.statScore) {
-            animateCounter(Elements.statScore, stats.totalScore || 0, 2000);
+        if (CyberElements.statScore) {
+            cyberCounter(CyberElements.statScore, stats.totalScore || 0, 2500);
         }
     }
 
-    /**
-     * Эффект печатной машинки для текста
-     */
-    typewriterEffect(element, text, speed = 100) {
-        if (!element) return;
-
-        element.textContent = '';
-        element.style.width = '0';
-        element.style.borderRight = '2px solid var(--evidence-gold)';
-        element.style.whiteSpace = 'nowrap';
-        element.style.overflow = 'hidden';
-
-        let i = 0;
-        const typeInterval = setInterval(() => {
-            if (i < text.length) {
-                element.textContent += text.charAt(i);
-                element.style.width = 'auto';
-                i++;
-            } else {
-                clearInterval(typeInterval);
-                setTimeout(() => {
-                    element.style.borderRight = 'none';
-                }, 500);
-            }
-        }, speed);
-    }
-
-    async loadAchievements() {
+    async loadDigitalAchievements() {
         try {
-            console.log('🏆 Загрузка наград агента...');
+            console.log('🏆 Загрузка цифровых наград...');
 
             const response = await fetch('/api/user/achievements', {
-                headers: {
-                    'Authorization': `Bearer ${ProfileState.token}`
-                }
+                headers: { 'Authorization': `Bearer ${CyberState.token}` }
             });
 
             if (!response.ok) {
-                console.log('⚠️ Данные о наградах недоступны');
+                console.log('⚠️ Цифровые награды недоступны');
                 return;
             }
 
             const achievements = await response.json();
-            this.renderAchievements(achievements);
+            this.renderCyberAchievements(achievements);
 
         } catch (error) {
-            console.error('❌ Ошибка загрузки наград:', error);
+            console.error('❌ Ошибка загрузки цифровых наград:', error);
         }
     }
 
-    renderAchievements(achievements) {
-        if (!Elements.achievementsContainer) return;
+    renderCyberAchievements(achievements) {
+        if (!CyberElements.achievementsContainer) return;
 
-        // Базовые достижения с улучшенными иконками
-        const baseAchievements = [
-            { id: 'first_case', name: 'ПЕРВАЯ ОПЕРАЦИЯ', icon: '🔍', locked: true, description: 'Завершена первая миссия' },
-            { id: 'rookie', name: 'АГЕНТ-НОВИЧОК', icon: '🎖️', locked: true, description: 'Получен статус агента' },
-            { id: 'expert', name: 'ЭКСПЕРТ', icon: '🏆', locked: true, description: 'Мастерство подтверждено' },
-            { id: 'sharp_eye', name: 'ОСТРЫЙ ГЛАЗ', icon: '👁️', locked: true, description: 'Исключительная наблюдательность' },
-            { id: 'serial_detective', name: 'СЕРИЙНЫЙ ДЕТЕКТИВ', icon: '🕵️', locked: true, description: 'Раскрыто множество дел' },
-            { id: 'maniac', name: 'ПЕРФЕКЦИОНИСТ', icon: '⚡', locked: true, description: 'Безупречная точность' }
+        const cyberAchievements = [
+            { id: 'first_case', name: 'ПЕРВАЯ МИССИЯ', icon: '⚡', locked: true, description: 'Дебютная операция' },
+            { id: 'rookie', name: 'КИБЕР-НОВИЧОК', icon: '🤖', locked: true, description: 'Вход в систему' },
+            { id: 'expert', name: 'МАСТЕР-ХАКЕР', icon: '💎', locked: true, description: 'Экспертный уровень' },
+            { id: 'sharp_eye', name: 'КВАНТОВЫЙ ГЛАЗ', icon: '👁️', locked: true, description: 'Суперзрение' },
+            { id: 'serial_detective', name: 'КИБЕР-ДЕТЕКТИВ', icon: '🕵️', locked: true, description: 'Серия побед' },
+            { id: 'maniac', name: 'ПЕРФЕКЦИОНИСТ', icon: '🔥', locked: true, description: 'Идеальная точность' }
         ];
 
-        // Отмечаем разблокированные достижения
+        // Обновление статуса наград
         achievements.forEach(userAchievement => {
-            const achievement = baseAchievements.find(a => a.id === userAchievement.id);
+            const achievement = cyberAchievements.find(a => a.id === userAchievement.id);
             if (achievement) {
                 achievement.locked = false;
                 achievement.name = userAchievement.name || achievement.name;
             }
         });
 
-        // Рендерим с улучшенными эффектами
-        Elements.achievementsContainer.innerHTML = baseAchievements.map((achievement, index) => `
-            <div class="achievement-medal ${achievement.locked ? '' : 'unlocked'}" 
+        // Рендер с кибер-эффектами
+        CyberElements.achievementsContainer.innerHTML = cyberAchievements.map((achievement, index) => `
+            <div class="achievement-core ${achievement.locked ? '' : 'unlocked'}" 
                  title="${achievement.description}"
                  style="animation-delay: ${index * 0.1}s">
                 <div class="achievement-icon">${achievement.icon}</div>
-                <div class="achievement-name">${achievement.locked ? '???' : achievement.name}</div>
+                <div class="achievement-name">${achievement.locked ? '▓▓▓' : achievement.name}</div>
             </div>
         `).join('');
 
-        // Добавляем интерактивность
+        // Квантовая интерактивность
         setTimeout(() => {
-            const medals = Elements.achievementsContainer.querySelectorAll('.achievement-medal');
-            medals.forEach(medal => {
-                medal.addEventListener('click', () => {
-                    if (medal.classList.contains('unlocked')) {
-                        createParticleEffect(medal, 'success');
+            const cores = CyberElements.achievementsContainer.querySelectorAll('.achievement-core');
+            cores.forEach(core => {
+                core.addEventListener('click', () => {
+                    if (core.classList.contains('unlocked')) {
+                        createQuantumExplosion(core, 'success');
+                        triggerGlitch(core);
                         if (tg?.HapticFeedback) {
-                            tg.HapticFeedback.impactOccurred('light');
+                            tg.HapticFeedback.impactOccurred('medium');
                         }
                     }
                 });
             });
-        }, 100);
+        }, 200);
     }
 
-    async loadLeaderboard() {
+    async loadAgentRanking() {
         try {
-            console.log('👑 Загрузка рейтинга агентов...');
+            console.log('👑 Загрузка рейтинга кибер-агентов...');
 
             const response = await fetch('/api/leaderboard/week', {
-                headers: {
-                    'Authorization': `Bearer ${ProfileState.token}`
-                }
+                headers: { 'Authorization': `Bearer ${CyberState.token}` }
             });
 
             if (!response.ok) {
@@ -463,154 +487,226 @@ class ProfileManager {
             }
 
             const leaderboard = await response.json();
-            this.renderLeaderboard(leaderboard);
+            this.renderCyberLeaderboard(leaderboard);
 
         } catch (error) {
             console.error('❌ Ошибка загрузки рейтинга:', error);
         }
     }
 
-    renderLeaderboard(data) {
-        if (!Elements.leaderboardContainer) return;
+    renderCyberLeaderboard(data) {
+        if (!CyberElements.leaderboardContainer) return;
 
         const leaders = data.leaders || [];
-        const currentUser = ProfileState.profileData;
+        const currentUser = CyberState.profileData;
 
         if (leaders.length === 0) {
-            Elements.leaderboardContainer.innerHTML = `
-                <div style="text-align: center; padding: 2rem; color: rgba(232, 232, 232, 0.6);">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">🕵️</div>
-                    <p style="font-family: 'JetBrains Mono', monospace; text-transform: uppercase;">
-                        Секретные данные недоступны
+            CyberElements.leaderboardContainer.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: var(--hologram-silver);">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🤖</div>
+                    <p style="font-family: 'Orbitron', monospace; text-transform: uppercase; letter-spacing: 2px;">
+                        КВАНТОВЫЕ ДАННЫЕ НЕДОСТУПНЫ
                     </p>
                 </div>
             `;
             return;
         }
 
-        Elements.leaderboardContainer.innerHTML = leaders.map((leader, index) => {
+        CyberElements.leaderboardContainer.innerHTML = leaders.map((leader, index) => {
             const isCurrentUser = currentUser && leader.userId === currentUser.id;
-            const rankIcons = ['👑', '🥈', '🥉'];
+            const rankIcons = ['🥇', '🥈', '🥉'];
             const rankIcon = rankIcons[index] || '🎖️';
 
             return `
                 <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}" 
-                     style="animation-delay: ${index * 0.05}s">
-                    <div class="leaderboard-rank">${index + 1}</div>
-                    <div class="leaderboard-info">
-                        <div class="leaderboard-name">
-                            ${rankIcon} ${leader.username || leader.firstName || 'АГЕНТ'}
+                     style="animation-delay: ${index * 0.05}s; 
+                            background: var(--hologram-secondary); 
+                            border: 1px solid var(--cyber-blue);
+                            border-radius: var(--radius-lg);
+                            padding: var(--space-lg);
+                            margin-bottom: var(--space-md);
+                            display: flex; align-items: center; gap: var(--space-md);
+                            transition: all var(--transition-cyber);">
+                    <div style="width: 50px; height: 50px; background: var(--hologram-primary); 
+                                color: var(--void-black); border-radius: 50%; 
+                                display: flex; align-items: center; justify-content: center; 
+                                font-weight: 900; font-family: 'Orbitron', monospace; 
+                                box-shadow: 0 0 20px var(--neon-cyan);">
+                        ${index + 1}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; margin-bottom: 2px; 
+                                    font-family: 'Orbitron', monospace; color: var(--void-black);">
+                            ${rankIcon} ${(leader.username || leader.firstName || 'КИБЕР-АГЕНТ').toUpperCase()}
                             ${isCurrentUser ? ' (ВЫ)' : ''}
                         </div>
-                        <div class="leaderboard-score">${leader.score || 0} ОЧКОВ</div>
+                        <div style="font-size: 0.9rem; color: rgba(0, 0, 0, 0.7); 
+                                    font-family: 'Rajdhani', monospace;">
+                            ${leader.score || 0} КИБЕР-ОЧКОВ
+                        </div>
                     </div>
                 </div>
             `;
         }).join('');
 
-        // Добавляем интерактивность для элементов лидерборда
+        // Кибер-интерактивность рейтинга
         setTimeout(() => {
-            const items = Elements.leaderboardContainer.querySelectorAll('.leaderboard-item');
+            const items = CyberElements.leaderboardContainer.querySelectorAll('.leaderboard-item');
             items.forEach(item => {
                 item.addEventListener('click', () => {
+                    createQuantumExplosion(item, 'info');
                     if (tg?.HapticFeedback) {
                         tg.HapticFeedback.impactOccurred('light');
                     }
+                });
+
+                item.addEventListener('mouseenter', () => {
+                    item.style.transform = 'translateX(8px) scale(1.02)';
+                    item.style.borderColor = 'var(--neon-cyan)';
+                    item.style.boxShadow = '0 0 30px rgba(0, 255, 255, 0.4)';
+                });
+
+                item.addEventListener('mouseleave', () => {
+                    item.style.transform = '';
+                    item.style.borderColor = 'var(--cyber-blue)';
+                    item.style.boxShadow = '';
                 });
             });
         }, 100);
     }
 
-    /**
-     * Инициализация интерактивности с улучшенным UX
-     */
-    initInteractivity() {
-        // Добавляем звуковые эффекты через Telegram HapticFeedback
+    initQuantumInteractivity() {
+        // Кибер-звуки через HapticFeedback
         if (tg?.HapticFeedback) {
-            document.querySelectorAll('.interactive').forEach(element => {
+            document.querySelectorAll('.cyber-button, .stat-pod, .achievement-core').forEach(element => {
                 element.addEventListener('click', () => {
-                    tg.HapticFeedback.impactOccurred('light');
+                    tg.HapticFeedback.impactOccurred('medium');
                 });
             });
         }
 
-        // Параллакс эффект для фона
-        if (window.DeviceMotionEvent) {
-            window.addEventListener('devicemotion', (event) => {
-                const x = event.accelerationIncludingGravity.x;
-                const y = event.accelerationIncludingGravity.y;
-
-                document.body.style.setProperty('--parallax-x', `${x * 2}px`);
-                document.body.style.setProperty('--parallax-y', `${y * 2}px`);
+        // Квантовые частицы при наведении
+        document.querySelectorAll('.cyber-module').forEach(module => {
+            module.addEventListener('mouseenter', () => {
+                this.generateQuantumField(module);
             });
-        }
-
-        // Добавляем эффект при скролле
-        window.addEventListener('scroll', () => {
-            const scrolled = window.pageYOffset;
-            const parallax = scrolled * 0.5;
-
-            document.body.style.setProperty('--scroll-parallax', `${parallax}px`);
         });
+
+        // Случайные глитчи
+        setInterval(() => {
+            if (Math.random() < 0.05) {
+                const elements = document.querySelectorAll('.stat-value, .agent-name');
+                const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                if (randomElement) {
+                    triggerGlitch(randomElement, 200);
+                }
+            }
+        }, 5000);
+    }
+
+    generateQuantumField(element) {
+        for (let i = 0; i < 6; i++) {
+            setTimeout(() => {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 4px;
+                    height: 4px;
+                    background: var(--neon-cyan);
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 1500;
+                    box-shadow: 0 0 10px var(--neon-cyan);
+                `;
+
+                const rect = element.getBoundingClientRect();
+                particle.style.left = `${rect.left + Math.random() * rect.width}px`;
+                particle.style.top = `${rect.top + Math.random() * rect.height}px`;
+
+                document.body.appendChild(particle);
+
+                let life = 1;
+                function quantumFloat() {
+                    life -= 0.02;
+                    particle.style.opacity = life;
+                    particle.style.transform = `translate(${Math.sin(Date.now() * 0.01) * 20}px, ${-life * 100}px) scale(${life * 2})`;
+
+                    if (life > 0) {
+                        requestAnimationFrame(quantumFloat);
+                    } else {
+                        document.body.removeChild(particle);
+                    }
+                }
+                requestAnimationFrame(quantumFloat);
+            }, i * 100);
+        }
+    }
+
+    triggerQuantumTransition() {
+        document.body.style.filter = 'hue-rotate(180deg) brightness(1.5) contrast(2)';
+        setTimeout(() => {
+            document.body.style.filter = '';
+        }, 300);
     }
 
     showLoading() {
-        ProfileState.loading = true;
-        ProfileState.error = false;
+        CyberState.loading = true;
+        CyberState.error = false;
 
-        if (Elements.loadingScreen) {
-            Elements.loadingScreen.classList.remove('hidden');
-            Elements.loadingScreen.style.animation = 'loading-fade-in 0.5s ease-out';
+        if (CyberElements.loadingScreen) {
+            CyberElements.loadingScreen.classList.remove('hidden');
         }
-        if (Elements.mainContent) Elements.mainContent.classList.add('hidden');
-        if (Elements.errorScreen) Elements.errorScreen.classList.add('hidden');
+        if (CyberElements.mainContent) CyberElements.mainContent.classList.add('hidden');
+        if (CyberElements.errorScreen) CyberElements.errorScreen.classList.add('hidden');
     }
 
-    showContent() {
-        ProfileState.loading = false;
-        ProfileState.error = false;
+    showCyberContent() {
+        CyberState.loading = false;
+        CyberState.error = false;
 
-        if (Elements.loadingScreen) Elements.loadingScreen.classList.add('hidden');
-        if (Elements.mainContent) {
-            Elements.mainContent.classList.remove('hidden');
-            Elements.mainContent.style.animation = 'fadeInUp 0.8s ease-out';
+        if (CyberElements.loadingScreen) CyberElements.loadingScreen.classList.add('hidden');
+        if (CyberElements.mainContent) {
+            CyberElements.mainContent.classList.remove('hidden');
+            // Квантовое появление
+            document.querySelectorAll('.cyber-module').forEach((module, index) => {
+                module.style.animationDelay = `${index * 0.1}s`;
+            });
         }
-        if (Elements.errorScreen) Elements.errorScreen.classList.add('hidden');
+        if (CyberElements.errorScreen) CyberElements.errorScreen.classList.add('hidden');
 
-        // Эффект успешной загрузки
+        // Успешная активация
         if (tg?.HapticFeedback) {
             tg.HapticFeedback.notificationOccurred('success');
         }
     }
 
     showError(message) {
-        ProfileState.loading = false;
-        ProfileState.error = true;
-        ProfileState.errorMessage = message;
+        CyberState.loading = false;
+        CyberState.error = true;
+        CyberState.errorMessage = message;
 
-        if (Elements.errorMessage) Elements.errorMessage.textContent = message;
+        if (CyberElements.errorMessage) CyberElements.errorMessage.textContent = message;
 
-        if (Elements.loadingScreen) Elements.loadingScreen.classList.add('hidden');
-        if (Elements.mainContent) Elements.mainContent.classList.add('hidden');
-        if (Elements.errorScreen) {
-            Elements.errorScreen.classList.remove('hidden');
-            Elements.errorScreen.style.animation = 'fadeInUp 0.6s ease-out';
+        if (CyberElements.loadingScreen) CyberElements.loadingScreen.classList.add('hidden');
+        if (CyberElements.mainContent) CyberElements.mainContent.classList.add('hidden');
+        if (CyberElements.errorScreen) {
+            CyberElements.errorScreen.classList.remove('hidden');
         }
 
-        // Уведомление об ошибке
+        // Ошибка системы
         if (tg?.HapticFeedback) {
             tg.HapticFeedback.notificationOccurred('error');
         }
     }
 }
 
-// Инициализация при загрузке страницы
+// Запуск кибер-системы
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Запуск ультра-секретной системы профиля агента...');
-    new ProfileManager();
+    console.log('🚀 Активация квантового интерфейса кибер-агента...');
+    new CyberProfileManager();
 });
 
-// Обновление иконок Lucide
+// Обновление кибер-иконок
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (typeof lucide !== 'undefined') {
