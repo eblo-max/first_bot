@@ -40,6 +40,24 @@ function initApp() {
         GameState.data.token = null;
         GameState.data.user = null;
         GameState.data.isTestMode = false;
+
+        // Восстанавливаем токен в GameState если он есть в localStorage
+        const existingToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
+        if (existingToken && !existingToken.includes('test_token_') && !existingToken.includes('guest_')) {
+            GameState.data.token = existingToken;
+            Logger?.debug('Восстановлен токен в GameState из localStorage');
+        }
+
+        // Восстанавливаем данные пользователя если они есть
+        const existingUser = localStorage.getItem('user');
+        if (existingUser) {
+            try {
+                GameState.data.user = JSON.parse(existingUser);
+                Logger?.debug('Восстановлены данные пользователя в GameState');
+            } catch (e) {
+                Logger?.warn('Ошибка парсинга данных пользователя:', e);
+            }
+        }
     }
     isInitialized = false;
 

@@ -840,7 +840,10 @@
                     initData: initData ? `${initData.substring(0, 50)}...` : 'НЕТ',
                     localStorageKeys: Object.keys(localStorage),
                     telegramWebApp: !!window.Telegram?.WebApp,
-                    gameStateToken: window.GameState?.data?.token ? `${window.GameState.data.token.substring(0, 20)}...` : 'НЕТ'
+                    gameStateToken: window.GameState?.data?.token ? `${window.GameState.data.token.substring(0, 20)}...` : 'НЕТ',
+                    gameStateUser: window.GameState?.data?.user?.name || 'НЕТ',
+                    tokenLength: token ? token.length : 0,
+                    isTestToken: token ? (token.includes('test_token_') || token.includes('guest_')) : false
                 });
 
                 // Если токена нет в localStorage, проверяем GameState
