@@ -193,16 +193,21 @@ const ProfileManager = {
             console.log('📱 Проверяем данные Telegram WebApp:', telegramInitData ? `${telegramInitData.substring(0, 50)}...` : 'НЕТ');
 
             if (telegramInitData && telegramInitData.includes('user=')) {
-
+                console.log('✅ Есть данные Telegram, пытаемся авторизоваться');
                 await this.authenticateTelegram();
                 return;
             }
 
-            // Нет токена и нет данных Telegram - ошибка авторизации
+            // Нет токена и нет данных Telegram - показываем ошибку
             console.error('❌ Нет данных для аутентификации');
             this.state.token = null;
             this.state.isAuthenticated = false;
-            await this.authenticateTelegram();
+
+            // Показываем ошибку вместо попытки автоматической авторизации
+            this.showError('Для доступа к профилю требуется авторизация через Telegram. Перенаправление на главную...');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
 
         } catch (error) {
             console.error('❌ Ошибка проверки аутентификации:', error);
@@ -324,6 +329,7 @@ const ProfileManager = {
      */
     async authenticateTelegram() {
         try {
+            console.log('🔐 Начинаем аутентификацию через Telegram');
 
             // НЕ ОЧИЩАЕМ ВСЕ ДАННЫЕ - только сбрасываем состояние аутентификации
             this.state.token = null;
@@ -333,21 +339,49 @@ const ProfileManager = {
             const urlParams = new URLSearchParams(window.location.search);
             let initData = urlParams.get('initData');
 
-            // Если нет данных в URL, пытаемся получить из Telegram WebApp
-            if (!initData && window.Telegram && window.Telegram.WebApp) {
-                initData = window.Telegram.WebApp.initData;
-
+            // Если нет данных в URL, пытаемся получить из localStorage
+            if (!initData) {
+                initData = localStorage.getItem('initData');
+                console.log('📦 Получили initData из localStorage:', initData ? `${initData.substring(0, 50)}...` : 'НЕТ');
             }
 
-            // Проверяем полученные данные
+            // Если нет данных в localStorage, пытаемся получить из Telegram WebApp
+            if (!initData && window.Telegram && window.Telegram.WebApp) {
+                initData = window.Telegram.WebApp.initData;
+                console.log('📱 Получили initData из Telegram WebApp:', initData ? `${initData.substring(0, 50)}...` : 'НЕТ');
+            }
+
+            // Если все еще нет initData, пытаемся использовать существующий токен
             if (!initData || initData.trim() === '') {
-                console.error('Данные инициализации Telegram WebApp отсутствуют или пусты');
+                console.warn('⚠️ initData отсутствуют, пытаемся использовать сохраненный токен');
+
+                const savedToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
+                if (savedToken && !savedToken.includes('guest_') && !savedToken.includes('test_')) {
+                    console.log('💾 Найден сохраненный токен, пытаемся его использовать');
+                    this.state.token = savedToken;
+                    this.state.isAuthenticated = true;
+
+                    try {
+                        await this.loadProfileData();
+                        return;
+                    } catch (error) {
+                        console.error('❌ Ошибка загрузки профиля с сохраненным токеном:', error);
+                        // Если токен не работает, продолжаем с авторизацией
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('auth_token');
+                    }
+                }
+
+                // Если ничего не работает, показываем ошибку с перенаправлением
+                console.error('❌ Невозможно выполнить авторизацию: нет данных Telegram и валидного токена');
                 this.showError('Невозможно загрузить профиль без авторизации Telegram. Перенаправление на главную...');
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 2000);
                 return;
             }
+
+            console.log('✅ Данные для авторизации найдены, отправляем запрос на сервер');
 
             // Отправляем запрос на сервер для авторизации
             const response = await fetch('/api/auth/init', {
@@ -383,11 +417,16 @@ const ProfileManager = {
                 localStorage.setItem('token', token);
                 localStorage.setItem('auth_token', token);
 
+                // Сохраняем initData для будущих использований
+                if (initData) {
+                    localStorage.setItem('initData', initData);
+                }
+
                 const userData = data.user || data.data.user;
                 if (userData && userData.telegramId) {
-
+                    console.log('✅ Пользователь авторизован:', userData.name || userData.telegramId);
                 } else {
-
+                    console.log('✅ Токен получен, но данные пользователя отсутствуют');
                 }
 
                 // Загружаем данные профиля
@@ -1059,7 +1098,7 @@ const ProfileManager = {
         const avatarLoading = document.getElementById('avatar-loading');
 
         if (!avatarImage || !avatarPlaceholder || !avatarLoading) {
-            
+
             return;
         }
 
@@ -1110,7 +1149,7 @@ const ProfileManager = {
 
                 img.onerror = () => {
                     // Ошибка загрузки изображения
-                    
+
                     this.showAvatarPlaceholder();
                 };
 
@@ -1119,7 +1158,7 @@ const ProfileManager = {
 
             } else {
                 // У пользователя нет аватара
-                
+
                 this.showAvatarPlaceholder();
             }
 

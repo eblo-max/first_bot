@@ -9,7 +9,8 @@
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet" integrity="sha384-Qt+XISmDQEq/74wHe2x+jTgoDrVjBD6q+ZjrcI8HnI0fBfjlvaraY7W/8S5Ho0yJ" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet"
+        integrity="sha384-Qt+XISmDQEq/74wHe2x+jTgoDrVjBD6q+ZjrcI8HnI0fBfjlvaraY7W/8S5Ho0yJ" crossorigin="anonymous">
     <link rel="stylesheet" href="styles.css">
     <meta name="theme-color" content="#1a1a1a">
     <meta name="description" content="Интерактивная игра-викторина с криминальными историями">
@@ -793,6 +794,23 @@
 
                 // Скрываем кнопку "Назад" при запуске
                 window.Telegram.WebApp.BackButton.hide();
+
+                // Сообщаем Telegram что WebApp готов
+                window.Telegram.WebApp.ready();
+
+                console.log('📱 Telegram WebApp инициализирован:', {
+                    initData: window.Telegram.WebApp.initData ? `${window.Telegram.WebApp.initData.substring(0, 50)}...` : 'НЕТ',
+                    user: window.Telegram.WebApp.initDataUnsafe?.user?.id || 'НЕТ',
+                    version: window.Telegram.WebApp.version,
+                    platform: window.Telegram.WebApp.platform
+                });
+
+                // Сохраняем initData в localStorage для использования в других частях приложения
+                if (window.Telegram.WebApp.initData) {
+                    localStorage.setItem('initData', window.Telegram.WebApp.initData);
+                }
+            } else {
+                console.warn('⚠️ Telegram WebApp API недоступен');
             }
 
             // Кнопка начала игры
@@ -813,35 +831,52 @@
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
                 }
 
-                // Передаем данные пользователя и токен в URL для профиля
-                const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-                const initData = window.Telegram?.WebApp?.initData;
+                // Получаем токен и данные авторизации
+                let token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+                let initData = localStorage.getItem('initData') || window.Telegram?.WebApp?.initData;
 
                 console.log('🔍 Отладка перехода к профилю:', {
                     token: token ? `${token.substring(0, 20)}...` : 'НЕТ',
                     initData: initData ? `${initData.substring(0, 50)}...` : 'НЕТ',
                     localStorageKeys: Object.keys(localStorage),
-                    telegramWebApp: !!window.Telegram?.WebApp
+                    telegramWebApp: !!window.Telegram?.WebApp,
+                    gameStateToken: window.GameState?.data?.token ? `${window.GameState.data.token.substring(0, 20)}...` : 'НЕТ'
                 });
+
+                // Если токена нет в localStorage, проверяем GameState
+                if (!token && window.GameState?.data?.token) {
+                    token = window.GameState.data.token;
+                    // Сохраняем в localStorage для последующих переходов
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('auth_token', token);
+                }
+
+                // Если initData нет в localStorage, сохраняем из Telegram
+                if (!localStorage.getItem('initData') && window.Telegram?.WebApp?.initData) {
+                    localStorage.setItem('initData', window.Telegram.WebApp.initData);
+                    initData = window.Telegram.WebApp.initData;
+                }
 
                 let profileUrl = '/profile.html';
 
                 // Если есть токен, добавляем его в URL
                 if (token) {
                     profileUrl += `?token=${encodeURIComponent(token)}`;
-
+                    console.log('✅ Токен добавлен в URL');
                 } else {
-                    
+                    console.warn('⚠️ Токен отсутствует, переход может не сработать');
                 }
 
                 // Если есть данные Telegram WebApp, добавляем их тоже
                 if (initData) {
                     const separator = profileUrl.includes('?') ? '&' : '?';
                     profileUrl += `${separator}initData=${encodeURIComponent(initData)}`;
-
+                    console.log('✅ initData добавлены в URL');
                 } else {
-                    
+                    console.warn('⚠️ initData отсутствуют');
                 }
+
+                console.log('🔗 Переход на:', profileUrl);
 
                 // Переход на экран профиля
                 window.location.href = profileUrl;
@@ -867,7 +902,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             // Первым делом инициализируем логгер
             if (window.Logger) {
-                
+
                 if (window.location.search.includes('debug=true')) {
                     window.Logger.enableDebug();
                 }
