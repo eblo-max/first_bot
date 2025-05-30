@@ -1,19 +1,19 @@
 /**
- * Кибер-система управления профилем агента
- * Футуристический интерфейс с квантовыми эффектами и голографическими анимациями
+ * Детективная система управления досье агента
+ * Мрачный интерфейс с криминальными эффектами и нуарными анимациями
  */
 
 // Telegram WebApp API
 let tg = window.Telegram?.WebApp;
 
 /**
- * Квантовый генератор частиц
+ * Генератор кровавых частиц
  */
-function createQuantumExplosion(element, type = 'success') {
+function createBloodExplosion(element, type = 'solved') {
     const colors = {
-        success: ['#00FFFF', '#FF00FF', '#39FF14'],
-        error: ['#FF0040', '#FF6600', '#FFBF00'],
-        info: ['#0066FF', '#8A2BE2', '#00FFFF']
+        solved: ['#8B0000', '#DC143C', '#FFD700'],
+        failed: ['#FF0040', '#FF6600', '#FFBF00'],
+        clue: ['#8B0000', '#4A0E0E', '#DC143C']
     };
 
     const particleCount = 12;
@@ -36,14 +36,14 @@ function createQuantumExplosion(element, type = 'success') {
 
         document.body.appendChild(particle);
 
-        // Квантовая анимация
+        // Криминальная анимация
         const angle = (Math.PI * 2 * i) / particleCount;
         const velocity = 80 + Math.random() * 40;
         let opacity = 1;
         let scale = 1;
         let rotation = 0;
 
-        function animateQuantumParticle() {
+        function animateBloodParticle() {
             const x = Math.cos(angle) * velocity * (1 - opacity);
             const y = Math.sin(angle) * velocity * (1 - opacity);
 
@@ -55,20 +55,20 @@ function createQuantumExplosion(element, type = 'success') {
             rotation += 8;
 
             if (opacity > 0) {
-                requestAnimationFrame(animateQuantumParticle);
+                requestAnimationFrame(animateBloodParticle);
             } else {
                 document.body.removeChild(particle);
             }
         }
 
-        requestAnimationFrame(animateQuantumParticle);
+        requestAnimationFrame(animateBloodParticle);
     }
 }
 
 /**
- * Кибер-счетчик с голографическими эффектами
+ * Детективный счетчик с мрачными эффектами
  */
-function cyberCounter(element, targetValue, duration = 1500) {
+function criminalCounter(element, targetValue, duration = 1500) {
     if (!element) return;
 
     const start = parseInt(element.textContent) || 0;
@@ -79,14 +79,14 @@ function cyberCounter(element, targetValue, duration = 1500) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        // Кибер-easing с квантовыми флуктуациями
+        // Детективный easing с мрачными флуктуациями
         const easeOut = 1 - Math.pow(1 - progress, 4);
         const fluctuation = Math.sin(progress * 20) * 0.1 * (1 - progress);
         const currentValue = Math.round(start + (target - start) * (easeOut + fluctuation));
 
-        // Добавляем случайные глитчи
+        // Добавляем случайные глитчи улик
         if (Math.random() < 0.1 && progress < 0.9) {
-            element.textContent = Math.random() > 0.5 ? '█'.repeat(3) : '▓'.repeat(3);
+            element.textContent = Math.random() > 0.5 ? '███' : '▓▓▓';
             setTimeout(() => {
                 element.textContent = element.id === 'stat-accuracy' ? `${currentValue}%` : currentValue;
             }, 50);
@@ -94,12 +94,12 @@ function cyberCounter(element, targetValue, duration = 1500) {
             element.textContent = element.id === 'stat-accuracy' ? `${currentValue}%` : currentValue;
         }
 
-        // Кибер-свечение при обновлении
+        // Кровавое свечение при обновлении
         if (progress < 1) {
-            element.style.textShadow = `0 0 ${20 + Math.sin(progress * 10) * 10}px var(--neon-cyan)`;
+            element.style.textShadow = `0 0 ${20 + Math.sin(progress * 10) * 10}px var(--blood-red)`;
             requestAnimationFrame(updateCounter);
         } else {
-            element.style.textShadow = '0 0 20px var(--neon-cyan)';
+            element.style.textShadow = '0 0 20px var(--crimson)';
         }
     }
 
@@ -107,21 +107,21 @@ function cyberCounter(element, targetValue, duration = 1500) {
 }
 
 /**
- * Голографический эффект печати
+ * Эффект детективной печатной машинки
  */
-function hologramTypewriter(element, text, speed = 80) {
+function detectiveTypewriter(element, text, speed = 80) {
     if (!element) return;
 
     element.textContent = '';
-    element.style.borderRight = '3px solid var(--neon-cyan)';
+    element.style.borderRight = '3px solid var(--crimson)';
     element.style.animation = 'name-glow 1s ease-in-out infinite';
 
     let i = 0;
     const typeInterval = setInterval(() => {
         if (i < text.length) {
-            // Случайные кибер-символы
+            // Случайные криминальные символы
             if (Math.random() < 0.1) {
-                element.textContent = text.substring(0, i) + '█';
+                element.textContent = text.substring(0, i) + '▓';
                 setTimeout(() => {
                     element.textContent = text.substring(0, i + 1);
                 }, 30);
@@ -137,9 +137,9 @@ function hologramTypewriter(element, text, speed = 80) {
         }
     }, speed);
 
-    // Голографический мерцание
+    // Мрачное мерцание
     element.addEventListener('mouseover', () => {
-        element.style.filter = 'hue-rotate(180deg) brightness(1.3)';
+        element.style.filter = 'hue-rotate(30deg) brightness(1.2)';
         setTimeout(() => {
             element.style.filter = '';
         }, 200);
@@ -147,16 +147,16 @@ function hologramTypewriter(element, text, speed = 80) {
 }
 
 /**
- * Кибер-глитч эффект
+ * Кровавый глитч эффект
  */
-function triggerGlitch(element, duration = 300) {
+function triggerBloodGlitch(element, duration = 300) {
     if (!element) return;
 
-    element.classList.add('glitch');
+    element.classList.add('blood-glitch');
 
-    // Случайные кибер-символы
+    // Случайные криминальные символы
     const originalText = element.textContent;
-    const glitchChars = '█▓▒░▀▄▌▐▆▇';
+    const glitchChars = '▓▒░█▄▌▐▆▇';
 
     let glitchInterval = setInterval(() => {
         if (Math.random() < 0.3) {
@@ -173,36 +173,36 @@ function triggerGlitch(element, duration = 300) {
 
     setTimeout(() => {
         clearInterval(glitchInterval);
-        element.classList.remove('glitch');
+        element.classList.remove('blood-glitch');
         element.textContent = originalText;
     }, duration);
 }
 
-// Состояние кибер-системы
-const CyberState = {
-    loading: false,
+// Состояние детективной системы
+const CaseState = {
+    investigating: false,
     error: false,
     errorMessage: '',
-    profileData: null,
+    detectiveData: null,
     token: null,
     isAuthenticated: false,
-    quantumField: true
+    crimeScene: true
 };
 
-// Кибер-элементы интерфейса
-const CyberElements = {
+// Элементы детективного интерфейса
+const CaseElements = {
     loadingScreen: null,
     mainContent: null,
     errorScreen: null,
     errorMessage: null,
 
-    // Профиль агента
+    // Досье детектива
     detectiveName: null,
     detectiveRank: null,
     reputationLevel: null,
     reputationCategory: null,
 
-    // Боевая статистика
+    // Криминальная статистика
     statInvestigations: null,
     statSolved: null,
     statAccuracy: null,
@@ -213,61 +213,61 @@ const CyberElements = {
     leaderboardContainer: null
 };
 
-// Инициализация кибер-элементов
-function initCyberElements() {
-    CyberElements.loadingScreen = document.getElementById('loading-screen');
-    CyberElements.mainContent = document.getElementById('main-content');
-    CyberElements.errorScreen = document.getElementById('error-screen');
-    CyberElements.errorMessage = document.getElementById('error-message');
+// Инициализация детективных элементов
+function initCaseElements() {
+    CaseElements.loadingScreen = document.getElementById('loading-screen');
+    CaseElements.mainContent = document.getElementById('main-content');
+    CaseElements.errorScreen = document.getElementById('error-screen');
+    CaseElements.errorMessage = document.getElementById('error-message');
 
-    // Профиль
-    CyberElements.detectiveName = document.getElementById('detective-name');
-    CyberElements.detectiveRank = document.getElementById('detective-rank');
-    CyberElements.reputationLevel = document.getElementById('reputation-level');
-    CyberElements.reputationCategory = document.getElementById('reputation-category');
+    // Досье
+    CaseElements.detectiveName = document.getElementById('detective-name');
+    CaseElements.detectiveRank = document.getElementById('detective-rank');
+    CaseElements.reputationLevel = document.getElementById('reputation-level');
+    CaseElements.reputationCategory = document.getElementById('reputation-category');
 
     // Статистика
-    CyberElements.statInvestigations = document.getElementById('stat-investigations');
-    CyberElements.statSolved = document.getElementById('stat-solved');
-    CyberElements.statAccuracy = document.getElementById('stat-accuracy');
-    CyberElements.statScore = document.getElementById('stat-score');
+    CaseElements.statInvestigations = document.getElementById('stat-investigations');
+    CaseElements.statSolved = document.getElementById('stat-solved');
+    CaseElements.statAccuracy = document.getElementById('stat-accuracy');
+    CaseElements.statScore = document.getElementById('stat-score');
 
     // Контейнеры
-    CyberElements.achievementsContainer = document.getElementById('achievements-container');
-    CyberElements.leaderboardContainer = document.getElementById('leaderboard-container');
+    CaseElements.achievementsContainer = document.getElementById('achievements-container');
+    CaseElements.leaderboardContainer = document.getElementById('leaderboard-container');
 }
 
 /**
- * Кибер-система управления профилем
+ * Детективная система управления досье
  */
-class CyberProfileManager {
+class CriminalProfileManager {
     constructor() {
         this.init();
     }
 
     async init() {
         try {
-            console.log('🤖 Активация кибер-системы профиля...');
+            console.log('🕵️ Активация детективной системы досье...');
 
-            initCyberElements();
-            this.showLoading();
+            initCaseElements();
+            this.showInvestigation();
 
-            // Инициализация Telegram WebApp с кибер-настройками
+            // Инициализация Telegram WebApp с детективными настройками
             if (tg) {
                 tg.ready();
                 tg.expand();
 
-                // Кибер-тема
+                // Мрачная тема
                 if (tg.themeParams) {
-                    document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '#000011');
-                    document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color || '#00FFFF');
+                    document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '#0D0D0D');
+                    document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color || '#F5F5DC');
                 }
 
-                // Квантовая кнопка назад
+                // Детективная кнопка назад
                 if (tg.BackButton) {
                     tg.BackButton.show();
                     tg.BackButton.onClick(() => {
-                        this.triggerQuantumTransition();
+                        this.triggerCrimeSceneTransition();
                         if (tg.HapticFeedback) {
                             tg.HapticFeedback.impactOccurred('heavy');
                         }
@@ -276,29 +276,29 @@ class CyberProfileManager {
                 }
             }
 
-            // Квантовая аутентификация
-            await this.quantumAuth();
+            // Криминальная аутентификация
+            await this.detectiveAuth();
 
-            if (CyberState.isAuthenticated) {
-                await this.loadCyberProfile();
-                await this.loadDigitalAchievements();
-                await this.loadAgentRanking();
+            if (CaseState.isAuthenticated) {
+                await this.loadDetectiveDossier();
+                await this.loadCriminalAchievements();
+                await this.loadDetectiveRanking();
 
-                this.showCyberContent();
-                this.initQuantumInteractivity();
+                this.showCaseContent();
+                this.initCrimeSceneInteractivity();
             } else {
-                this.showError('Квантовый доступ запрещен');
+                this.showError('Доступ к досье запрещен');
             }
 
         } catch (error) {
-            console.error('❌ Критическая ошибка кибер-системы:', error);
+            console.error('❌ Критическая ошибка детективной системы:', error);
             this.showError('Система взломана: ' + error.message);
         }
     }
 
-    async quantumAuth() {
+    async detectiveAuth() {
         try {
-            console.log('🔐 Квантовая верификация агента...');
+            console.log('🔐 Проверка удостоверения детектива...');
 
             const urlParams = new URLSearchParams(window.location.search);
             let token = urlParams.get('token') || localStorage.getItem('token') || localStorage.getItem('auth_token');
@@ -323,147 +323,147 @@ class CyberProfileManager {
                 });
 
                 if (response.ok) {
-                    CyberState.token = token;
-                    CyberState.isAuthenticated = true;
-                    console.log('✅ Квантовая верификация успешна');
+                    CaseState.token = token;
+                    CaseState.isAuthenticated = true;
+                    console.log('✅ Удостоверение детектива подтверждено');
                 } else {
-                    console.log('❌ Недействительный квантовый ключ');
+                    console.log('❌ Недействительное удостоверение');
                     localStorage.removeItem('token');
                 }
             }
 
         } catch (error) {
-            console.error('❌ Ошибка квантовой системы:', error);
-            CyberState.isAuthenticated = false;
+            console.error('❌ Ошибка проверки удостоверения:', error);
+            CaseState.isAuthenticated = false;
         }
     }
 
-    async loadCyberProfile() {
+    async loadDetectiveDossier() {
         try {
-            console.log('📊 Загрузка кибер-досье агента...');
+            console.log('📊 Загрузка досье детектива...');
 
             const response = await fetch('/api/user/profile', {
-                headers: { 'Authorization': `Bearer ${CyberState.token}` }
+                headers: { 'Authorization': `Bearer ${CaseState.token}` }
             });
 
             if (!response.ok) {
-                throw new Error('Квантовые данные недоступны');
+                throw new Error('Досье недоступно');
             }
 
-            const profileData = await response.json();
-            CyberState.profileData = profileData;
+            const detectiveData = await response.json();
+            CaseState.detectiveData = detectiveData;
 
-            console.log('✅ Кибер-досье загружено:', profileData);
-            this.updateCyberUI(profileData);
+            console.log('✅ Досье детектива загружено:', detectiveData);
+            this.updateDetectiveUI(detectiveData);
 
         } catch (error) {
-            console.error('❌ Ошибка загрузки кибер-досье:', error);
+            console.error('❌ Ошибка загрузки досье:', error);
             throw error;
         }
     }
 
-    updateCyberUI(data) {
-        // Голографическое имя
-        if (CyberElements.detectiveName) {
-            const name = (data.basic?.firstName || data.username || 'КИБЕР-АГЕНТ').toUpperCase();
-            hologramTypewriter(CyberElements.detectiveName, name);
+    updateDetectiveUI(data) {
+        // Детективное имя
+        if (CaseElements.detectiveName) {
+            const name = (data.basic?.firstName || data.username || 'ДЕТЕКТИВ').toUpperCase();
+            detectiveTypewriter(CaseElements.detectiveName, name);
         }
 
-        // Кибер-ранг
-        if (CyberElements.detectiveRank) {
-            CyberElements.detectiveRank.textContent = data.rank?.current || 'СИСТЕМА';
-            createQuantumExplosion(CyberElements.detectiveRank, 'success');
+        // Детективный ранг
+        if (CaseElements.detectiveRank) {
+            CaseElements.detectiveRank.textContent = data.rank?.current || 'НОВИЧОК';
+            createBloodExplosion(CaseElements.detectiveRank, 'solved');
         }
 
-        // Квантовая репутация
-        if (CyberElements.reputationLevel) {
-            cyberCounter(CyberElements.reputationLevel, data.reputation?.level || 0, 2000);
+        // Криминальная репутация
+        if (CaseElements.reputationLevel) {
+            criminalCounter(CaseElements.reputationLevel, data.reputation?.level || 0, 2000);
         }
 
-        if (CyberElements.reputationCategory) {
-            CyberElements.reputationCategory.textContent = data.reputation?.category || 'НЕОПРЕДЕЛЕНО';
+        if (CaseElements.reputationCategory) {
+            CaseElements.reputationCategory.textContent = data.reputation?.category || 'НЕОПРЕДЕЛЕНО';
         }
 
-        // Боевая статистика с кибер-эффектами
+        // Криминальная статистика с мрачными эффектами
         const stats = data.stats || {};
 
-        if (CyberElements.statInvestigations) {
-            cyberCounter(CyberElements.statInvestigations, stats.investigations || 0);
+        if (CaseElements.statInvestigations) {
+            criminalCounter(CaseElements.statInvestigations, stats.investigations || 0);
         }
 
-        if (CyberElements.statSolved) {
-            cyberCounter(CyberElements.statSolved, stats.solvedCases || 0);
+        if (CaseElements.statSolved) {
+            criminalCounter(CaseElements.statSolved, stats.solvedCases || 0);
         }
 
-        if (CyberElements.statAccuracy) {
-            cyberCounter(CyberElements.statAccuracy, Math.round(stats.accuracy || 0));
+        if (CaseElements.statAccuracy) {
+            criminalCounter(CaseElements.statAccuracy, Math.round(stats.accuracy || 0));
         }
 
-        if (CyberElements.statScore) {
-            cyberCounter(CyberElements.statScore, stats.totalScore || 0, 2500);
+        if (CaseElements.statScore) {
+            criminalCounter(CaseElements.statScore, stats.totalScore || 0, 2500);
         }
     }
 
-    async loadDigitalAchievements() {
+    async loadCriminalAchievements() {
         try {
-            console.log('🏆 Загрузка цифровых наград...');
+            console.log('🏆 Загрузка улик и наград...');
 
             const response = await fetch('/api/user/achievements', {
-                headers: { 'Authorization': `Bearer ${CyberState.token}` }
+                headers: { 'Authorization': `Bearer ${CaseState.token}` }
             });
 
             if (!response.ok) {
-                console.log('⚠️ Цифровые награды недоступны');
+                console.log('⚠️ Улики и награды недоступны');
                 return;
             }
 
             const achievements = await response.json();
-            this.renderCyberAchievements(achievements);
+            this.renderCriminalAchievements(achievements);
 
         } catch (error) {
-            console.error('❌ Ошибка загрузки цифровых наград:', error);
+            console.error('❌ Ошибка загрузки улик:', error);
         }
     }
 
-    renderCyberAchievements(achievements) {
-        if (!CyberElements.achievementsContainer) return;
+    renderCriminalAchievements(achievements) {
+        if (!CaseElements.achievementsContainer) return;
 
-        const cyberAchievements = [
-            { id: 'first_case', name: 'ПЕРВАЯ МИССИЯ', icon: '⚡', locked: true, description: 'Дебютная операция' },
-            { id: 'rookie', name: 'КИБЕР-НОВИЧОК', icon: '🤖', locked: true, description: 'Вход в систему' },
-            { id: 'expert', name: 'МАСТЕР-ХАКЕР', icon: '💎', locked: true, description: 'Экспертный уровень' },
-            { id: 'sharp_eye', name: 'КВАНТОВЫЙ ГЛАЗ', icon: '👁️', locked: true, description: 'Суперзрение' },
-            { id: 'serial_detective', name: 'КИБЕР-ДЕТЕКТИВ', icon: '🕵️', locked: true, description: 'Серия побед' },
-            { id: 'maniac', name: 'ПЕРФЕКЦИОНИСТ', icon: '🔥', locked: true, description: 'Идеальная точность' }
+        const criminalAchievements = [
+            { id: 'first_case', name: 'ПЕРВОЕ ДЕЛО', icon: '🔍', locked: true, description: 'Начало карьеры' },
+            { id: 'rookie', name: 'НОВИЧОК', icon: '🕵️', locked: true, description: 'Первые шаги' },
+            { id: 'expert', name: 'МАСТЕР-СЫЩИК', icon: '💀', locked: true, description: 'Опытный детектив' },
+            { id: 'sharp_eye', name: 'ОСТРЫЙ ГЛАЗ', icon: '👁️', locked: true, description: 'Все видит' },
+            { id: 'serial_detective', name: 'СЕРИЙНЫЙ СЫЩИК', icon: '🔗', locked: true, description: 'Связанные дела' },
+            { id: 'maniac', name: 'ПЕРФЕКЦИОНИСТ', icon: '🎯', locked: true, description: 'Идеальная точность' }
         ];
 
-        // Обновление статуса наград
+        // Обновление статуса улик
         achievements.forEach(userAchievement => {
-            const achievement = cyberAchievements.find(a => a.id === userAchievement.id);
+            const achievement = criminalAchievements.find(a => a.id === userAchievement.id);
             if (achievement) {
                 achievement.locked = false;
                 achievement.name = userAchievement.name || achievement.name;
             }
         });
 
-        // Рендер с кибер-эффектами
-        CyberElements.achievementsContainer.innerHTML = cyberAchievements.map((achievement, index) => `
-            <div class="achievement-core ${achievement.locked ? '' : 'unlocked'}" 
+        // Рендер с криминальными эффектами
+        CaseElements.achievementsContainer.innerHTML = criminalAchievements.map((achievement, index) => `
+            <div class="evidence-piece ${achievement.locked ? '' : 'found'}" 
                  title="${achievement.description}"
                  style="animation-delay: ${index * 0.1}s">
-                <div class="achievement-icon">${achievement.icon}</div>
-                <div class="achievement-name">${achievement.locked ? '▓▓▓' : achievement.name}</div>
+                <div class="evidence-icon">${achievement.icon}</div>
+                <div class="evidence-name">${achievement.locked ? '▓▓▓' : achievement.name}</div>
             </div>
         `).join('');
 
-        // Квантовая интерактивность
+        // Криминальная интерактивность
         setTimeout(() => {
-            const cores = CyberElements.achievementsContainer.querySelectorAll('.achievement-core');
-            cores.forEach(core => {
-                core.addEventListener('click', () => {
-                    if (core.classList.contains('unlocked')) {
-                        createQuantumExplosion(core, 'success');
-                        triggerGlitch(core);
+            const pieces = CaseElements.achievementsContainer.querySelectorAll('.evidence-piece');
+            pieces.forEach(piece => {
+                piece.addEventListener('click', () => {
+                    if (piece.classList.contains('found')) {
+                        createBloodExplosion(piece, 'solved');
+                        triggerBloodGlitch(piece);
                         if (tg?.HapticFeedback) {
                             tg.HapticFeedback.impactOccurred('medium');
                         }
@@ -473,46 +473,46 @@ class CyberProfileManager {
         }, 200);
     }
 
-    async loadAgentRanking() {
+    async loadDetectiveRanking() {
         try {
-            console.log('👑 Загрузка рейтинга кибер-агентов...');
+            console.log('👑 Загрузка рейтинга детективов...');
 
             const response = await fetch('/api/leaderboard/week', {
-                headers: { 'Authorization': `Bearer ${CyberState.token}` }
+                headers: { 'Authorization': `Bearer ${CaseState.token}` }
             });
 
             if (!response.ok) {
-                console.log('⚠️ Рейтинг агентов недоступен');
+                console.log('⚠️ Рейтинг детективов недоступен');
                 return;
             }
 
             const leaderboard = await response.json();
-            this.renderCyberLeaderboard(leaderboard);
+            this.renderDetectiveLeaderboard(leaderboard);
 
         } catch (error) {
             console.error('❌ Ошибка загрузки рейтинга:', error);
         }
     }
 
-    renderCyberLeaderboard(data) {
-        if (!CyberElements.leaderboardContainer) return;
+    renderDetectiveLeaderboard(data) {
+        if (!CaseElements.leaderboardContainer) return;
 
         const leaders = data.leaders || [];
-        const currentUser = CyberState.profileData;
+        const currentUser = CaseState.detectiveData;
 
         if (leaders.length === 0) {
-            CyberElements.leaderboardContainer.innerHTML = `
-                <div style="text-align: center; padding: 3rem; color: var(--hologram-silver);">
-                    <div style="font-size: 4rem; margin-bottom: 1rem;">🤖</div>
-                    <p style="font-family: 'Orbitron', monospace; text-transform: uppercase; letter-spacing: 2px;">
-                        КВАНТОВЫЕ ДАННЫЕ НЕДОСТУПНЫ
+            CaseElements.leaderboardContainer.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: var(--bone-white);">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🕵️</div>
+                    <p style="font-family: 'Special Elite', monospace; text-transform: uppercase; letter-spacing: 2px;">
+                        ДОСЬЕ ЗАСЕКРЕЧЕНО
                     </p>
                 </div>
             `;
             return;
         }
 
-        CyberElements.leaderboardContainer.innerHTML = leaders.map((leader, index) => {
+        CaseElements.leaderboardContainer.innerHTML = leaders.map((leader, index) => {
             const isCurrentUser = currentUser && leader.userId === currentUser.id;
             const rankIcons = ['🥇', '🥈', '🥉'];
             const rankIcon = rankIcons[index] || '🎖️';
@@ -520,41 +520,41 @@ class CyberProfileManager {
             return `
                 <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}" 
                      style="animation-delay: ${index * 0.05}s; 
-                            background: var(--hologram-secondary); 
-                            border: 1px solid var(--cyber-blue);
+                            background: var(--shadow-gradient); 
+                            border: 2px solid var(--steel-gray);
                             border-radius: var(--radius-lg);
                             padding: var(--space-lg);
                             margin-bottom: var(--space-md);
                             display: flex; align-items: center; gap: var(--space-md);
-                            transition: all var(--transition-cyber);">
-                    <div style="width: 50px; height: 50px; background: var(--hologram-primary); 
-                                color: var(--void-black); border-radius: 50%; 
+                            transition: all var(--transition-detective);">
+                    <div style="width: 50px; height: 50px; background: var(--blood-gradient); 
+                                color: var(--bone-white); border-radius: 50%; 
                                 display: flex; align-items: center; justify-content: center; 
-                                font-weight: 900; font-family: 'Orbitron', monospace; 
-                                box-shadow: 0 0 20px var(--neon-cyan);">
+                                font-weight: 900; font-family: 'JetBrains Mono', monospace; 
+                                box-shadow: 0 0 20px var(--blood-red);">
                         ${index + 1}
                     </div>
                     <div style="flex: 1;">
                         <div style="font-weight: 700; margin-bottom: 2px; 
-                                    font-family: 'Orbitron', monospace; color: var(--void-black);">
-                            ${rankIcon} ${(leader.username || leader.firstName || 'КИБЕР-АГЕНТ').toUpperCase()}
+                                    font-family: 'Special Elite', monospace; color: var(--bone-white);">
+                            ${rankIcon} ${(leader.username || leader.firstName || 'ДЕТЕКТИВ').toUpperCase()}
                             ${isCurrentUser ? ' (ВЫ)' : ''}
                         </div>
-                        <div style="font-size: 0.9rem; color: rgba(0, 0, 0, 0.7); 
-                                    font-family: 'Rajdhani', monospace;">
-                            ${leader.score || 0} КИБЕР-ОЧКОВ
+                        <div style="font-size: 0.9rem; color: rgba(245, 245, 220, 0.7); 
+                                    font-family: 'Special Elite', monospace;">
+                            ${leader.score || 0} ОЧКОВ
                         </div>
                     </div>
                 </div>
             `;
         }).join('');
 
-        // Кибер-интерактивность рейтинга
+        // Детективная интерактивность рейтинга
         setTimeout(() => {
-            const items = CyberElements.leaderboardContainer.querySelectorAll('.leaderboard-item');
+            const items = CaseElements.leaderboardContainer.querySelectorAll('.leaderboard-item');
             items.forEach(item => {
                 item.addEventListener('click', () => {
-                    createQuantumExplosion(item, 'info');
+                    createBloodExplosion(item, 'clue');
                     if (tg?.HapticFeedback) {
                         tg.HapticFeedback.impactOccurred('light');
                     }
@@ -562,49 +562,49 @@ class CyberProfileManager {
 
                 item.addEventListener('mouseenter', () => {
                     item.style.transform = 'translateX(8px) scale(1.02)';
-                    item.style.borderColor = 'var(--neon-cyan)';
-                    item.style.boxShadow = '0 0 30px rgba(0, 255, 255, 0.4)';
+                    item.style.borderColor = 'var(--crimson)';
+                    item.style.boxShadow = '0 0 30px rgba(139, 0, 0, 0.4)';
                 });
 
                 item.addEventListener('mouseleave', () => {
                     item.style.transform = '';
-                    item.style.borderColor = 'var(--cyber-blue)';
+                    item.style.borderColor = 'var(--steel-gray)';
                     item.style.boxShadow = '';
                 });
             });
         }, 100);
     }
 
-    initQuantumInteractivity() {
-        // Кибер-звуки через HapticFeedback
+    initCrimeSceneInteractivity() {
+        // Детективные звуки через HapticFeedback
         if (tg?.HapticFeedback) {
-            document.querySelectorAll('.cyber-button, .stat-pod, .achievement-core').forEach(element => {
+            document.querySelectorAll('.evidence-button, .stat-evidence, .evidence-piece').forEach(element => {
                 element.addEventListener('click', () => {
                     tg.HapticFeedback.impactOccurred('medium');
                 });
             });
         }
 
-        // Квантовые частицы при наведении
-        document.querySelectorAll('.cyber-module').forEach(module => {
+        // Кровавые частицы при наведении
+        document.querySelectorAll('.case-module').forEach(module => {
             module.addEventListener('mouseenter', () => {
-                this.generateQuantumField(module);
+                this.generateCrimeScene(module);
             });
         });
 
-        // Случайные глитчи
+        // Случайные криминальные глитчи
         setInterval(() => {
             if (Math.random() < 0.05) {
-                const elements = document.querySelectorAll('.stat-value, .agent-name');
+                const elements = document.querySelectorAll('.stat-value, .detective-name');
                 const randomElement = elements[Math.floor(Math.random() * elements.length)];
                 if (randomElement) {
-                    triggerGlitch(randomElement, 200);
+                    triggerBloodGlitch(randomElement, 200);
                 }
             }
         }, 5000);
     }
 
-    generateQuantumField(element) {
+    generateCrimeScene(element) {
         for (let i = 0; i < 6; i++) {
             setTimeout(() => {
                 const particle = document.createElement('div');
@@ -612,11 +612,11 @@ class CyberProfileManager {
                     position: absolute;
                     width: 4px;
                     height: 4px;
-                    background: var(--neon-cyan);
+                    background: var(--blood-red);
                     border-radius: 50%;
                     pointer-events: none;
                     z-index: 1500;
-                    box-shadow: 0 0 10px var(--neon-cyan);
+                    box-shadow: 0 0 10px var(--blood-red);
                 `;
 
                 const rect = element.getBoundingClientRect();
@@ -626,87 +626,87 @@ class CyberProfileManager {
                 document.body.appendChild(particle);
 
                 let life = 1;
-                function quantumFloat() {
+                function crimeFloat() {
                     life -= 0.02;
                     particle.style.opacity = life;
                     particle.style.transform = `translate(${Math.sin(Date.now() * 0.01) * 20}px, ${-life * 100}px) scale(${life * 2})`;
 
                     if (life > 0) {
-                        requestAnimationFrame(quantumFloat);
+                        requestAnimationFrame(crimeFloat);
                     } else {
                         document.body.removeChild(particle);
                     }
                 }
-                requestAnimationFrame(quantumFloat);
+                requestAnimationFrame(crimeFloat);
             }, i * 100);
         }
     }
 
-    triggerQuantumTransition() {
-        document.body.style.filter = 'hue-rotate(180deg) brightness(1.5) contrast(2)';
+    triggerCrimeSceneTransition() {
+        document.body.style.filter = 'hue-rotate(30deg) brightness(1.3) contrast(1.5)';
         setTimeout(() => {
             document.body.style.filter = '';
         }, 300);
     }
 
-    showLoading() {
-        CyberState.loading = true;
-        CyberState.error = false;
+    showInvestigation() {
+        CaseState.investigating = true;
+        CaseState.error = false;
 
-        if (CyberElements.loadingScreen) {
-            CyberElements.loadingScreen.classList.remove('hidden');
+        if (CaseElements.loadingScreen) {
+            CaseElements.loadingScreen.classList.remove('hidden');
         }
-        if (CyberElements.mainContent) CyberElements.mainContent.classList.add('hidden');
-        if (CyberElements.errorScreen) CyberElements.errorScreen.classList.add('hidden');
+        if (CaseElements.mainContent) CaseElements.mainContent.classList.add('hidden');
+        if (CaseElements.errorScreen) CaseElements.errorScreen.classList.add('hidden');
     }
 
-    showCyberContent() {
-        CyberState.loading = false;
-        CyberState.error = false;
+    showCaseContent() {
+        CaseState.investigating = false;
+        CaseState.error = false;
 
-        if (CyberElements.loadingScreen) CyberElements.loadingScreen.classList.add('hidden');
-        if (CyberElements.mainContent) {
-            CyberElements.mainContent.classList.remove('hidden');
-            // Квантовое появление
-            document.querySelectorAll('.cyber-module').forEach((module, index) => {
+        if (CaseElements.loadingScreen) CaseElements.loadingScreen.classList.add('hidden');
+        if (CaseElements.mainContent) {
+            CaseElements.mainContent.classList.remove('hidden');
+            // Детективное появление
+            document.querySelectorAll('.case-module').forEach((module, index) => {
                 module.style.animationDelay = `${index * 0.1}s`;
             });
         }
-        if (CyberElements.errorScreen) CyberElements.errorScreen.classList.add('hidden');
+        if (CaseElements.errorScreen) CaseElements.errorScreen.classList.add('hidden');
 
-        // Успешная активация
+        // Успешное расследование
         if (tg?.HapticFeedback) {
             tg.HapticFeedback.notificationOccurred('success');
         }
     }
 
     showError(message) {
-        CyberState.loading = false;
-        CyberState.error = true;
-        CyberState.errorMessage = message;
+        CaseState.investigating = false;
+        CaseState.error = true;
+        CaseState.errorMessage = message;
 
-        if (CyberElements.errorMessage) CyberElements.errorMessage.textContent = message;
+        if (CaseElements.errorMessage) CaseElements.errorMessage.textContent = message;
 
-        if (CyberElements.loadingScreen) CyberElements.loadingScreen.classList.add('hidden');
-        if (CyberElements.mainContent) CyberElements.mainContent.classList.add('hidden');
-        if (CyberElements.errorScreen) {
-            CyberElements.errorScreen.classList.remove('hidden');
+        if (CaseElements.loadingScreen) CaseElements.loadingScreen.classList.add('hidden');
+        if (CaseElements.mainContent) CaseElements.mainContent.classList.add('hidden');
+        if (CaseElements.errorScreen) {
+            CaseElements.errorScreen.classList.remove('hidden');
         }
 
-        // Ошибка системы
+        // Ошибка расследования
         if (tg?.HapticFeedback) {
             tg.HapticFeedback.notificationOccurred('error');
         }
     }
 }
 
-// Запуск кибер-системы
+// Запуск детективной системы
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Активация квантового интерфейса кибер-агента...');
-    new CyberProfileManager();
+    console.log('🚀 Активация интерфейса детективного досье...');
+    new CriminalProfileManager();
 });
 
-// Обновление кибер-иконок
+// Обновление детективных иконок
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (typeof lucide !== 'undefined') {

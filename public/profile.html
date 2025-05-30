@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>КИБЕРСПЕЦАГЕНТ | Досье</title>
+    <title>ЗАСЕКРЕЧЕННОЕ ДОСЬЕ | Детектив</title>
 
     <!-- Telegram WebApp API -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -19,35 +19,35 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Crimson+Text:wght@400;600;700&family=Special+Elite&display=swap"
         rel="stylesheet">
 
     <style>
         :root {
-            /* Кибер-палитра 2024 */
-            --neon-cyan: #00FFFF;
-            --neon-magenta: #FF00FF;
-            --neon-green: #39FF14;
-            --neon-orange: #FF6600;
-            --deep-space: #000011;
-            --void-black: #0A0A0F;
-            --cyber-blue: #0066FF;
-            --matrix-green: #00FF41;
-            --plasma-purple: #8A2BE2;
-            --hologram-silver: #C0C0C0;
-            --danger-red: #FF0040;
-            --warning-amber: #FFBF00;
+            /* Криминальная палитра */
+            --blood-red: #8B0000;
+            --crimson: #DC143C;
+            --dark-red: #4A0E0E;
+            --coal-black: #1C1C1C;
+            --void-black: #0D0D0D;
+            --ash-gray: #2A2A2A;
+            --steel-gray: #4A4A4A;
+            --bone-white: #F5F5DC;
+            --amber-yellow: #FFD700;
+            --morgue-blue: #1E3A8A;
+            --evidence-green: #228B22;
+            --warning-orange: #FF4500;
 
-            /* Голографические градиенты */
-            --hologram-primary: linear-gradient(45deg, var(--neon-cyan), var(--neon-magenta), var(--neon-green));
-            --hologram-secondary: linear-gradient(135deg, var(--cyber-blue), var(--plasma-purple), var(--neon-orange));
-            --matrix-flow: linear-gradient(180deg, var(--matrix-green), var(--void-black));
-            --cyber-glow: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
+            /* Мрачные градиенты */
+            --blood-gradient: linear-gradient(45deg, var(--blood-red), var(--crimson), var(--dark-red));
+            --shadow-gradient: linear-gradient(135deg, var(--void-black), var(--coal-black), var(--ash-gray));
+            --case-gradient: linear-gradient(180deg, var(--steel-gray), var(--coal-black));
+            --evidence-glow: linear-gradient(90deg, var(--amber-yellow), var(--warning-orange));
 
-            /* 3D Эффекты */
-            --shadow-neon: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan), 0 0 60px var(--neon-cyan);
-            --shadow-hologram: 0 0 30px rgba(0, 255, 255, 0.5), inset 0 0 30px rgba(255, 0, 255, 0.1);
-            --shadow-cyber: 0 8px 32px rgba(0, 102, 255, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            /* Детективные тени */
+            --shadow-blood: 0 0 20px var(--blood-red), 0 0 40px var(--blood-red), 0 0 60px var(--blood-red);
+            --shadow-case: 0 0 30px rgba(139, 0, 0, 0.5), inset 0 0 30px rgba(220, 20, 60, 0.1);
+            --shadow-evidence: 0 8px 32px rgba(255, 215, 0, 0.4), 0 0 0 1px rgba(245, 245, 220, 0.1);
 
             /* Размеры */
             --space-xs: 0.25rem;
@@ -64,9 +64,9 @@
             --radius-xl: 2rem;
 
             /* Переходы */
-            --transition-cyber: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            --transition-glow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-hologram: 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            --transition-detective: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --transition-blood: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-case: 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
 
         * {
@@ -77,13 +77,13 @@
         }
 
         body {
-            background: var(--deep-space);
+            background: var(--void-black);
             background-image:
-                radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(57, 255, 20, 0.05) 0%, transparent 50%);
-            color: var(--hologram-silver);
-            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+                radial-gradient(circle at 20% 20%, rgba(139, 0, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(220, 20, 60, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+            color: var(--bone-white);
+            font-family: 'Crimson Text', Georgia, serif;
             line-height: 1.6;
             min-height: 100vh;
             overflow-x: hidden;
@@ -92,7 +92,7 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Кибер-фон с матричными эффектами */
+        /* Мрачный фон с эффектом старой бумаги */
         body::before {
             content: '';
             position: fixed;
@@ -101,15 +101,15 @@
             right: 0;
             bottom: 0;
             background-image:
-                linear-gradient(90deg, transparent 98%, rgba(0, 255, 255, 0.03) 100%),
-                linear-gradient(180deg, transparent 98%, rgba(255, 0, 255, 0.03) 100%);
+                linear-gradient(90deg, transparent 98%, rgba(139, 0, 0, 0.03) 100%),
+                linear-gradient(180deg, transparent 98%, rgba(220, 20, 60, 0.03) 100%);
             background-size: 50px 50px;
-            animation: matrix-scan 4s linear infinite;
+            animation: evidence-scan 4s linear infinite;
             pointer-events: none;
             z-index: 0;
         }
 
-        @keyframes matrix-scan {
+        @keyframes evidence-scan {
             0% {
                 transform: translate(0, 0);
             }
@@ -119,7 +119,7 @@
             }
         }
 
-        /* Голографические частицы */
+        /* Пылинки и улики */
         body::after {
             content: '';
             position: fixed;
@@ -128,34 +128,34 @@
             right: 0;
             bottom: 0;
             background-image:
-                radial-gradient(1px 1px at 20px 30px, var(--neon-cyan), transparent),
-                radial-gradient(1px 1px at 40px 70px, var(--neon-magenta), transparent),
-                radial-gradient(1px 1px at 90px 40px, var(--matrix-green), transparent),
-                radial-gradient(1px 1px at 130px 80px, var(--neon-orange), transparent);
+                radial-gradient(1px 1px at 20px 30px, var(--blood-red), transparent),
+                radial-gradient(1px 1px at 40px 70px, var(--crimson), transparent),
+                radial-gradient(1px 1px at 90px 40px, var(--amber-yellow), transparent),
+                radial-gradient(1px 1px at 130px 80px, var(--warning-orange), transparent);
             background-repeat: repeat;
             background-size: 200px 200px;
-            animation: particles-float 6s ease-in-out infinite;
+            animation: dust-float 6s ease-in-out infinite;
             pointer-events: none;
             z-index: 0;
-            opacity: 0.6;
+            opacity: 0.4;
         }
 
-        @keyframes particles-float {
+        @keyframes dust-float {
 
             0%,
             100% {
                 transform: translateY(0) rotate(0deg);
-                opacity: 0.6;
+                opacity: 0.4;
             }
 
             50% {
                 transform: translateY(-20px) rotate(180deg);
-                opacity: 1;
+                opacity: 0.6;
             }
         }
 
         /* Главный контейнер */
-        .cyber-interface {
+        .detective-interface {
             max-width: 480px;
             margin: 0 auto;
             min-height: 100vh;
@@ -191,22 +191,22 @@
             }
         }
 
-        .cyber-button {
-            background: var(--hologram-primary);
-            border: none;
+        .evidence-button {
+            background: var(--blood-gradient);
+            border: 2px solid var(--crimson);
             border-radius: var(--radius-lg);
             padding: var(--space-md) var(--space-xl);
-            font-family: 'Orbitron', monospace;
+            font-family: 'Special Elite', 'JetBrains Mono', monospace;
             font-weight: 700;
             font-size: 0.875rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: var(--void-black);
+            color: var(--bone-white);
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            transition: all var(--transition-cyber);
-            box-shadow: var(--shadow-neon);
+            transition: all var(--transition-detective);
+            box-shadow: var(--shadow-blood);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
@@ -214,18 +214,18 @@
             backdrop-filter: blur(10px);
         }
 
-        .cyber-button::before {
+        .evidence-button::before {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-            animation: button-scan 2s ease-in-out infinite;
+            background: linear-gradient(90deg, transparent, rgba(245, 245, 220, 0.3), transparent);
+            animation: evidence-flash 3s ease-in-out infinite;
         }
 
-        @keyframes button-scan {
+        @keyframes evidence-flash {
             0% {
                 left: -100%;
             }
@@ -239,62 +239,64 @@
             }
         }
 
-        .cyber-button:hover {
+        .evidence-button:hover {
             transform: translateY(-4px) scale(1.05);
             box-shadow:
-                0 0 30px var(--neon-cyan),
-                0 0 60px var(--neon-magenta),
+                0 0 30px var(--blood-red),
+                0 0 60px var(--crimson),
                 0 20px 40px rgba(0, 0, 0, 0.4);
-            background: var(--cyber-glow);
+            background: var(--evidence-glow);
+            color: var(--coal-black);
         }
 
-        .cyber-button:active {
+        .evidence-button:active {
             transform: translateY(-2px) scale(1.02);
         }
 
-        .cyber-button.primary {
-            background: var(--hologram-primary);
-            animation: primary-pulse 3s ease-in-out infinite;
+        .evidence-button.primary {
+            background: var(--blood-gradient);
+            animation: blood-pulse 3s ease-in-out infinite;
         }
 
-        @keyframes primary-pulse {
+        @keyframes blood-pulse {
 
             0%,
             100% {
-                box-shadow: var(--shadow-neon);
+                box-shadow: var(--shadow-blood);
                 filter: hue-rotate(0deg);
             }
 
             50% {
                 box-shadow:
-                    0 0 40px var(--neon-cyan),
-                    0 0 80px var(--neon-magenta);
-                filter: hue-rotate(90deg);
+                    0 0 40px var(--blood-red),
+                    0 0 80px var(--crimson);
+                filter: hue-rotate(15deg);
             }
         }
 
-        .cyber-button.secondary {
-            background: var(--hologram-secondary);
+        .evidence-button.secondary {
+            background: var(--shadow-gradient);
+            border-color: var(--steel-gray);
         }
 
-        /* === ГОЛОГРАФИЧЕСКИЙ ХЕДЕР === */
-        .hologram-header {
+        /* === ДОСЬЕ ХЕДЕР === */
+        .case-header {
             background: linear-gradient(135deg,
-                    rgba(0, 255, 255, 0.1) 0%,
-                    rgba(255, 0, 255, 0.1) 50%,
-                    rgba(57, 255, 20, 0.1) 100%);
+                    rgba(139, 0, 0, 0.2) 0%,
+                    rgba(220, 20, 60, 0.1) 50%,
+                    rgba(255, 215, 0, 0.05) 100%);
             border: 2px solid;
-            border-image: var(--hologram-primary) 1;
+            border-image: var(--blood-gradient) 1;
             border-radius: var(--radius-xl);
             padding: var(--space-xl);
             position: relative;
             overflow: hidden;
             backdrop-filter: blur(15px);
-            box-shadow: var(--shadow-hologram);
-            animation: hologram-flicker 4s ease-in-out infinite;
+            box-shadow: var(--shadow-case);
+            animation: case-flicker 4s ease-in-out infinite;
         }
 
-        @keyframes hologram-flicker {
+        @keyframes case-flicker {
 
             0%,
             100% {
@@ -303,17 +305,17 @@
             }
 
             2% {
-                opacity: 0.8;
-                filter: brightness(1.2) contrast(1.1);
+                opacity: 0.9;
+                filter: brightness(1.1) contrast(1.05);
             }
 
             4% {
                 opacity: 1;
-                filter: brightness(0.9) contrast(1);
+                filter: brightness(0.95) contrast(1);
             }
         }
 
-        .hologram-header::before {
+        .case-header::before {
             content: '';
             position: absolute;
             top: 0;
@@ -323,13 +325,13 @@
             background: repeating-linear-gradient(90deg,
                     transparent,
                     transparent 2px,
-                    rgba(0, 255, 255, 0.1) 2px,
-                    rgba(0, 255, 255, 0.1) 4px);
-            animation: hologram-lines 1s linear infinite;
+                    rgba(139, 0, 0, 0.1) 2px,
+                    rgba(139, 0, 0, 0.1) 4px);
+            animation: typewriter-lines 1s linear infinite;
             pointer-events: none;
         }
 
-        @keyframes hologram-lines {
+        @keyframes typewriter-lines {
             0% {
                 transform: translateX(0);
             }
@@ -339,69 +341,69 @@
             }
         }
 
-        .security-badge {
+        .classified-badge {
             position: absolute;
             top: var(--space-md);
             right: var(--space-md);
-            background: var(--cyber-glow);
-            color: var(--void-black);
+            background: var(--evidence-glow);
+            color: var(--coal-black);
             padding: var(--space-xs) var(--space-sm);
             border-radius: var(--radius-sm);
-            font-family: 'Orbitron', monospace;
+            font-family: 'Special Elite', monospace;
             font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
             transform: rotate(15deg);
-            animation: security-glow 2s ease-in-out infinite;
-            box-shadow: 0 0 20px var(--neon-cyan);
+            animation: classified-glow 2s ease-in-out infinite;
+            box-shadow: 0 0 20px var(--amber-yellow);
         }
 
-        @keyframes security-glow {
+        @keyframes classified-glow {
 
             0%,
             100% {
-                box-shadow: 0 0 20px var(--neon-cyan);
+                box-shadow: 0 0 20px var(--amber-yellow);
                 filter: hue-rotate(0deg);
             }
 
             50% {
-                box-shadow: 0 0 40px var(--neon-magenta);
-                filter: hue-rotate(180deg);
+                box-shadow: 0 0 40px var(--warning-orange);
+                filter: hue-rotate(30deg);
             }
         }
 
-        /* Кибер-аватар */
-        .cyber-avatar {
+        /* Детективный аватар */
+        .detective-avatar {
             width: 140px;
             height: 140px;
             border-radius: 50%;
-            background: var(--hologram-secondary);
-            border: 4px solid var(--neon-cyan);
+            background: var(--shadow-gradient);
+            border: 4px solid var(--crimson);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 4rem;
             margin: 0 auto var(--space-lg);
             position: relative;
-            box-shadow: var(--shadow-neon);
-            transition: all var(--transition-hologram);
+            box-shadow: var(--shadow-blood);
+            transition: all var(--transition-case);
             overflow: hidden;
         }
 
-        .cyber-avatar::before {
+        .detective-avatar::before {
             content: '';
             position: absolute;
             top: -50%;
             left: -50%;
             width: 200%;
             height: 200%;
-            background: conic-gradient(from 0deg, var(--neon-cyan), var(--neon-magenta), var(--matrix-green), var(--neon-cyan));
-            animation: avatar-rotate 3s linear infinite;
+            background: conic-gradient(from 0deg, var(--blood-red), var(--crimson), var(--amber-yellow), var(--blood-red));
+            animation: badge-rotate 4s linear infinite;
             z-index: -1;
         }
 
-        @keyframes avatar-rotate {
+        @keyframes badge-rotate {
             0% {
                 transform: rotate(0deg);
             }
@@ -411,76 +413,76 @@
             }
         }
 
-        .cyber-avatar:hover {
+        .detective-avatar:hover {
             transform: scale(1.1) rotateY(20deg);
             box-shadow:
-                0 0 50px var(--neon-cyan),
-                0 0 100px var(--neon-magenta),
+                0 0 50px var(--blood-red),
+                0 0 100px var(--crimson),
                 0 20px 40px rgba(0, 0, 0, 0.3);
         }
 
-        .cyber-avatar::after {
+        .detective-avatar::after {
             content: '';
             position: absolute;
             bottom: -12px;
             right: -12px;
             width: 50px;
             height: 50px;
-            background: var(--matrix-green);
+            background: var(--evidence-green);
             border-radius: 50%;
             border: 4px solid var(--void-black);
-            animation: status-pulse 1.5s ease-in-out infinite;
-            box-shadow: 0 0 20px var(--matrix-green);
+            animation: active-pulse 1.5s ease-in-out infinite;
+            box-shadow: 0 0 20px var(--evidence-green);
         }
 
-        @keyframes status-pulse {
+        @keyframes active-pulse {
 
             0%,
             100% {
                 transform: scale(1);
-                box-shadow: 0 0 20px var(--matrix-green);
+                box-shadow: 0 0 20px var(--evidence-green);
             }
 
             50% {
                 transform: scale(1.2);
-                box-shadow: 0 0 40px var(--matrix-green), 0 0 60px var(--matrix-green);
+                box-shadow: 0 0 40px var(--evidence-green), 0 0 60px var(--evidence-green);
             }
         }
 
-        .agent-info {
+        .detective-info {
             text-align: center;
             position: relative;
             z-index: 2;
         }
 
-        .agent-id {
+        .detective-id {
             display: inline-flex;
             align-items: center;
             gap: var(--space-sm);
-            background: rgba(0, 255, 255, 0.2);
+            background: rgba(139, 0, 0, 0.3);
             padding: var(--space-sm) var(--space-md);
             border-radius: var(--radius-md);
-            border: 1px solid var(--neon-cyan);
+            border: 1px solid var(--crimson);
             margin-bottom: var(--space-md);
-            font-family: 'Orbitron', monospace;
+            font-family: 'Special Elite', monospace;
             font-size: 0.875rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
             backdrop-filter: blur(10px);
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 15px rgba(139, 0, 0, 0.3);
         }
 
-        .agent-name {
+        .detective-name {
             font-size: 2.5rem;
-            font-weight: 900;
-            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-family: 'Special Elite', serif;
             margin-bottom: var(--space-sm);
-            background: var(--hologram-primary);
+            background: var(--blood-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            text-shadow: 0 0 30px rgba(139, 0, 0, 0.5);
             animation: name-glow 2s ease-in-out infinite;
         }
 
@@ -489,42 +491,43 @@
             0%,
             100% {
                 filter: brightness(1);
-                text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+                text-shadow: 0 0 30px rgba(139, 0, 0, 0.5);
             }
 
             50% {
                 filter: brightness(1.3);
-                text-shadow: 0 0 50px rgba(255, 0, 255, 0.8);
+                text-shadow: 0 0 50px rgba(220, 20, 60, 0.8);
             }
         }
 
-        .agent-rank {
+        .detective-rank {
             display: inline-flex;
             align-items: center;
             gap: var(--space-sm);
-            background: var(--hologram-secondary);
-            color: var(--void-black);
+            background: var(--shadow-gradient);
+            color: var(--bone-white);
             padding: var(--space-md) var(--space-xl);
             border-radius: var(--radius-lg);
             font-weight: 700;
             font-size: 1.1rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: var(--shadow-cyber);
+            box-shadow: var(--shadow-evidence);
             position: relative;
             overflow: hidden;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Special Elite', monospace;
+            border: 2px solid var(--steel-gray);
         }
 
-        .agent-rank::before {
+        .detective-rank::before {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: rank-sweep 3s ease-in-out infinite;
+            background: linear-gradient(90deg, transparent, rgba(245, 245, 220, 0.2), transparent);
+            animation: rank-sweep 4s ease-in-out infinite;
         }
 
         @keyframes rank-sweep {
@@ -541,35 +544,35 @@
             }
         }
 
-        /* === КИБЕР КАРТОЧКИ === */
-        .cyber-module {
+        /* === ДЕТЕКТИВНЫЕ МОДУЛИ === */
+        .case-module {
             background: linear-gradient(135deg,
-                    rgba(0, 102, 255, 0.1) 0%,
-                    rgba(138, 43, 226, 0.1) 100%);
-            border: 1px solid var(--cyber-blue);
+                    rgba(139, 0, 0, 0.1) 0%,
+                    rgba(42, 42, 42, 0.2) 100%);
+            border: 1px solid var(--steel-gray);
             border-radius: var(--radius-lg);
             padding: var(--space-xl);
             position: relative;
             overflow: hidden;
             backdrop-filter: blur(15px);
-            box-shadow: var(--shadow-cyber);
-            transition: all var(--transition-cyber);
+            box-shadow: var(--shadow-evidence);
+            transition: all var(--transition-detective);
             animation: module-appear 0.8s ease-out backwards;
         }
 
-        .cyber-module:nth-child(2) {
+        .case-module:nth-child(2) {
             animation-delay: 0.1s;
         }
 
-        .cyber-module:nth-child(3) {
+        .case-module:nth-child(3) {
             animation-delay: 0.2s;
         }
 
-        .cyber-module:nth-child(4) {
+        .case-module:nth-child(4) {
             animation-delay: 0.3s;
         }
 
-        .cyber-module:nth-child(5) {
+        .case-module:nth-child(5) {
             animation-delay: 0.4s;
         }
 
@@ -585,22 +588,22 @@
             }
         }
 
-        .cyber-module:hover {
+        .case-module:hover {
             transform: translateY(-8px) scale(1.02);
-            border-color: var(--neon-cyan);
+            border-color: var(--crimson);
             box-shadow:
-                0 0 40px rgba(0, 255, 255, 0.3),
+                0 0 40px rgba(139, 0, 0, 0.3),
                 0 20px 40px rgba(0, 0, 0, 0.2);
         }
 
-        .cyber-module::before {
+        .case-module::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             height: 3px;
-            background: var(--hologram-primary);
+            background: var(--blood-gradient);
             border-radius: var(--radius-lg) var(--radius-lg) 0 0;
             animation: module-glow 3s ease-in-out infinite;
         }
@@ -614,7 +617,7 @@
 
             50% {
                 opacity: 0.5;
-                box-shadow: 0 0 20px var(--neon-cyan);
+                box-shadow: 0 0 20px var(--blood-red);
             }
         }
 
@@ -624,23 +627,24 @@
             gap: var(--space-md);
             margin-bottom: var(--space-lg);
             padding-bottom: var(--space-md);
-            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+            border-bottom: 1px solid rgba(139, 0, 0, 0.3);
         }
 
         .module-icon {
             width: 56px;
             height: 56px;
-            background: var(--hologram-primary);
+            background: var(--blood-gradient);
             border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--void-black);
+            color: var(--bone-white);
             font-size: 1.5rem;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
-            transition: all var(--transition-cyber);
+            box-shadow: 0 0 20px rgba(139, 0, 0, 0.4);
+            transition: all var(--transition-detective);
             position: relative;
             overflow: hidden;
+            border: 2px solid var(--crimson);
         }
 
         .module-icon::before {
@@ -650,8 +654,8 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: conic-gradient(from 0deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: icon-spin 2s linear infinite;
+            background: conic-gradient(from 0deg, transparent, rgba(245, 245, 220, 0.2), transparent);
+            animation: icon-spin 3s linear infinite;
         }
 
         @keyframes icon-spin {
@@ -671,66 +675,66 @@
         .module-title {
             font-size: 1.4rem;
             font-weight: 700;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Special Elite', serif;
             text-transform: uppercase;
             letter-spacing: 1px;
-            background: var(--cyber-glow);
+            background: var(--evidence-glow);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        /* === СТАТИСТИКА === */
+        /* === КРИМИНАЛЬНАЯ СТАТИСТИКА === */
         .stats-matrix {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: var(--space-md);
         }
 
-        .stat-pod {
-            background: var(--hologram-secondary);
-            border: 2px solid var(--plasma-purple);
+        .stat-evidence {
+            background: var(--shadow-gradient);
+            border: 2px solid var(--ash-gray);
             border-radius: var(--radius-lg);
             padding: var(--space-lg);
             text-align: center;
             position: relative;
             overflow: hidden;
-            transition: all var(--transition-cyber);
+            transition: all var(--transition-detective);
             cursor: pointer;
             backdrop-filter: blur(10px);
         }
 
-        .stat-pod:hover {
+        .stat-evidence:hover {
             transform: translateY(-6px) rotateX(10deg);
-            border-color: var(--neon-cyan);
+            border-color: var(--crimson);
             box-shadow:
-                0 0 30px var(--neon-cyan),
+                0 0 30px var(--blood-red),
                 0 15px 30px rgba(0, 0, 0, 0.3);
         }
 
-        .stat-pod::before {
+        .stat-evidence::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 3px;
-            background: var(--hologram-primary);
+            background: var(--blood-gradient);
             transform: scaleX(0);
-            transition: transform var(--transition-cyber);
+            transition: transform var(--transition-detective);
         }
 
-        .stat-pod:hover::before {
+        .stat-evidence:hover::before {
             transform: scaleX(1);
         }
 
         .stat-value {
             font-size: 2.5rem;
             font-weight: 900;
-            font-family: 'Orbitron', monospace;
-            color: var(--neon-cyan);
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--crimson);
             margin-bottom: var(--space-sm);
-            text-shadow: 0 0 20px var(--neon-cyan);
+            text-shadow: 0 0 20px var(--crimson);
             animation: value-flicker 3s ease-in-out infinite;
         }
 
@@ -739,44 +743,44 @@
             0%,
             100% {
                 opacity: 1;
-                text-shadow: 0 0 20px var(--neon-cyan);
+                text-shadow: 0 0 20px var(--crimson);
             }
 
             98% {
                 opacity: 1;
-                text-shadow: 0 0 20px var(--neon-cyan);
+                text-shadow: 0 0 20px var(--crimson);
             }
 
             99% {
                 opacity: 0.8;
-                text-shadow: 0 0 30px var(--neon-magenta);
+                text-shadow: 0 0 30px var(--amber-yellow);
             }
         }
 
         .stat-label {
             font-size: 0.8rem;
-            color: rgba(192, 192, 192, 0.8);
+            color: rgba(245, 245, 220, 0.8);
             text-transform: uppercase;
             letter-spacing: 1px;
             font-weight: 600;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Special Elite', monospace;
         }
 
-        /* === ДОСТИЖЕНИЯ === */
+        /* === УЛИКИ И ДОСТИЖЕНИЯ === */
         .achievements-matrix {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
             gap: var(--space-md);
         }
 
-        .achievement-core {
-            background: linear-gradient(45deg, var(--void-black), var(--deep-space));
-            border: 2px solid var(--cyber-blue);
+        .evidence-piece {
+            background: linear-gradient(45deg, var(--void-black), var(--coal-black));
+            border: 2px solid var(--ash-gray);
             border-radius: var(--radius-lg);
             padding: var(--space-lg);
             text-align: center;
             position: relative;
-            transition: all var(--transition-hologram);
+            transition: all var(--transition-case);
             cursor: pointer;
             overflow: hidden;
             aspect-ratio: 1;
@@ -786,24 +790,24 @@
             justify-content: center;
         }
 
-        .achievement-core.unlocked {
-            border-color: var(--neon-cyan);
-            background: var(--hologram-primary);
-            box-shadow: var(--shadow-neon);
+        .evidence-piece.found {
+            border-color: var(--crimson);
+            background: var(--blood-gradient);
+            box-shadow: var(--shadow-blood);
         }
 
-        .achievement-core.unlocked::before {
+        .evidence-piece.found::before {
             content: '';
             position: absolute;
             top: -100%;
             left: -100%;
             width: 300%;
             height: 300%;
-            background: conic-gradient(from 0deg, transparent, rgba(0, 255, 255, 0.2), transparent);
-            animation: achievement-spin 4s linear infinite;
+            background: conic-gradient(from 0deg, transparent, rgba(139, 0, 0, 0.3), transparent);
+            animation: evidence-spin 5s linear infinite;
         }
 
-        @keyframes achievement-spin {
+        @keyframes evidence-spin {
             0% {
                 transform: rotate(0deg);
             }
@@ -813,21 +817,21 @@
             }
         }
 
-        .achievement-core:hover {
+        .evidence-piece:hover {
             transform: translateY(-8px) rotateY(15deg) scale(1.1);
         }
 
-        .achievement-icon {
+        .evidence-icon {
             font-size: 2.5rem;
             margin-bottom: var(--space-sm);
-            transition: all var(--transition-cyber);
+            transition: all var(--transition-detective);
             position: relative;
             z-index: 2;
         }
 
-        .achievement-core.unlocked .achievement-icon {
-            color: var(--void-black);
-            filter: drop-shadow(0 0 10px var(--neon-cyan));
+        .evidence-piece.found .evidence-icon {
+            color: var(--bone-white);
+            filter: drop-shadow(0 0 10px var(--blood-red));
             animation: icon-hover 2s ease-in-out infinite;
         }
 
@@ -843,20 +847,20 @@
             }
         }
 
-        .achievement-name {
+        .evidence-name {
             font-size: 0.65rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: rgba(192, 192, 192, 0.6);
+            color: rgba(245, 245, 220, 0.6);
             line-height: 1.2;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Special Elite', monospace;
             position: relative;
             z-index: 2;
         }
 
-        .achievement-core.unlocked .achievement-name {
-            color: var(--void-black);
+        .evidence-piece.found .evidence-name {
+            color: var(--bone-white);
         }
 
         /* === ЗАГРУЗКА === */
@@ -869,19 +873,19 @@
             text-align: center;
         }
 
-        .cyber-scanner {
+        .case-scanner {
             width: 100px;
             height: 100px;
             border: 4px solid transparent;
-            border-top: 4px solid var(--neon-cyan);
-            border-right: 4px solid var(--neon-magenta);
+            border-top: 4px solid var(--crimson);
+            border-right: 4px solid var(--blood-red);
             border-radius: 50%;
-            animation: cyber-spin 1s linear infinite;
+            animation: case-spin 1.2s linear infinite;
             margin-bottom: var(--space-xl);
             position: relative;
         }
 
-        .cyber-scanner::before {
+        .case-scanner::before {
             content: '';
             position: absolute;
             top: -4px;
@@ -889,13 +893,13 @@
             right: -4px;
             bottom: -4px;
             border: 2px solid transparent;
-            border-bottom: 2px solid var(--matrix-green);
-            border-left: 2px solid var(--neon-orange);
+            border-bottom: 2px solid var(--amber-yellow);
+            border-left: 2px solid var(--warning-orange);
             border-radius: 50%;
-            animation: cyber-spin 0.8s linear infinite reverse;
+            animation: case-spin 1s linear infinite reverse;
         }
 
-        @keyframes cyber-spin {
+        @keyframes case-spin {
             0% {
                 transform: rotate(0deg);
             }
@@ -908,8 +912,8 @@
         .loading-text {
             font-size: 1.4rem;
             font-weight: 700;
-            font-family: 'Orbitron', monospace;
-            background: var(--hologram-primary);
+            font-family: 'Special Elite', serif;
+            background: var(--blood-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -936,9 +940,9 @@
             display: none !important;
         }
 
-        .cyber-divider {
+        .case-divider {
             height: 2px;
-            background: var(--hologram-primary);
+            background: var(--blood-gradient);
             margin: var(--space-lg) 0;
             border-radius: 1px;
             animation: divider-glow 2s ease-in-out infinite;
@@ -948,19 +952,19 @@
 
             0%,
             100% {
-                box-shadow: 0 0 10px var(--neon-cyan);
+                box-shadow: 0 0 10px var(--blood-red);
                 opacity: 1;
             }
 
             50% {
-                box-shadow: 0 0 20px var(--neon-magenta);
+                box-shadow: 0 0 20px var(--crimson);
                 opacity: 0.8;
             }
         }
 
         /* === RESPONSIVE === */
         @media (max-width: 480px) {
-            .cyber-interface {
+            .detective-interface {
                 padding: var(--space-sm);
                 gap: var(--space-md);
             }
@@ -973,7 +977,7 @@
                 grid-template-columns: repeat(3, 1fr);
             }
 
-            .agent-name {
+            .detective-name {
                 font-size: 2rem;
             }
 
@@ -984,11 +988,11 @@
         }
 
         /* === ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ === */
-        .glitch {
-            animation: glitch 0.3s ease-in-out infinite;
+        .blood-glitch {
+            animation: blood-glitch 0.3s ease-in-out infinite;
         }
 
-        @keyframes glitch {
+        @keyframes blood-glitch {
 
             0%,
             100% {
@@ -998,42 +1002,42 @@
 
             20% {
                 transform: translate(-2px, 2px);
-                filter: hue-rotate(90deg);
+                filter: hue-rotate(15deg);
             }
 
             40% {
                 transform: translate(-2px, -2px);
-                filter: hue-rotate(180deg);
+                filter: hue-rotate(30deg);
             }
 
             60% {
                 transform: translate(2px, 2px);
-                filter: hue-rotate(270deg);
+                filter: hue-rotate(45deg);
             }
 
             80% {
                 transform: translate(2px, -2px);
-                filter: hue-rotate(360deg);
+                filter: hue-rotate(60deg);
             }
         }
 
-        .quantum-effect {
+        .crime-scene {
             position: relative;
         }
 
-        .quantum-effect::before {
+        .crime-scene::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(0, 255, 255, 0.1) 50%, transparent 70%);
-            animation: quantum-sweep 3s ease-in-out infinite;
+            background: linear-gradient(45deg, transparent 30%, rgba(139, 0, 0, 0.1) 50%, transparent 70%);
+            animation: evidence-sweep 4s ease-in-out infinite;
             pointer-events: none;
         }
 
-        @keyframes quantum-sweep {
+        @keyframes evidence-sweep {
             0% {
                 transform: translateX(-100%) skewX(-45deg);
             }
@@ -1050,88 +1054,88 @@
 </head>
 
 <body>
-    <div class="cyber-interface">
+    <div class="detective-interface">
         <!-- Экран загрузки -->
         <div id="loading-screen" class="loading-matrix">
-            <div class="cyber-scanner"></div>
-            <div class="loading-text">Инициализация</div>
+            <div class="case-scanner"></div>
+            <div class="loading-text">Расследование</div>
             <div
-                style="font-size: 0.9rem; color: var(--hologram-silver); font-family: 'Orbitron', monospace; opacity: 0.7;">
-                КВАНТОВЫЙ ПРОТОКОЛ АКТИВЕН
+                style="font-size: 0.9rem; color: var(--bone-white); font-family: 'Special Elite', monospace; opacity: 0.7;">
+                ЗАСЕКРЕЧЕННОЕ ДЕЛО
             </div>
         </div>
 
         <!-- Основной интерфейс -->
         <div id="main-content" class="hidden">
-            <!-- Голографический хедер -->
-            <div class="hologram-header quantum-effect">
-                <div class="security-badge">КИБЕР</div>
+            <!-- Досье хедер -->
+            <div class="case-header crime-scene">
+                <div class="classified-badge">СЕКРЕТНО</div>
 
-                <div class="agent-info">
-                    <div class="agent-id">
-                        <i data-lucide="zap" style="width: 16px; height: 16px;"></i>
-                        <span>СПЕЦАГЕНТ</span>
+                <div class="detective-info">
+                    <div class="detective-id">
+                        <i data-lucide="shield" style="width: 16px; height: 16px;"></i>
+                        <span>ДЕТЕКТИВ</span>
                     </div>
 
-                    <div class="cyber-avatar" id="user-avatar">
-                        <div id="avatar-placeholder">🤖</div>
+                    <div class="detective-avatar" id="user-avatar">
+                        <div id="avatar-placeholder">🕵️</div>
                     </div>
 
-                    <div class="agent-name" id="detective-name">КИБЕР-АГЕНТ</div>
+                    <div class="detective-name" id="detective-name">ДЕТЕКТИВ</div>
 
-                    <div class="agent-rank">
-                        <i data-lucide="cpu" style="width: 20px; height: 20px;"></i>
-                        <span id="detective-rank">СИСТЕМА</span>
+                    <div class="detective-rank">
+                        <i data-lucide="badge" style="width: 20px; height: 20px;"></i>
+                        <span id="detective-rank">НОВИЧОК</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Кибер-разделитель -->
-            <div class="cyber-divider"></div>
+            <!-- Криминальный разделитель -->
+            <div class="case-divider"></div>
 
             <!-- Модуль репутации -->
-            <div class="cyber-module">
+            <div class="case-module">
                 <div class="module-header">
                     <div class="module-icon">
                         <i data-lucide="trending-up" style="width: 24px; height: 24px;"></i>
                     </div>
-                    <div class="module-title">Кибер-рейтинг</div>
+                    <div class="module-title">Репутация детектива</div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr auto; gap: var(--space-lg); align-items: center;">
-                    <div style="font-size: 4.5rem; font-weight: 900; font-family: 'Orbitron', monospace; 
-                                background: var(--hologram-primary); -webkit-background-clip: text; 
+                    <div style="font-size: 4.5rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; 
+                                background: var(--blood-gradient); -webkit-background-clip: text; 
                                 -webkit-text-fill-color: transparent; background-clip: text; 
-                                text-shadow: 0 0 40px rgba(0, 255, 255, 0.6);" id="reputation-level">0</div>
-                    <div style="background: var(--hologram-secondary); color: var(--void-black); 
+                                text-shadow: 0 0 40px rgba(139, 0, 0, 0.6);" id="reputation-level">0</div>
+                    <div style="background: var(--shadow-gradient); color: var(--bone-white); 
                                 padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-lg); 
                                 font-weight: 700; text-transform: uppercase; letter-spacing: 1px; 
-                                font-family: 'Orbitron', monospace; box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);"
-                        id="reputation-category">НЕОПРЕДЕЛЕНО</div>
+                                font-family: 'Special Elite', monospace; box-shadow: 0 0 20px rgba(139, 0, 0, 0.4);
+                                border: 2px solid var(--steel-gray);" id="reputation-category">НЕОПРЕДЕЛЕНО</div>
                 </div>
             </div>
 
             <!-- Модуль статистики -->
-            <div class="cyber-module">
+            <div class="case-module">
                 <div class="module-header">
                     <div class="module-icon">
                         <i data-lucide="activity" style="width: 24px; height: 24px;"></i>
                     </div>
-                    <div class="module-title">Боевые данные</div>
+                    <div class="module-title">Криминальная статистика</div>
                 </div>
                 <div class="stats-matrix">
-                    <div class="stat-pod">
+                    <div class="stat-evidence">
                         <div class="stat-value" id="stat-investigations">0</div>
-                        <div class="stat-label">Миссии</div>
+                        <div class="stat-label">Дела</div>
                     </div>
-                    <div class="stat-pod">
+                    <div class="stat-evidence">
                         <div class="stat-value" id="stat-solved">0</div>
-                        <div class="stat-label">Успех</div>
+                        <div class="stat-label">Раскрыто</div>
                     </div>
-                    <div class="stat-pod">
+                    <div class="stat-evidence">
                         <div class="stat-value" id="stat-accuracy">0%</div>
                         <div class="stat-label">Точность</div>
                     </div>
-                    <div class="stat-pod">
+                    <div class="stat-evidence">
                         <div class="stat-value" id="stat-score">0</div>
                         <div class="stat-label">Очки</div>
                     </div>
@@ -1139,12 +1143,12 @@
             </div>
 
             <!-- Модуль достижений -->
-            <div class="cyber-module">
+            <div class="case-module">
                 <div class="module-header">
                     <div class="module-icon">
                         <i data-lucide="award" style="width: 24px; height: 24px;"></i>
                     </div>
-                    <div class="module-title">Цифровые награды</div>
+                    <div class="module-title">Улики и награды</div>
                 </div>
                 <div class="achievements-matrix" id="achievements-container">
                     <!-- Динамическое содержимое -->
@@ -1152,12 +1156,12 @@
             </div>
 
             <!-- Модуль рейтинга -->
-            <div class="cyber-module">
+            <div class="case-module">
                 <div class="module-header">
                     <div class="module-icon">
                         <i data-lucide="crown" style="width: 24px; height: 24px;"></i>
                     </div>
-                    <div class="module-title">Топ агентов</div>
+                    <div class="module-title">Топ детективов</div>
                 </div>
                 <div id="leaderboard-container">
                     <!-- Динамическое содержимое -->
@@ -1169,16 +1173,16 @@
         </div>
 
         <!-- Экран ошибки -->
-        <div id="error-screen" class="cyber-module hidden">
+        <div id="error-screen" class="case-module hidden">
             <div class="module-header">
-                <div class="module-icon" style="background: var(--danger-red);">
+                <div class="module-icon" style="background: var(--warning-orange);">
                     <i data-lucide="alert-triangle" style="width: 24px; height: 24px; color: white;"></i>
                 </div>
-                <div class="module-title" style="color: var(--danger-red);">Ошибка системы</div>
+                <div class="module-title" style="color: var(--warning-orange);">Ошибка расследования</div>
             </div>
             <div style="text-align: center; padding: var(--space-lg);">
-                <p id="error-message" style="margin-bottom: var(--space-lg); color: var(--hologram-silver);"></p>
-                <button onclick="window.location.reload()" class="cyber-button">
+                <p id="error-message" style="margin-bottom: var(--space-lg); color: var(--bone-white);"></p>
+                <button onclick="window.location.reload()" class="evidence-button">
                     <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
                     Перезагрузка
                 </button>
@@ -1188,11 +1192,11 @@
 
     <!-- Навигационные кнопки -->
     <div class="nav-controls">
-        <a href="/" class="cyber-button primary">
+        <a href="/" class="evidence-button primary">
             <i data-lucide="home" style="width: 18px; height: 18px;"></i>
             Главное меню
         </a>
-        <a href="/game" class="cyber-button secondary">
+        <a href="/game" class="evidence-button secondary">
             <i data-lucide="play" style="width: 18px; height: 18px;"></i>
             Начать игру
         </a>
@@ -1208,20 +1212,20 @@
                 lucide.createIcons();
             }
 
-            // Глитч эффекты
+            // Криминальные глитч эффекты
             setInterval(() => {
-                const elements = document.querySelectorAll('.cyber-module, .cyber-avatar');
+                const elements = document.querySelectorAll('.case-module, .detective-avatar');
                 const randomElement = elements[Math.floor(Math.random() * elements.length)];
                 if (randomElement && Math.random() < 0.1) {
-                    randomElement.classList.add('glitch');
+                    randomElement.classList.add('blood-glitch');
                     setTimeout(() => {
-                        randomElement.classList.remove('glitch');
+                        randomElement.classList.remove('blood-glitch');
                     }, 300);
                 }
             }, 3000);
 
-            // Кибер-интерактивность
-            document.querySelectorAll('.cyber-button, .stat-pod, .achievement-core').forEach(element => {
+            // Детективная интерактивность
+            document.querySelectorAll('.evidence-button, .stat-evidence, .evidence-piece').forEach(element => {
                 element.addEventListener('click', () => {
                     if (window.Telegram?.WebApp?.HapticFeedback) {
                         window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
@@ -1229,26 +1233,26 @@
                 });
             });
 
-            // Квантовые частицы при наведении
-            document.querySelectorAll('.cyber-module').forEach(module => {
+            // Кровавые частицы при наведении
+            document.querySelectorAll('.case-module').forEach(module => {
                 module.addEventListener('mouseenter', () => {
-                    createQuantumParticles(module);
+                    createBloodParticles(module);
                 });
             });
         });
 
-        function createQuantumParticles(element) {
+        function createBloodParticles(element) {
             for (let i = 0; i < 3; i++) {
                 const particle = document.createElement('div');
                 particle.style.cssText = `
                     position: absolute;
                     width: 6px;
                     height: 6px;
-                    background: var(--neon-cyan);
+                    background: var(--blood-red);
                     border-radius: 50%;
                     pointer-events: none;
                     z-index: 1000;
-                    box-shadow: 0 0 10px var(--neon-cyan);
+                    box-shadow: 0 0 10px var(--blood-red);
                 `;
 
                 const rect = element.getBoundingClientRect();
