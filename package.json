@@ -18,6 +18,8 @@
         "security-check": "npm audit && node scripts/security-check.js",
         "cleanup-debug": "node scripts/cleanup-debug.js",
         "cleanup-debug-no-backup": "node scripts/cleanup-debug.js --no-backup",
+        "cleanup-test-users": "node scripts/cleanup-test-users.js",
+        "cleanup-test-users-confirm": "node scripts/cleanup-test-users.js --confirm",
         "production-ready": "npm run cleanup-debug && npm run optimize && npm run security-check"
     },
     "dependencies": {

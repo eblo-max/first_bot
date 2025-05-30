@@ -112,21 +112,32 @@ const ProfileManager = {
         try {
 
             console.log('📊 Состояние localStorage до проверки:', Object.keys(localStorage));
+            console.log('📊 Все данные localStorage:', {
+                token: localStorage.getItem('token'),
+                auth_token: localStorage.getItem('auth_token'),
+                initData: localStorage.getItem('initData'),
+                user: localStorage.getItem('user')
+            });
+            console.log('📊 URL параметры:', window.location.search);
+            console.log('📊 Telegram WebApp:', {
+                available: !!window.Telegram?.WebApp,
+                initData: window.Telegram?.WebApp?.initData || 'НЕТ',
+                user: window.Telegram?.WebApp?.initDataUnsafe?.user || 'НЕТ'
+            });
 
             // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ТОЛЬКО ГОСТЕВЫХ ТОКЕНОВ И ДАННЫХ (НЕ ВСЕХ!)
-
             for (let i = localStorage.length - 1; i >= 0; i--) {
                 const key = localStorage.key(i);
-                if (key && (key.includes('guest_') || key.includes('test_token'))) {
+                if (key && (key.includes('guest_') || key.startsWith('test_token'))) {
                     localStorage.removeItem(key);
-
+                    console.log('🗑️ Удален ключ:', key);
                 }
             }
 
             // Проверяем существующие токены на гостевые данные
             const existingToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
-            if (existingToken && (existingToken.includes('guest_') || existingToken.includes('test_'))) {
-
+            if (existingToken && (existingToken.includes('guest_') || existingToken.startsWith('test_token_'))) {
+                console.log('🗑️ Удаляем тестовый/гостевой токен:', existingToken.substring(0, 20) + '...');
                 localStorage.removeItem('token');
                 localStorage.removeItem('auth_token');
                 this.state.token = null;
