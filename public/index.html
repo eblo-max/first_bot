@@ -826,13 +826,8 @@
 
             // Кнопка перехода в профиль
             document.getElementById('goToProfile').addEventListener('click', function () {
-                // Визуальная обратная связь при нажатии
-                if (window.Telegram?.WebApp?.HapticFeedback) {
-                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-                }
-
-                // Получаем токен и данные авторизации
-                let token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+                // Проверяем, есть ли авторизация
+                let token = localStorage.getItem('token') || localStorage.getItem('auth_token') || window.GameState?.data?.token;
                 let initData = localStorage.getItem('initData') || window.Telegram?.WebApp?.initData;
 
                 console.log('🔍 Отладка перехода к профилю:', {
@@ -846,43 +841,37 @@
                     isTestToken: token ? (token.includes('test_token_') || token.includes('guest_')) : false
                 });
 
-                // Если токена нет в localStorage, проверяем GameState
-                if (!token && window.GameState?.data?.token) {
-                    token = window.GameState.data.token;
-                    // Сохраняем в localStorage для последующих переходов
-                    localStorage.setItem('token', token);
-                    localStorage.setItem('auth_token', token);
+                // Проверяем, есть ли валидная авторизация
+                if (!token || token.includes('test_token_') || token.includes('guest_')) {
+                    // Нет валидной авторизации
+                    console.warn('❌ Нет валидной авторизации для профиля');
+
+                    if (window.Telegram?.WebApp?.showAlert) {
+                        window.Telegram.WebApp.showAlert('Для доступа к профилю необходима авторизация через Telegram');
+                    } else {
+                        alert('Для доступа к профилю необходима авторизация через Telegram');
+                    }
+                    return;
                 }
 
-                // Если initData нет в localStorage, сохраняем из Telegram
-                if (!localStorage.getItem('initData') && window.Telegram?.WebApp?.initData) {
-                    localStorage.setItem('initData', window.Telegram.WebApp.initData);
-                    initData = window.Telegram.WebApp.initData;
+                // Визуальная обратная связь при нажатии
+                if (window.Telegram?.WebApp?.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
                 }
 
-                let profileUrl = '/profile.html';
+                console.log('✅ Переходим в профиль с валидными данными');
 
-                // Если есть токен, добавляем его в URL
+                // Безопасный переход с передачей токена и initData через URL
+                const profileUrl = new URL('/profile.html', window.location.origin);
+
                 if (token) {
-                    profileUrl += `?token=${encodeURIComponent(token)}`;
-                    console.log('✅ Токен добавлен в URL');
-                } else {
-                    console.warn('⚠️ Токен отсутствует, переход может не сработать');
+                    profileUrl.searchParams.set('token', token);
                 }
-
-                // Если есть данные Telegram WebApp, добавляем их тоже
                 if (initData) {
-                    const separator = profileUrl.includes('?') ? '&' : '?';
-                    profileUrl += `${separator}initData=${encodeURIComponent(initData)}`;
-                    console.log('✅ initData добавлены в URL');
-                } else {
-                    console.warn('⚠️ initData отсутствуют');
+                    profileUrl.searchParams.set('initData', initData);
                 }
 
-                console.log('🔗 Переход на:', profileUrl);
-
-                // Переход на экран профиля
-                window.location.href = profileUrl;
+                window.location.href = profileUrl.toString();
             });
         });
     </script>

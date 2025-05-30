@@ -97,13 +97,31 @@ function initApp() {
 
         // Проверяем данные пользователя
         if (tg.initData && tg.initData.trim() !== '' && !tg.initData.includes('test_mode_data')) {
-            // Если есть initData но нет initDataUnsafe.user, все равно пытаемся авторизоваться
-            Logger?.debug('Есть initData но нет initDataUnsafe.user. Пробуем авторизоваться.');
-            authorize();
+            // Проверяем, есть ли корректные данные пользователя в initData
+            try {
+                // Декодируем initData для проверки наличия пользователя
+                const initDataParams = new URLSearchParams(tg.initData);
+                const userParam = initDataParams.get('user');
+
+                if (userParam) {
+                    const userData = JSON.parse(decodeURIComponent(userParam));
+                    if (userData && userData.id) {
+                        Logger?.debug('✅ Найдены корректные данные пользователя в initData:', userData.id);
+                        authorize();
+                        return;
+                    }
+                }
+
+                Logger?.debug('⚠️ initData присутствует, но не содержит данных пользователя');
+                handleNoValidAuth();
+
+            } catch (error) {
+                Logger?.warn('Ошибка парсинга initData:', error);
+                handleNoValidAuth();
+            }
         } else {
-            // Если данные пользователя отсутствуют, показываем заглушку для тестирования
-            Logger?.debug('Telegram WebApp: initDataUnsafe не содержит данных пользователя. Режим разработки.');
-            handleTestMode();
+            Logger?.debug('❌ Отсутствуют валидные данные Telegram initData');
+            handleNoValidAuth();
         }
 
         // Сообщаем Telegram, что приложение готово
@@ -193,23 +211,24 @@ function handleNoTelegramApi() {
 }
 
 /**
- * Обработка тестового режима
+ * Обработка тестового режима (ТОЛЬКО для реального тестирования с test_mode_data)
  */
 function handleTestMode() {
+    Logger?.debug('🧪 Включен режим тестирования с test_mode_data');
     GameState.data.isTestMode = true;
     showContent();
     isInitialized = true;
 
-    // Генерируем тестовый токен, если нет настоящего
-    if (!GameState.data.token) {
+    // ВАЖНО: НЕ создаем токены автоматически!
+    // Токены создаются только при явной авторизации
+
+    // Создаем моковые данные ТОЛЬКО если есть специальный параметр для автотестов
+    if (GameState.data.isTestMode && window.location.search.includes('autostory=true')) {
+        // Создаем тестовый токен ТОЛЬКО для автотестов
         const testToken = `test_token_${Date.now()}`;
         GameState.data.token = testToken;
         localStorage.setItem('token', testToken);
-        Logger?.debug('Сгенерирован тестовый токен');
-    }
 
-    // Создаем моковые данные для тестирования
-    if (GameState.data.isTestMode && window.location.search.includes('autostory=true')) {
         setTimeout(() => {
             const testStory = {
                 id: 'test-story-1',
@@ -229,6 +248,16 @@ function handleTestMode() {
             GameState.showScreen('game');
             GameState.updateGameScreen();
         }, 1000);
+    } else {
+        // Обычный тестовый режим без токенов - деактивируем профиль
+        setTimeout(() => {
+            const profileButton = document.getElementById('goToProfile');
+            if (profileButton) {
+                profileButton.style.opacity = '0.5';
+                profileButton.style.pointerEvents = 'none';
+                profileButton.title = 'Профиль недоступен в тестовом режиме';
+            }
+        }, 100);
     }
 }
 
@@ -1204,4 +1233,44 @@ function clearAppCache() {
 // Делаем функцию доступной глобально
 window.clearAppCache = clearAppCache;
 window.CriminalBluffApp = window.CriminalBluffApp || {};
-window.CriminalBluffApp.clearCache = clearAppCache; 
+window.CriminalBluffApp.clearCache = clearAppCache;
+
+/**
+ * Обработка отсутствия валидной авторизации Telegram
+ */
+function handleNoValidAuth() {
+    Logger?.warn('⚠️ Нет валидных данных авторизации от Telegram');
+
+    // НЕ создаем тестовые токены - просто показываем контент
+    // В этом случае приложение работает, но кнопка профиля будет недоступна
+
+    GameState.data.isTestMode = false; // Это НЕ тестовый режим
+    GameState.data.token = null; // Нет токена
+    GameState.data.user = null; // Нет пользователя
+
+    // Показываем контент
+    showContent();
+    isInitialized = true;
+
+    // Деактивируем кнопку профиля, так как нет авторизации
+    setTimeout(() => {
+        const profileButton = document.getElementById('goToProfile');
+        if (profileButton) {
+            profileButton.style.opacity = '0.5';
+            profileButton.style.pointerEvents = 'none';
+            profileButton.title = 'Профиль недоступен без авторизации Telegram';
+
+            // Заменяем обработчик клика на предупреждение
+            profileButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (window.Telegram?.WebApp?.showAlert) {
+                    window.Telegram.WebApp.showAlert('Для доступа к профилю необходима авторизация через Telegram');
+                } else {
+                    alert('Для доступа к профилю необходима авторизация через Telegram');
+                }
+            });
+        }
+    }, 100);
+} 
