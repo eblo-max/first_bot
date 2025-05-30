@@ -4,8 +4,8 @@
     "description": "Telegram Mini App игра-викторина с криминальными историями",
     "main": "src/index.js",
     "scripts": {
-        "start": "node src/server.js",
-        "dev": "nodemon src/server.js",
+        "start": "node src/index.js",
+        "dev": "nodemon src/index.js",
         "seed": "node src/utils/seedData.js",
         "migrate-leaderboard": "node src/utils/migrateLeaderboard.js",
         "test": "echo \"Error: no test specified\" && exit 1",
