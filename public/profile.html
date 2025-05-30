@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Профиль детектива | Криминальный Блеф</title>
+    <title>Досье детектива | Криминальный Блеф</title>
 
     <!-- Telegram WebApp API -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -18,210 +18,312 @@
     <!-- Иконки Lucide -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
+    <!-- Шрифты Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            /* Криминальная палитра */
+            --blood-red: #8B0000;
+            --dark-red: #4A0404;
+            --crime-scene-yellow: #FFD700;
+            --chalk-white: #E8E8E8;
+            --body-bag-black: #0A0A0A;
+            --evidence-tag: #D4AF37;
+            --dried-blood: #5C1010;
+            --morgue-gray: #2C2C2C;
+            --police-tape: #FFF200;
+            --suspect-gray: #666666;
+            --witness-silver: #C0C0C0;
+
+            /* Расстояния */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+
+            /* Радиусы */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+
+            /* Переходы */
+            --transition-fast: 150ms ease;
+            --transition-normal: 250ms ease;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        :root {
-            --bg-primary: #0a0e1a;
-            --bg-secondary: #1a1f2e;
-            --bg-tertiary: #2a2f3e;
-            --accent-primary: #3b82f6;
-            --accent-secondary: #8b5cf6;
-            --accent-gold: #f59e0b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --border-color: #334155;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            --gradient-gold: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            --gradient-reputation: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            background: var(--body-bag-black);
+            color: var(--chalk-white);
+            font-family: 'Roboto Condensed', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             line-height: 1.6;
             min-height: 100vh;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            position: relative;
         }
 
-        /* === ХЕДЕР ПРОФИЛЯ === */
-        .profile-header {
-            background: var(--gradient-primary);
-            padding: 20px;
-            border-radius: 0 0 24px 24px;
-            box-shadow: var(--shadow-lg);
+        /* Атмосферный фон */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(139, 0, 0, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(74, 4, 4, 0.1) 0%, transparent 30%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .profile-container {
+            max-width: 450px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            z-index: 2;
+            padding: var(--spacing-md);
+        }
+
+        /* === ХЕДЕР ДОСЬЕ === */
+        .detective-header {
+            background: linear-gradient(135deg, var(--morgue-gray) 0%, var(--dried-blood) 100%);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 2px solid var(--blood-red);
+            box-shadow:
+                0 8px 25px rgba(139, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
             position: relative;
             overflow: hidden;
         }
 
-        .profile-header::before {
+        .detective-header::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            background: repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 20px,
+                    rgba(139, 0, 0, 0.05) 20px,
+                    rgba(139, 0, 0, 0.05) 40px);
+            pointer-events: none;
+        }
+
+        .detective-header::after {
+            content: '🔍';
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            font-size: 24px;
             opacity: 0.3;
         }
 
-        .profile-info {
+        .detective-info {
             position: relative;
             z-index: 1;
         }
 
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
+        .detective-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            background: var(--dried-blood);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--blood-red);
+            margin-bottom: var(--spacing-md);
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .badge-icon {
+            width: 16px;
+            height: 16px;
+            color: var(--crime-scene-yellow);
+        }
+
+        /* Аватар с вещественными доказательствами */
+        .avatar {
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            background: var(--gradient-gold);
+            border: 4px solid var(--crime-scene-yellow);
+            background: var(--morgue-gray);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
-            font-weight: bold;
-            margin: 0 auto 16px;
-            box-shadow: var(--shadow);
+            font-size: 36px;
+            font-weight: 700;
+            margin: 0 auto var(--spacing-md);
+            box-shadow:
+                0 0 20px rgba(255, 215, 0, 0.4),
+                inset 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
         }
 
-        .profile-name {
-            font-size: 24px;
+        .avatar::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 30px;
+            height: 30px;
+            background: var(--blood-red);
+            border-radius: 50%;
+            border: 3px solid var(--chalk-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .detective-name {
+            font-size: 28px;
             font-weight: 700;
             text-align: center;
-            margin-bottom: 8px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: var(--spacing-sm);
+            color: var(--chalk-white);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
 
-        .profile-rank {
+        .detective-rank {
             text-align: center;
-            margin-bottom: 16px;
+            margin-bottom: var(--spacing-md);
         }
 
         .rank-badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            gap: var(--spacing-sm);
+            background: linear-gradient(135deg, var(--crime-scene-yellow) 0%, var(--evidence-tag) 100%);
+            color: var(--body-bag-black);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-lg);
+            font-weight: 700;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
         }
 
-        .rank-progress {
-            margin-top: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            height: 8px;
+        .rank-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* === КАРТОЧКИ ДОСЬЕ === */
+        .case-file {
+            background: var(--morgue-gray);
+            border: 2px solid var(--dried-blood);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            position: relative;
             overflow: hidden;
         }
 
-        .rank-progress-bar {
-            height: 100%;
-            background: var(--gradient-gold);
-            border-radius: 10px;
-            transition: width 0.5s ease;
+        .case-file::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--blood-red) 0%, var(--crime-scene-yellow) 100%);
         }
 
-        /* === РЕПУТАЦИЯ === */
-        .reputation-section {
-            margin: 20px;
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-        }
-
-        .reputation-header {
+        .case-header {
+            background: var(--dried-blood);
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--blood-red);
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
+            gap: var(--spacing-sm);
         }
 
-        .reputation-level {
-            font-size: 32px;
-            font-weight: 800;
-            background: var(--gradient-reputation);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .case-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--crime-scene-yellow);
         }
 
-        .reputation-category {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--success);
+        .case-title {
+            font-size: 18px;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .reputation-components {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 16px;
+        .case-content {
+            padding: var(--spacing-lg);
         }
 
-        .reputation-component {
-            background: var(--bg-tertiary);
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-
-        .component-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
+        /* === РЕПУТАЦИОННОЕ ДОСЬЕ === */
+        .reputation-level {
             display: flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
         }
 
-        .component-value {
-            font-size: 18px;
+        .reputation-number {
+            font-size: 48px;
             font-weight: 700;
-            color: var(--text-primary);
+            background: linear-gradient(135deg, var(--crime-scene-yellow) 0%, var(--evidence-tag) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
         }
 
-        /* === СТАТИСТИКА === */
+        .reputation-category {
+            background: var(--blood-red);
+            color: var(--chalk-white);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* === СТАТИСТИКА РАССЛЕДОВАНИЙ === */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            margin: 20px;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
         }
 
         .stat-card {
-            background: var(--bg-secondary);
-            padding: 16px;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
+            background: var(--dried-blood);
+            border: 1px solid var(--blood-red);
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-md);
             text-align: center;
+            transition: all var(--transition-normal);
             position: relative;
             overflow: hidden;
-            box-shadow: var(--shadow);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
         }
 
         .stat-card::before {
@@ -229,634 +331,365 @@
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            height: 3px;
-            background: var(--gradient-primary);
+            width: 100%;
+            height: 2px;
+            background: var(--crime-scene-yellow);
+            transform: scaleX(0);
+            transition: transform var(--transition-normal);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
         }
 
         .stat-value {
             font-size: 24px;
-            font-weight: 800;
-            color: var(--text-primary);
-            margin-bottom: 4px;
+            font-weight: 700;
+            color: var(--crime-scene-yellow);
+            margin-bottom: var(--spacing-xs);
         }
 
         .stat-label {
             font-size: 12px;
-            color: var(--text-secondary);
+            color: var(--suspect-gray);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            font-weight: 600;
-        }
-
-        .stat-icon {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            opacity: 0.3;
-            width: 20px;
-            height: 20px;
         }
 
         /* === ДОСТИЖЕНИЯ === */
-        .achievements-section {
-            margin: 20px;
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-        }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .section-icon {
-            width: 24px;
-            height: 24px;
-            color: var(--accent-primary);
-        }
-
         .achievements-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-sm);
         }
 
-        .achievement-card {
-            background: var(--bg-tertiary);
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
+        .achievement-badge {
+            background: var(--dried-blood);
+            border: 2px solid transparent;
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-md);
             text-align: center;
+            transition: all var(--transition-normal);
             position: relative;
-            transition: transform 0.2s ease;
         }
 
-        .achievement-card:hover {
-            transform: scale(1.05);
-        }
-
-        .achievement-card.rare {
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
-        }
-
-        .achievement-card.epic {
-            border-color: var(--accent-secondary);
-            box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
-        }
-
-        .achievement-card.legendary {
-            border-color: var(--accent-gold);
-            box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+        .achievement-badge.unlocked {
+            border-color: var(--crime-scene-yellow);
+            background: linear-gradient(135deg, var(--dried-blood) 0%, var(--morgue-gray) 100%);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
         }
 
         .achievement-icon {
             font-size: 24px;
-            margin-bottom: 8px;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .achievement-badge.unlocked .achievement-icon {
+            color: var(--crime-scene-yellow);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
 
         .achievement-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-
-        .achievement-rarity {
             font-size: 10px;
-            color: var(--text-muted);
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            color: var(--suspect-gray);
         }
 
-        /* === НАВИГАЦИЯ === */
-        .nav-tabs {
-            display: flex;
-            background: var(--bg-secondary);
-            margin: 20px;
-            border-radius: 12px;
-            padding: 4px;
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
+        .achievement-badge.unlocked .achievement-name {
+            color: var(--chalk-white);
         }
 
-        .nav-tab {
-            flex: 1;
-            padding: 12px;
-            background: none;
-            border: none;
-            border-radius: 8px;
-            color: var(--text-secondary);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .nav-tab.active {
-            color: var(--text-primary);
-            background: var(--gradient-primary);
-            box-shadow: var(--shadow);
-        }
-
-        .nav-tab:not(.active):hover {
-            color: var(--text-primary);
-            background: var(--bg-tertiary);
-        }
-
-        /* === ЛИДЕРБОРД === */
+        /* === ТАБЛИЦА ЛИДЕРОВ === */
         .leaderboard-item {
             display: flex;
             align-items: center;
-            padding: 12px;
-            background: var(--bg-tertiary);
-            border-radius: 12px;
-            margin-bottom: 8px;
-            border: 1px solid var(--border-color);
-            position: relative;
-            transition: transform 0.2s ease;
-        }
-
-        .leaderboard-item:hover {
-            transform: translateX(4px);
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: var(--dried-blood);
+            border: 1px solid var(--blood-red);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--spacing-sm);
+            transition: all var(--transition-normal);
         }
 
         .leaderboard-item.current-user {
-            border-color: var(--accent-primary);
-            background: rgba(59, 130, 246, 0.1);
+            background: linear-gradient(135deg, var(--dried-blood) 0%, var(--blood-red) 100%);
+            border-color: var(--crime-scene-yellow);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
         }
 
         .leaderboard-rank {
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--accent-primary);
-            width: 40px;
-            text-align: center;
-        }
-
-        .leaderboard-rank.gold {
-            color: var(--accent-gold);
-        }
-
-        .leaderboard-rank.silver {
-            color: #94a3b8;
-        }
-
-        .leaderboard-rank.bronze {
-            color: #f59e0b;
+            width: 32px;
+            height: 32px;
+            background: var(--crime-scene-yellow);
+            color: var(--body-bag-black);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
         }
 
         .leaderboard-info {
             flex: 1;
-            margin-left: 12px;
         }
 
         .leaderboard-name {
-            font-weight: 600;
-            color: var(--text-primary);
+            font-weight: 700;
             margin-bottom: 2px;
         }
 
-        .leaderboard-rank-title {
+        .leaderboard-score {
             font-size: 12px;
-            color: var(--text-secondary);
+            color: var(--suspect-gray);
         }
 
-        .leaderboard-value {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--accent-primary);
-        }
-
-        /* === АНИМАЦИИ === */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in-up {
-            animation: fadeInUp 0.5s ease-out;
-        }
-
-        .loading {
+        /* === ЗАГРУЗКА === */
+        .loading-message {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            padding: 40px;
-            color: var(--text-secondary);
+            gap: var(--spacing-md);
+            padding: var(--spacing-xl);
+            text-align: center;
         }
 
-        .spinner {
-            width: 32px;
-            height: 32px;
-            border: 3px solid var(--border-color);
-            border-top: 3px solid var(--accent-primary);
+        .evidence-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(139, 0, 0, 0.2);
+            border-top-color: var(--blood-red);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 12px;
+            animation: evidence-spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
+        @keyframes evidence-spin {
+            to {
                 transform: rotate(360deg);
             }
         }
 
-        /* === АДАПТИВНОСТЬ === */
-        @media (max-width: 480px) {
+        .loading-text {
+            color: var(--suspect-gray);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* === ПОЛИЦЕЙСКАЯ ЛЕНТА === */
+        .police-tape {
+            height: 4px;
+            background: repeating-linear-gradient(90deg,
+                    var(--police-tape) 0px,
+                    var(--police-tape) 20px,
+                    var(--body-bag-black) 20px,
+                    var(--body-bag-black) 40px);
+            margin: var(--spacing-lg) 0;
+            animation: tape-scroll 2s linear infinite;
+        }
+
+        @keyframes tape-scroll {
+            0% {
+                background-position: 0 0;
+            }
+
+            100% {
+                background-position: 40px 0;
+            }
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 380px) {
             .stats-grid {
                 grid-template-columns: 1fr;
             }
 
-            .reputation-components {
-                grid-template-columns: 1fr;
-            }
-
             .achievements-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
         /* === КНОПКИ === */
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
+        .evidence-button {
+            background: linear-gradient(135deg, var(--blood-red) 0%, var(--dark-red) 100%);
+            color: var(--chalk-white);
+            border: 2px solid var(--dried-blood);
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-md) var(--spacing-lg);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: var(--shadow);
+            transition: all var(--transition-normal);
+            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
         }
 
-        .btn-primary {
-            background: var(--gradient-primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
+        .evidence-button:hover {
+            background: linear-gradient(135deg, var(--dark-red) 0%, var(--blood-red) 100%);
+            border-color: var(--crime-scene-yellow);
             transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 6px 20px rgba(139, 0, 0, 0.4);
         }
 
-        .btn-secondary {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg-secondary);
+        .evidence-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(139, 0, 0, 0.3);
         }
     </style>
+
+    <link rel="stylesheet" href="profile.css">
 </head>
 
 <body>
-    <div id="app" x-data="profileApp()" x-init="init()">
+    <div class="profile-container" x-data="profileManager" x-init="init()">
 
-        <!-- Хедер профиля -->
-        <div class="profile-header fade-in-up">
-            <template x-if="profile">
-                <div class="profile-info">
-                    <div class="profile-avatar">
-                        <span
-                            x-text="(profile.basic.firstName || profile.basic.username || 'А')[0].toUpperCase()"></span>
-                    </div>
-
-                    <h1 class="profile-name" x-text="profile.basic.firstName || profile.basic.username || 'Детектив'">
-                    </h1>
-
-                    <div class="profile-rank">
-                        <div class="rank-badge">
-                            <i data-lucide="shield" style="width: 16px; height: 16px;"></i>
-                            <span x-text="profile.rank.displayName"></span>
-                        </div>
-
-                        <div class="rank-progress">
-                            <div class="rank-progress-bar" :style="`width: ${profile.rank.progress}%`"></div>
-                        </div>
-
-                        <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 4px;">
-                            Прогресс: <span x-text="profile.rank.progress"></span>%
-                        </div>
-                    </div>
-                </div>
-            </template>
+        <!-- Загрузка -->
+        <div x-show="loading" class="loading-message">
+            <div class="evidence-spinner"></div>
+            <div class="loading-text">Анализ досье...</div>
         </div>
 
-        <!-- Репутация -->
-        <template x-if="profile">
-            <div class="reputation-section fade-in-up">
-                <div class="reputation-header">
-                    <div>
-                        <h2 style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                            <i data-lucide="star" style="width: 20px; height: 20px; color: var(--accent-gold);"></i>
-                            Репутация
-                        </h2>
-                        <div class="reputation-category" x-text="profile.reputation.category"></div>
-                    </div>
-                    <div class="reputation-level" x-text="profile.reputation.level"></div>
-                </div>
+        <!-- Основной контент -->
+        <div x-show="!loading" style="display: none;" x-transition>
 
-                <div class="reputation-components">
-                    <div class="reputation-component">
-                        <div class="component-label">
-                            <i data-lucide="target" style="width: 12px; height: 12px;"></i>
-                            Точность
-                        </div>
-                        <div class="component-value" x-text="profile.reputation.components.accuracy.value"></div>
+            <!-- Хедер детектива -->
+            <div class="detective-header">
+                <div class="detective-info">
+                    <div class="detective-badge">
+                        <i data-lucide="shield" class="badge-icon"></i>
+                        <span>Досье детектива</span>
                     </div>
 
-                    <div class="reputation-component">
-                        <div class="component-label">
-                            <i data-lucide="zap" style="width: 12px; height: 12px;"></i>
-                            Скорость
+                    <div class="avatar" id="user-avatar">
+                        <img id="avatar-image"
+                            style="display: none; width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
+                            alt="Аватар детектива">
+                        <div class="avatar-placeholder" id="avatar-placeholder">
+                            🕵️
                         </div>
-                        <div class="component-value" x-text="profile.reputation.components.speed.value"></div>
+                        <div class="avatar-loading" id="avatar-loading" style="display: none;">
+                            <div class="evidence-spinner" style="width: 24px; height: 24px; border-width: 2px;"></div>
+                        </div>
                     </div>
 
-                    <div class="reputation-component">
-                        <div class="component-label">
-                            <i data-lucide="trending-up" style="width: 12px; height: 12px;"></i>
-                            Постоянство
-                        </div>
-                        <div class="component-value" x-text="profile.reputation.components.consistency.value"></div>
-                    </div>
+                    <div class="detective-name" x-text="profileData?.basic?.firstName || 'Детектив'"></div>
 
-                    <div class="reputation-component">
-                        <div class="component-label">
-                            <i data-lucide="brain" style="width: 12px; height: 12px;"></i>
-                            Сложность
+                    <div class="detective-rank">
+                        <div class="rank-badge">
+                            <i data-lucide="star" class="rank-icon"></i>
+                            <span x-text="profileData?.rank?.current || 'НОВИЧОК'"></span>
                         </div>
-                        <div class="component-value" x-text="profile.reputation.components.difficulty.value"></div>
                     </div>
                 </div>
             </div>
-        </template>
 
-        <!-- Навигационные табы -->
-        <div class="nav-tabs">
-            <button class="nav-tab" :class="{ active: activeTab === 'stats' }" @click="activeTab = 'stats'">
-                Статистика
-            </button>
-            <button class="nav-tab" :class="{ active: activeTab === 'achievements' }"
-                @click="activeTab = 'achievements'">
-                Достижения
-            </button>
-            <button class="nav-tab" :class="{ active: activeTab === 'leaderboard' }" @click="activeTab = 'leaderboard'">
-                Рейтинг
-            </button>
-        </div>
+            <!-- Полицейская лента -->
+            <div class="police-tape"></div>
 
-        <!-- Контент табов -->
-        <div x-show="activeTab === 'stats'" x-transition class="fade-in-up">
-            <template x-if="profile">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <i data-lucide="search" class="stat-icon"></i>
-                        <div class="stat-value" x-text="profile.stats.investigations"></div>
-                        <div class="stat-label">Расследований</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <i data-lucide="check-circle" class="stat-icon"></i>
-                        <div class="stat-value" x-text="profile.stats.accuracy + '%'"></div>
-                        <div class="stat-label">Точность</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <i data-lucide="trophy" class="stat-icon"></i>
-                        <div class="stat-value" x-text="profile.stats.totalScore"></div>
-                        <div class="stat-label">Очки</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <i data-lucide="flame" class="stat-icon"></i>
-                        <div class="stat-value" x-text="profile.stats.maxWinStreak"></div>
-                        <div class="stat-label">Лучшая серия</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <i data-lucide="clock" class="stat-icon"></i>
-                        <div class="stat-value" x-text="formatTime(profile.stats.averageTime)"></div>
-                        <div class="stat-label">Ср. время</div>
-                    </div>
-
-                    <div class="stat-card">
-                        <i data-lucide="calendar" class="stat-icon"></i>
-                        <div class="stat-value" x-text="profile.stats.dailyStreakCurrent"></div>
-                        <div class="stat-label">Дней подряд</div>
-                    </div>
+            <!-- Репутационное досье -->
+            <div class="case-file">
+                <div class="case-header">
+                    <i data-lucide="trending-up" class="case-icon"></i>
+                    <span class="case-title">Репутация детектива</span>
                 </div>
-            </template>
-        </div>
-
-        <!-- Достижения -->
-        <div x-show="activeTab === 'achievements'" x-transition class="fade-in-up">
-            <template x-if="profile">
-                <div class="achievements-section">
-                    <div class="section-header">
-                        <i data-lucide="award" class="section-icon"></i>
-                        <h2 class="section-title">Достижения</h2>
-                        <span
-                            style="margin-left: auto; background: var(--accent-primary); color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;"
-                            x-text="profile.achievements.list.length"></span>
-                    </div>
-
-                    <div class="achievements-grid">
-                        <template x-for="achievement in profile.achievements.list" :key="achievement.id">
-                            <div class="achievement-card" :class="achievement.rarity.toLowerCase()">
-                                <div class="achievement-icon">🏆</div>
-                                <div class="achievement-name" x-text="achievement.name"></div>
-                                <div class="achievement-rarity" x-text="achievement.rarity"></div>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </template>
-        </div>
-
-        <!-- Лидерборд -->
-        <div x-show="activeTab === 'leaderboard'" x-transition class="fade-in-up">
-            <template x-if="leaderboard">
-                <div class="achievements-section">
-                    <div class="section-header">
-                        <i data-lucide="bar-chart-3" class="section-icon"></i>
-                        <h2 class="section-title">Топ игроков</h2>
-                    </div>
-
-                    <template x-for="(user, index) in leaderboard.totalScore" :key="user.telegramId">
-                        <div class="leaderboard-item"
-                            :class="{ 'current-user': user.telegramId === profile?.basic.telegramId }">
-                            <div class="leaderboard-rank"
-                                :class="{ gold: index === 0, silver: index === 1, bronze: index === 2 }"
-                                x-text="index + 1"></div>
-                            <div class="leaderboard-info">
-                                <div class="leaderboard-name" x-text="user.firstName || user.username || 'Детектив'">
-                                </div>
-                                <div class="leaderboard-rank-title" x-text="getRankDisplayName(user.rank)"></div>
-                            </div>
-                            <div class="leaderboard-value" x-text="user.stats.totalScore"></div>
+                <div class="case-content">
+                    <div class="reputation-level">
+                        <div class="reputation-number" x-text="profileData?.reputation?.level || '0'"></div>
+                        <div class="reputation-category" x-text="profileData?.reputation?.category || 'Неизвестно'">
                         </div>
-                    </template>
+                    </div>
                 </div>
-            </template>
+            </div>
+
+            <!-- Статистика расследований -->
+            <div class="case-file">
+                <div class="case-header">
+                    <i data-lucide="bar-chart-3" class="case-icon"></i>
+                    <span class="case-title">Статистика расследований</span>
+                </div>
+                <div class="case-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" x-text="profileData?.stats?.investigations || '0'"></div>
+                            <div class="stat-label">Всего дел</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" x-text="profileData?.stats?.solvedCases || '0'"></div>
+                            <div class="stat-label">Раскрыто</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" x-text="Math.round(profileData?.stats?.accuracy || 0) + '%'"></div>
+                            <div class="stat-label">Точность</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" x-text="profileData?.stats?.totalScore || '0'"></div>
+                            <div class="stat-label">Общий счет</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Достижения -->
+            <div class="case-file">
+                <div class="case-header">
+                    <i data-lucide="award" class="case-icon"></i>
+                    <span class="case-title">Знаки отличия</span>
+                </div>
+                <div class="case-content">
+                    <div class="achievements-grid" id="achievements-container">
+                        <!-- Достижения будут добавлены динамически -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Таблица лидеров -->
+            <div class="case-file">
+                <div class="case-header">
+                    <i data-lucide="crown" class="case-icon"></i>
+                    <span class="case-title">Рейтинг детективов</span>
+                </div>
+                <div class="case-content">
+                    <div id="leaderboard-container">
+                        <!-- Лидерборд будет загружен динамически -->
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Кнопки навигации -->
-        <div style="margin: 20px; display: flex; gap: 12px;">
-            <a href="/" class="btn btn-secondary" style="flex: 1;">
-                <i data-lucide="home" style="width: 16px; height: 16px;"></i>
-                Главная
-            </a>
-            <a href="/game" class="btn btn-primary" style="flex: 1;">
-                <i data-lucide="play" style="width: 16px; height: 16px;"></i>
-                Играть
-            </a>
+        <!-- Ошибка подключения -->
+        <div x-show="error && !loading" class="case-file" style="display: none;">
+            <div class="case-header">
+                <i data-lucide="alert-triangle" class="case-icon"></i>
+                <span class="case-title">Ошибка расследования</span>
+            </div>
+            <div class="case-content">
+                <p x-text="errorMessage" style="margin-bottom: var(--spacing-md);"></p>
+                <button @click="init()" class="evidence-button">
+                    <i data-lucide="refresh-cw" style="width: 16px; height: 16px; margin-right: var(--spacing-sm);"></i>
+                    Повторить анализ
+                </button>
+            </div>
         </div>
 
-        <!-- Загрузка -->
-        <div x-show="loading" class="loading">
-            <div class="spinner"></div>
-            <span>Загрузка профиля...</span>
-        </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="logger.js"></script>
+    <script src="security-utils.js"></script>
+    <script src="achievement-system.js"></script>
+    <script src="profile.js"></script>
+
     <script>
-        function profileApp() {
-            return {
-                profile: null,
-                leaderboard: null,
-                activeTab: 'stats',
-                loading: true,
-                error: null,
-
-                async init() {
-                    console.log('🚀 Инициализация профиля...');
-
-                    try {
-                        await this.loadProfile();
-                        await this.loadLeaderboard();
-
-                        // Инициализируем иконки Lucide
-                        if (typeof lucide !== 'undefined') {
-                            lucide.createIcons();
-                        }
-
-                    } catch (error) {
-                        console.error('❌ Ошибка инициализации:', error);
-                        this.error = 'Ошибка загрузки данных';
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-
-                async loadProfile() {
-                    const token = this.getAuthToken();
-
-                    const response = await fetch('/api/profile', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Ошибка загрузки профиля');
-                    }
-
-                    this.profile = await response.json();
-                    console.log('✅ Профиль загружен:', this.profile);
-                },
-
-                async loadLeaderboard() {
-                    const token = this.getAuthToken();
-
-                    const response = await fetch('/api/profile/leaderboard/all?limit=10', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Ошибка загрузки лидерборда');
-                    }
-
-                    this.leaderboard = await response.json();
-                    console.log('✅ Лидерборд загружен:', this.leaderboard);
-                },
-
-                getAuthToken() {
-                    // Попробуем получить токен из разных источников
-                    let token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-
-                    // Если токена нет, попробуем из URL
-                    if (!token) {
-                        const urlParams = new URLSearchParams(window.location.search);
-                        token = urlParams.get('token');
-                    }
-
-                    // Если есть данные Telegram WebApp
-                    if (!token && window.Telegram?.WebApp?.initData) {
-                        // Можно попробовать авторизоваться через Telegram данные
-                        console.log('🔑 Используем Telegram WebApp данные');
-                    }
-
-                    return token;
-                },
-
-                formatTime(seconds) {
-                    if (!seconds) return '0с';
-                    if (seconds < 60) return `${seconds}с`;
-                    const minutes = Math.floor(seconds / 60);
-                    const remainingSeconds = seconds % 60;
-                    return `${minutes}м ${remainingSeconds}с`;
-                },
-
-                getRankDisplayName(rank) {
-                    const rankNames = {
-                        'СТАЖЕР': 'Стажер',
-                        'СЛЕДОВАТЕЛЬ': 'Следователь',
-                        'ДЕТЕКТИВ': 'Детектив',
-                        'СТАРШИЙ_ДЕТЕКТИВ': 'Старший детектив',
-                        'ИНСПЕКТОР': 'Инспектор',
-                        'КОМИССАР': 'Комиссар',
-                        'ГЛАВНЫЙ_ИНСПЕКТОР': 'Главный инспектор',
-                        'ШЕФ_ПОЛИЦИИ': 'Шеф полиции'
-                    };
-                    return rankNames[rank] || rank;
-                }
-            };
-        }
+        // Инициализация иконок
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
     </script>
 </body>
 
