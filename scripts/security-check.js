@@ -248,27 +248,63 @@ class SecurityScanner {
     /**
      * Рекурсивно сканирует директорию
      */
-    async scanDirectory(dirPath) {
+    async scanDirectory(dirPath, excludeDirs = []) {
         try {
             const items = await fs.readdir(dirPath);
 
             for (const item of items) {
                 const fullPath = path.join(dirPath, item);
                 const stats = await fs.stat(fullPath);
+                const relativePath = path.relative(process.cwd(), fullPath);
 
                 if (stats.isDirectory()) {
-                    // Пропускаем node_modules и другие служебные папки
-                    if (!['node_modules', '.git', 'dist', 'build'].includes(item)) {
-                        await this.scanDirectory(fullPath);
+                    // Пропускаем исключенные директории
+                    if (!excludeDirs.includes(item)) {
+                        await this.scanDirectory(fullPath, excludeDirs);
                     }
-                } else if (SCAN_EXTENSIONS.includes(path.extname(item).toLowerCase())) {
-                    this.totalFiles++;
-                    await this.scanFile(fullPath);
+                } else {
+                    // Пропускаем служебные файлы и скрипты
+                    const shouldSkip = this.shouldSkipFile(relativePath, item);
+                    if (!shouldSkip) {
+                        await this.scanFile(fullPath);
+                        this.totalFiles++;
+                    }
                 }
             }
         } catch (error) {
-            this.addIssue('medium', 'scan_error', `Ошибка сканирования директории: ${error.message}`, dirPath);
+            this.addIssue('medium', 'scan_error', `Ошибка сканирования директории ${dirPath}: ${error.message}`);
         }
+    }
+
+    /**
+     * Определяет, нужно ли пропустить файл при сканировании
+     */
+    shouldSkipFile(relativePath, fileName) {
+        // Пропускаем скрипты очистки и служебные файлы
+        const skipPatterns = [
+            /scripts[\\\/]cleanup-debug\.js$/,
+            /scripts[\\\/]security-check\.js$/,
+            /scripts[\\\/].*\.js$/,  // Все скрипты в папке scripts
+            /backup_debug[\\\/]/,
+            /node_modules[\\\/]/,
+            /\.git[\\\/]/,
+            /dist[\\\/]/,
+            /test-results[\\\/]/,
+            /\.log$/,
+            /\.bak$/,
+            /\.tmp$/,
+            /package-lock\.json$/
+        ];
+
+        // Проверяем паттерны исключения
+        const matchesSkipPattern = skipPatterns.some(pattern => pattern.test(relativePath.replace(/\\/g, '/')));
+        if (matchesSkipPattern) return true;
+
+        // Проверяем расширения файлов - сканируем только определенные типы
+        const allowedExtensions = ['.js', '.html', '.css', '.json', '.env'];
+        const fileExtension = path.extname(fileName).toLowerCase();
+
+        return !allowedExtensions.includes(fileExtension);
     }
 
     /**
@@ -374,8 +410,9 @@ class SecurityScanner {
         
         const startTime = Date.now();
 
-        // Сканируем файлы проекта
-        await this.scanDirectory(process.cwd());
+        // Сканируем файлы проекта с исключениями
+        const excludeDirs = ['node_modules', '.git', 'dist', 'backup_debug', 'test-results'];
+        await this.scanDirectory(process.cwd(), excludeDirs);
 
         // Проверяем конфигурацию сервера
         await this.checkServerSecurity();
@@ -406,7 +443,7 @@ class SecurityScanner {
 
         // Детали проблем
         if (issues.length > 0) {
-            
+
             console.log('─'.repeat(50));
 
             issues.forEach((issue, index) => {
@@ -418,19 +455,19 @@ class SecurityScanner {
                 };
 
                 console.log(`${index + 1}. ${severityEmoji[issue.severity]} [${issue.severity.toUpperCase()}] ${issue.type}`);
-                
+
                 if (issue.file) {
-                    
+
                 }
-                
+
             });
         } else {
-            
+
         }
 
         // Рекомендации
         if (summary.critical > 0 || summary.high > 0) {
-            
+
             console.log('─'.repeat(50));
 
         }

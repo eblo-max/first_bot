@@ -37,7 +37,7 @@ function initApp() {
     try {
         // Проверяем наличие Telegram WebApp API
         if (!window.Telegram || !window.Telegram.WebApp) {
-            console.warn('Telegram WebApp API недоступен, запуск в тестовом режиме');
+            
             handleNoTelegramApi();
             return;
         }
@@ -58,7 +58,7 @@ function initApp() {
 
         // Убеждаемся, что GameInterface инициализирован
         if (typeof GameInterface === 'undefined') {
-            console.warn('GameInterface не определен, ожидаем загрузку DOM');
+            
             document.addEventListener('DOMContentLoaded', () => {
 
                 loadGameData();
@@ -79,7 +79,7 @@ function initApp() {
  * Обработка отсутствия Telegram WebApp API
  */
 function handleNoTelegramApi() {
-    console.warn('Запуск в режиме тестирования - Telegram WebApp API недоступен');
+    
     GameData.isTestMode = true;
 
     // Создаем тестовую заглушку для Telegram WebApp API если её ещё нет
@@ -377,7 +377,7 @@ function timeExpired() {
         GameData.timer = null;
 
     } else {
-        console.warn('Таймер не был найден для остановки в timeExpired');
+        
     }
 
     // Если ответ уже был выбран, пропускаем обработку истечения времени
@@ -475,7 +475,7 @@ function selectAnswer(mistakeId) {
         GameData.timer = null;
 
     } else {
-        console.warn('Таймер не был найден для остановки. GameData.secondsLeft =', GameData.secondsLeft);
+        
         // Пытаемся остановить все интервалы, которые могут быть связаны с таймером
         const highestIntervalId = setInterval(() => { }, 100000);
         for (let i = 0; i < highestIntervalId; i++) {
@@ -720,7 +720,7 @@ async function finishGame() {
                         // Показываем уведомления о новых достижениях
                         window.AchievementSystem.handleNewAchievements(data.data.newAchievements);
                     } else {
-                        console.warn('AchievementSystem не инициализирована');
+                        
                         // Fallback: показываем простое уведомление
                         data.data.newAchievements.forEach(achievement => {
                             if (window.Telegram?.WebApp?.showAlert) {
@@ -735,7 +735,7 @@ async function finishGame() {
                 console.error('Ошибка при сохранении результатов на сервере:', await response.text());
             }
         } else {
-            console.warn('Невозможно сохранить результаты игры - отсутствует токен авторизации');
+            
         }
     } catch (error) {
         console.error('❌ Ошибка при отправке результатов игры:', error);

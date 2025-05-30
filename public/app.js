@@ -919,7 +919,7 @@ function handleButtonClick(event) {
             if (feedbackType) provideFeedback(feedbackType);
             break;
         default:
-            console.warn('Неизвестное действие:', action);
+            
     }
 }
 
@@ -1040,16 +1040,31 @@ GameState.updateUI = function () {
         const storyContent = document.getElementById('story-content');
         let content = this.data.currentStory.content || '';
 
-        // Проверяем, содержит ли контент уже HTML-разметку
+        // БЕЗОПАСНОЕ обновление контента без innerHTML
         if (!content.includes('<span class="highlighted-text">')) {
-            // Заменяем ключевые фразы с выделением
-            content = content
-                .replace(/скрытую камеру над сейфом/gi, '<span class="highlighted-text">скрытую камеру над сейфом</span>')
-                .replace(/без перчаток/gi, '<span class="highlighted-text">без перчаток</span>')
-                .replace(/раковиной в подсобке/gi, '<span class="highlighted-text">раковиной в подсобке</span>');
-        }
+            // Создаем безопасную разметку с выделением
+            const fragments = content.split(/(\скрытую камеру над сейфом|\без перчаток|\раковиной в подсобке)/gi);
 
-        storyContent.innerHTML = content;
+            // Очищаем контейнер безопасно
+            while (storyContent.firstChild) {
+                storyContent.removeChild(storyContent.firstChild);
+            }
+
+            fragments.forEach(fragment => {
+                if (fragment.match(/скрытую камеру над сейфом|без перчаток|раковиной в подсобке/gi)) {
+                    const span = document.createElement('span');
+                    span.className = 'highlighted-text';
+                    span.textContent = fragment;
+                    storyContent.appendChild(span);
+                } else if (fragment) {
+                    const textNode = document.createTextNode(fragment);
+                    storyContent.appendChild(textNode);
+                }
+            });
+        } else {
+            // Если контент уже содержит разметку, безопасно отображаем только текст
+            storyContent.textContent = content.replace(/<[^>]*>/g, '');
+        }
 
         // Обновляем метаданные истории
         if (document.getElementById('story-date')) {
@@ -1091,7 +1106,9 @@ GameState.updateAnswers = function () {
     if (!container || !this.data.currentStory || !this.data.currentStory.mistakes) return;
 
     // Очищаем контейнер
-    container.innerHTML = '';
+    while (container.firstChild) {
+        container.removeChild(container.firstChild);
+    }
 
     // Добавляем варианты ответов
     const letters = ['A', 'B', 'C', 'D'];

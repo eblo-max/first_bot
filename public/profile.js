@@ -110,7 +110,7 @@ const ProfileManager = {
      */
     async checkAuthentication() {
         try {
-            
+
             console.log('📊 Состояние localStorage до проверки:', Object.keys(localStorage));
 
             // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ТОЛЬКО ГОСТЕВЫХ ТОКЕНОВ И ДАННЫХ (НЕ ВСЕХ!)
@@ -119,14 +119,14 @@ const ProfileManager = {
                 const key = localStorage.key(i);
                 if (key && (key.includes('guest_') || key.includes('test_token'))) {
                     localStorage.removeItem(key);
-                    
+
                 }
             }
 
             // Проверяем существующие токены на гостевые данные
             const existingToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
             if (existingToken && (existingToken.includes('guest_') || existingToken.includes('test_'))) {
-                
+
                 localStorage.removeItem('token');
                 localStorage.removeItem('auth_token');
                 this.state.token = null;
@@ -145,16 +145,16 @@ const ProfileManager = {
 
             // Если есть данные из URL, используем их
             if (tokenFromUrl && initDataFromUrl) {
-                
+
                 localStorage.setItem('token', tokenFromUrl);
                 localStorage.setItem('auth_token', tokenFromUrl);
                 localStorage.setItem('initData', initDataFromUrl);
                 this.state.token = tokenFromUrl;
                 this.state.isAuthenticated = true;
-                
+
                 return;
             } else if (tokenFromUrl || initDataFromUrl) {
-                console.warn('⚠️ Получены неполные данные из URL:', { tokenFromUrl: !!tokenFromUrl, initDataFromUrl: !!initDataFromUrl });
+
             }
 
             // Получаем сохраненный токен
@@ -163,7 +163,7 @@ const ProfileManager = {
 
             if (token) {
                 // Проверяем валидность токена на сервере
-                
+
                 const response = await fetch('/api/auth/verify', {
                     method: 'GET',
                     headers: {
@@ -174,13 +174,13 @@ const ProfileManager = {
 
                 if (response.ok) {
                     const data = await response.json();
-                    
+
                     this.state.token = token;
                     this.state.isAuthenticated = true;
                     return;
                 } else {
                     // Токен недействителен
-                    console.warn('❌ Токен недействителен:', response.status);
+
                     localStorage.removeItem('token');
                     localStorage.removeItem('auth_token');
                     this.state.token = null;
@@ -193,7 +193,7 @@ const ProfileManager = {
             console.log('📱 Проверяем данные Telegram WebApp:', telegramInitData ? `${telegramInitData.substring(0, 50)}...` : 'НЕТ');
 
             if (telegramInitData && telegramInitData.includes('user=')) {
-                
+
                 await this.authenticateTelegram();
                 return;
             }
@@ -410,7 +410,7 @@ const ProfileManager = {
         return false;
 
         // Режим для тестирования можно включить через URL параметр
-        // return window.location.search.includes('debug_mode=true');
+
     },
 
     /**
@@ -487,16 +487,54 @@ const ProfileManager = {
         if (appContainer) {
             const errorMessage = document.createElement('div');
             errorMessage.className = 'auth-error';
-            errorMessage.innerHTML = `
-                <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                <h3>Ошибка подключения</h3>
-                <p>${message}</p>
-                <button class="retry-button">Повторить</button>
-            `;
+
+            // Безопасное создание SVG иконки
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'error-icon');
+            svg.setAttribute('viewBox', '0 0 24 24');
+            svg.setAttribute('fill', 'none');
+            svg.setAttribute('stroke', 'currentColor');
+            svg.setAttribute('stroke-width', '2');
+
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', '12');
+            circle.setAttribute('cy', '12');
+            circle.setAttribute('r', '10');
+
+            const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line1.setAttribute('x1', '12');
+            line1.setAttribute('y1', '8');
+            line1.setAttribute('x2', '12');
+            line1.setAttribute('y2', '12');
+
+            const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line2.setAttribute('x1', '12');
+            line2.setAttribute('y1', '16');
+            line2.setAttribute('x2', '12.01');
+            line2.setAttribute('y2', '16');
+
+            svg.appendChild(circle);
+            svg.appendChild(line1);
+            svg.appendChild(line2);
+
+            // Создаем заголовок
+            const h3 = document.createElement('h3');
+            h3.textContent = 'Ошибка подключения';
+
+            // Создаем параграф с сообщением
+            const p = document.createElement('p');
+            p.textContent = message;
+
+            // Создаем кнопку
+            const button = document.createElement('button');
+            button.className = 'retry-button';
+            button.textContent = 'Повторить';
+
+            // Добавляем все элементы в контейнер
+            errorMessage.appendChild(svg);
+            errorMessage.appendChild(h3);
+            errorMessage.appendChild(p);
+            errorMessage.appendChild(button);
 
             // Добавляем стили для сообщения
             if (!document.querySelector('.auth-error-styles')) {
@@ -547,7 +585,9 @@ const ProfileManager = {
             }
 
             // Очищаем контейнер и добавляем сообщение
-            appContainer.innerHTML = '';
+            while (appContainer.firstChild) {
+                appContainer.removeChild(appContainer.firstChild);
+            }
             appContainer.appendChild(errorMessage);
 
             // Добавляем обработчик для кнопки повтора
@@ -850,7 +890,7 @@ const ProfileManager = {
 
             if (!response.ok) {
                 if (response.status === 401 || response.status === 403) {
-                    console.warn('Ошибка авторизации при загрузке лидерборда');
+
                     // Не сбрасываем токен здесь, так как это некритичная ошибка
                 }
                 throw new Error(`Ошибка загрузки таблицы лидеров: ${response.status} ${response.statusText}`);
@@ -969,6 +1009,9 @@ const ProfileManager = {
             this.elements.profileId.textContent = data.telegramId || '-';
         }
 
+        // Загружаем аватар пользователя
+        this.loadUserAvatar();
+
         // Обновляем статистику (обеспечиваем корректное отображение нулевых значений)
         if (this.elements.investigationsCount) {
             this.elements.investigationsCount.textContent = data.stats?.investigations !== undefined ?
@@ -1008,6 +1051,107 @@ const ProfileManager = {
     },
 
     /**
+     * Загрузка аватара пользователя из Telegram
+     */
+    async loadUserAvatar() {
+        const avatarImage = document.getElementById('avatar-image');
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+        const avatarLoading = document.getElementById('avatar-loading');
+
+        if (!avatarImage || !avatarPlaceholder || !avatarLoading) {
+            
+            return;
+        }
+
+        try {
+            // Показываем загрузку
+            avatarLoading.style.display = 'block';
+            avatarPlaceholder.style.opacity = '0.3';
+
+            // Получаем токен
+            const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+            if (!token) {
+                throw new Error('Токен авторизации отсутствует');
+            }
+
+            // Запрашиваем аватар с сервера
+            const response = await fetch('/api/user/avatar', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка сервера: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.status === 'success' && data.data.hasAvatar && data.data.avatarUrl) {
+                // Загружаем изображение
+                const img = new Image();
+
+                img.onload = () => {
+                    // Успешно загружено - показываем аватар
+                    avatarImage.src = data.data.avatarUrl;
+                    avatarImage.style.display = 'block';
+                    avatarPlaceholder.style.display = 'none';
+                    avatarLoading.style.display = 'none';
+
+                    // Добавляем плавное появление
+                    avatarImage.style.opacity = '0';
+                    setTimeout(() => {
+                        avatarImage.style.transition = 'opacity 0.3s ease';
+                        avatarImage.style.opacity = '1';
+                    }, 50);
+                };
+
+                img.onerror = () => {
+                    // Ошибка загрузки изображения
+                    
+                    this.showAvatarPlaceholder();
+                };
+
+                // Начинаем загрузку изображения
+                img.src = data.data.avatarUrl;
+
+            } else {
+                // У пользователя нет аватара
+                
+                this.showAvatarPlaceholder();
+            }
+
+        } catch (error) {
+            console.error('Ошибка при загрузке аватара:', error);
+            this.showAvatarPlaceholder();
+        }
+    },
+
+    /**
+     * Показывает плейсхолдер аватара
+     */
+    showAvatarPlaceholder() {
+        const avatarImage = document.getElementById('avatar-image');
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+        const avatarLoading = document.getElementById('avatar-loading');
+
+        if (avatarImage) {
+            avatarImage.style.display = 'none';
+        }
+
+        if (avatarPlaceholder) {
+            avatarPlaceholder.style.display = 'block';
+            avatarPlaceholder.style.opacity = '1';
+        }
+
+        if (avatarLoading) {
+            avatarLoading.style.display = 'none';
+        }
+    },
+
+    /**
      * Обновление интерфейса достижений
      * @param {Array} achievements - Массив достижений пользователя
      */
@@ -1031,7 +1175,7 @@ const ProfileManager = {
 
                 window.AchievementSystem.updateUserStats(userStats);
             } else {
-                console.warn('Статистика профиля отсутствует, передаем нулевые значения');
+
                 window.AchievementSystem.updateUserStats({
                     investigations: 0,
                     accuracy: 0,
@@ -1179,43 +1323,6 @@ const ProfileManager = {
         container.appendChild(instruction);
 
         // Добавляем отладочную информацию
-        const debugInfo = document.createElement('details');
-        debugInfo.style.marginTop = '20px';
-        debugInfo.style.width = '80%';
-        debugInfo.style.textAlign = 'left';
-        debugInfo.style.fontSize = '12px';
-        debugInfo.style.fontFamily = 'monospace';
-        debugInfo.style.border = '1px solid #444';
-        debugInfo.style.padding = '10px';
-        debugInfo.style.borderRadius = '5px';
-
-        const summary = document.createElement('summary');
-        summary.textContent = 'Информация для отладки';
-        summary.style.cursor = 'pointer';
-        summary.style.color = '#888';
-        summary.style.paddingBottom = '10px';
-        debugInfo.appendChild(summary);
-
-        const debugText = document.createElement('pre');
-        debugText.style.whiteSpace = 'pre-wrap';
-        debugText.style.wordBreak = 'break-all';
-        debugText.style.color = '#888';
-        debugText.style.maxHeight = '200px';
-        debugText.style.overflow = 'auto';
-        debugText.style.fontSize = '10px';
-        debugText.innerHTML = JSON.stringify({
-            "userAgent": navigator.userAgent,
-            "platform": navigator.platform,
-            "webAppExists": !!window.Telegram?.WebApp,
-            "url": window.location.href,
-            "referrer": document.referrer,
-            "timestamp": new Date().toISOString(),
-            "inIframe": window.self !== window.top
-        }, null, 2);
-
-        debugInfo.appendChild(debugText);
-        container.appendChild(debugInfo);
-
         // Добавляем кнопку для открытия в Telegram
         const button = document.createElement('button');
         button.textContent = 'Открыть в Telegram';

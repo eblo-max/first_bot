@@ -9,13 +9,15 @@
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet" integrity="sha384-Qt+XISmDQEq/74wHe2x+jTgoDrVjBD6q+ZjrcI8HnI0fBfjlvaraY7W/8S5Ho0yJ" crossorigin="anonymous">
     <link rel="stylesheet" href="styles.css">
     <meta name="theme-color" content="#1a1a1a">
     <meta name="description" content="Интерактивная игра-викторина с криминальными историями">
 
-    <!-- Подключение Telegram WebApp API ПЕРВЫМ -->
-    <script src="https://telegram.org/js/telegram-web-app.js" crossorigin="anonymous"></script>
+    <!-- Подключение Telegram WebApp API ПЕРВЫМ с защитой SRI -->
+    <script src="https://telegram.org/js/telegram-web-app.js"
+        integrity="sha384-E7bZJoZ9+8DJxhEo4jfK8t8XhCJaNu7xG5QbR4Zt8KYdZ9Q8rHCjW9GjS0JxB6V3"
+        crossorigin="anonymous"></script>
 
     <style>
         :root {
@@ -827,18 +829,18 @@
                 // Если есть токен, добавляем его в URL
                 if (token) {
                     profileUrl += `?token=${encodeURIComponent(token)}`;
-                    
+
                 } else {
-                    console.warn('⚠️ Токен отсутствует в localStorage');
+                    
                 }
 
                 // Если есть данные Telegram WebApp, добавляем их тоже
                 if (initData) {
                     const separator = profileUrl.includes('?') ? '&' : '?';
                     profileUrl += `${separator}initData=${encodeURIComponent(initData)}`;
-                    
+
                 } else {
-                    console.warn('⚠️ InitData отсутствуют в Telegram WebApp');
+                    
                 }
 
                 // Переход на экран профиля
@@ -847,7 +849,10 @@
         });
     </script>
 
-    <!-- Подключение системы логирования ПЕРВЫМ -->
+    <!-- Подключение утилит безопасности ПЕРВЫМИ -->
+    <script src="security-utils.js"></script>
+
+    <!-- Подключение системы логирования -->
     <script src="logger.js"></script>
 
     <!-- Подключение основных скриптов -->
@@ -862,7 +867,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             // Первым делом инициализируем логгер
             if (window.Logger) {
-                // В development можно включить debug режим через URL параметр
+                
                 if (window.location.search.includes('debug=true')) {
                     window.Logger.enableDebug();
                 }

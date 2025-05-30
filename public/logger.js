@@ -34,7 +34,7 @@ class Logger {
             window.location.hostname.includes('criminal-bluff') ||
             // HTTPS в production
             (window.location.protocol === 'https:' && !window.location.hostname.includes('localhost')) ||
-            // Отсутствие debug параметров
+            
             (!window.location.search.includes('debug=true') && !window.location.search.includes('test=true'));
 
         return isProduction ? 'production' : 'development';
@@ -174,7 +174,7 @@ class Logger {
             if (this.originalConsole?.warn) {
                 this.originalConsole.warn('🟡 [WARN]', ...filteredArgs);
             } else {
-                console.warn('🟡 [WARN]', ...filteredArgs);
+                
             }
         }
     }
@@ -185,7 +185,7 @@ class Logger {
             if (this.originalConsole?.info) {
                 this.originalConsole.info('🔵 [INFO]', ...filteredArgs);
             } else {
-                console.info('🔵 [INFO]', ...filteredArgs);
+                
             }
         }
     }

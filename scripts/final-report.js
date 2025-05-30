@@ -31,7 +31,7 @@ async function generateFinalReport() {
             critical: 0,
             high: 317,  // в основном XSS vectors и dangerous functions в минифицированном коде
             medium: 99, // missing integrity, unsafe URLs
-            low: 1581,  // остаточная debug информация в logger и тестах
+            low: 1581,  
             status: "Критичных проблем нет, высокие проблемы - ложные срабатывания"
         },
         scriptsAdded: [

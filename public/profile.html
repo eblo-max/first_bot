@@ -260,17 +260,39 @@
             position: relative;
             border: 3px solid var(--dried-blood);
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .avatar::before {
-            content: '';
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .avatar .avatar-placeholder {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 20C37.5 20 30 30 30 42.5C30 55 37.5 65 50 65C62.5 65 70 55 70 42.5C70 30 62.5 20 50 20ZM50 30C56.875 30 60 35.625 60 42.5C60 49.375 56.875 55 50 55C43.125 55 40 49.375 40 42.5C40 35.625 43.125 30 50 30Z' fill='%23D4AF37' fill-opacity='0.2'/%3E%3Cpath d='M28 70C28 70 38 90 50 90C62 90 72 70 72 70' stroke='%23D4AF37' stroke-opacity='0.2' stroke-width='2'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 20C37.5 20 30 30 30 42.5C30 55 37.5 65 50 65C62.5 65 70 55 70 42.5C70 30 62.5 20 50 20ZM50 30C56.875 30 60 35.625 60 42.5C60 49.375 56.875 55 50 55C43.125 55 40 49.375 40 42.5C40 35.625 43.125 30 50 30Z' fill='%23D4AF37' fill-opacity='0.3'/%3E%3Cpath d='M28 70C28 70 38 90 50 90C62 90 72 70 72 70' stroke='%23D4AF37' stroke-opacity='0.3' stroke-width='2'/%3E%3C/svg%3E");
             opacity: 0.6;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .avatar .avatar-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--crime-scene-yellow);
+            font-size: 10px;
+            opacity: 0.7;
         }
 
         .avatar::after {
@@ -1067,7 +1089,10 @@
         </div>
 
         <section class="profile-header">
-            <div class="avatar">
+            <div class="avatar" id="user-avatar">
+                <img id="avatar-image" style="display: none;" alt="Аватар пользователя">
+                <div class="avatar-placeholder" id="avatar-placeholder"></div>
+                <div class="avatar-loading" id="avatar-loading" style="display: none;">Загрузка...</div>
                 <div class="badge-decor top-left"></div>
                 <div class="badge-decor top-right"></div>
                 <div class="badge-decor bottom-left"></div>

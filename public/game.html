@@ -6,8 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Криминальный Блеф - Игровой процесс</title>
 
-    <!-- Подключение Telegram WebApp API -->
-    <script src="https://telegram.org/js/telegram-web-app.js" crossorigin="anonymous"></script>
+    <!-- Telegram WebApp API с защитой SRI -->
+    <script src="https://telegram.org/js/telegram-web-app.js"
+        integrity="sha384-E7bZJoZ9+8DJxhEo4jfK8t8XhCJaNu7xG5QbR4Zt8KYdZ9Q8rHCjW9GjS0JxB6V3"
+        crossorigin="anonymous"></script>
 
     <!-- Инициализация объекта TG и проверка наличия Telegram WebApp API -->
     <script>
@@ -1339,23 +1341,16 @@
         document.addEventListener('DOMContentLoaded', function () {
             // Функция для загрузки аватарки пользователя
             function loadUserAvatar() {
-                console.log('=== ЗАГРУЗКА АВАТАРКИ ===');
+                
                 try {
-                    console.log('Telegram объект:', window.Telegram);
-                    console.log('WebApp объект:', window.Telegram?.WebApp);
-                    console.log('initDataUnsafe:', window.Telegram?.WebApp?.initDataUnsafe);
 
                     const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
-                    console.log('Данные пользователя:', user);
-
+                    
                     const avatarImg = document.getElementById('user-avatar');
                     const profileIcon = document.getElementById('profile-icon');
 
-                    console.log('Элемент аватарки:', avatarImg);
-                    console.log('Элемент иконки:', profileIcon);
-
                     if (!avatarImg || !profileIcon) {
-                        console.log('Не найдены элементы DOM для аватарки или иконки');
+                        
                         return;
                     }
 
@@ -1368,18 +1363,17 @@
 
                     // Функция для показа аватарки
                     function showAvatar(photoUrl) {
-                        console.log('Пытаюсь загрузить аватарку:', photoUrl);
-
+                        
                         // Обработчик успешной загрузки
                         avatarImg.onload = function () {
-                            console.log('✅ Аватарка успешно загружена!');
+                            
                             avatarImg.style.display = 'block';
                             profileIcon.style.display = 'none';
                         };
 
                         // Обработчик ошибки загрузки изображения
                         avatarImg.onerror = function () {
-                            console.log('❌ Ошибка загрузки аватарки, возвращаюсь к иконке');
+                            
                             showIcon();
                         };
 
@@ -1389,34 +1383,32 @@
                         // Тестируем загрузку через 3 секунды
                         setTimeout(() => {
                             if (avatarImg.style.display === 'none') {
-                                console.log('⚠️ Аватарка не загрузилась за 3 секунды, показываю иконку');
+                                
                                 showIcon();
                             }
                         }, 3000);
                     }
 
                     if (user) {
-                        console.log('photo_url пользователя:', user.photo_url);
-
+                        
                         if (user.photo_url) {
                             showAvatar(user.photo_url);
                         } else {
-                            console.log('У пользователя нет photo_url');
+                            
                             showIcon();
                         }
                     } else {
-                        console.log('Данные пользователя не найдены');
+                        
                         // Попробуем альтернативные источники для тестирования
                         const testAvatars = [
                             'https://avatars.githubusercontent.com/u/1?v=4',
                             'https://via.placeholder.com/64x64/d32f2f/ffffff?text=T'
                         ];
 
-                        console.log('Пробую тестовую аватарку:', testAvatars[0]);
                         showAvatar(testAvatars[0]);
                     }
                 } catch (error) {
-                    console.log('Ошибка при загрузке аватарки:', error);
+                    
                     // В случае ошибки показываем иконку
                     const avatarImg = document.getElementById('user-avatar');
                     const profileIcon = document.getElementById('profile-icon');

@@ -1,30 +1,6 @@
 {
-  "generated": "2025-05-29T15:12:01.085Z",
-  "description": "SRI (Subresource Integrity) хеши для внешних ресурсов",
-  "resources": [
-    {
-      "url": "https://telegram.org/js/telegram-web-app.js",
-      "type": "script",
-      "description": "Telegram WebApp API",
-      "size": 113893,
-      "integrity": "sha384-Lm7i9uT8/pqn4JKjI1kdOJv4RU6p8FMPxdumm3YYmORxhghx/gjzrP92+r72Gm6G",
-      "allHashes": {
-        "sha256": "sha256-iaV0gkIVB1tTknMPBNKvo/732JkjEd61/z6hl19+470=",
-        "sha384": "sha384-Lm7i9uT8/pqn4JKjI1kdOJv4RU6p8FMPxdumm3YYmORxhghx/gjzrP92+r72Gm6G",
-        "sha512": "sha512-OWn/xaI071J+jhYx9eWOanGJoUs7j8VMpL+dJg8HgdY4BGqM+4+eUmBLQ68UaGT2m7Zg4jQswoc7Rcn2kedrpw=="
-      }
-    },
-    {
-      "url": "https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap",
-      "type": "stylesheet",
-      "description": "Google Fonts - Roboto Condensed",
-      "size": 494,
-      "integrity": "sha384-RSqguqSlWAa0Upp3DHatD4t0xAlgSlqSJtKDEIZgVmSvH5WdDtVJxMySyntSCCE9",
-      "allHashes": {
-        "sha256": "sha256-VYt2X5apzeDf0Bx3KQhD57l6nvoPF+5+wZK+UaD4Gqc=",
-        "sha384": "sha384-RSqguqSlWAa0Upp3DHatD4t0xAlgSlqSJtKDEIZgVmSvH5WdDtVJxMySyntSCCE9",
-        "sha512": "sha512-bWz0JnyuQvniRtLESm+3TYB7KQox+L8f9+gBIQ32SlEtfLFz95iRMBp4D2Uc6H/eoqgXnpDt2g17OABDKHayKg=="
-      }
-    }
-  ]
+  "generated": "2025-05-30T09:19:42.455Z",
+  "hashes": {
+    "https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap": "sha384-Qt+XISmDQEq/74wHe2x+jTgoDrVjBD6q+ZjrcI8HnI0fBfjlvaraY7W/8S5Ho0yJ"
+  }
 }

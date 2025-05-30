@@ -949,7 +949,7 @@ class AchievementSystem {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.soundEnabled = true;
         } catch (error) {
-            console.warn('Web Audio API не поддерживается:', error);
+            
             this.soundEnabled = false;
         }
     }
@@ -1000,13 +1000,13 @@ class AchievementSystem {
     getAchievementProgress(achievementId) {
 
         if (!this.userStats) {
-            console.warn('⚠️ Статистика пользователя отсутствует');
+            
             return { current: 0, required: 1, percentage: 0 };
         }
 
         const config = this.achievementConfig[achievementId];
         if (!config) {
-            console.warn(`⚠️ Конфигурация для достижения ${achievementId} не найдена`);
+            
             return { current: 0, required: 1, percentage: 0 };
         }
 
@@ -1066,7 +1066,7 @@ class AchievementSystem {
     showAchievementNotification(achievement) {
         const config = this.achievementConfig[achievement.id];
         if (!config) {
-            console.warn('Неизвестное достижение:', achievement.id);
+            
             return;
         }
 

@@ -21,14 +21,16 @@ class DebugCleaner {
                     /console\.trace\s*\([^)]*\)\s*;?\s*$/gm,
                     /console\.table\s*\([^)]*\)\s*;?\s*$/gm
                 ],
-                // Комментируем (для возможного восстановления)
+                // Комментируем (для возможного восстановления) только критичные
                 comment: [
-                    /console\.warn\s*\([^)]*\)\s*;?\s*$/gm,
                     /console\.error\s*\([^)]*\)\s*;?\s*$/gm
+                ],
+                // Полностью удаляем warn в production
+                removeWarn: [
+                    /console\.warn\s*\([^)]*\)\s*;?\s*$/gm
                 ]
             },
 
-            // Debugger statements
             debugger: [
                 /debugger\s*;?\s*$/gm
             ],
@@ -40,37 +42,50 @@ class DebugCleaner {
                 /prompt\s*\([^)]*\)\s*;?\s*$/gm
             ],
 
-            // Comments с debug информацией
+            debugVariables: [
+                
+                /const\s+debugInfo\s*=\s*document\.createElement\('details'\);[\s\S]*?container\.appendChild\(debugInfo\)\s*;?\s*/gm,
+                /let\s+debugInfo\s*=[\s\S]*?container\.appendChild\(debugInfo\)\s*;?\s*$/gm,
+                /var\s+debugInfo\s*=[\s\S]*?container\.appendChild\(debugInfo\)\s*;?\s*$/gm,
+                
+                /<details[^>]*debug[^>]*>[\s\S]*?<\/details>/gim,
+                // Временные переменные
+                /let\s+temp\w*\s*=.*?;?\s*$/gm,
+                /var\s+temp\w*\s*=.*?;?\s*$/gm,
+                /const\s+temp\w*\s*=.*?;?\s*$/gm,
+                
+                /debugText[\s\S]*?JSON\.stringify/gm
+            ],
+
             debugComments: [
                 /\/\/\s*TODO.*$/gm,
                 /\/\/\s*FIXME.*$/gm,
                 /\/\/\s*DEBUG.*$/gm,
                 /\/\/\s*TEST.*$/gm,
                 /\/\*\s*DEBUG[\s\S]*?\*\//gm,
-                /\/\*\s*TODO[\s\S]*?\*\//gm
-            ],
-
-            // Временные переменные
-            tempVars: [
-                /let\s+temp\w*\s*=.*?;?\s*$/gm,
-                /var\s+temp\w*\s*=.*?;?\s*$/gm,
-                /const\s+temp\w*\s*=.*?;?\s*$/gm
+                /\/\*\s*TODO[\s\S]*?\*\//gm,
+                /\/\/.*console.*debug/gi,
+                /\/\/.*отладка/gi,
+                /\/\/.*debug.*/gi
             ]
         };
 
         this.preservePatterns = [
             // Сохраняем логирование в logger системе
-            /logger\./,
+            /Logger\./,
+            /window\.Logger/,
+            // Сохраняем важное логирование ошибок
             /error\(/,
-            /warn\(/,
-            /info\(/,
-            /debug\(/,
+            /Error\(/,
             // Сохраняем в тестах
             /test.*console/,
             /expect.*console/,
             // Сохраняем в комментариях с объяснениями
             /\/\/.*console.*production/i,
-            /\/\*.*console.*production.*\*\//i
+            /\/\*.*console.*production.*\*\//i,
+            // Сохраняем production логирование
+            /production.*console/i,
+            /error.*console/i
         ];
     }
 
@@ -82,13 +97,46 @@ class DebugCleaner {
     }
 
     /**
+     * Удаляет debugInfo блоки из JavaScript
+     */
+    removeDebugInfoBlocks(content) {
+        let cleaned = content;
+        let statements = 0;
+
+        const debugInfoPattern = /const\s+debugInfo\s*=\s*document\.createElement\('details'\);[\s\S]*?container\.appendChild\(debugInfo\)\s*;?\s*/gm;
+        const matches = cleaned.match(debugInfoPattern) || [];
+        if (matches.length > 0) {
+            statements += matches.length;
+            cleaned = cleaned.replace(debugInfoPattern, '');
+        }
+
+        const debugInfoOps = [
+            /debugInfo\.style\.[^;]*;?\s*$/gm,
+            /debugInfo\.appendChild\([^)]*\)\s*;?\s*$/gm,
+            /debugInfo\.textContent\s*=[\s\S]*?;?\s*$/gm
+        ];
+
+        debugInfoOps.forEach(pattern => {
+            const lineMatches = cleaned.match(pattern) || [];
+            statements += lineMatches.length;
+            cleaned = cleaned.replace(pattern, '');
+        });
+
+        return { content: cleaned, statements };
+    }
+
+    /**
      * Очищает JavaScript файл
      */
     cleanJavaScriptFile(content) {
         let cleaned = content;
         let statements = 0;
 
-        // Удаляем console statements (кроме error/warn в production коде)
+        const debugInfoResult = this.removeDebugInfoBlocks(cleaned);
+        cleaned = debugInfoResult.content;
+        statements += debugInfoResult.statements;
+
+        // Удаляем console statements (кроме критичных ошибок)
         this.patterns.console.remove.forEach(pattern => {
             const matches = cleaned.match(pattern) || [];
             matches.forEach(match => {
@@ -99,18 +147,28 @@ class DebugCleaner {
             });
         });
 
-        // Комментируем важные console statements
+        // Удаляем console.warn в production
+        this.patterns.console.removeWarn.forEach(pattern => {
+            const matches = cleaned.match(pattern) || [];
+            matches.forEach(match => {
+                if (!this.shouldPreserve(match)) {
+                    cleaned = cleaned.replace(pattern, '');
+                    statements++;
+                }
+            });
+        });
+
+        // Комментируем только критичные console.error
         this.patterns.console.comment.forEach(pattern => {
             cleaned = cleaned.replace(pattern, (match) => {
                 if (!this.shouldPreserve(match)) {
                     statements++;
-                    return `// ${match} // Закомментировано при очистке debug`;
+                    return `// ${match} // Закомментировано в production`;
                 }
                 return match;
             });
         });
 
-        // Удаляем debugger statements
         this.patterns.debugger.forEach(pattern => {
             const matches = cleaned.match(pattern) || [];
             statements += matches.length;
@@ -124,15 +182,13 @@ class DebugCleaner {
             cleaned = cleaned.replace(pattern, '');
         });
 
-        // Удаляем debug комментарии
-        this.patterns.debugComments.forEach(pattern => {
+        this.patterns.debugVariables.forEach(pattern => {
             const matches = cleaned.match(pattern) || [];
             statements += matches.length;
             cleaned = cleaned.replace(pattern, '');
         });
 
-        // Удаляем временные переменные
-        this.patterns.tempVars.forEach(pattern => {
+        this.patterns.debugComments.forEach(pattern => {
             const matches = cleaned.match(pattern) || [];
             statements += matches.length;
             cleaned = cleaned.replace(pattern, '');
@@ -140,6 +196,7 @@ class DebugCleaner {
 
         // Убираем лишние пустые строки
         cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n');
+        cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
 
         return { content: cleaned, statements };
     }
@@ -151,7 +208,6 @@ class DebugCleaner {
         let cleaned = content;
         let statements = 0;
 
-        // Удаляем script блоки с debug кодом
         const scriptPattern = /<script[^>]*>[\s\S]*?<\/script>/gi;
         cleaned = cleaned.replace(scriptPattern, (match) => {
             const result = this.cleanJavaScriptFile(match);
@@ -159,7 +215,6 @@ class DebugCleaner {
             return result.content;
         });
 
-        // Удаляем debug комментарии из HTML
         const htmlDebugComments = [
             /<!--\s*DEBUG[\s\S]*?-->/gm,
             /<!--\s*TODO[\s\S]*?-->/gm,
@@ -192,7 +247,7 @@ class DebugCleaner {
                     result = this.cleanHTMLFile(content);
                     break;
                 case '.css':
-                    // Для CSS только удаляем комментарии с debug
+                    
                     let cleaned = content.replace(/\/\*\s*DEBUG[\s\S]*?\*\//gm, '');
                     cleaned = cleaned.replace(/\/\*\s*TODO[\s\S]*?\*\//gm, '');
                     result = {
@@ -216,7 +271,7 @@ class DebugCleaner {
             return { processed: true, statements: result.statements };
 
         } catch (error) {
-            console.warn(`⚠️ Ошибка обработки ${filePath}:`, error.message);
+            
             return { processed: false, statements: 0 };
         }
     }
@@ -245,7 +300,7 @@ class DebugCleaner {
                 }
             }
         } catch (error) {
-            console.warn(`⚠️ Ошибка сканирования ${dirPath}:`, error.message);
+            
         }
     }
 
@@ -273,14 +328,14 @@ class DebugCleaner {
                 try {
                     await this.copyDirectory(sourcePath, targetPath);
                 } catch (error) {
-                    console.warn(`⚠️ Не удалось создать backup для ${dir}:`, error.message);
+                    
                 }
             }
 
             return specificBackupDir;
 
         } catch (error) {
-            console.warn('⚠️ Не удалось создать backup:', error.message);
+            
             return null;
         }
     }
@@ -319,26 +374,26 @@ class DebugCleaner {
         try {
             // Создаем backup если нужно
             if (createBackup) {
-                
+
                 await this.createBackup();
-                
+
             }
 
             // Сканируем и очищаем файлы
-            
+
             await this.scanDirectory(process.cwd(), excludeDirs);
 
             const endTime = Date.now();
             const duration = ((endTime - startTime) / 1000).toFixed(2);
 
             // Выводим результаты
-            
+
             console.log('═'.repeat(50));
 
             if (this.cleanedStatements > 0) {
 
             } else {
-                
+
             }
 
         } catch (error) {

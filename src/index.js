@@ -255,7 +255,7 @@ const startServer = async () => {
             isConnected = true;
             break; // Выходим из цикла, так как подключение успешно
         } catch (error) {
-            console.warn(`Не удалось подключиться к MongoDB по адресу ${uri}:`, error.message);
+            
         }
     }
 

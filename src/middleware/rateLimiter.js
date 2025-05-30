@@ -22,7 +22,7 @@ const generalLimiter = rateLimit({
 
     // Кастомная обработка ошибок
     handler: (req, res) => {
-        console.warn(`Rate limit exceeded for IP: ${req.ip} on ${req.path}`);
+        
         res.status(429).json({
             error: 'Слишком много запросов',
             message: 'Превышен лимит запросов. Попробуйте позже.',
@@ -78,7 +78,7 @@ const gameLimiter = rateLimit({
     },
 
     handler: (req, res) => {
-        console.warn(`Game rate limit exceeded for IP: ${req.ip}`);
+        
         res.status(429).json({
             error: 'Превышена скорость игры',
             message: 'Слишком быстро! Сделайте перерыв на 10 минут.',

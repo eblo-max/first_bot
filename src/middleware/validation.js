@@ -12,10 +12,7 @@ const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
-        console.warn('Validation errors:', {
-            ip: req.ip,
-            path: req.path,
-            errors: errors.array()
+        
         });
 
         return res.status(400).json({

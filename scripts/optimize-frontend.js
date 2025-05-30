@@ -134,7 +134,7 @@ class FrontendOptimizer {
 
                 console.log(`✅ ${file}: ${originalSize} → ${optimizedSize} байт (${Math.round((1 - optimizedSize / originalSize) * 100)}% сжатие)`);
             } catch (error) {
-                console.warn(`⚠️ Ошибка минификации ${file}:`, error.message);
+                
             }
         }
     }
@@ -173,7 +173,7 @@ class FrontendOptimizer {
 
                 console.log(`✅ ${file}: ${originalSize} → ${optimizedSize} байт (${Math.round((1 - optimizedSize / originalSize) * 100)}% сжатие)`);
             } catch (error) {
-                console.warn(`⚠️ Ошибка минификации ${file}:`, error.message);
+                
             }
         }
     }
@@ -205,7 +205,7 @@ class FrontendOptimizer {
 
                 console.log(`✅ ${file}: ${originalSize} → ${optimizedSize} байт (${Math.round((1 - optimizedSize / originalSize) * 100)}% сжатие)`);
             } catch (error) {
-                console.warn(`⚠️ Ошибка минификации ${file}:`, error.message);
+                
             }
         }
     }
@@ -226,7 +226,7 @@ class FrontendOptimizer {
                 await fs.copyFile(inputPath, outputPath);
                 
             } catch (error) {
-                console.warn(`⚠️ Ошибка копирования ${file}:`, error.message);
+                
             }
         }
     }
