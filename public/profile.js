@@ -4,7 +4,7 @@
  */
 
 // Объект Telegram WebApp для доступа к API Telegram Mini Apps
-let tg = null;
+let tg = window.Telegram?.WebApp;
 
 /**
  * Вспомогательная функция для создания URL с параметрами авторизации
@@ -27,58 +27,78 @@ function createAuthenticatedUrl(baseUrl) {
     return url;
 }
 
-/**
- * Объект для работы с профилем пользователя
- */
-const ProfileManager = {
-    /**
-     * Элементы интерфейса
-     */
-    elements: {
-        profileName: document.querySelector('.profile-name'),
-        profileBadge: document.querySelector('.profile-badge'),
-        profileId: document.querySelector('.profile-id span'),
-
-        // Статистика
-        investigationsCount: document.querySelector('.stat-card[data-tag="ОПЫТ"] .stat-value'),
-        solvedCases: document.querySelector('.stat-card[data-tag="УСПЕХ"] .stat-value'),
-        winStreak: document.querySelector('.stat-card[data-tag="СЕРИЯ"] .stat-value'),
-        accuracy: document.querySelector('.stat-card[data-tag="ТОЧНОСТЬ"] .stat-value'),
-
-        // Лидерборд
-        leaderboardRows: document.querySelectorAll('.leaderboard-row'),
-        leaderboardTabs: document.querySelectorAll('.tab-button'),
-
-        // Кнопки навигации
-        mainButton: document.querySelector('.nav-button:not(.primary)'),
-        newGameButton: document.querySelector('.nav-button.primary'),
-
-        // Достижения
-        achievements: document.querySelectorAll('.achievement')
-    },
-
-    /**
-     * Данные профиля
-     */
+// Состояние приложения
+const ProfileState = {
+    loading: false,
+    error: false,
+    errorMessage: '',
     profileData: null,
+    token: null,
+    isAuthenticated: false
+};
 
-    /**
-     * Состояние приложения
-     */
-    state: {
-        token: null,
-        isLoading: false,
-        currentLeaderboardPeriod: 'week',
-        isAuthenticated: false,
-        error: null
-    },
+// DOM элементы
+const Elements = {
+    loadingScreen: null,
+    mainContent: null,
+    errorScreen: null,
+    errorMessage: null,
 
-    /**
-     * Инициализация профиля
-     */
+    // Профиль
+    detectiveName: null,
+    detectiveRank: null,
+    reputationLevel: null,
+    reputationCategory: null,
+
+    // Статистика
+    statInvestigations: null,
+    statSolved: null,
+    statAccuracy: null,
+    statScore: null,
+
+    // Контейнеры
+    achievementsContainer: null,
+    leaderboardContainer: null
+};
+
+// Инициализация DOM элементов
+function initElements() {
+    Elements.loadingScreen = document.getElementById('loading-screen');
+    Elements.mainContent = document.getElementById('main-content');
+    Elements.errorScreen = document.getElementById('error-screen');
+    Elements.errorMessage = document.getElementById('error-message');
+
+    // Профиль
+    Elements.detectiveName = document.getElementById('detective-name');
+    Elements.detectiveRank = document.getElementById('detective-rank');
+    Elements.reputationLevel = document.getElementById('reputation-level');
+    Elements.reputationCategory = document.getElementById('reputation-category');
+
+    // Статистика
+    Elements.statInvestigations = document.getElementById('stat-investigations');
+    Elements.statSolved = document.getElementById('stat-solved');
+    Elements.statAccuracy = document.getElementById('stat-accuracy');
+    Elements.statScore = document.getElementById('stat-score');
+
+    // Контейнеры
+    Elements.achievementsContainer = document.getElementById('achievements-container');
+    Elements.leaderboardContainer = document.getElementById('leaderboard-container');
+}
+
+/**
+ * Основной класс профиля
+ */
+class ProfileManager {
+    constructor() {
+        this.init();
+    }
+
     async init() {
         try {
             console.log('🕵️ Инициализация профиля детектива...');
+
+            // Инициализируем элементы DOM
+            initElements();
 
             this.showLoading();
 
@@ -91,7 +111,7 @@ const ProfileManager = {
             // Проверяем аутентификацию
             await this.checkAuth();
 
-            if (this.state.isAuthenticated) {
+            if (ProfileState.isAuthenticated) {
                 // Загружаем данные профиля
                 await this.loadProfile();
                 await this.loadAchievements();
@@ -106,11 +126,8 @@ const ProfileManager = {
             console.error('❌ Ошибка инициализации:', error);
             this.showError('Ошибка загрузки: ' + error.message);
         }
-    },
+    }
 
-    /**
-     * Проверка аутентификации пользователя
-     */
     async checkAuth() {
         try {
             console.log('🔐 Проверка аутентификации...');
@@ -147,8 +164,8 @@ const ProfileManager = {
                 });
 
                 if (response.ok) {
-                    this.state.token = token;
-                    this.state.isAuthenticated = true;
+                    ProfileState.token = token;
+                    ProfileState.isAuthenticated = true;
                     console.log('✅ Аутентификация успешна');
                 } else {
                     console.log('❌ Токен недействителен');
@@ -158,20 +175,17 @@ const ProfileManager = {
 
         } catch (error) {
             console.error('❌ Ошибка аутентификации:', error);
-            this.state.isAuthenticated = false;
+            ProfileState.isAuthenticated = false;
         }
-    },
+    }
 
-    /**
-     * Загрузка данных профиля пользователя
-     */
     async loadProfile() {
         try {
             console.log('📊 Загрузка профиля...');
 
             const response = await fetch('/api/user/profile', {
                 headers: {
-                    'Authorization': `Bearer ${this.state.token}`
+                    'Authorization': `Bearer ${ProfileState.token}`
                 }
             });
 
@@ -180,7 +194,7 @@ const ProfileManager = {
             }
 
             const profileData = await response.json();
-            this.profileData = profileData;
+            ProfileState.profileData = profileData;
 
             console.log('✅ Профиль загружен:', profileData);
 
@@ -191,276 +205,54 @@ const ProfileManager = {
             console.error('❌ Ошибка загрузки профиля:', error);
             throw error;
         }
-    },
+    }
 
-    /**
-     * Обновление интерфейса профиля на основе данных
-     * @param {Object} data - Данные профиля
-     */
     updateProfileUI(data) {
-        if (!data) return;
-
-        // Обновляем информацию о профиле
-        if (this.elements.profileName) {
-            this.elements.profileName.textContent = data.basic?.firstName || data.username || 'Детектив';
+        // Основная информация
+        if (Elements.detectiveName) {
+            Elements.detectiveName.textContent = data.basic?.firstName || data.username || 'Детектив';
         }
 
-        if (this.elements.profileBadge) {
-            this.elements.profileBadge.textContent = data.rank?.current || 'НОВИЧОК';
+        if (Elements.detectiveRank) {
+            Elements.detectiveRank.textContent = data.rank?.current || 'НОВИЧОК';
         }
 
-        if (this.elements.profileId) {
-            this.elements.profileId.textContent = data.telegramId || '-';
+        // Репутация
+        if (Elements.reputationLevel) {
+            Elements.reputationLevel.textContent = data.reputation?.level || 0;
         }
 
-        // Загружаем аватар пользователя
-        this.loadUserAvatar();
-
-        // Обновляем статистику (обеспечиваем корректное отображение нулевых значений)
-        if (this.elements.investigationsCount) {
-            this.elements.investigationsCount.textContent = data.stats?.investigations !== undefined ?
-                data.stats.investigations : '0';
+        if (Elements.reputationCategory) {
+            Elements.reputationCategory.textContent = data.reputation?.category || 'Неизвестно';
         }
 
-        if (this.elements.solvedCases) {
-            this.elements.solvedCases.textContent = data.stats?.solvedCases !== undefined ?
-                data.stats.solvedCases : '0';
+        // Статистика
+        const stats = data.stats || {};
+
+        if (Elements.statInvestigations) {
+            Elements.statInvestigations.textContent = stats.investigations || 0;
         }
 
-        if (this.elements.winStreak) {
-            this.elements.winStreak.textContent = data.stats?.winStreak !== undefined ?
-                data.stats.winStreak : '0';
+        if (Elements.statSolved) {
+            Elements.statSolved.textContent = stats.solvedCases || 0;
         }
 
-        if (this.elements.accuracy) {
-            const accuracyValue = data.stats?.accuracy !== undefined ? data.stats.accuracy : 0;
-            this.elements.accuracy.textContent = `${accuracyValue}%`;
-        }
-    },
-
-    /**
-     * Загрузка аватара пользователя из Telegram
-     */
-    async loadUserAvatar() {
-        const avatarImage = document.getElementById('avatar-image');
-        const avatarPlaceholder = document.getElementById('avatar-placeholder');
-        const avatarLoading = document.getElementById('avatar-loading');
-
-        if (!avatarImage || !avatarPlaceholder || !avatarLoading) {
-            return;
+        if (Elements.statAccuracy) {
+            Elements.statAccuracy.textContent = Math.round(stats.accuracy || 0) + '%';
         }
 
-        try {
-            // Показываем загрузку
-            avatarLoading.style.display = 'block';
-            avatarPlaceholder.style.opacity = '0.3';
-
-            // Получаем токен
-            const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-            if (!token) {
-                throw new Error('Токен авторизации отсутствует');
-            }
-
-            // Запрашиваем аватар с сервера
-            const response = await fetch('/api/user/avatar', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`Ошибка сервера: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (data.status === 'success' && data.data.hasAvatar && data.data.avatarUrl) {
-                // Загружаем изображение
-                const img = new Image();
-
-                img.onload = () => {
-                    // Успешно загружено - показываем аватар
-                    avatarImage.src = data.data.avatarUrl;
-                    avatarImage.style.display = 'block';
-                    avatarPlaceholder.style.display = 'none';
-                    avatarLoading.style.display = 'none';
-
-                    // Добавляем плавное появление
-                    avatarImage.style.opacity = '0';
-                    setTimeout(() => {
-                        avatarImage.style.transition = 'opacity 0.3s ease';
-                        avatarImage.style.opacity = '1';
-                    }, 50);
-                };
-
-                img.onerror = () => {
-                    // Ошибка загрузки изображения
-                    this.showAvatarPlaceholder();
-                };
-
-                // Начинаем загрузку изображения
-                img.src = data.data.avatarUrl;
-
-            } else {
-                // У пользователя нет аватара
-                this.showAvatarPlaceholder();
-            }
-
-        } catch (error) {
-            console.error('Ошибка при загрузке аватара:', error);
-            this.showAvatarPlaceholder();
+        if (Elements.statScore) {
+            Elements.statScore.textContent = stats.totalScore || 0;
         }
-    },
+    }
 
-    /**
-     * Показывает плейсхолдер аватара
-     */
-    showAvatarPlaceholder() {
-        const avatarImage = document.getElementById('avatar-image');
-        const avatarPlaceholder = document.getElementById('avatar-placeholder');
-        const avatarLoading = document.getElementById('avatar-loading');
-
-        if (avatarImage) {
-            avatarImage.style.display = 'none';
-        }
-
-        if (avatarPlaceholder) {
-            avatarPlaceholder.style.display = 'block';
-            avatarPlaceholder.style.opacity = '1';
-        }
-
-        if (avatarLoading) {
-            avatarLoading.style.display = 'none';
-        }
-    },
-
-    /**
-     * Загрузка данных таблицы лидеров
-     */
-    async loadLeaderboard(period = 'week') {
-        try {
-            if (!this.state.token) {
-                throw new Error('Токен авторизации отсутствует');
-            }
-
-            // Запрашиваем данные лидерборда
-            const response = await fetch(`/api/user/leaderboard?period=${period}`, {
-                headers: {
-                    'Authorization': `Bearer ${this.state.token}`
-                }
-            });
-
-            if (!response.ok) {
-                if (response.status === 401 || response.status === 403) {
-                    // Не сбрасываем токен здесь, так как это некритичная ошибка
-                }
-                throw new Error(`Ошибка загрузки таблицы лидеров: ${response.status} ${response.statusText}`);
-            }
-
-            let data;
-            try {
-                data = await response.json();
-            } catch (parseError) {
-                console.error('Ошибка при парсинге ответа лидерборда:', parseError);
-                throw new Error('Ошибка при обработке данных таблицы лидеров');
-            }
-
-            if (data.status !== 'success' || !data.data) {
-                throw new Error(data.message || 'Ошибка загрузки таблицы лидеров');
-            }
-
-            // Обновляем UI с данными лидерборда
-            this.updateLeaderboardUI(data.data);
-
-        } catch (error) {
-            console.error('Ошибка при загрузке таблицы лидеров:', error);
-
-            // Очищаем таблицу лидеров при ошибке или создаем пустую, если ее нет
-            const tableContainer = document.querySelector('.leaderboard-table');
-            if (tableContainer) {
-                const headerRow = tableContainer.querySelector('.leaderboard-header');
-                tableContainer.innerHTML = '';
-                if (headerRow) {
-                    tableContainer.appendChild(headerRow);
-                }
-
-                // Добавляем сообщение об ошибке в таблицу
-                const errorRow = document.createElement('div');
-                errorRow.className = 'leaderboard-row';
-                errorRow.innerHTML = `
-                    <div class="rank-cell">-</div>
-                    <div class="user-cell" style="color: var(--blood-red);">Ошибка загрузки данных</div>
-                    <div class="score-cell">-</div>
-                `;
-                tableContainer.appendChild(errorRow);
-            }
-        }
-    },
-
-    /**
-     * Обновление интерфейса лидерборда
-     * @param {Object} data - Данные лидерборда
-     */
-    updateLeaderboardUI(data) {
-        const leaderboardContent = document.getElementById('leaderboard-content');
-        if (!leaderboardContent) {
-            console.error('Контейнер лидерборда не найден');
-            return;
-        }
-
-        // Если данных нет или список пуст
-        if (!data || !data.entries || data.entries.length === 0) {
-            leaderboardContent.innerHTML = `
-                <div class="empty-leaderboard">
-                    <div class="empty-leaderboard-icon">🏆</div>
-                    <div class="empty-leaderboard-text">Рейтинг пуст</div>
-                    <div class="empty-leaderboard-subtext">Станьте первым детективом!</div>
-                </div>
-            `;
-            return;
-        }
-
-        // Очищаем контейнер
-        leaderboardContent.innerHTML = '';
-
-        // Получаем текущего пользователя для выделения
-        const currentUserTelegramId = this.profileData?.telegramId;
-
-        // Создаем строки лидерборда
-        data.entries.forEach((entry, index) => {
-            const row = document.createElement('div');
-            row.className = 'leaderboard-row';
-
-            // Выделяем текущего пользователя
-            if (entry.telegramId === currentUserTelegramId) {
-                row.classList.add('current-user');
-            }
-
-            // Форматируем очки
-            const formattedScore = new Intl.NumberFormat('ru-RU').format(entry.totalScore || 0);
-
-            row.innerHTML = `
-                <div class="rank-cell">${entry.rank || (index + 1)}</div>
-                <div class="user-cell">${entry.name || entry.username || 'Анонимный детектив'}</div>
-                <div class="score-cell">${formattedScore}</div>
-            `;
-
-            leaderboardContent.appendChild(row);
-        });
-    },
-
-    /**
-     * Загрузка достижений пользователя
-     */
     async loadAchievements() {
         try {
             console.log('🏆 Загрузка достижений...');
 
             const response = await fetch('/api/user/achievements', {
                 headers: {
-                    'Authorization': `Bearer ${this.state.token}`
+                    'Authorization': `Bearer ${ProfileState.token}`
                 }
             });
 
@@ -475,14 +267,10 @@ const ProfileManager = {
         } catch (error) {
             console.error('❌ Ошибка загрузки достижений:', error);
         }
-    },
+    }
 
-    /**
-     * Обновление интерфейса достижений
-     * @param {Array} achievements - Массив достижений пользователя
-     */
     renderAchievements(achievements) {
-        if (!this.elements.achievements) return;
+        if (!Elements.achievementsContainer) return;
 
         // Базовые достижения с иконками
         const baseAchievements = [
@@ -504,144 +292,98 @@ const ProfileManager = {
         });
 
         // Рендерим
-        this.elements.achievements.forEach((element, index) => {
-            const achievement = baseAchievements[index];
-            const iconElement = element.querySelector('.achievement-icon');
-            const nameElement = element.querySelector('.achievement-name');
-
-            if (iconElement) {
-                iconElement.innerHTML = achievement.icon;
-            }
-
-            if (nameElement) {
-                nameElement.textContent = achievement.name;
-            }
-
-            element.classList.toggle('locked', achievement.locked);
-        });
-    },
-
-    /**
-     * Начало загрузки данных
-     */
-    showLoading() {
-        this.state.isLoading = true;
-        this.state.error = false;
-
-        if (this.elements.loadingScreen) this.elements.loadingScreen.classList.remove('hidden');
-        if (this.elements.mainContent) this.elements.mainContent.classList.add('hidden');
-        if (this.elements.errorScreen) this.elements.errorScreen.classList.add('hidden');
-    },
-
-    /**
-     * Окончание загрузки данных
-     */
-    showContent() {
-        this.state.isLoading = false;
-        this.state.error = false;
-
-        if (this.elements.loadingScreen) this.elements.loadingScreen.classList.add('hidden');
-        if (this.elements.mainContent) this.elements.mainContent.classList.remove('hidden');
-        if (this.elements.errorScreen) this.elements.errorScreen.classList.add('hidden');
-    },
-
-    /**
-     * Отображение ошибки
-     */
-    showError(message) {
-        this.state.error = true;
-        this.state.errorMessage = message;
-
-        if (this.elements.errorMessage) this.elements.errorMessage.textContent = message;
-
-        if (this.elements.loadingScreen) this.elements.loadingScreen.classList.add('hidden');
-        if (this.elements.mainContent) this.elements.mainContent.classList.add('hidden');
-        if (this.elements.errorScreen) this.elements.errorScreen.classList.remove('hidden');
-    },
-
-    /**
-     * Настройка обработчиков событий
-     */
-    setupEventListeners() {
-        // Обработчики для табов лидерборда
-        this.elements.leaderboardTabs.forEach(tab => {
-            tab.addEventListener('click', (event) => {
-                // Удаляем класс active у всех табов
-                this.elements.leaderboardTabs.forEach(t => t.classList.remove('active'));
-                // Добавляем класс active к выбранному табу
-                tab.classList.add('active');
-
-                // Получаем период из атрибута data-period или из текста кнопки
-                const period = tab.dataset.period || tab.textContent.trim().toLowerCase();
-                this.state.currentLeaderboardPeriod = period;
-
-                // Загружаем данные лидерборда для выбранного периода
-                this.loadLeaderboard(period);
-
-                // Тактильная обратная связь в Telegram
-                if (tg && tg.HapticFeedback) {
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
-            });
-        });
-
-        // Прямые обработчики для кнопок навигации
-        const mainButton = document.querySelector('[data-action="goToMain"]');
-        const newGameButton = document.querySelector('[data-action="startNewGame"]');
-
-        if (mainButton) {
-            mainButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-
-                // Тактильный отклик
-                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-                }
-
-                window.location.href = createAuthenticatedUrl('/');
-            });
-        } else {
-            console.error('Кнопка "Главная" не найдена!');
-        }
-
-        if (newGameButton) {
-            newGameButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-
-                // Тактильный отклик
-                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-                }
-
-                window.location.href = createAuthenticatedUrl('/game.html');
-            });
-        } else {
-            console.error('Кнопка "Новое дело" не найдена!');
-        }
-
-        // Дополнительный универсальный обработчик как fallback
-        document.addEventListener('click', (event) => {
-            const actionElement = event.target.closest('[data-action]');
-            if (!actionElement) return;
-
-            const action = actionElement.getAttribute('data-action');
-
-            // Избегаем дублирования для кнопок навигации
-            if (action === 'goToMain' || action === 'startNewGame') {
-                return; // Эти кнопки уже обрабатываются выше
-            }
-
-            // Тактильный отклик
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-            }
-        });
+        Elements.achievementsContainer.innerHTML = baseAchievements.map(achievement => `
+            <div class="achievement-badge ${achievement.locked ? '' : 'unlocked'}">
+                <div class="achievement-icon">${achievement.icon}</div>
+                <div class="achievement-name">${achievement.locked ? '???' : achievement.name}</div>
+            </div>
+        `).join('');
     }
-};
 
-// Инициализация профиля при загрузке DOM
+    async loadLeaderboard() {
+        try {
+            console.log('👑 Загрузка лидерборда...');
+
+            const response = await fetch('/api/leaderboard/week', {
+                headers: {
+                    'Authorization': `Bearer ${ProfileState.token}`
+                }
+            });
+
+            if (!response.ok) {
+                console.log('⚠️ Не удалось загрузить лидерборд');
+                return;
+            }
+
+            const leaderboard = await response.json();
+            this.renderLeaderboard(leaderboard);
+
+        } catch (error) {
+            console.error('❌ Ошибка загрузки лидерборда:', error);
+        }
+    }
+
+    renderLeaderboard(data) {
+        if (!Elements.leaderboardContainer) return;
+
+        const leaders = data.leaders || [];
+        const currentUser = ProfileState.profileData;
+
+        if (leaders.length === 0) {
+            Elements.leaderboardContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: var(--suspect-gray);">
+                    <p>Пока нет данных о лидерах</p>
+                </div>
+            `;
+            return;
+        }
+
+        Elements.leaderboardContainer.innerHTML = leaders.map((leader, index) => {
+            const isCurrentUser = currentUser && leader.userId === currentUser.id;
+            return `
+                <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
+                    <div class="leaderboard-rank">${index + 1}</div>
+                    <div class="leaderboard-info">
+                        <div class="leaderboard-name">${leader.username || leader.firstName || 'Детектив'}</div>
+                        <div class="leaderboard-score">${leader.score || 0} очков</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    showLoading() {
+        ProfileState.loading = true;
+        ProfileState.error = false;
+
+        if (Elements.loadingScreen) Elements.loadingScreen.classList.remove('hidden');
+        if (Elements.mainContent) Elements.mainContent.classList.add('hidden');
+        if (Elements.errorScreen) Elements.errorScreen.classList.add('hidden');
+    }
+
+    showContent() {
+        ProfileState.loading = false;
+        ProfileState.error = false;
+
+        if (Elements.loadingScreen) Elements.loadingScreen.classList.add('hidden');
+        if (Elements.mainContent) Elements.mainContent.classList.remove('hidden');
+        if (Elements.errorScreen) Elements.errorScreen.classList.add('hidden');
+    }
+
+    showError(message) {
+        ProfileState.loading = false;
+        ProfileState.error = true;
+        ProfileState.errorMessage = message;
+
+        if (Elements.errorMessage) Elements.errorMessage.textContent = message;
+
+        if (Elements.loadingScreen) Elements.loadingScreen.classList.add('hidden');
+        if (Elements.mainContent) Elements.mainContent.classList.add('hidden');
+        if (Elements.errorScreen) Elements.errorScreen.classList.remove('hidden');
+    }
+}
+
+// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Запуск профиля детектива...');
     new ProfileManager();
