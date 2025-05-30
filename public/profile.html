@@ -3,198 +3,66 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Криминальный Блеф - Личный кабинет</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Профиль детектива | Криминальный Блеф</title>
+
+    <!-- Telegram WebApp API -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Alpine.js -->
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <!-- Chart.js для графиков -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
     <style>
-        :root {
-            --blood-red: #8B0000;
-            --fresh-blood: #C10000;
-            --dark-red: #4A0404;
-            --crime-scene-yellow: #FFD700;
-            --chalk-white: #E8E8E8;
-            --body-bag-black: #0A0A0A;
-            --evidence-tag: #D4AF37;
-            --dried-blood: #5C1010;
-            --morgue-gray: #2C2C2C;
-            --darker-gray: #1E1E1E;
-            --police-tape: #FFF200;
-            --autopsy-green: #1D3B2A;
-            --success-green: #2D6A4F;
-
-            --spacing-xs: 4px;
-            --spacing-sm: 8px;
-            --spacing-md: 16px;
-            --spacing-lg: 24px;
-            --spacing-xl: 32px;
-
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-
-            --transition-fast: 150ms ease;
-            --transition-normal: 250ms ease;
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #1a1f2e;
+            --bg-tertiary: #2a2f3e;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --accent-gold: #f59e0b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --gradient-gold: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --gradient-reputation: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
         }
 
         body {
-            background: var(--body-bag-black);
-            color: var(--chalk-white);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
             min-height: 100vh;
             overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-            position: relative;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath d='M1 3h1v1H1V3zm2-2h1v1H3V1z' fill='%23333' fill-opacity='0.2'/%3E%3C/svg%3E"),
-                radial-gradient(circle at 20% 30%, rgba(139, 0, 0, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(74, 4, 4, 0.1) 0%, transparent 30%);
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        /* Film grain overlay */
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
-            opacity: 0.05;
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        .app-container {
-            max-width: 450px;
-            margin: 0 auto;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding: var(--spacing-md);
-            position: relative;
-            z-index: 2;
-            overflow-x: hidden;
-        }
-
-        /* Vignette effect */
-        .vignette {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.8);
-            pointer-events: none;
-            z-index: 4;
-        }
-
-        /* Page header with case file title */
-        .case-file-header {
-            margin-bottom: var(--spacing-xl);
-            position: relative;
-            text-align: center;
-        }
-
-        .case-file-badge {
-            display: inline-block;
-            background: var(--darker-gray);
-            border: 2px solid var(--dried-blood);
-            padding: var(--spacing-xs) var(--spacing-md);
-            border-radius: var(--radius-sm);
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: var(--chalk-white);
-            text-transform: uppercase;
-            position: relative;
-            margin-bottom: var(--spacing-sm);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .case-file-badge::before,
-        .case-file-badge::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 40px;
-            height: 2px;
-            background: var(--dried-blood);
-        }
-
-        .case-file-badge::before {
-            right: calc(100% + 10px);
-        }
-
-        .case-file-badge::after {
-            left: calc(100% + 10px);
-        }
-
-        .case-file-title {
-            font-family: 'Impact', sans-serif;
-            font-size: 36px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-bottom: var(--spacing-xs);
-            color: var(--chalk-white);
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
-            position: relative;
-            display: inline-block;
-        }
-
-        .case-file-title::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--blood-red), transparent);
-        }
-
-        /* Fingerprint background effect */
-        .fingerprint-bg {
-            position: absolute;
-            top: 40%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 300px;
-            height: 300px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 0C33.8 0 20 13.8 20 30c0 7.2 5.5 13.3 12.5 19.6C39.5 55.9 46.5 62 50 80c3.5-18 10.5-24.1 17.5-30.4C74.5 43.3 80 37.2 80 30 80 13.8 66.2 0 50 0zm0 8c12.2 0 22 9.8 22 22 0 5-4 9.8-10.2 15.4C55.6 51 48.4 58.4 43.7 80c-4.7-21.6-11.9-29-18.1-34.6C19.3 39.8 15.3 35 15.3 30c0-12.2 9.8-22 22-22z' fill='%238B0000' fill-opacity='0.03'/%3E%3C/svg%3E");
-            opacity: 0.3;
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* Header - Profile Info */
+        /* === ХЕДЕР ПРОФИЛЯ === */
         .profile-header {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md);
-            padding: var(--spacing-md);
-            background: var(--morgue-gray);
-            border-radius: var(--radius-md);
-            margin-bottom: var(--spacing-lg);
-            border: 2px solid var(--dried-blood);
+            background: var(--gradient-primary);
+            padding: 20px;
+            border-radius: 0 0 24px 24px;
+            box-shadow: var(--shadow-lg);
             position: relative;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
         .profile-header::before {
@@ -202,1054 +70,794 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, var(--blood-red), transparent);
-        }
-
-        .profile-header::after {
-            content: 'ЛИЧНОЕ ДЕЛО';
-            position: absolute;
-            top: 5px;
-            right: 10px;
-            font-size: 8px;
-            color: var(--blood-red);
-            letter-spacing: 1px;
-            opacity: 0.6;
-            font-weight: 700;
-            z-index: 1;
-        }
-
-        .header-title {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: var(--spacing-md);
-            position: relative;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--blood-red);
-            position: relative;
-            display: inline-block;
-            margin-left: var(--spacing-md);
-        }
-
-        .section-title::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: -15px;
-            transform: translateY(-50%);
-            width: 6px;
-            height: 20px;
-            background: var(--blood-red);
-            border-radius: 3px;
-        }
-
-        .avatar {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: var(--dark-red);
-            overflow: hidden;
-            position: relative;
-            border: 3px solid var(--dried-blood);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        .avatar .avatar-placeholder {
-            position: absolute;
-            top: 0;
-            left: 0;
             right: 0;
             bottom: 0;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 20C37.5 20 30 30 30 42.5C30 55 37.5 65 50 65C62.5 65 70 55 70 42.5C70 30 62.5 20 50 20ZM50 30C56.875 30 60 35.625 60 42.5C60 49.375 56.875 55 50 55C43.125 55 40 49.375 40 42.5C40 35.625 43.125 30 50 30Z' fill='%23D4AF37' fill-opacity='0.3'/%3E%3Cpath d='M28 70C28 70 38 90 50 90C62 90 72 70 72 70' stroke='%23D4AF37' stroke-opacity='0.3' stroke-width='2'/%3E%3C/svg%3E");
-            opacity: 0.6;
-            background-size: contain;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        .avatar .avatar-loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: var(--crime-scene-yellow);
-            font-size: 10px;
-            opacity: 0.7;
-        }
-
-        .avatar::after {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            right: -10px;
-            bottom: -10px;
-            border: 1px dashed var(--crime-scene-yellow);
-            border-radius: 50%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
             opacity: 0.3;
-            animation: rotate 10s linear infinite;
         }
 
         .profile-info {
-            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            background: var(--gradient-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0 auto 16px;
+            box-shadow: var(--shadow);
         }
 
         .profile-name {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 700;
-            margin-bottom: var(--spacing-xs);
-            letter-spacing: 1px;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-            position: relative;
+            text-align: center;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        .profile-badge {
-            display: inline-block;
-            background: var(--dark-red);
-            padding: 5px 10px;
-            border-radius: var(--radius-sm);
-            font-size: 12px;
-            color: var(--crime-scene-yellow);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        .profile-rank {
+            text-align: center;
+            margin-bottom: 16px;
         }
 
-        .profile-badge::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .rank-progress {
+            margin-top: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .rank-progress-bar {
             height: 100%;
-            background: linear-gradient(45deg, transparent 49%, rgba(212, 175, 55, 0.2) 50%, transparent 51%);
-            pointer-events: none;
+            background: var(--gradient-gold);
+            border-radius: 10px;
+            transition: width 0.5s ease;
         }
 
-        .profile-id {
-            font-size: 11px;
-            color: var(--chalk-white);
-            opacity: 0.6;
-            margin-top: var(--spacing-sm);
-            letter-spacing: 1px;
+        /* === РЕПУТАЦИЯ === */
+        .reputation-section {
+            margin: 20px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
         }
 
-        .profile-id span {
-            font-family: monospace;
-            letter-spacing: 0;
-            color: var(--chalk-white);
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2px 4px;
-            border-radius: 3px;
+        .reputation-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
         }
 
-        /* Stats Section */
-        .stats-section {
-            margin-bottom: var(--spacing-xl);
-            position: relative;
+        .reputation-level {
+            font-size: 32px;
+            font-weight: 800;
+            background: var(--gradient-reputation);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
+        .reputation-category {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--success);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .reputation-components {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .reputation-component {
+            background: var(--bg-tertiary);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .component-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .component-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* === СТАТИСТИКА === */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: var(--spacing-md);
-        }
-
-        /* Section corner decor */
-        .corner-decor {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            opacity: 0.4;
-        }
-
-        .corner-decor.top-left {
-            top: 0;
-            left: 0;
-            border-top: 3px solid var(--blood-red);
-            border-left: 3px solid var(--blood-red);
-            border-top-left-radius: var(--radius-sm);
-        }
-
-        .corner-decor.top-right {
-            top: 0;
-            right: 0;
-            border-top: 3px solid var(--blood-red);
-            border-right: 3px solid var(--blood-red);
-            border-top-right-radius: var(--radius-sm);
-        }
-
-        .corner-decor.bottom-left {
-            bottom: 0;
-            left: 0;
-            border-bottom: 3px solid var(--blood-red);
-            border-left: 3px solid var(--blood-red);
-            border-bottom-left-radius: var(--radius-sm);
-        }
-
-        .corner-decor.bottom-right {
-            bottom: 0;
-            right: 0;
-            border-bottom: 3px solid var(--blood-red);
-            border-right: 3px solid var(--blood-red);
-            border-bottom-right-radius: var(--radius-sm);
+            gap: 16px;
+            margin: 20px;
         }
 
         .stat-card {
-            background: var(--morgue-gray);
-            border-radius: var(--radius-md);
-            padding: var(--spacing-md);
-            border: 1px solid var(--dried-blood);
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            text-align: center;
             position: relative;
             overflow: hidden;
-            transition: transform var(--transition-normal);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .stat-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--shadow-lg);
         }
 
         .stat-card::before {
             content: '';
             position: absolute;
             top: 0;
+            left: 0;
             right: 0;
-            border-style: solid;
-            border-width: 0 20px 20px 0;
-            border-color: transparent var(--blood-red) transparent transparent;
+            height: 3px;
+            background: var(--gradient-primary);
         }
 
-        .stat-card::after {
-            content: attr(data-tag);
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 8px;
-            font-weight: 700;
-            color: var(--chalk-white);
-            opacity: 0.5;
-            letter-spacing: 0.5px;
-            transform: rotate(45deg);
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 4px;
         }
 
         .stat-label {
             font-size: 12px;
+            color: var(--text-secondary);
             text-transform: uppercase;
-            color: var(--evidence-tag);
-            margin-bottom: var(--spacing-sm);
-            letter-spacing: 1px;
-            opacity: 0.8;
-            position: relative;
-            display: inline-block;
+            letter-spacing: 0.5px;
+            font-weight: 600;
         }
 
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--chalk-white);
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-            position: relative;
-        }
-
-        .stat-value::after {
-            content: '';
+        .stat-icon {
             position: absolute;
-            bottom: -5px;
-            left: 0;
+            top: 12px;
+            right: 12px;
+            opacity: 0.3;
             width: 20px;
-            height: 2px;
-            background: var(--evidence-tag);
-            opacity: 0.5;
+            height: 20px;
         }
 
-        .stat-value.success {
-            color: var(--success-green);
-        }
-
-        .stat-value.percentage {
-            font-size: 24px;
-        }
-
-        .stat-value.percentage::after {
-            content: '%';
-            position: relative;
-            display: inline-block;
-            margin-left: 2px;
-            font-size: 14px;
-            vertical-align: super;
-        }
-
-        /* Achievements Section */
+        /* === ДОСТИЖЕНИЯ === */
         .achievements-section {
-            margin-bottom: var(--spacing-xl);
-            position: relative;
+            margin: 20px;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .section-icon {
+            width: 24px;
+            height: 24px;
+            color: var(--accent-primary);
         }
 
         .achievements-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: var(--spacing-md);
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
         }
 
-        .achievement {
-            background: var(--morgue-gray);
-            border-radius: var(--radius-md);
-            padding: var(--spacing-md);
+        .achievement-card {
+            background: var(--bg-tertiary);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
             position: relative;
-            aspect-ratio: 1/1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: all var(--transition-normal);
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
         }
 
-        .achievement:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        .achievement-card:hover {
+            transform: scale(1.05);
         }
 
-        .achievement::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, transparent 50%, rgba(0, 0, 0, 0.3) 100%);
-            pointer-events: none;
+        .achievement-card.rare {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
         }
 
-        .achievement.locked {
-            opacity: 0.7;
-            filter: grayscale(0.8);
-            box-shadow: none;
+        .achievement-card.epic {
+            border-color: var(--accent-secondary);
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
         }
 
-        .achievement.locked:hover {
-            transform: none;
-        }
-
-        .achievement.locked::before {
-            content: '';
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .achievement.locked::after {
-            content: '?';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 24px;
-            color: var(--chalk-white);
-            opacity: 0.3;
-            font-weight: bold;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        .achievement-card.legendary {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
         }
 
         .achievement-icon {
-            width: 32px;
-            height: 32px;
-            color: var(--crime-scene-yellow);
-            margin-bottom: var(--spacing-sm);
-            filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
-            position: relative;
-            z-index: 2;
+            font-size: 24px;
+            margin-bottom: 8px;
         }
 
         .achievement-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .achievement-rarity {
             font-size: 10px;
-            color: var(--chalk-white);
+            color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            font-weight: 600;
-            position: relative;
-            z-index: 2;
         }
 
-        /* Leaderboard Section */
-        .leaderboard-section {
-            margin-bottom: var(--spacing-xl);
-            position: relative;
-            padding: var(--spacing-md);
-            background: var(--morgue-gray);
-            border-radius: var(--radius-md);
-            border: 2px solid var(--dried-blood);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .leaderboard-section::before {
-            content: '';
-            position: absolute;
-            top: -5px;
-            left: 20px;
-            right: 20px;
-            height: 3px;
-            background: var(--dried-blood);
-            border-radius: 3px 3px 0 0;
-        }
-
-        .wanted-poster {
-            position: absolute;
-            top: -15px;
-            right: 20px;
-            background: var(--dark-red);
-            color: var(--chalk-white);
-            font-size: 10px;
-            padding: 4px 10px;
-            border-radius: var(--radius-sm);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 700;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--blood-red);
-            z-index: 2;
-        }
-
-        .leaderboard-tabs {
+        /* === НАВИГАЦИЯ === */
+        .nav-tabs {
             display: flex;
-            margin-bottom: var(--spacing-md);
-            overflow: hidden;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--dried-blood);
-        }
-
-        .tab-button {
-            flex: 1;
-            padding: var(--spacing-sm) var(--spacing-md);
-            background: var(--darker-gray);
-            border: none;
-            color: var(--chalk-white);
-            font-size: 12px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all var(--transition-normal);
-            letter-spacing: 1px;
-            font-weight: 500;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .tab-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
-            pointer-events: none;
-        }
-
-        .tab-button.active {
-            background: var(--dark-red);
-            color: var(--crime-scene-yellow);
-            font-weight: 600;
-        }
-
-        .tab-button:hover:not(.active) {
-            background: #3A3A3A;
-        }
-
-        .leaderboard-table {
-            background: var(--darker-gray);
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            border: 1px solid var(--dried-blood);
-        }
-
-        .leaderboard-header {
-            display: grid;
-            grid-template-columns: 0.5fr 2fr 1fr;
-            padding: var(--spacing-sm) var(--spacing-md);
-            background: var(--dark-red);
-            border-bottom: 2px solid var(--dried-blood);
-        }
-
-        .header-cell {
-            font-size: 11px;
-            color: var(--crime-scene-yellow);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .leaderboard-row {
-            display: grid;
-            grid-template-columns: 0.5fr 2fr 1fr;
-            padding: var(--spacing-sm) var(--spacing-md);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            transition: background var(--transition-fast);
-        }
-
-        .leaderboard-row:hover {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .leaderboard-row:last-child {
-            border-bottom: none;
-        }
-
-        .leaderboard-row.current-user {
-            background: rgba(139, 0, 0, 0.2);
-            position: relative;
-        }
-
-        .leaderboard-row.current-user:hover {
-            background: rgba(139, 0, 0, 0.25);
-        }
-
-        .leaderboard-row.current-user::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: var(--blood-red);
-        }
-
-        .leaderboard-row.current-user::after {
-            content: 'ВЫ';
-            position: absolute;
-            right: 80px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 8px;
-            color: var(--blood-red);
-            opacity: 0.5;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        .rank-cell {
-            font-weight: 700;
-            color: var(--chalk-white);
-            position: relative;
-        }
-
-        .rank-cell::after {
-            content: '#';
-            position: absolute;
-            left: -4px;
-            top: 2px;
-            font-size: 8px;
-            color: var(--chalk-white);
-            opacity: 0.5;
-        }
-
-        .user-cell {
-            font-weight: 500;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .score-cell {
-            text-align: right;
-            font-weight: 600;
-            color: var(--evidence-tag);
-            position: relative;
-        }
-
-        .score-cell::after {
-            content: 'pts';
-            margin-left: 4px;
-            font-size: 10px;
-            opacity: 0.7;
-            vertical-align: super;
-            position: relative;
-            display: inline-block;
-        }
-
-        .leaderboard-divider {
-            text-align: center;
+            background: var(--bg-secondary);
+            margin: 20px;
+            border-radius: 12px;
             padding: 4px;
-            color: var(--chalk-white);
-            opacity: 0.5;
-            font-weight: bold;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
         }
 
-        /* Footer Navigation */
-        .footer-nav {
-            margin-top: auto;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--spacing-md);
-        }
-
-        .nav-button {
-            padding: var(--spacing-md);
-            background: var(--morgue-gray);
-            border: 2px solid var(--dried-blood);
-            border-radius: var(--radius-md);
-            color: var(--chalk-white);
-            font-size: 14px;
-            font-weight: 700;
+        .nav-tab {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-weight: 600;
             cursor: pointer;
-            transition: all var(--transition-normal);
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-tab.active {
+            color: var(--text-primary);
+            background: var(--gradient-primary);
+            box-shadow: var(--shadow);
+        }
+
+        .nav-tab:not(.active):hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+
+        /* === ЛИДЕРБОРД === */
+        .leaderboard-item {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: var(--spacing-sm);
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border-color);
             position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
         }
 
-        .nav-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
-            pointer-events: none;
+        .leaderboard-item:hover {
+            transform: translateX(4px);
         }
 
-        .nav-button.primary {
-            background: var(--blood-red);
-            color: var(--chalk-white);
-            border-color: var(--dark-red);
+        .leaderboard-item.current-user {
+            border-color: var(--accent-primary);
+            background: rgba(59, 130, 246, 0.1);
         }
 
-        .nav-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        .leaderboard-rank {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent-primary);
+            width: 40px;
+            text-align: center;
         }
 
-        .nav-button:active {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        .leaderboard-rank.gold {
+            color: var(--accent-gold);
         }
 
-        .nav-icon {
-            width: 16px;
-            height: 16px;
-            position: relative;
-            z-index: 1;
+        .leaderboard-rank.silver {
+            color: #94a3b8;
         }
 
-        .nav-button.primary .nav-icon {
-            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.3));
+        .leaderboard-rank.bronze {
+            color: #f59e0b;
         }
 
-        /* Blood drips */
-        .blood-drip {
-            position: absolute;
-            top: 0;
-            width: 8px;
-            height: 60px;
-            background: linear-gradient(to bottom, var(--blood-red) 0%, var(--blood-red) 70%, transparent 100%);
-            z-index: 3;
-            border-radius: 0 0 4px 4px;
-            opacity: 0.8;
-            filter: drop-shadow(0 0 2px rgba(139, 0, 0, 0.7));
+        .leaderboard-info {
+            flex: 1;
+            margin-left: 12px;
         }
 
-        .blood-drip-1 {
-            right: 20px;
-            height: 70px;
+        .leaderboard-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
         }
 
-        .blood-drip-2 {
-            right: 80px;
-            height: 40px;
-            opacity: 0.6;
+        .leaderboard-rank-title {
+            font-size: 12px;
+            color: var(--text-secondary);
         }
 
-        .blood-drip-3 {
-            left: 30px;
-            height: 50px;
-            opacity: 0.7;
+        .leaderboard-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-primary);
         }
 
-        .blood-drip::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 12px;
-            height: 12px;
-            background: var(--blood-red);
-            border-radius: 50%;
-            animation: drip 3s infinite ease-in;
-        }
-
-        .blood-drip-2::after {
-            animation-delay: 1s;
-        }
-
-        .blood-drip-3::after {
-            animation-delay: 1.5s;
-        }
-
-        @keyframes drip {
-            0% {
-                transform: translateX(-50%) scale(1);
-                opacity: 0.8;
-            }
-
-            80% {
-                transform: translateX(-50%) scale(1);
-                opacity: 0.8;
-            }
-
-            100% {
-                transform: translateX(-50%) translateY(20px) scale(0.5);
-                opacity: 0;
-            }
-        }
-
-        /* Chalk outline */
-        .chalk-outline {
-            position: absolute;
-            bottom: 100px;
-            right: -80px;
-            width: 150px;
-            height: 80px;
-            border: 2px dashed rgba(255, 255, 255, 0.1);
-            z-index: -1;
-            transform: rotate(15deg);
-            pointer-events: none;
-        }
-
-        /* Scene tape */
-        .crime-tape {
-            position: absolute;
-            top: 150px;
-            left: -20px;
-            right: -20px;
-            width: calc(100% + 40px);
-            height: 20px;
-            background: repeating-linear-gradient(45deg,
-                    var(--police-tape),
-                    var(--police-tape) 10px,
-                    #000 10px,
-                    #000 20px);
-            opacity: 0.15;
-            transform: rotate(-2deg);
-            z-index: -1;
-        }
-
-        .crime-tape-2 {
-            top: 380px;
-            transform: rotate(3deg);
-        }
-
-        /* Badge decorations */
-        .badge-decor {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .badge-decor.top-left {
-            top: -10px;
-            left: -10px;
-            border-top: 2px solid var(--crime-scene-yellow);
-            border-left: 2px solid var(--crime-scene-yellow);
-            border-top-left-radius: var(--radius-sm);
-            opacity: 0.4;
-        }
-
-        .badge-decor.top-right {
-            top: -10px;
-            right: -10px;
-            border-top: 2px solid var(--crime-scene-yellow);
-            border-right: 2px solid var(--crime-scene-yellow);
-            border-top-right-radius: var(--radius-sm);
-            opacity: 0.4;
-        }
-
-        .badge-decor.bottom-left {
-            bottom: -10px;
-            left: -10px;
-            border-bottom: 2px solid var(--crime-scene-yellow);
-            border-left: 2px solid var(--crime-scene-yellow);
-            border-bottom-left-radius: var(--radius-sm);
-            opacity: 0.4;
-        }
-
-        .badge-decor.bottom-right {
-            bottom: -10px;
-            right: -10px;
-            border-bottom: 2px solid var(--crime-scene-yellow);
-            border-right: 2px solid var(--crime-scene-yellow);
-            border-bottom-right-radius: var(--radius-sm);
-            opacity: 0.4;
-        }
-
-        /* Animated elements */
-        @keyframes rotate {
+        /* === АНИМАЦИИ === */
+        @keyframes fadeInUp {
             from {
-                transform: rotate(0deg);
+                opacity: 0;
+                transform: translateY(20px);
             }
 
             to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
                 transform: rotate(360deg);
             }
         }
 
-        /* Responsive */
-        @media (max-width: 380px) {
+        /* === АДАПТИВНОСТЬ === */
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
 
-            .stats-grid,
+            .reputation-components {
+                grid-template-columns: 1fr;
+            }
+
             .achievements-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .stat-value {
-                font-size: 22px;
-            }
-
-            .profile-name {
-                font-size: 18px;
-            }
-
-            .section-title {
-                font-size: 16px;
-            }
-
-            .case-file-title {
-                font-size: 28px;
-            }
-
-            .leaderboard-row {
-                font-size: 14px;
-            }
-
-            .crime-tape {
-                width: 100%;
-                left: 0;
-                right: 0;
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             }
         }
 
-        /* Accessibility */
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation: none !important;
-                transition: none !important;
-            }
+        /* === КНОПКИ === */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-secondary);
         }
     </style>
 </head>
 
 <body>
-    <div class="vignette"></div>
-    <div class="app-container">
-        <div class="fingerprint-bg"></div>
-        <div class="chalk-outline"></div>
-        <div class="crime-tape"></div>
-        <div class="crime-tape crime-tape-2"></div>
+    <div id="app" x-data="profileApp()" x-init="init()">
 
-        <div class="blood-drip blood-drip-1"></div>
-        <div class="blood-drip blood-drip-2"></div>
-        <div class="blood-drip blood-drip-3"></div>
+        <!-- Хедер профиля -->
+        <div class="profile-header fade-in-up">
+            <template x-if="profile">
+                <div class="profile-info">
+                    <div class="profile-avatar">
+                        <span
+                            x-text="(profile.basic.firstName || profile.basic.username || 'А')[0].toUpperCase()"></span>
+                    </div>
 
-        <div class="case-file-header">
-            <div class="case-file-badge">ЛИЧНОЕ ДЕЛО</div>
-            <h1 class="case-file-title">ПРОФИЛЬ</h1>
+                    <h1 class="profile-name" x-text="profile.basic.firstName || profile.basic.username || 'Детектив'">
+                    </h1>
+
+                    <div class="profile-rank">
+                        <div class="rank-badge">
+                            <i data-lucide="shield" style="width: 16px; height: 16px;"></i>
+                            <span x-text="profile.rank.displayName"></span>
+                        </div>
+
+                        <div class="rank-progress">
+                            <div class="rank-progress-bar" :style="`width: ${profile.rank.progress}%`"></div>
+                        </div>
+
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 4px;">
+                            Прогресс: <span x-text="profile.rank.progress"></span>%
+                        </div>
+                    </div>
+                </div>
+            </template>
         </div>
 
-        <section class="profile-header">
-            <div class="avatar" id="user-avatar">
-                <img id="avatar-image" style="display: none;" alt="Аватар пользователя">
-                <div class="avatar-placeholder" id="avatar-placeholder"></div>
-                <div class="avatar-loading" id="avatar-loading" style="display: none;">Загрузка...</div>
-                <div class="badge-decor top-left"></div>
-                <div class="badge-decor top-right"></div>
-                <div class="badge-decor bottom-left"></div>
-                <div class="badge-decor bottom-right"></div>
-            </div>
-            <div class="profile-info">
-                <h2 class="profile-name" id="profile-name">Загрузка...</h2>
-                <div class="profile-badge" id="profile-rank">НОВИЧОК</div>
-                <div class="profile-id">ID: <span id="profile-id">-</span></div>
-            </div>
-        </section>
-
-        <section class="stats-section">
-            <div class="header-title">
-                <h2 class="section-title">СТАТИСТИКА</h2>
-            </div>
-
-            <div class="corner-decor top-left"></div>
-            <div class="corner-decor top-right"></div>
-            <div class="corner-decor bottom-left"></div>
-            <div class="corner-decor bottom-right"></div>
-
-            <div class="stats-grid">
-                <div class="stat-card" data-tag="ОПЫТ">
-                    <div class="stat-label">Расследований</div>
-                    <div class="stat-value" id="investigations-count">0</div>
+        <!-- Репутация -->
+        <template x-if="profile">
+            <div class="reputation-section fade-in-up">
+                <div class="reputation-header">
+                    <div>
+                        <h2 style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <i data-lucide="star" style="width: 20px; height: 20px; color: var(--accent-gold);"></i>
+                            Репутация
+                        </h2>
+                        <div class="reputation-category" x-text="profile.reputation.category"></div>
+                    </div>
+                    <div class="reputation-level" x-text="profile.reputation.level"></div>
                 </div>
 
-                <div class="stat-card" data-tag="УСПЕХ">
-                    <div class="stat-label">Раскрыто дел</div>
-                    <div class="stat-value success" id="solved-cases">0</div>
-                </div>
+                <div class="reputation-components">
+                    <div class="reputation-component">
+                        <div class="component-label">
+                            <i data-lucide="target" style="width: 12px; height: 12px;"></i>
+                            Точность
+                        </div>
+                        <div class="component-value" x-text="profile.reputation.components.accuracy.value"></div>
+                    </div>
 
-                <div class="stat-card" data-tag="СЕРИЯ">
-                    <div class="stat-label">Серия успехов</div>
-                    <div class="stat-value" id="win-streak">0</div>
-                </div>
+                    <div class="reputation-component">
+                        <div class="component-label">
+                            <i data-lucide="zap" style="width: 12px; height: 12px;"></i>
+                            Скорость
+                        </div>
+                        <div class="component-value" x-text="profile.reputation.components.speed.value"></div>
+                    </div>
 
-                <div class="stat-card" data-tag="ТОЧНОСТЬ">
-                    <div class="stat-label">Точность</div>
-                    <div class="stat-value percentage" id="accuracy">0</div>
-                </div>
-            </div>
-        </section>
+                    <div class="reputation-component">
+                        <div class="component-label">
+                            <i data-lucide="trending-up" style="width: 12px; height: 12px;"></i>
+                            Постоянство
+                        </div>
+                        <div class="component-value" x-text="profile.reputation.components.consistency.value"></div>
+                    </div>
 
-        <section class="achievements-section">
-            <div class="header-title">
-                <h2 class="section-title">ДОСТИЖЕНИЯ</h2>
-            </div>
-
-            <div class="corner-decor top-left"></div>
-            <div class="corner-decor top-right"></div>
-            <div class="corner-decor bottom-left"></div>
-            <div class="corner-decor bottom-right"></div>
-
-            <div class="achievements-grid">
-                <div class="achievement">
-                    <svg class="achievement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
-                        <path
-                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                    <div class="achievement-name">Первое дело</div>
-                </div>
-
-                <div class="achievement">
-                    <svg class="achievement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
-                        <circle cx="12" cy="8" r="7" />
-                        <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12" />
-                    </svg>
-                    <div class="achievement-name">Новичок</div>
-                </div>
-
-                <div class="achievement">
-                    <svg class="achievement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
-                        <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
-                        <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
-                    </svg>
-                    <div class="achievement-name">Эксперт</div>
-                </div>
-
-                <div class="achievement locked">
-                    <svg class="achievement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="opacity: 0.3;">
-                        <path d="M3 6h18M3 12h18M3 18h18" />
-                    </svg>
-                    <div class="achievement-name">???</div>
-                </div>
-
-                <div class="achievement locked">
-                    <svg class="achievement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="opacity: 0.3;">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8v8M8 12h8" />
-                    </svg>
-                    <div class="achievement-name">???</div>
-                </div>
-
-                <div class="achievement locked">
-                    <svg class="achievement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="opacity: 0.3;">
-                        <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                    <div class="achievement-name">???</div>
+                    <div class="reputation-component">
+                        <div class="component-label">
+                            <i data-lucide="brain" style="width: 12px; height: 12px;"></i>
+                            Сложность
+                        </div>
+                        <div class="component-value" x-text="profile.reputation.components.difficulty.value"></div>
+                    </div>
                 </div>
             </div>
-        </section>
+        </template>
 
-        <section class="leaderboard-section">
-            <div class="wanted-poster">РОЗЫСК</div>
-            <div class="header-title">
-                <h2 class="section-title">ТАБЛИЦА ЛИДЕРОВ</h2>
-            </div>
-
-            <div class="leaderboard-tabs">
-                <button class="tab-button" data-period="day">ДЕНЬ</button>
-                <button class="tab-button active" data-period="week">НЕДЕЛЯ</button>
-                <button class="tab-button" data-period="all">ВСЕ ВРЕМЯ</button>
-            </div>
-
-            <div class="leaderboard-table">
-                <div class="leaderboard-header">
-                    <div class="header-cell">РАНГ</div>
-                    <div class="header-cell">ДЕТЕКТИВ</div>
-                    <div class="header-cell">ОЧКИ</div>
-                </div>
-
-                <div id="leaderboard-content">
-                    <div class="loading-message">Загрузка рейтинга...</div>
-                </div>
-            </div>
-        </section>
-
-        <footer class="footer-nav">
-            <button class="nav-button" data-action="goToMain">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                    <path d="M9 22V12h6v10" />
-                </svg>
-                ГЛАВНАЯ
+        <!-- Навигационные табы -->
+        <div class="nav-tabs">
+            <button class="nav-tab" :class="{ active: activeTab === 'stats' }" @click="activeTab = 'stats'">
+                Статистика
             </button>
-
-            <button class="nav-button primary" data-action="startNewGame">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-                НОВОЕ ДЕЛО
+            <button class="nav-tab" :class="{ active: activeTab === 'achievements' }"
+                @click="activeTab = 'achievements'">
+                Достижения
             </button>
-        </footer>
+            <button class="nav-tab" :class="{ active: activeTab === 'leaderboard' }" @click="activeTab = 'leaderboard'">
+                Рейтинг
+            </button>
+        </div>
+
+        <!-- Контент табов -->
+        <div x-show="activeTab === 'stats'" x-transition class="fade-in-up">
+            <template x-if="profile">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i data-lucide="search" class="stat-icon"></i>
+                        <div class="stat-value" x-text="profile.stats.investigations"></div>
+                        <div class="stat-label">Расследований</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <i data-lucide="check-circle" class="stat-icon"></i>
+                        <div class="stat-value" x-text="profile.stats.accuracy + '%'"></div>
+                        <div class="stat-label">Точность</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <i data-lucide="trophy" class="stat-icon"></i>
+                        <div class="stat-value" x-text="profile.stats.totalScore"></div>
+                        <div class="stat-label">Очки</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <i data-lucide="flame" class="stat-icon"></i>
+                        <div class="stat-value" x-text="profile.stats.maxWinStreak"></div>
+                        <div class="stat-label">Лучшая серия</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <i data-lucide="clock" class="stat-icon"></i>
+                        <div class="stat-value" x-text="formatTime(profile.stats.averageTime)"></div>
+                        <div class="stat-label">Ср. время</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <i data-lucide="calendar" class="stat-icon"></i>
+                        <div class="stat-value" x-text="profile.stats.dailyStreakCurrent"></div>
+                        <div class="stat-label">Дней подряд</div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Достижения -->
+        <div x-show="activeTab === 'achievements'" x-transition class="fade-in-up">
+            <template x-if="profile">
+                <div class="achievements-section">
+                    <div class="section-header">
+                        <i data-lucide="award" class="section-icon"></i>
+                        <h2 class="section-title">Достижения</h2>
+                        <span
+                            style="margin-left: auto; background: var(--accent-primary); color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;"
+                            x-text="profile.achievements.list.length"></span>
+                    </div>
+
+                    <div class="achievements-grid">
+                        <template x-for="achievement in profile.achievements.list" :key="achievement.id">
+                            <div class="achievement-card" :class="achievement.rarity.toLowerCase()">
+                                <div class="achievement-icon">🏆</div>
+                                <div class="achievement-name" x-text="achievement.name"></div>
+                                <div class="achievement-rarity" x-text="achievement.rarity"></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Лидерборд -->
+        <div x-show="activeTab === 'leaderboard'" x-transition class="fade-in-up">
+            <template x-if="leaderboard">
+                <div class="achievements-section">
+                    <div class="section-header">
+                        <i data-lucide="bar-chart-3" class="section-icon"></i>
+                        <h2 class="section-title">Топ игроков</h2>
+                    </div>
+
+                    <template x-for="(user, index) in leaderboard.totalScore" :key="user.telegramId">
+                        <div class="leaderboard-item"
+                            :class="{ 'current-user': user.telegramId === profile?.basic.telegramId }">
+                            <div class="leaderboard-rank"
+                                :class="{ gold: index === 0, silver: index === 1, bronze: index === 2 }"
+                                x-text="index + 1"></div>
+                            <div class="leaderboard-info">
+                                <div class="leaderboard-name" x-text="user.firstName || user.username || 'Детектив'">
+                                </div>
+                                <div class="leaderboard-rank-title" x-text="getRankDisplayName(user.rank)"></div>
+                            </div>
+                            <div class="leaderboard-value" x-text="user.stats.totalScore"></div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <!-- Кнопки навигации -->
+        <div style="margin: 20px; display: flex; gap: 12px;">
+            <a href="/" class="btn btn-secondary" style="flex: 1;">
+                <i data-lucide="home" style="width: 16px; height: 16px;"></i>
+                Главная
+            </a>
+            <a href="/game" class="btn btn-primary" style="flex: 1;">
+                <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+                Играть
+            </a>
+        </div>
+
+        <!-- Загрузка -->
+        <div x-show="loading" class="loading">
+            <div class="spinner"></div>
+            <span>Загрузка профиля...</span>
+        </div>
     </div>
 
-    <!-- Система достижений -->
-    <script src="achievement-system.js"></script>
-    <!-- Скрипт для функциональности профиля -->
-    <script src="profile.js"></script>
+    <script>
+        function profileApp() {
+            return {
+                profile: null,
+                leaderboard: null,
+                activeTab: 'stats',
+                loading: true,
+                error: null,
+
+                async init() {
+                    console.log('🚀 Инициализация профиля...');
+
+                    try {
+                        await this.loadProfile();
+                        await this.loadLeaderboard();
+
+                        // Инициализируем иконки Lucide
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+
+                    } catch (error) {
+                        console.error('❌ Ошибка инициализации:', error);
+                        this.error = 'Ошибка загрузки данных';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async loadProfile() {
+                    const token = this.getAuthToken();
+
+                    const response = await fetch('/api/profile', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Ошибка загрузки профиля');
+                    }
+
+                    this.profile = await response.json();
+                    console.log('✅ Профиль загружен:', this.profile);
+                },
+
+                async loadLeaderboard() {
+                    const token = this.getAuthToken();
+
+                    const response = await fetch('/api/profile/leaderboard/all?limit=10', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Ошибка загрузки лидерборда');
+                    }
+
+                    this.leaderboard = await response.json();
+                    console.log('✅ Лидерборд загружен:', this.leaderboard);
+                },
+
+                getAuthToken() {
+                    // Попробуем получить токен из разных источников
+                    let token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+
+                    // Если токена нет, попробуем из URL
+                    if (!token) {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        token = urlParams.get('token');
+                    }
+
+                    // Если есть данные Telegram WebApp
+                    if (!token && window.Telegram?.WebApp?.initData) {
+                        // Можно попробовать авторизоваться через Telegram данные
+                        console.log('🔑 Используем Telegram WebApp данные');
+                    }
+
+                    return token;
+                },
+
+                formatTime(seconds) {
+                    if (!seconds) return '0с';
+                    if (seconds < 60) return `${seconds}с`;
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    return `${minutes}м ${remainingSeconds}с`;
+                },
+
+                getRankDisplayName(rank) {
+                    const rankNames = {
+                        'СТАЖЕР': 'Стажер',
+                        'СЛЕДОВАТЕЛЬ': 'Следователь',
+                        'ДЕТЕКТИВ': 'Детектив',
+                        'СТАРШИЙ_ДЕТЕКТИВ': 'Старший детектив',
+                        'ИНСПЕКТОР': 'Инспектор',
+                        'КОМИССАР': 'Комиссар',
+                        'ГЛАВНЫЙ_ИНСПЕКТОР': 'Главный инспектор',
+                        'ШЕФ_ПОЛИЦИИ': 'Шеф полиции'
+                    };
+                    return rankNames[rank] || rank;
+                }
+            };
+        }
+    </script>
 </body>
 
 </html>

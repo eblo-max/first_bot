@@ -22,6 +22,7 @@ const {
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/game');
 const userRoutes = require('./routes/user'); // Добавляем маршруты пользователя
+const profileRoutes = require('./routes/profile'); // Новые расширенные роуты профиля
 const leaderboardRoutes = require('./routes/leaderboard'); // Будет добавлено в фазе 2
 
 // Импорт функции для заполнения базы тестовыми данными
@@ -168,6 +169,7 @@ app.use(staticLimiter, express.static(path.join(__dirname, '../public'), {
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/game', gameLimiter, gameRoutes);
 app.use('/api/user', apiLimiter, userRoutes);
+app.use('/api/profile', apiLimiter, profileRoutes);
 app.use('/api/leaderboard', apiLimiter, leaderboardRoutes);
 
 // Маршрут для проверки здоровья приложения
@@ -230,7 +232,7 @@ const startServer = async () => {
 
     // Запускаем сервер независимо от подключения к MongoDB
     const server = app.listen(PORT, () => {
-        
+
     });
 
     // Пытаемся подключиться к MongoDB (попробуем все строки подключения)
@@ -255,7 +257,7 @@ const startServer = async () => {
             isConnected = true;
             break; // Выходим из цикла, так как подключение успешно
         } catch (error) {
-            
+
         }
     }
 
@@ -266,24 +268,24 @@ const startServer = async () => {
 
     // Graceful shutdown
     process.on('SIGTERM', () => {
-        
+
         leaderboardService.stop();
         server.close(() => {
-            
+
             mongoose.connection.close(false, () => {
-                
+
                 process.exit(0);
             });
         });
     });
 
     process.on('SIGINT', () => {
-        
+
         leaderboardService.stop();
         server.close(() => {
-            
+
             mongoose.connection.close(false, () => {
-                
+
                 process.exit(0);
             });
         });
