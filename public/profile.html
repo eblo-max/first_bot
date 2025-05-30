@@ -9,9 +9,6 @@
     <!-- Telegram WebApp API -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <!-- Alpine.js -->
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-
     <!-- Chart.js для графиков -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -538,22 +535,26 @@
             transform: translateY(0);
             box-shadow: 0 2px 8px rgba(139, 0, 0, 0.3);
         }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 
     <link rel="stylesheet" href="profile.css">
 </head>
 
 <body>
-    <div class="profile-container" x-data="profileManager" x-init="init()">
+    <div class="profile-container">
 
         <!-- Загрузка -->
-        <div x-show="loading" class="loading-message">
+        <div id="loading-screen" class="loading-message">
             <div class="evidence-spinner"></div>
             <div class="loading-text">Анализ досье...</div>
         </div>
 
         <!-- Основной контент -->
-        <div x-show="!loading" style="display: none;" x-transition>
+        <div id="main-content" class="hidden">
 
             <!-- Хедер детектива -->
             <div class="detective-header">
@@ -575,12 +576,12 @@
                         </div>
                     </div>
 
-                    <div class="detective-name" x-text="profileData?.basic?.firstName || 'Детектив'"></div>
+                    <div class="detective-name" id="detective-name">Детектив</div>
 
                     <div class="detective-rank">
                         <div class="rank-badge">
                             <i data-lucide="star" class="rank-icon"></i>
-                            <span x-text="profileData?.rank?.current || 'НОВИЧОК'"></span>
+                            <span id="detective-rank">НОВИЧОК</span>
                         </div>
                     </div>
                 </div>
@@ -597,9 +598,8 @@
                 </div>
                 <div class="case-content">
                     <div class="reputation-level">
-                        <div class="reputation-number" x-text="profileData?.reputation?.level || '0'"></div>
-                        <div class="reputation-category" x-text="profileData?.reputation?.category || 'Неизвестно'">
-                        </div>
+                        <div class="reputation-number" id="reputation-level">0</div>
+                        <div class="reputation-category" id="reputation-category">Неизвестно</div>
                     </div>
                 </div>
             </div>
@@ -613,19 +613,19 @@
                 <div class="case-content">
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-value" x-text="profileData?.stats?.investigations || '0'"></div>
+                            <div class="stat-value" id="stat-investigations">0</div>
                             <div class="stat-label">Всего дел</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-value" x-text="profileData?.stats?.solvedCases || '0'"></div>
+                            <div class="stat-value" id="stat-solved">0</div>
                             <div class="stat-label">Раскрыто</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-value" x-text="Math.round(profileData?.stats?.accuracy || 0) + '%'"></div>
+                            <div class="stat-value" id="stat-accuracy">0%</div>
                             <div class="stat-label">Точность</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-value" x-text="profileData?.stats?.totalScore || '0'"></div>
+                            <div class="stat-value" id="stat-score">0</div>
                             <div class="stat-label">Общий счет</div>
                         </div>
                     </div>
@@ -661,14 +661,14 @@
         </div>
 
         <!-- Ошибка подключения -->
-        <div x-show="error && !loading" class="case-file" style="display: none;">
+        <div id="error-screen" class="case-file hidden">
             <div class="case-header">
                 <i data-lucide="alert-triangle" class="case-icon"></i>
                 <span class="case-title">Ошибка расследования</span>
             </div>
             <div class="case-content">
-                <p x-text="errorMessage" style="margin-bottom: var(--spacing-md);"></p>
-                <button @click="init()" class="evidence-button">
+                <p id="error-message" style="margin-bottom: var(--spacing-md);"></p>
+                <button onclick="window.location.reload()" class="evidence-button">
                     <i data-lucide="refresh-cw" style="width: 16px; height: 16px; margin-right: var(--spacing-sm);"></i>
                     Повторить анализ
                 </button>

@@ -78,810 +78,191 @@ const ProfileManager = {
      */
     async init() {
         try {
+            console.log('🕵️ Инициализация профиля детектива...');
 
-            this.loadingStart('Загрузка профиля...');
+            this.showLoading();
+
+            // Инициализация Telegram WebApp
+            if (tg) {
+                tg.ready();
+                tg.expand();
+            }
 
             // Проверяем аутентификацию
-            await this.checkAuthentication();
+            await this.checkAuth();
 
-            // Если аутентификация прошла успешно, загружаем данные
-            if (this.state.isAuthenticated && this.state.token) {
+            if (this.state.isAuthenticated) {
+                // Загружаем данные профиля
+                await this.loadProfile();
+                await this.loadAchievements();
+                await this.loadLeaderboard();
 
-                await this.loadProfileData();
+                this.showContent();
             } else {
-
                 this.showError('Не удалось выполнить аутентификацию');
             }
 
-            // Настраиваем обработчики событий после успешной инициализации
-
-            this.setupEventListeners();
-
         } catch (error) {
-            console.error('Ошибка инициализации профиля:', error);
-            this.showError('Ошибка инициализации: ' + error.message);
-        } finally {
-            this.loadingEnd();
+            console.error('❌ Ошибка инициализации:', error);
+            this.showError('Ошибка загрузки: ' + error.message);
         }
     },
 
     /**
      * Проверка аутентификации пользователя
      */
-    async checkAuthentication() {
+    async checkAuth() {
         try {
+            console.log('🔐 Проверка аутентификации...');
 
-            console.log('📊 Состояние localStorage до проверки:', Object.keys(localStorage));
-            console.log('📊 Все данные localStorage:', {
-                token: localStorage.getItem('token'),
-                auth_token: localStorage.getItem('auth_token'),
-                initData: localStorage.getItem('initData'),
-                user: localStorage.getItem('user')
-            });
-            console.log('📊 URL параметры:', window.location.search);
-            console.log('📊 Telegram WebApp:', {
-                available: !!window.Telegram?.WebApp,
-                initData: window.Telegram?.WebApp?.initData || 'НЕТ',
-                user: window.Telegram?.WebApp?.initDataUnsafe?.user || 'НЕТ'
-            });
-
-            // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ТОЛЬКО ГОСТЕВЫХ ТОКЕНОВ И ДАННЫХ (НЕ ВСЕХ!)
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-                const key = localStorage.key(i);
-                // БОЛЕЕ СТРОГАЯ ПРОВЕРКА: точное совпадение с префиксами
-                if (key && (key === 'guest_token' || key.startsWith('guest_user_') || key === 'test_token' || key.startsWith('test_token_'))) {
-                    localStorage.removeItem(key);
-                    console.log('🗑️ Удален ключ:', key);
-                }
-            }
-
-            // Проверяем существующие токены на гостевые данные - БОЛЕЕ СТРОГИЕ КРИТЕРИИ
-            const existingToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
-            console.log('🔍 Анализ существующего токена:', {
-                exists: !!existingToken,
-                length: existingToken ? existingToken.length : 0,
-                prefix: existingToken ? existingToken.substring(0, 20) + '...' : 'НЕТ',
-                isGuest: existingToken ? existingToken.startsWith('guest_') : false,
-                isTestToken: existingToken ? existingToken.startsWith('test_token_') : false,
-                containsGuest: existingToken ? existingToken.includes('guest_') : false,
-                containsTestToken: existingToken ? existingToken.includes('test_token_') : false
-            });
-
-            // БОЛЕЕ СТРОГИЕ КРИТЕРИИ: только если токен НАЧИНАЕТСЯ с этих префиксов
-            if (existingToken && (existingToken.startsWith('guest_') || existingToken.startsWith('test_token_'))) {
-                console.log('🗑️ Удаляем тестовый/гостевой токен (строгая проверка):', existingToken.substring(0, 20) + '...');
-                localStorage.removeItem('token');
-                localStorage.removeItem('auth_token');
-                this.state.token = null;
-                this.state.isAuthenticated = false;
-            } else if (existingToken) {
-                console.log('✅ Токен прошел проверку, сохраняем');
-            }
-
-            // Проверяем данные из URL (переданные с главной страницы)
+            // Получаем токен из URL или localStorage
             const urlParams = new URLSearchParams(window.location.search);
-            const tokenFromUrl = urlParams.get('token');
-            const initDataFromUrl = urlParams.get('initData');
+            let token = urlParams.get('token') || localStorage.getItem('token') || localStorage.getItem('auth_token');
 
-            console.log('🔗 Данные из URL:', {
-                token: tokenFromUrl ? `${tokenFromUrl.substring(0, 20)}...` : 'НЕТ',
-                initData: initDataFromUrl ? `${initDataFromUrl.substring(0, 50)}...` : 'НЕТ'
-            });
-
-            // Если есть данные из URL, используем их
-            if (tokenFromUrl && initDataFromUrl) {
-
-                localStorage.setItem('token', tokenFromUrl);
-                localStorage.setItem('auth_token', tokenFromUrl);
-                localStorage.setItem('initData', initDataFromUrl);
-                this.state.token = tokenFromUrl;
-                this.state.isAuthenticated = true;
-
-                return;
-            } else if (tokenFromUrl || initDataFromUrl) {
-
-            }
-
-            // Получаем сохраненный токен
-            let token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-            console.log('🔑 Проверяем сохраненный токен:', token ? `${token.substring(0, 20)}...` : 'НЕТ');
-
-            if (token) {
-                // Проверяем валидность токена на сервере
-
-                const response = await fetch('/api/auth/verify', {
-                    method: 'GET',
+            if (!token && tg?.initData) {
+                // Пытаемся аутентифицироваться через Telegram
+                const response = await fetch('/api/auth/telegram', {
+                    method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({
+                        initData: tg.initData
+                    })
                 });
 
                 if (response.ok) {
                     const data = await response.json();
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                }
+            }
 
+            if (token) {
+                // Проверяем токен на сервере
+                const response = await fetch('/api/auth/verify', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
                     this.state.token = token;
                     this.state.isAuthenticated = true;
-                    return;
+                    console.log('✅ Аутентификация успешна');
                 } else {
-                    // Токен недействителен
-
+                    console.log('❌ Токен недействителен');
                     localStorage.removeItem('token');
-                    localStorage.removeItem('auth_token');
-                    this.state.token = null;
-                    this.state.isAuthenticated = false;
                 }
             }
 
-            // Если нет токена или он недействителен, проверяем, есть ли данные Telegram для новой авторизации
-            const telegramInitData = window.Telegram?.WebApp?.initData;
-            console.log('📱 Проверяем данные Telegram WebApp:', telegramInitData ? `${telegramInitData.substring(0, 50)}...` : 'НЕТ');
-
-            if (telegramInitData && telegramInitData.includes('user=')) {
-                console.log('✅ Есть данные Telegram, пытаемся авторизоваться');
-                await this.authenticateTelegram();
-                return;
-            }
-
-            // Нет токена и нет данных Telegram - показываем ошибку
-            console.error('❌ Нет данных для аутентификации');
-            this.state.token = null;
+        } catch (error) {
+            console.error('❌ Ошибка аутентификации:', error);
             this.state.isAuthenticated = false;
-
-            // Показываем ошибку вместо попытки автоматической авторизации
-            this.showError('Для доступа к профилю требуется авторизация через Telegram. Перенаправление на главную...');
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 2000);
-
-        } catch (error) {
-            console.error('❌ Ошибка проверки аутентификации:', error);
-            this.showError('Ошибка проверки авторизации');
-        }
-    },
-
-    /**
-     * Комплексная проверка Telegram окружения
-     * ВАЖНО: Всегда возвращает true - мы отключили эту проверку
-     */
-    checkTelegramEnvironment() {
-        // Просто логируем все проверки для отладки, но игнорируем результаты
-
-        if (window.Telegram && window.Telegram.WebApp) {
-
-        }
-
-        if (window.TelegramWebApp) {
-
-        }
-
-        if (window.WebApp) {
-
-        }
-
-        if (this.checkTelegramUrlParams()) {
-
-        }
-
-        if (this.checkTelegramUserAgent()) {
-
-        }
-
-        if (this.checkTelegramIframe()) {
-
-        }
-
-        if (localStorage.getItem('auth_token')) {
-
-        }
-
-        // Мы принудительно разрешаем работу без проверки окружения Telegram
-        return true;
-    },
-
-    /**
-     * Проверка наличия параметров Telegram в URL
-     */
-    checkTelegramUrlParams() {
-        // Проверяем, есть ли в URL параметры Telegram WebApp
-        const urlParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(window.location.hash.slice(1));
-
-        // Проверяем параметры в URL и в хеше
-        return urlParams.has('tgWebAppData') ||
-            urlParams.has('tgWebAppStartParam') ||
-            urlParams.has('tgWebAppVersion') ||
-            urlParams.has('tgWebAppPlatform') ||
-            hashParams.has('tgWebAppData') ||
-            hashParams.has('tgWebAppStartParam') ||
-            hashParams.has('tgWebAppVersion') ||
-            hashParams.has('tgWebAppPlatform');
-    },
-
-    /**
-     * Проверка Telegram WebView в User Agent
-     */
-    checkTelegramUserAgent() {
-        const userAgent = navigator.userAgent.toLowerCase();
-        return userAgent.includes('telegram') ||
-            userAgent.includes('webview') ||
-            userAgent.includes('tgweb') ||
-            document.referrer.includes('telegram') ||
-            document.referrer.includes('t.me') ||
-            window.parent !== window;
-    },
-
-    /**
-     * Проверка открытия в iframe от Telegram
-     */
-    checkTelegramIframe() {
-        return window.self !== window.top &&
-            (document.referrer.includes('telegram') || document.referrer.includes('t.me'));
-    },
-
-    /**
-     * Создание минимального объекта Telegram WebApp для работы
-     */
-    createMinimalTelegramWebApp() {
-        return {
-            initData: '',
-            colorScheme: 'dark',
-            version: 'minimal-1.0',
-            platform: 'unknown',
-            ready: function () { console.log('Minimal WebApp ready called'); },
-            expand: function () { console.log('Minimal WebApp expand called'); },
-            BackButton: {
-                show: function () { console.log('Minimal WebApp BackButton.show called'); },
-                hide: function () { console.log('Minimal WebApp BackButton.hide called'); },
-                onClick: function (callback) {
-
-                    window.addEventListener('popstate', callback);
-                }
-            },
-            HapticFeedback: {
-                notificationOccurred: function (type) {
-
-                }
-            },
-            isExpanded: true,
-            viewportHeight: window.innerHeight,
-            viewportStableHeight: window.innerHeight
-        };
-    },
-
-    /**
-     * Аутентификация через Telegram WebApp
-     */
-    async authenticateTelegram() {
-        try {
-            console.log('🔐 Начинаем аутентификацию через Telegram');
-
-            // НЕ ОЧИЩАЕМ ВСЕ ДАННЫЕ - только сбрасываем состояние аутентификации
-            this.state.token = null;
-            this.state.isAuthenticated = false;
-
-            // Получаем данные инициализации из URL или из Telegram WebApp
-            const urlParams = new URLSearchParams(window.location.search);
-            let initData = urlParams.get('initData');
-
-            // Если нет данных в URL, пытаемся получить из localStorage
-            if (!initData) {
-                initData = localStorage.getItem('initData');
-                console.log('📦 Получили initData из localStorage:', initData ? `${initData.substring(0, 50)}...` : 'НЕТ');
-            }
-
-            // Если нет данных в localStorage, пытаемся получить из Telegram WebApp
-            if (!initData && window.Telegram && window.Telegram.WebApp) {
-                initData = window.Telegram.WebApp.initData;
-                console.log('📱 Получили initData из Telegram WebApp:', initData ? `${initData.substring(0, 50)}...` : 'НЕТ');
-            }
-
-            // Если все еще нет initData, пытаемся использовать существующий токен
-            if (!initData || initData.trim() === '') {
-                console.warn('⚠️ initData отсутствуют, пытаемся использовать сохраненный токен');
-
-                const savedToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
-                // БОЛЕЕ СТРОГАЯ ПРОВЕРКА: только если токен НАЧИНАЕТСЯ с префиксов
-                if (savedToken && !savedToken.startsWith('guest_') && !savedToken.startsWith('test_')) {
-                    console.log('💾 Найден сохраненный токен, пытаемся его использовать');
-                    this.state.token = savedToken;
-                    this.state.isAuthenticated = true;
-
-                    try {
-                        await this.loadProfileData();
-                        return;
-                    } catch (error) {
-                        console.error('❌ Ошибка загрузки профиля с сохраненным токеном:', error);
-                        // Если токен не работает, продолжаем с авторизацией
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('auth_token');
-                    }
-                }
-
-                // Если ничего не работает, показываем ошибку с перенаправлением
-                console.error('❌ Невозможно выполнить авторизацию: нет данных Telegram и валидного токена');
-                this.showError('Невозможно загрузить профиль без авторизации Telegram. Перенаправление на главную...');
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 2000);
-                return;
-            }
-
-            console.log('✅ Данные для авторизации найдены, отправляем запрос на сервер');
-
-            // Отправляем запрос на сервер для авторизации
-            const response = await fetch('/api/auth/init', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    initData: initData
-                })
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Ошибка ответа сервера:', errorText);
-                throw new Error(`Ошибка авторизации: ${response.status} - ${errorText}`);
-            }
-
-            const data = await response.json();
-            console.log('Данные авторизации получены:', {
-                status: data.status,
-                hasToken: !!data.token || !!(data.data && data.data.token),
-                hasUser: !!data.user || !!(data.data && data.data.user)
-            });
-
-            if (data.status === 'success' && (data.token || (data.data && data.data.token))) {
-                // Получаем токен
-                const token = data.token || data.data.token;
-
-                // Сохраняем токен и данные пользователя
-                this.state.token = token;
-                this.state.isAuthenticated = true;
-                localStorage.setItem('token', token);
-                localStorage.setItem('auth_token', token);
-
-                // Сохраняем initData для будущих использований
-                if (initData) {
-                    localStorage.setItem('initData', initData);
-                }
-
-                const userData = data.user || data.data.user;
-                if (userData && userData.telegramId) {
-                    console.log('✅ Пользователь авторизован:', userData.name || userData.telegramId);
-                } else {
-                    console.log('✅ Токен получен, но данные пользователя отсутствуют');
-                }
-
-                // Загружаем данные профиля
-                await this.loadProfileData();
-            } else {
-                throw new Error(data.message || 'Неизвестная ошибка авторизации');
-            }
-
-        } catch (error) {
-            console.error('Ошибка в authenticateTelegram:', error);
-            this.showConnectionError('Не удалось авторизоваться через Telegram: ' + error.message);
-        }
-    },
-
-    /**
-     * Проверяет, следует ли использовать режим эмуляции
-     */
-    shouldUseEmulationMode() {
-        // Отключаем режим эмуляции в продакшене
-        return false;
-
-        // Режим для тестирования можно включить через URL параметр
-
-    },
-
-    /**
-     * Использует эмуляционную аутентификацию для тестирования без Telegram
-     */
-    async useEmulationAuth() {
-
-        try {
-            const response = await fetch('/api/auth/emulate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    userAgent: navigator.userAgent,
-                    emulationKey: 'dev_mode_enabled'
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Ошибка эмуляционной аутентификации: ${response.status}`);
-            }
-
-            const data = await response.json();
-            if (data.token) {
-                localStorage.setItem('auth_token', data.token);
-                this.state.token = data.token;
-                this.state.isAuthenticated = true;
-                await this.loadProfileData();
-            } else {
-                throw new Error('Эмуляционная аутентификация не вернула токен');
-            }
-        } catch (error) {
-            console.error('Ошибка при эмуляционной аутентификации:', error);
-            this.showError('Ошибка при тестовой аутентификации: ' + error.message);
-        }
-    },
-
-    /**
-     * Резервный метод авторизации при ошибках
-     */
-    async useFallbackAuth() {
-
-        this.loadingEnd();
-
-        // Пытаемся использовать сохраненный токен
-        const storedToken = localStorage.getItem('auth_token');
-        if (storedToken) {
-
-            this.state.token = storedToken;
-            this.state.isAuthenticated = true;
-
-            try {
-                await this.loadProfileData();
-                return;
-            } catch (e) {
-                console.error('Не удалось загрузить профиль с сохраненным токеном:', e);
-                // Если токен недействителен, удаляем его
-                localStorage.removeItem('auth_token');
-                this.state.token = null;
-                this.state.isAuthenticated = false;
-            }
-        }
-
-        // Показываем ошибку и кнопку для повтора
-        this.showConnectionError('Не удалось загрузить профиль. Пожалуйста, попробуйте позже.');
-    },
-
-    /**
-     * Показывает ошибку соединения с сервером
-     */
-    showConnectionError(message) {
-        const appContainer = document.querySelector('.app-container');
-        if (appContainer) {
-            const errorMessage = document.createElement('div');
-            errorMessage.className = 'auth-error';
-
-            // Безопасное создание SVG иконки
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.setAttribute('class', 'error-icon');
-            svg.setAttribute('viewBox', '0 0 24 24');
-            svg.setAttribute('fill', 'none');
-            svg.setAttribute('stroke', 'currentColor');
-            svg.setAttribute('stroke-width', '2');
-
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', '12');
-            circle.setAttribute('cy', '12');
-            circle.setAttribute('r', '10');
-
-            const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line1.setAttribute('x1', '12');
-            line1.setAttribute('y1', '8');
-            line1.setAttribute('x2', '12');
-            line1.setAttribute('y2', '12');
-
-            const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line2.setAttribute('x1', '12');
-            line2.setAttribute('y1', '16');
-            line2.setAttribute('x2', '12.01');
-            line2.setAttribute('y2', '16');
-
-            svg.appendChild(circle);
-            svg.appendChild(line1);
-            svg.appendChild(line2);
-
-            // Создаем заголовок
-            const h3 = document.createElement('h3');
-            h3.textContent = 'Ошибка подключения';
-
-            // Создаем параграф с сообщением
-            const p = document.createElement('p');
-            p.textContent = message;
-
-            // Создаем кнопку
-            const button = document.createElement('button');
-            button.className = 'retry-button';
-            button.textContent = 'Повторить';
-
-            // Добавляем все элементы в контейнер
-            errorMessage.appendChild(svg);
-            errorMessage.appendChild(h3);
-            errorMessage.appendChild(p);
-            errorMessage.appendChild(button);
-
-            // Добавляем стили для сообщения
-            if (!document.querySelector('.auth-error-styles')) {
-                const style = document.createElement('style');
-                style.className = 'auth-error-styles';
-                style.textContent = `
-                    .auth-error {
-                        background: var(--morgue-gray);
-                        padding: 20px;
-                        border-radius: var(--radius-md);
-                        text-align: center;
-                        border: 2px solid var(--dried-blood);
-                        margin: 40px auto;
-                        max-width: 320px;
-                    }
-                    .error-icon {
-                        width: 48px;
-                        height: 48px;
-                        color: var(--blood-red);
-                        margin-bottom: 15px;
-                    }
-                    .auth-error h3 {
-                        color: var(--blood-red);
-                        margin-bottom: 10px;
-                        font-size: 18px;
-                    }
-                    .auth-error p {
-                        margin-bottom: 8px;
-                        font-size: 14px;
-                        opacity: 0.9;
-                    }
-                    .retry-button {
-                        background: var(--blood-red);
-                        color: var(--chalk-white);
-                        border: none;
-                        padding: 8px 16px;
-                        border-radius: var(--radius-sm);
-                        margin-top: 12px;
-                        cursor: pointer;
-                        font-weight: bold;
-                        transition: background-color 0.2s ease;
-                    }
-                    .retry-button:hover {
-                        background: var(--fresh-blood);
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-
-            // Очищаем контейнер и добавляем сообщение
-            while (appContainer.firstChild) {
-                appContainer.removeChild(appContainer.firstChild);
-            }
-            appContainer.appendChild(errorMessage);
-
-            // Добавляем обработчик для кнопки повтора
-            const retryButton = errorMessage.querySelector('.retry-button');
-            if (retryButton) {
-                retryButton.addEventListener('click', () => {
-                    window.location.reload();
-                });
-            }
-        }
-    },
-
-    /**
-     * Настройка обработчиков событий
-     */
-    setupEventListeners() {
-        // Обработчики для табов лидерборда
-        this.elements.leaderboardTabs.forEach(tab => {
-            tab.addEventListener('click', (event) => {
-                // Удаляем класс active у всех табов
-                this.elements.leaderboardTabs.forEach(t => t.classList.remove('active'));
-                // Добавляем класс active к выбранному табу
-                tab.classList.add('active');
-
-                // Получаем период из атрибута data-period или из текста кнопки
-                const period = tab.dataset.period || tab.textContent.trim().toLowerCase();
-                this.state.currentLeaderboardPeriod = period;
-
-                // Загружаем данные лидерборда для выбранного периода
-                this.loadLeaderboard(period);
-
-                // Тактильная обратная связь в Telegram
-                if (tg && tg.HapticFeedback) {
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
-            });
-        });
-
-        // Прямые обработчики для кнопок навигации
-        const mainButton = document.querySelector('[data-action="goToMain"]');
-        const newGameButton = document.querySelector('[data-action="startNewGame"]');
-
-        if (mainButton) {
-
-            mainButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-
-                // Тактильный отклик
-                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-                }
-
-                window.location.href = createAuthenticatedUrl('/');
-            });
-        } else {
-            console.error('Кнопка "Главная" не найдена!');
-        }
-
-        if (newGameButton) {
-
-            newGameButton.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-
-                // Тактильный отклик
-                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-                }
-
-                window.location.href = createAuthenticatedUrl('/game.html');
-            });
-        } else {
-            console.error('Кнопка "Новое дело" не найдена!');
-        }
-
-        // Дополнительный универсальный обработчик как fallback
-        document.addEventListener('click', (event) => {
-            const actionElement = event.target.closest('[data-action]');
-            if (!actionElement) return;
-
-            const action = actionElement.getAttribute('data-action');
-
-            // Избегаем дублирования для кнопок навигации
-            if (action === 'goToMain' || action === 'startNewGame') {
-                return; // Эти кнопки уже обрабатываются выше
-            }
-
-            // Тактильный отклик
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-            }
-        });
-    },
-
-    /**
-     * Начало загрузки данных
-     */
-    loadingStart(message = 'Загрузка...') {
-        this.state.isLoading = true;
-
-        // Создаем элемент загрузки, если его еще нет
-        if (!document.querySelector('.loading-overlay')) {
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'loading-overlay';
-            loadingOverlay.innerHTML = `
-                <div class="loading-spinner"></div>
-                <div class="loading-message">${message}</div>
-            `;
-            document.body.appendChild(loadingOverlay);
-
-            // Добавляем стили для анимации загрузки
-            const style = document.createElement('style');
-            style.textContent = `
-                .loading-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.8);
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 1000;
-                }
-                .loading-spinner {
-                    width: 50px;
-                    height: 50px;
-                    border: 5px solid rgba(139, 0, 0, 0.3);
-                    border-top-color: #8B0000;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                }
-                .loading-message {
-                    margin-top: 20px;
-                    color: #E8E8E8;
-                    font-size: 16px;
-                }
-                @keyframes spin {
-                    to { transform: rotate(360deg); }
-                }
-            `;
-            document.head.appendChild(style);
-        } else {
-            // Обновляем сообщение, если оверлей уже существует
-            document.querySelector('.loading-message').textContent = message;
-        }
-    },
-
-    /**
-     * Окончание загрузки данных
-     */
-    loadingEnd() {
-        this.state.isLoading = false;
-        const loadingOverlay = document.querySelector('.loading-overlay');
-        if (loadingOverlay) {
-            loadingOverlay.remove();
-        }
-    },
-
-    /**
-     * Отображение ошибки
-     */
-    showError(message) {
-        this.state.error = message;
-
-        // Создаем элемент ошибки, если его еще нет
-        if (!document.querySelector('.error-message')) {
-            const errorElement = document.createElement('div');
-            errorElement.className = 'error-message';
-            errorElement.textContent = message;
-
-            // Добавляем стили для элемента ошибки
-            const style = document.createElement('style');
-            style.textContent = `
-                .error-message {
-                    position: fixed;
-                    top: 20px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: rgba(139, 0, 0, 0.9);
-                    color: #E8E8E8;
-                    padding: 12px 20px;
-                    border-radius: 8px;
-                    z-index: 1001;
-                    max-width: 80%;
-                    text-align: center;
-                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-                    animation: fadeInOut 5s forwards;
-                }
-                @keyframes fadeInOut {
-                    0% { opacity: 0; transform: translate(-50%, -20px); }
-                    10% { opacity: 1; transform: translate(-50%, 0); }
-                    90% { opacity: 1; transform: translate(-50%, 0); }
-                    100% { opacity: 0; transform: translate(-50%, -20px); }
-                }
-            `;
-            document.head.appendChild(style);
-
-            document.body.appendChild(errorElement);
-
-            // Удаляем элемент ошибки через 5 секунд
-            setTimeout(() => {
-                errorElement.remove();
-                this.state.error = null;
-            }, 5000);
         }
     },
 
     /**
      * Загрузка данных профиля пользователя
      */
-    async loadProfileData() {
+    async loadProfile() {
         try {
-            this.loadingStart('Загрузка профиля...');
+            console.log('📊 Загрузка профиля...');
 
-            // Получаем токен из localStorage (проверяем оба ключа)
-            const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+            const response = await fetch('/api/user/profile', {
+                headers: {
+                    'Authorization': `Bearer ${this.state.token}`
+                }
+            });
 
-            if (!token) {
-                throw new Error('Отсутствует токен авторизации');
+            if (!response.ok) {
+                throw new Error('Не удалось загрузить профиль');
             }
 
-            console.log('Отправляем запрос профиля с токеном:', token.substring(0, 20) + '...');
+            const profileData = await response.json();
+            this.profileData = profileData;
 
-            // Запрашиваем данные профиля с сервера
-            const response = await fetch('/api/user/profile', {
+            console.log('✅ Профиль загружен:', profileData);
+
+            // Обновляем UI
+            this.updateProfileUI(profileData);
+
+        } catch (error) {
+            console.error('❌ Ошибка загрузки профиля:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Обновление интерфейса профиля на основе данных
+     * @param {Object} data - Данные профиля
+     */
+    updateProfileUI(data) {
+        if (!data) return;
+
+        // Обновляем информацию о профиле
+        if (this.elements.profileName) {
+            this.elements.profileName.textContent = data.basic?.firstName || data.username || 'Детектив';
+        }
+
+        if (this.elements.profileBadge) {
+            this.elements.profileBadge.textContent = data.rank?.current || 'НОВИЧОК';
+        }
+
+        if (this.elements.profileId) {
+            this.elements.profileId.textContent = data.telegramId || '-';
+        }
+
+        // Загружаем аватар пользователя
+        this.loadUserAvatar();
+
+        // Обновляем статистику (обеспечиваем корректное отображение нулевых значений)
+        if (this.elements.investigationsCount) {
+            this.elements.investigationsCount.textContent = data.stats?.investigations !== undefined ?
+                data.stats.investigations : '0';
+        }
+
+        if (this.elements.solvedCases) {
+            this.elements.solvedCases.textContent = data.stats?.solvedCases !== undefined ?
+                data.stats.solvedCases : '0';
+        }
+
+        if (this.elements.winStreak) {
+            this.elements.winStreak.textContent = data.stats?.winStreak !== undefined ?
+                data.stats.winStreak : '0';
+        }
+
+        if (this.elements.accuracy) {
+            const accuracyValue = data.stats?.accuracy !== undefined ? data.stats.accuracy : 0;
+            this.elements.accuracy.textContent = `${accuracyValue}%`;
+        }
+    },
+
+    /**
+     * Загрузка аватара пользователя из Telegram
+     */
+    async loadUserAvatar() {
+        const avatarImage = document.getElementById('avatar-image');
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+        const avatarLoading = document.getElementById('avatar-loading');
+
+        if (!avatarImage || !avatarPlaceholder || !avatarLoading) {
+            return;
+        }
+
+        try {
+            // Показываем загрузку
+            avatarLoading.style.display = 'block';
+            avatarPlaceholder.style.opacity = '0.3';
+
+            // Получаем токен
+            const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+            if (!token) {
+                throw new Error('Токен авторизации отсутствует');
+            }
+
+            // Запрашиваем аватар с сервера
+            const response = await fetch('/api/user/avatar', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -889,51 +270,69 @@ const ProfileManager = {
                 }
             });
 
-            if (response.status === 401) {
-                // Токен недействителен, перенаправляем на авторизацию
-                console.log('Токен недействителен (401), очищаем и перенаправляем');
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('token');
-                window.location.href = '/';
-                return;
-            }
-
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Ошибка ответа сервера:', response.status, errorText);
-                throw new Error(`Ошибка сервера: ${response.status} - ${errorText}`);
+                throw new Error(`Ошибка сервера: ${response.status}`);
             }
 
             const data = await response.json();
 
-            if (data.status === 'success') {
-                // Сохраняем данные профиля
-                this.profileData = data.data;
+            if (data.status === 'success' && data.data.hasAvatar && data.data.avatarUrl) {
+                // Загружаем изображение
+                const img = new Image();
 
-                // Обновляем интерфейс профиля
-                this.updateProfileUI(this.profileData);
+                img.onload = () => {
+                    // Успешно загружено - показываем аватар
+                    avatarImage.src = data.data.avatarUrl;
+                    avatarImage.style.display = 'block';
+                    avatarPlaceholder.style.display = 'none';
+                    avatarLoading.style.display = 'none';
 
-                // Загружаем таблицу лидеров
-                await this.loadLeaderboard();
+                    // Добавляем плавное появление
+                    avatarImage.style.opacity = '0';
+                    setTimeout(() => {
+                        avatarImage.style.transition = 'opacity 0.3s ease';
+                        avatarImage.style.opacity = '1';
+                    }, 50);
+                };
+
+                img.onerror = () => {
+                    // Ошибка загрузки изображения
+                    this.showAvatarPlaceholder();
+                };
+
+                // Начинаем загрузку изображения
+                img.src = data.data.avatarUrl;
 
             } else {
-                throw new Error(data.message || 'Ошибка при загрузке профиля');
+                // У пользователя нет аватара
+                this.showAvatarPlaceholder();
             }
 
         } catch (error) {
-            console.error('Ошибка загрузки профиля:', error);
+            console.error('Ошибка при загрузке аватара:', error);
+            this.showAvatarPlaceholder();
+        }
+    },
 
-            // Показываем сообщение об ошибке
-            this.showError('Не удалось загрузить данные профиля. Проверьте подключение к интернету.');
+    /**
+     * Показывает плейсхолдер аватара
+     */
+    showAvatarPlaceholder() {
+        const avatarImage = document.getElementById('avatar-image');
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+        const avatarLoading = document.getElementById('avatar-loading');
 
-            // Если это ошибка авторизации, возвращаемся на главную
-            if (error.message.includes('токен') || error.message.includes('401')) {
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 3000);
-            }
-        } finally {
-            this.loadingEnd();
+        if (avatarImage) {
+            avatarImage.style.display = 'none';
+        }
+
+        if (avatarPlaceholder) {
+            avatarPlaceholder.style.display = 'block';
+            avatarPlaceholder.style.opacity = '1';
+        }
+
+        if (avatarLoading) {
+            avatarLoading.style.display = 'none';
         }
     },
 
@@ -955,7 +354,6 @@ const ProfileManager = {
 
             if (!response.ok) {
                 if (response.status === 401 || response.status === 403) {
-
                     // Не сбрасываем токен здесь, так как это некритичная ошибка
                 }
                 throw new Error(`Ошибка загрузки таблицы лидеров: ${response.status} ${response.statusText}`);
@@ -1051,168 +449,31 @@ const ProfileManager = {
 
             leaderboardContent.appendChild(row);
         });
-
     },
 
     /**
-     * Обновление интерфейса профиля на основе данных
-     * @param {Object} data - Данные профиля
+     * Загрузка достижений пользователя
      */
-    updateProfileUI(data) {
-        if (!data) return;
-
-        // Обновляем информацию о профиле
-        if (this.elements.profileName) {
-            this.elements.profileName.textContent = data.name || 'Новый детектив';
-        }
-
-        if (this.elements.profileBadge) {
-            this.elements.profileBadge.textContent = data.rank || 'НОВИЧОК';
-        }
-
-        if (this.elements.profileId) {
-            this.elements.profileId.textContent = data.telegramId || '-';
-        }
-
-        // Загружаем аватар пользователя
-        this.loadUserAvatar();
-
-        // Обновляем статистику (обеспечиваем корректное отображение нулевых значений)
-        if (this.elements.investigationsCount) {
-            this.elements.investigationsCount.textContent = data.stats?.investigations !== undefined ?
-                data.stats.investigations : '0';
-        }
-
-        if (this.elements.solvedCases) {
-            this.elements.solvedCases.textContent = data.stats?.solvedCases !== undefined ?
-                data.stats.solvedCases : '0';
-        }
-
-        if (this.elements.winStreak) {
-            this.elements.winStreak.textContent = data.stats?.winStreak !== undefined ?
-                data.stats.winStreak : '0';
-        }
-
-        if (this.elements.accuracy) {
-            const accuracyValue = data.stats?.accuracy !== undefined ? data.stats.accuracy : 0;
-            this.elements.accuracy.textContent = `${accuracyValue}%`;
-        }
-
-        // Если это новый пользователь, добавляем особый класс
-        if (data.isNewUser) {
-            document.body.classList.add('new-user');
-        } else {
-            document.body.classList.remove('new-user');
-        }
-
-        // Обновляем достижения
-        if (data.achievements) {
-            this.updateAchievementsUI(data.achievements);
-        } else {
-            // Для новых пользователей без достижений показываем все как заблокированные
-            const emptyAchievements = [];
-            this.updateAchievementsUI(emptyAchievements);
-        }
-    },
-
-    /**
-     * Загрузка аватара пользователя из Telegram
-     */
-    async loadUserAvatar() {
-        const avatarImage = document.getElementById('avatar-image');
-        const avatarPlaceholder = document.getElementById('avatar-placeholder');
-        const avatarLoading = document.getElementById('avatar-loading');
-
-        if (!avatarImage || !avatarPlaceholder || !avatarLoading) {
-
-            return;
-        }
-
+    async loadAchievements() {
         try {
-            // Показываем загрузку
-            avatarLoading.style.display = 'block';
-            avatarPlaceholder.style.opacity = '0.3';
+            console.log('🏆 Загрузка достижений...');
 
-            // Получаем токен
-            const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-            if (!token) {
-                throw new Error('Токен авторизации отсутствует');
-            }
-
-            // Запрашиваем аватар с сервера
-            const response = await fetch('/api/user/avatar', {
-                method: 'GET',
+            const response = await fetch('/api/user/achievements', {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${this.state.token}`
                 }
             });
 
             if (!response.ok) {
-                throw new Error(`Ошибка сервера: ${response.status}`);
+                console.log('⚠️ Не удалось загрузить достижения');
+                return;
             }
 
-            const data = await response.json();
-
-            if (data.status === 'success' && data.data.hasAvatar && data.data.avatarUrl) {
-                // Загружаем изображение
-                const img = new Image();
-
-                img.onload = () => {
-                    // Успешно загружено - показываем аватар
-                    avatarImage.src = data.data.avatarUrl;
-                    avatarImage.style.display = 'block';
-                    avatarPlaceholder.style.display = 'none';
-                    avatarLoading.style.display = 'none';
-
-                    // Добавляем плавное появление
-                    avatarImage.style.opacity = '0';
-                    setTimeout(() => {
-                        avatarImage.style.transition = 'opacity 0.3s ease';
-                        avatarImage.style.opacity = '1';
-                    }, 50);
-                };
-
-                img.onerror = () => {
-                    // Ошибка загрузки изображения
-
-                    this.showAvatarPlaceholder();
-                };
-
-                // Начинаем загрузку изображения
-                img.src = data.data.avatarUrl;
-
-            } else {
-                // У пользователя нет аватара
-
-                this.showAvatarPlaceholder();
-            }
+            const achievements = await response.json();
+            this.renderAchievements(achievements);
 
         } catch (error) {
-            console.error('Ошибка при загрузке аватара:', error);
-            this.showAvatarPlaceholder();
-        }
-    },
-
-    /**
-     * Показывает плейсхолдер аватара
-     */
-    showAvatarPlaceholder() {
-        const avatarImage = document.getElementById('avatar-image');
-        const avatarPlaceholder = document.getElementById('avatar-placeholder');
-        const avatarLoading = document.getElementById('avatar-loading');
-
-        if (avatarImage) {
-            avatarImage.style.display = 'none';
-        }
-
-        if (avatarPlaceholder) {
-            avatarPlaceholder.style.display = 'block';
-            avatarPlaceholder.style.opacity = '1';
-        }
-
-        if (avatarLoading) {
-            avatarLoading.style.display = 'none';
+            console.error('❌ Ошибка загрузки достижений:', error);
         }
     },
 
@@ -1220,220 +481,177 @@ const ProfileManager = {
      * Обновление интерфейса достижений
      * @param {Array} achievements - Массив достижений пользователя
      */
-    updateAchievementsUI(achievements) {
-        if (!achievements) return;
-
-        // Используем новую систему достижений, если она доступна
-        if (window.AchievementSystem) {
-
-            // Обновляем статистику пользователя для корректного расчета прогресса
-            if (this.profileData && this.profileData.stats) {
-
-                const userStats = {
-                    investigations: this.profileData.stats.investigations || this.profileData.stats.totalGames || 0,
-                    accuracy: this.profileData.stats.accuracy || 0,
-                    totalScore: this.profileData.stats.totalScore || 0,
-                    winStreak: this.profileData.stats.winStreak || this.profileData.stats.maxWinStreak || this.profileData.stats.maxStreak || 0,
-                    perfectGames: this.profileData.stats.perfectGames || 0,
-                    fastestGame: this.profileData.stats.fastestGame || 999
-                };
-
-                window.AchievementSystem.updateUserStats(userStats);
-            } else {
-
-                window.AchievementSystem.updateUserStats({
-                    investigations: 0,
-                    accuracy: 0,
-                    totalScore: 0,
-                    winStreak: 0,
-                    perfectGames: 0,
-                    fastestGame: 999
-                });
-            }
-
-            // Рендерим достижения через новую систему
-            window.AchievementSystem.renderEnhancedAchievements(achievements);
-
-            // Обновляем прогресс-бары
-            window.AchievementSystem.updateAchievementProgress();
-
-            return;
-        }
-
-        // Fallback: старая логика для совместимости
-        console.log('Используем старую систему достижений (fallback)');
-        this.updateAchievementsUILegacy(achievements);
-    },
-
-    /**
-     * Старая логика обновления достижений (для совместимости)
-     * @param {Array} achievements - Массив достижений пользователя  
-     */
-    updateAchievementsUILegacy(achievements) {
+    renderAchievements(achievements) {
         if (!this.elements.achievements) return;
 
-        // Определяем известные достижения и их иконки
-        const achievementIcons = {
-            "first_case": '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />',
-            "rookie": '<circle cx="12" cy="8" r="7" /><path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12" />',
-            "expert": '<path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" /><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />',
-            "sharp_eye": '<circle cx="12" cy="12" r="10" /><path d="M8 12l2 2 4-4" />',
-            "serial_detective": '<path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />',
-            "maniac": '<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />'
-        };
+        // Базовые достижения с иконками
+        const baseAchievements = [
+            { id: 'first_case', name: 'ПЕРВОЕ ДЕЛО', icon: '🔍', locked: true },
+            { id: 'rookie', name: 'НОВИЧОК', icon: '🎖️', locked: true },
+            { id: 'expert', name: 'ЭКСПЕРТ', icon: '🏆', locked: true },
+            { id: 'sharp_eye', name: 'ОСТРЫЙ ГЛАЗ', icon: '👁️', locked: true },
+            { id: 'serial_detective', name: 'СЕРИЙНЫЙ СЫЩИК', icon: '🕵️', locked: true },
+            { id: 'maniac', name: 'МАНЬЯК', icon: '⚡', locked: true }
+        ];
 
-        // Находим все элементы достижений
-        const achievementElements = Array.from(this.elements.achievements);
-
-        // Для каждого элемента достижения проверяем, разблокировано ли оно
-        achievementElements.forEach((element, index) => {
-            // Если у нас есть достижение с соответствующим индексом
-            if (achievements[index]) {
-                const achievement = achievements[index];
-
-                // Удаляем класс locked, если он есть
-                element.classList.remove('locked');
-
-                // Обновляем иконку и название достижения
-                const iconElement = element.querySelector('.achievement-icon');
-                const nameElement = element.querySelector('.achievement-name');
-
-                if (iconElement && achievementIcons[achievement.id]) {
-                    iconElement.innerHTML = achievementIcons[achievement.id];
-                }
-
-                if (nameElement) {
-                    nameElement.textContent = achievement.name;
-                }
-
-                // Добавляем всплывающую подсказку с описанием
-                element.title = achievement.description;
-            } else {
-                // Если достижение не разблокировано
-                element.classList.add('locked');
-
-                const iconElement = element.querySelector('.achievement-icon');
-                const nameElement = element.querySelector('.achievement-name');
-
-                if (iconElement) {
-                    iconElement.innerHTML = '<path d="M3 6h18M3 12h18M3 18h18" />';
-                    iconElement.style.opacity = 0.3;
-                }
-
-                if (nameElement) {
-                    nameElement.textContent = '???';
-                }
-
-                element.title = 'Достижение заблокировано';
+        // Отмечаем разблокированные достижения
+        achievements.forEach(userAchievement => {
+            const achievement = baseAchievements.find(a => a.id === userAchievement.id);
+            if (achievement) {
+                achievement.locked = false;
+                achievement.name = userAchievement.name || achievement.name;
             }
+        });
+
+        // Рендерим
+        this.elements.achievements.forEach((element, index) => {
+            const achievement = baseAchievements[index];
+            const iconElement = element.querySelector('.achievement-icon');
+            const nameElement = element.querySelector('.achievement-name');
+
+            if (iconElement) {
+                iconElement.innerHTML = achievement.icon;
+            }
+
+            if (nameElement) {
+                nameElement.textContent = achievement.name;
+            }
+
+            element.classList.toggle('locked', achievement.locked);
         });
     },
 
     /**
-     * Показывает сообщение о необходимости открыть страницу в Telegram
+     * Начало загрузки данных
      */
-    showTelegramRequiredMessage() {
-        // Создаем контейнер
-        const container = document.createElement('div');
-        container.className = 'telegram-required-message';
-        container.style.position = 'fixed';
-        container.style.top = '0';
-        container.style.left = '0';
-        container.style.right = '0';
-        container.style.bottom = '0';
-        container.style.backgroundColor = '#1e1e1e';
-        container.style.color = '#fff';
-        container.style.display = 'flex';
-        container.style.flexDirection = 'column';
-        container.style.alignItems = 'center';
-        container.style.justifyContent = 'center';
-        container.style.textAlign = 'center';
-        container.style.padding = '20px';
-        container.style.zIndex = '10000';
+    showLoading() {
+        this.state.isLoading = true;
+        this.state.error = false;
 
-        // Добавляем лого
-        const logo = document.createElement('div');
-        logo.innerHTML = `<svg viewBox="0 0 32 32" width="64" height="64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="16" cy="16" r="14" stroke="#C4302B" stroke-width="2"/>
-            <path d="M22.9865 10.1152C22.9487 10.0499 22.9238 9.97705 22.9238 9.9025C22.9238 9.82625 22.9487 9.75339 22.9865 9.68805C23.0243 9.62272 23.0742 9.56641 23.1316 9.52344C23.1891 9.48047 23.2529 9.45175 23.3196 9.43893C23.3864 9.42611 23.4546 9.42944 23.5196 9.4486C23.5846 9.46775 23.6444 9.50222 23.6946 9.54944C23.7448 9.59667 23.7841 9.65544 23.8097 9.72137C23.8353 9.7873 23.8465 9.85871 23.8426 9.92983C23.8387 10.0009 23.8199 10.0702 23.7879 10.1324L17.1621 21.8648C17.1157 21.9371 17.0536 21.9976 16.9803 22.0416C16.907 22.0855 16.8244 22.112 16.7393 22.1191C16.6541 22.1262 16.5685 22.1137 16.489 22.0825C16.4095 22.0513 16.3383 22.0022 16.2809 21.9388L9.93079 14.6512C9.87471 14.5961 9.832 14.5295 9.80555 14.4563C9.77911 14.3832 9.76962 14.3051 9.77776 14.228C9.78591 14.1508 9.81149 14.0766 9.85237 14.0107C9.89325 13.9448 9.9484 13.8889 10.0142 13.8469C10.0801 13.8049 10.1549 13.7779 10.2323 13.7681C10.3097 13.7584 10.388 13.7662 10.4618 13.7911C10.5356 13.816 10.6031 13.8573 10.6593 13.9121C10.7155 13.9669 10.7588 14.0339 10.7862 14.1082L16.6926 20.7922L22.9865 10.1152Z" fill="#C4302B"/>
-        </svg>`;
-        container.appendChild(logo);
+        if (this.elements.loadingScreen) this.elements.loadingScreen.classList.remove('hidden');
+        if (this.elements.mainContent) this.elements.mainContent.classList.add('hidden');
+        if (this.elements.errorScreen) this.elements.errorScreen.classList.add('hidden');
+    },
 
-        // Добавляем заголовок
-        const title = document.createElement('h2');
-        title.textContent = 'Требуется Telegram';
-        title.style.marginTop = '20px';
-        title.style.marginBottom = '10px';
-        title.style.fontFamily = 'Arial, sans-serif';
-        title.style.fontSize = '24px';
-        title.style.color = '#c4302b';
-        container.appendChild(title);
+    /**
+     * Окончание загрузки данных
+     */
+    showContent() {
+        this.state.isLoading = false;
+        this.state.error = false;
 
-        // Добавляем текст сообщения
-        const message = document.createElement('p');
-        message.textContent = 'Эта страница доступна только через Telegram Mini App.';
-        message.style.marginBottom = '20px';
-        message.style.fontFamily = 'Arial, sans-serif';
-        message.style.fontSize = '16px';
-        message.style.lineHeight = '1.4';
-        container.appendChild(message);
+        if (this.elements.loadingScreen) this.elements.loadingScreen.classList.add('hidden');
+        if (this.elements.mainContent) this.elements.mainContent.classList.remove('hidden');
+        if (this.elements.errorScreen) this.elements.errorScreen.classList.add('hidden');
+    },
 
-        // Добавляем инструкцию
-        const instruction = document.createElement('p');
-        instruction.textContent = 'Пожалуйста, откройте ссылку в приложении Telegram.';
-        instruction.style.marginBottom = '30px';
-        instruction.style.fontFamily = 'Arial, sans-serif';
-        instruction.style.fontSize = '16px';
-        instruction.style.lineHeight = '1.4';
-        container.appendChild(instruction);
+    /**
+     * Отображение ошибки
+     */
+    showError(message) {
+        this.state.error = true;
+        this.state.errorMessage = message;
 
-        // Добавляем отладочную информацию
-        // Добавляем кнопку для открытия в Telegram
-        const button = document.createElement('button');
-        button.textContent = 'Открыть в Telegram';
-        button.style.padding = '12px 24px';
-        button.style.backgroundColor = '#c4302b';
-        button.style.color = '#fff';
-        button.style.border = 'none';
-        button.style.borderRadius = '8px';
-        button.style.fontSize = '16px';
-        button.style.fontWeight = 'bold';
-        button.style.cursor = 'pointer';
-        button.style.fontFamily = 'Arial, sans-serif';
-        button.style.marginTop = '20px';
+        if (this.elements.errorMessage) this.elements.errorMessage.textContent = message;
 
-        button.addEventListener('mouseover', () => {
-            button.style.backgroundColor = '#a82b25';
+        if (this.elements.loadingScreen) this.elements.loadingScreen.classList.add('hidden');
+        if (this.elements.mainContent) this.elements.mainContent.classList.add('hidden');
+        if (this.elements.errorScreen) this.elements.errorScreen.classList.remove('hidden');
+    },
+
+    /**
+     * Настройка обработчиков событий
+     */
+    setupEventListeners() {
+        // Обработчики для табов лидерборда
+        this.elements.leaderboardTabs.forEach(tab => {
+            tab.addEventListener('click', (event) => {
+                // Удаляем класс active у всех табов
+                this.elements.leaderboardTabs.forEach(t => t.classList.remove('active'));
+                // Добавляем класс active к выбранному табу
+                tab.classList.add('active');
+
+                // Получаем период из атрибута data-period или из текста кнопки
+                const period = tab.dataset.period || tab.textContent.trim().toLowerCase();
+                this.state.currentLeaderboardPeriod = period;
+
+                // Загружаем данные лидерборда для выбранного периода
+                this.loadLeaderboard(period);
+
+                // Тактильная обратная связь в Telegram
+                if (tg && tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+            });
         });
 
-        button.addEventListener('mouseout', () => {
-            button.style.backgroundColor = '#c4302b';
-        });
+        // Прямые обработчики для кнопок навигации
+        const mainButton = document.querySelector('[data-action="goToMain"]');
+        const newGameButton = document.querySelector('[data-action="startNewGame"]');
 
-        button.addEventListener('click', () => {
-            // Попытка открыть в Telegram
-            const url = window.location.href;
-            const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}`;
-            window.location.href = telegramUrl;
-        });
+        if (mainButton) {
+            mainButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
 
-        container.appendChild(button);
+                // Тактильный отклик
+                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+                }
 
-        // Добавляем контейнер в body
-        document.body.appendChild(container);
-
-        // Скрываем основной контент
-        const mainContent = document.querySelector('.container');
-        if (mainContent) {
-            mainContent.style.display = 'none';
+                window.location.href = createAuthenticatedUrl('/');
+            });
+        } else {
+            console.error('Кнопка "Главная" не найдена!');
         }
 
-        // Останавливаем загрузку
-        this.loadingEnd();
+        if (newGameButton) {
+            newGameButton.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                // Тактильный отклик
+                if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+                }
+
+                window.location.href = createAuthenticatedUrl('/game.html');
+            });
+        } else {
+            console.error('Кнопка "Новое дело" не найдена!');
+        }
+
+        // Дополнительный универсальный обработчик как fallback
+        document.addEventListener('click', (event) => {
+            const actionElement = event.target.closest('[data-action]');
+            if (!actionElement) return;
+
+            const action = actionElement.getAttribute('data-action');
+
+            // Избегаем дублирования для кнопок навигации
+            if (action === 'goToMain' || action === 'startNewGame') {
+                return; // Эти кнопки уже обрабатываются выше
+            }
+
+            // Тактильный отклик
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
+        });
     }
 };
 
 // Инициализация профиля при загрузке DOM
 document.addEventListener('DOMContentLoaded', () => {
-    ProfileManager.init();
+    console.log('🚀 Запуск профиля детектива...');
+    new ProfileManager();
+});
+
+// Обновление иконок Lucide
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }, 100);
 }); 
