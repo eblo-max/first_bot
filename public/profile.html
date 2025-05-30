@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Досье детектива | Криминальный Блеф</title>
+    <title>ЗАСЕКРЕЧЕННОЕ ДОСЬЕ | Детектив</title>
 
     <!-- Telegram WebApp API -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -18,38 +18,56 @@
     <!-- Шрифты Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <style>
         :root {
-            /* Криминальная палитра */
-            --blood-red: #8B0000;
-            --dark-red: #4A0404;
-            --crime-scene-yellow: #FFD700;
-            --chalk-white: #E8E8E8;
-            --body-bag-black: #0A0A0A;
-            --evidence-tag: #D4AF37;
-            --dried-blood: #5C1010;
-            --morgue-gray: #2C2C2C;
-            --police-tape: #FFF200;
-            --suspect-gray: #666666;
-            --witness-silver: #C0C0C0;
+            /* Ультра-криминальная палитра 2024 */
+            --blood-crimson: #DC143C;
+            --deep-shadow: #0A0A0F;
+            --midnight-noir: #1A1A2E;
+            --evidence-gold: #F4C430;
+            --forensic-blue: #0F3460;
+            --chalk-outline: #E8E8E8;
+            --steel-gray: #16213E;
+            --danger-red: #E53E3E;
+            --neon-green: #39FF14;
+            --amber-warning: #FFA500;
 
-            /* Расстояния */
-            --spacing-xs: 4px;
-            --spacing-sm: 8px;
-            --spacing-md: 16px;
-            --spacing-lg: 24px;
-            --spacing-xl: 32px;
+            /* Градиенты */
+            --crime-scene-gradient: linear-gradient(135deg, var(--midnight-noir) 0%, var(--deep-shadow) 100%);
+            --evidence-gradient: linear-gradient(135deg, var(--evidence-gold) 0%, #DAA520 100%);
+            --blood-gradient: linear-gradient(135deg, var(--blood-crimson) 0%, #8B0000 100%);
+            --steel-gradient: linear-gradient(135deg, var(--steel-gray) 0%, var(--forensic-blue) 100%);
+
+            /* Размеры и отступы */
+            --space-xs: 0.25rem;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+            --space-2xl: 3rem;
 
             /* Радиусы */
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
+            --radius-sm: 0.375rem;
+            --radius-md: 0.75rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.5rem;
+
+            /* Тени */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --shadow-crime: 0 0 30px rgba(220, 20, 60, 0.4);
+            --shadow-evidence: 0 0 20px rgba(244, 196, 48, 0.3);
 
             /* Переходы */
-            --transition-fast: 150ms ease;
-            --transition-normal: 250ms ease;
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
@@ -60,17 +78,18 @@
         }
 
         body {
-            background: var(--body-bag-black);
-            color: var(--chalk-white);
-            font-family: 'Roboto Condensed', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--deep-shadow);
+            color: var(--chalk-outline);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
             line-height: 1.6;
             min-height: 100vh;
             overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
             position: relative;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Атмосферный фон */
+        /* Криминалистический фон с отпечатками пальцев */
         body::before {
             content: '';
             position: fixed;
@@ -78,37 +97,68 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background:
-                radial-gradient(circle at 20% 30%, rgba(139, 0, 0, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(74, 4, 4, 0.1) 0%, transparent 30%);
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(220, 20, 60, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(15, 52, 96, 0.1) 0%, transparent 50%),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
             pointer-events: none;
-            z-index: 1;
+            z-index: 0;
+            animation: evidence-sweep 20s ease-in-out infinite;
         }
 
-        .profile-container {
-            max-width: 450px;
+        @keyframes evidence-sweep {
+
+            0%,
+            100% {
+                background-position: 0% 0%, 100% 100%, 0% 0%;
+                opacity: 1;
+            }
+
+            50% {
+                background-position: 100% 100%, 0% 0%, 50% 50%;
+                opacity: 0.8;
+            }
+        }
+
+        /* Контейнер досье */
+        .dossier-container {
+            max-width: 480px;
             margin: 0 auto;
             min-height: 100vh;
             position: relative;
-            z-index: 2;
-            padding: var(--spacing-md);
+            z-index: 1;
+            padding: var(--space-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
         }
 
-        /* === ХЕДЕР ДОСЬЕ === */
-        .detective-header {
-            background: linear-gradient(135deg, var(--morgue-gray) 0%, var(--dried-blood) 100%);
-            padding: var(--spacing-lg);
-            border-radius: var(--radius-lg);
-            margin-bottom: var(--spacing-lg);
-            border: 2px solid var(--blood-red);
-            box-shadow:
-                0 8px 25px rgba(139, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        /* === КЛАССИФИЦИРОВАННЫЙ ХЕДЕР === */
+        .classified-header {
+            background: var(--crime-scene-gradient);
+            border: 2px solid var(--blood-crimson);
+            border-radius: var(--radius-xl);
+            padding: var(--space-xl);
             position: relative;
             overflow: hidden;
+            box-shadow: var(--shadow-crime);
+            backdrop-filter: blur(10px);
+            animation: dossier-appear 0.8s ease-out;
         }
 
-        .detective-header::before {
+        @keyframes dossier-appear {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .classified-header::before {
             content: '';
             position: absolute;
             top: 0;
@@ -118,316 +168,543 @@
             background: repeating-linear-gradient(45deg,
                     transparent,
                     transparent 20px,
-                    rgba(139, 0, 0, 0.05) 20px,
-                    rgba(139, 0, 0, 0.05) 40px);
+                    rgba(220, 20, 60, 0.1) 20px,
+                    rgba(220, 20, 60, 0.1) 40px);
             pointer-events: none;
+            animation: scanner-sweep 3s linear infinite;
         }
 
-        .detective-header::after {
-            content: '🔍';
+        @keyframes scanner-sweep {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .classified-stamp {
             position: absolute;
-            top: var(--spacing-md);
-            right: var(--spacing-md);
-            font-size: 24px;
-            opacity: 0.3;
-        }
-
-        .detective-info {
-            position: relative;
-            z-index: 1;
-        }
-
-        .detective-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-            background: var(--dried-blood);
-            padding: var(--spacing-sm) var(--spacing-md);
+            top: var(--space-md);
+            right: var(--space-md);
+            background: var(--blood-gradient);
+            color: var(--chalk-outline);
+            padding: var(--space-xs) var(--space-sm);
             border-radius: var(--radius-sm);
-            border: 1px solid var(--blood-red);
-            margin-bottom: var(--spacing-md);
-            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
+            transform: rotate(15deg);
+            border: 1px solid var(--danger-red);
+            box-shadow: var(--shadow-md);
+            animation: stamp-pulse 2s ease-in-out infinite;
         }
 
-        .badge-icon {
-            width: 16px;
-            height: 16px;
-            color: var(--crime-scene-yellow);
+        @keyframes stamp-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
         }
 
-        /* Аватар с вещественными доказательствами */
-        .avatar {
-            width: 100px;
-            height: 100px;
+        /* Аватар агента */
+        .agent-avatar {
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            border: 4px solid var(--crime-scene-yellow);
-            background: var(--morgue-gray);
+            background: var(--steel-gradient);
+            border: 4px solid var(--evidence-gold);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 36px;
-            font-weight: 700;
-            margin: 0 auto var(--spacing-md);
-            box-shadow:
-                0 0 20px rgba(255, 215, 0, 0.4),
-                inset 0 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 3rem;
+            margin: 0 auto var(--space-lg);
             position: relative;
+            box-shadow: var(--shadow-evidence);
+            transition: all var(--transition-normal);
         }
 
-        .avatar::after {
+        .agent-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-evidence), 0 0 40px rgba(244, 196, 48, 0.5);
+        }
+
+        .agent-avatar::after {
             content: '';
             position: absolute;
-            bottom: -2px;
-            right: -2px;
-            width: 30px;
-            height: 30px;
-            background: var(--blood-red);
+            bottom: -8px;
+            right: -8px;
+            width: 40px;
+            height: 40px;
+            background: var(--neon-green);
             border-radius: 50%;
-            border: 3px solid var(--chalk-white);
+            border: 3px solid var(--deep-shadow);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            animation: status-blink 2s ease-in-out infinite;
         }
 
-        .detective-name {
-            font-size: 28px;
-            font-weight: 700;
+        @keyframes status-blink {
+
+            0%,
+            100% {
+                box-shadow: 0 0 10px var(--neon-green);
+            }
+
+            50% {
+                box-shadow: 0 0 20px var(--neon-green), 0 0 30px var(--neon-green);
+            }
+        }
+
+        .agent-info {
             text-align: center;
-            margin-bottom: var(--spacing-sm);
-            color: var(--chalk-white);
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 2;
         }
 
-        .detective-rank {
-            text-align: center;
-            margin-bottom: var(--spacing-md);
-        }
-
-        .rank-badge {
+        .agent-id {
             display: inline-flex;
             align-items: center;
-            gap: var(--spacing-sm);
-            background: linear-gradient(135deg, var(--crime-scene-yellow) 0%, var(--evidence-tag) 100%);
-            color: var(--body-bag-black);
-            padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--radius-lg);
+            gap: var(--space-sm);
+            background: rgba(244, 196, 48, 0.2);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--evidence-gold);
+            margin-bottom: var(--space-md);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            backdrop-filter: blur(5px);
+        }
+
+        .agent-name {
+            font-size: 2rem;
             font-weight: 700;
-            font-size: 16px;
+            margin-bottom: var(--space-sm);
+            background: var(--evidence-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: typewriter 1.5s steps(20) 0.5s both;
+        }
+
+        @keyframes typewriter {
+            from {
+                width: 0;
+            }
+
+            to {
+                width: 100%;
+            }
+        }
+
+        .agent-rank {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+            background: var(--blood-gradient);
+            color: var(--chalk-outline);
+            padding: var(--space-sm) var(--space-lg);
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            font-size: 1rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
-        }
-
-        .rank-icon {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* === КАРТОЧКИ ДОСЬЕ === */
-        .case-file {
-            background: var(--morgue-gray);
-            border: 2px solid var(--dried-blood);
-            border-radius: var(--radius-md);
-            margin-bottom: var(--spacing-lg);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--shadow-lg);
             position: relative;
             overflow: hidden;
         }
 
-        .case-file::before {
+        .agent-rank::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: rank-shine 3s ease-in-out infinite;
+        }
+
+        @keyframes rank-shine {
+            0% {
+                left: -100%;
+            }
+
+            100% {
+                left: 100%;
+            }
+        }
+
+        /* === ДОСЬЕ КАРТОЧКИ === */
+        .case-dossier {
+            background: var(--midnight-noir);
+            border: 1px solid var(--steel-gray);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+            transition: all var(--transition-normal);
+            animation: card-slide-in 0.6s ease-out backwards;
+        }
+
+        .case-dossier:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .case-dossier:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .case-dossier:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .case-dossier:nth-child(5) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes card-slide-in {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .case-dossier:hover {
+            transform: translateY(-4px);
+            border-color: var(--evidence-gold);
+            box-shadow: var(--shadow-xl), 0 0 30px rgba(244, 196, 48, 0.2);
+        }
+
+        .case-dossier::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
+            right: 0;
             height: 4px;
-            background: linear-gradient(90deg, var(--blood-red) 0%, var(--crime-scene-yellow) 100%);
+            background: var(--evidence-gradient);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
         }
 
-        .case-header {
-            background: var(--dried-blood);
-            padding: var(--spacing-md);
-            border-bottom: 1px solid var(--blood-red);
+        .dossier-header {
             display: flex;
             align-items: center;
-            gap: var(--spacing-sm);
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+            padding-bottom: var(--space-md);
+            border-bottom: 1px solid var(--steel-gray);
         }
 
-        .case-icon {
-            width: 24px;
-            height: 24px;
-            color: var(--crime-scene-yellow);
-        }
-
-        .case-title {
-            font-size: 18px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .case-content {
-            padding: var(--spacing-lg);
-        }
-
-        /* === РЕПУТАЦИОННОЕ ДОСЬЕ === */
-        .reputation-level {
+        .dossier-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--steel-gradient);
+            border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: var(--spacing-md);
-            margin-bottom: var(--spacing-lg);
+            color: var(--evidence-gold);
+            border: 1px solid var(--forensic-blue);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-fast);
         }
 
-        .reputation-number {
-            font-size: 48px;
+        .dossier-icon:hover {
+            transform: rotate(360deg) scale(1.1);
+        }
+
+        .dossier-title {
+            font-size: 1.25rem;
             font-weight: 700;
-            background: linear-gradient(135deg, var(--crime-scene-yellow) 0%, var(--evidence-tag) 100%);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--chalk-outline);
+        }
+
+        /* === РЕПУТАЦИЯ АГЕНТА === */
+        .reputation-matrix {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: var(--space-lg);
+            align-items: center;
+        }
+
+        .reputation-score {
+            font-size: 4rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--evidence-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            text-shadow: 0 0 30px rgba(244, 196, 48, 0.5);
+            animation: score-pulse 2s ease-in-out infinite;
         }
 
-        .reputation-category {
-            background: var(--blood-red);
-            color: var(--chalk-white);
-            padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            font-weight: 700;
+        @keyframes score-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .reputation-badge {
+            background: var(--blood-gradient);
+            color: var(--chalk-outline);
+            padding: var(--space-sm) var(--space-lg);
+            border-radius: var(--radius-lg);
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
+            border: 1px solid var(--danger-red);
+            box-shadow: var(--shadow-md);
+            white-space: nowrap;
         }
 
-        /* === СТАТИСТИКА РАССЛЕДОВАНИЙ === */
+        /* === СТАТИСТИКА ОПЕРАЦИЙ === */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--spacing-md);
-            margin-bottom: var(--spacing-lg);
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: var(--space-md);
         }
 
-        .stat-card {
-            background: var(--dried-blood);
-            border: 1px solid var(--blood-red);
-            border-radius: var(--radius-sm);
-            padding: var(--spacing-md);
+        .stat-module {
+            background: var(--steel-gradient);
+            border: 1px solid var(--forensic-blue);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
             text-align: center;
-            transition: all var(--transition-normal);
             position: relative;
             overflow: hidden;
+            transition: all var(--transition-normal);
+            cursor: pointer;
         }
 
-        .stat-card::before {
+        .stat-module:hover {
+            transform: translateY(-2px) scale(1.02);
+            border-color: var(--evidence-gold);
+            box-shadow: var(--shadow-lg), 0 0 20px rgba(244, 196, 48, 0.3);
+        }
+
+        .stat-module::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 2px;
-            background: var(--crime-scene-yellow);
+            background: var(--evidence-gradient);
             transform: scaleX(0);
             transition: transform var(--transition-normal);
         }
 
-        .stat-card:hover::before {
+        .stat-module:hover::before {
             transform: scaleX(1);
         }
 
         .stat-value {
-            font-size: 24px;
+            font-size: 2rem;
             font-weight: 700;
-            color: var(--crime-scene-yellow);
-            margin-bottom: var(--spacing-xs);
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--evidence-gold);
+            margin-bottom: var(--space-sm);
+            animation: counter-up 0.8s ease-out;
+        }
+
+        @keyframes counter-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .stat-label {
-            font-size: 12px;
-            color: var(--suspect-gray);
+            font-size: 0.75rem;
+            color: rgba(232, 232, 232, 0.8);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            font-weight: 500;
         }
 
-        /* === ДОСТИЖЕНИЯ === */
+        /* === ДОСТИЖЕНИЯ АГЕНТА === */
         .achievements-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: var(--spacing-sm);
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: var(--space-md);
         }
 
-        .achievement-badge {
-            background: var(--dried-blood);
-            border: 2px solid transparent;
-            border-radius: var(--radius-sm);
-            padding: var(--spacing-md);
+        .achievement-medal {
+            background: var(--midnight-noir);
+            border: 2px solid var(--steel-gray);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
             text-align: center;
-            transition: all var(--transition-normal);
             position: relative;
+            transition: all var(--transition-normal);
+            cursor: pointer;
+            overflow: hidden;
         }
 
-        .achievement-badge.unlocked {
-            border-color: var(--crime-scene-yellow);
-            background: linear-gradient(135deg, var(--dried-blood) 0%, var(--morgue-gray) 100%);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        .achievement-medal.unlocked {
+            border-color: var(--evidence-gold);
+            background: linear-gradient(135deg, var(--midnight-noir) 0%, var(--forensic-blue) 100%);
+            box-shadow: var(--shadow-evidence);
+        }
+
+        .achievement-medal.unlocked::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(244, 196, 48, 0.1), transparent);
+            animation: achievement-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes achievement-glow {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .achievement-medal:hover {
+            transform: translateY(-4px) rotateY(10deg);
         }
 
         .achievement-icon {
-            font-size: 24px;
-            margin-bottom: var(--spacing-xs);
-        }
-
-        .achievement-badge.unlocked .achievement-icon {
-            color: var(--crime-scene-yellow);
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-        }
-
-        .achievement-name {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--suspect-gray);
-        }
-
-        .achievement-badge.unlocked .achievement-name {
-            color: var(--chalk-white);
-        }
-
-        /* === ТАБЛИЦА ЛИДЕРОВ === */
-        .leaderboard-item {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md);
-            padding: var(--spacing-md);
-            background: var(--dried-blood);
-            border: 1px solid var(--blood-red);
-            border-radius: var(--radius-sm);
-            margin-bottom: var(--spacing-sm);
+            font-size: 2rem;
+            margin-bottom: var(--space-sm);
             transition: all var(--transition-normal);
         }
 
+        .achievement-medal.unlocked .achievement-icon {
+            color: var(--evidence-gold);
+            text-shadow: 0 0 10px rgba(244, 196, 48, 0.5);
+            animation: icon-sparkle 1.5s ease-in-out infinite;
+        }
+
+        @keyframes icon-sparkle {
+
+            0%,
+            100% {
+                filter: brightness(1);
+            }
+
+            50% {
+                filter: brightness(1.3) drop-shadow(0 0 5px var(--evidence-gold));
+            }
+        }
+
+        .achievement-name {
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(232, 232, 232, 0.6);
+            line-height: 1.2;
+        }
+
+        .achievement-medal.unlocked .achievement-name {
+            color: var(--chalk-outline);
+        }
+
+        /* === РЕЙТИНГ АГЕНТОВ === */
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-lg);
+            background: var(--steel-gradient);
+            border: 1px solid var(--forensic-blue);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-md);
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .leaderboard-item:hover {
+            transform: translateX(4px);
+            border-color: var(--evidence-gold);
+            box-shadow: var(--shadow-lg);
+        }
+
         .leaderboard-item.current-user {
-            background: linear-gradient(135deg, var(--dried-blood) 0%, var(--blood-red) 100%);
-            border-color: var(--crime-scene-yellow);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+            background: var(--blood-gradient);
+            border-color: var(--evidence-gold);
+            box-shadow: var(--shadow-evidence);
+        }
+
+        .leaderboard-item.current-user::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(244, 196, 48, 0.1), transparent);
+            animation: current-user-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes current-user-glow {
+
+            0%,
+            100% {
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
         }
 
         .leaderboard-rank {
-            width: 32px;
-            height: 32px;
-            background: var(--crime-scene-yellow);
-            color: var(--body-bag-black);
+            width: 40px;
+            height: 40px;
+            background: var(--evidence-gradient);
+            color: var(--deep-shadow);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: var(--shadow-md);
         }
 
         .leaderboard-info {
@@ -435,57 +712,93 @@
         }
 
         .leaderboard-name {
-            font-weight: 700;
+            font-weight: 600;
             margin-bottom: 2px;
+            color: var(--chalk-outline);
         }
 
         .leaderboard-score {
-            font-size: 12px;
-            color: var(--suspect-gray);
+            font-size: 0.875rem;
+            color: rgba(232, 232, 232, 0.7);
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        /* === ЗАГРУЗКА === */
-        .loading-message {
+        /* === СОСТОЯНИЯ ЗАГРУЗКИ === */
+        .loading-chamber {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: var(--spacing-md);
-            padding: var(--spacing-xl);
+            justify-content: center;
+            min-height: 100vh;
             text-align: center;
+            animation: loading-fade-in 0.5s ease-out;
         }
 
-        .evidence-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(139, 0, 0, 0.2);
-            border-top-color: var(--blood-red);
+        @keyframes loading-fade-in {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .evidence-scanner {
+            width: 80px;
+            height: 80px;
+            border: 4px solid var(--steel-gray);
+            border-top-color: var(--evidence-gold);
             border-radius: 50%;
-            animation: evidence-spin 1s linear infinite;
+            animation: evidence-scan 1s linear infinite;
+            margin-bottom: var(--space-lg);
         }
 
-        @keyframes evidence-spin {
+        @keyframes evidence-scan {
             to {
                 transform: rotate(360deg);
             }
         }
 
         .loading-text {
-            color: var(--suspect-gray);
-            font-weight: 700;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--chalk-outline);
+            margin-bottom: var(--space-sm);
+            font-family: 'JetBrains Mono', monospace;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            animation: text-blink 1.5s ease-in-out infinite;
         }
 
-        /* === ПОЛИЦЕЙСКАЯ ЛЕНТА === */
-        .police-tape {
-            height: 4px;
+        @keyframes text-blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* === СКРЫТИЕ ЭЛЕМЕНТОВ === */
+        .hidden {
+            display: none !important;
+        }
+
+        .classified-tape {
+            height: 8px;
             background: repeating-linear-gradient(90deg,
-                    var(--police-tape) 0px,
-                    var(--police-tape) 20px,
-                    var(--body-bag-black) 20px,
-                    var(--body-bag-black) 40px);
-            margin: var(--spacing-lg) 0;
-            animation: tape-scroll 2s linear infinite;
+                    var(--amber-warning) 0px,
+                    var(--amber-warning) 30px,
+                    var(--deep-shadow) 30px,
+                    var(--deep-shadow) 60px);
+            margin: var(--space-lg) 0;
+            animation: tape-scroll 3s linear infinite;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
         }
 
         @keyframes tape-scroll {
@@ -494,50 +807,111 @@
             }
 
             100% {
-                background-position: 40px 0;
+                background-position: 60px 0;
             }
         }
 
-        /* === RESPONSIVE === */
-        @media (max-width: 380px) {
+        /* === RESPONSIVE DESIGN === */
+        @media (max-width: 480px) {
+            .dossier-container {
+                padding: var(--space-sm);
+                gap: var(--space-md);
+            }
+
             .stats-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
 
             .achievements-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .agent-name {
+                font-size: 1.5rem;
+            }
+
+            .reputation-score {
+                font-size: 3rem;
             }
         }
 
-        /* === КНОПКИ === */
-        .evidence-button {
-            background: linear-gradient(135deg, var(--blood-red) 0%, var(--dark-red) 100%);
-            color: var(--chalk-white);
-            border: 2px solid var(--dried-blood);
-            border-radius: var(--radius-sm);
-            padding: var(--spacing-md) var(--spacing-lg);
-            font-weight: 700;
+        /* === КНОПКИ УПРАВЛЕНИЯ === */
+        .control-button {
+            background: var(--steel-gradient);
+            color: var(--chalk-outline);
+            border: 1px solid var(--forensic-blue);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md) var(--space-lg);
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             cursor: pointer;
             transition: all var(--transition-normal);
-            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        .evidence-button:hover {
-            background: linear-gradient(135deg, var(--dark-red) 0%, var(--blood-red) 100%);
-            border-color: var(--crime-scene-yellow);
+        .control-button:hover {
+            background: var(--evidence-gradient);
+            color: var(--deep-shadow);
+            border-color: var(--evidence-gold);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(139, 0, 0, 0.4);
+            box-shadow: var(--shadow-lg);
         }
 
-        .evidence-button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 8px rgba(139, 0, 0, 0.3);
+        .control-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left var(--transition-normal);
         }
 
-        .hidden {
-            display: none !important;
+        .control-button:hover::before {
+            left: 100%;
+        }
+
+        /* === АНИМАЦИИ ПОЯВЛЕНИЯ === */
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* === МИКРО-ИНТЕРАКТИВНОСТЬ === */
+        .interactive:hover {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .pulse-on-hover:hover {
+            animation: gentle-pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes gentle-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
         }
     </style>
 
@@ -545,131 +919,137 @@
 </head>
 
 <body>
-    <div class="profile-container">
+    <div class="dossier-container">
 
-        <!-- Загрузка -->
-        <div id="loading-screen" class="loading-message">
-            <div class="evidence-spinner"></div>
-            <div class="loading-text">Анализ досье...</div>
+        <!-- Экран загрузки -->
+        <div id="loading-screen" class="loading-chamber">
+            <div class="evidence-scanner"></div>
+            <div class="loading-text">Анализ досье</div>
+            <div
+                style="font-size: 0.875rem; color: rgba(232, 232, 232, 0.6); font-family: 'JetBrains Mono', monospace;">
+                КЛАССИФИКАЦИЯ: СЕКРЕТНО
+            </div>
         </div>
 
         <!-- Основной контент -->
         <div id="main-content" class="hidden">
 
-            <!-- Хедер детектива -->
-            <div class="detective-header">
-                <div class="detective-info">
-                    <div class="detective-badge">
-                        <i data-lucide="shield" class="badge-icon"></i>
-                        <span>Досье детектива</span>
+            <!-- Классифицированный хедер -->
+            <div class="classified-header fade-in-up">
+                <div class="classified-stamp">СЕКРЕТНО</div>
+
+                <div class="agent-info">
+                    <div class="agent-id">
+                        <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i>
+                        <span>АГЕНТ ID</span>
                     </div>
 
-                    <div class="avatar" id="user-avatar">
+                    <div class="agent-avatar interactive pulse-on-hover" id="user-avatar">
                         <img id="avatar-image"
                             style="display: none; width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
-                            alt="Аватар детектива">
+                            alt="Фото агента">
                         <div class="avatar-placeholder" id="avatar-placeholder">
                             🕵️
                         </div>
                         <div class="avatar-loading" id="avatar-loading" style="display: none;">
-                            <div class="evidence-spinner" style="width: 24px; height: 24px; border-width: 2px;"></div>
+                            <div class="evidence-scanner" style="width: 32px; height: 32px; border-width: 2px;"></div>
                         </div>
                     </div>
 
-                    <div class="detective-name" id="detective-name">Детектив</div>
+                    <div class="agent-name" id="detective-name">АГЕНТ</div>
 
-                    <div class="detective-rank">
-                        <div class="rank-badge">
-                            <i data-lucide="star" class="rank-icon"></i>
-                            <span id="detective-rank">НОВИЧОК</span>
-                        </div>
+                    <div class="agent-rank">
+                        <i data-lucide="star" style="width: 20px; height: 20px;"></i>
+                        <span id="detective-rank">НОВИЧОК</span>
                     </div>
                 </div>
             </div>
 
             <!-- Полицейская лента -->
-            <div class="police-tape"></div>
+            <div class="classified-tape"></div>
 
-            <!-- Репутационное досье -->
-            <div class="case-file">
-                <div class="case-header">
-                    <i data-lucide="trending-up" class="case-icon"></i>
-                    <span class="case-title">Репутация детектива</span>
+            <!-- Уровень репутации -->
+            <div class="case-dossier fade-in-up">
+                <div class="dossier-header">
+                    <div class="dossier-icon">
+                        <i data-lucide="trending-up" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div class="dossier-title">Репутация агента</div>
                 </div>
-                <div class="case-content">
-                    <div class="reputation-level">
-                        <div class="reputation-number" id="reputation-level">0</div>
-                        <div class="reputation-category" id="reputation-category">Неизвестно</div>
+                <div class="reputation-matrix">
+                    <div class="reputation-score" id="reputation-level">0</div>
+                    <div class="reputation-badge" id="reputation-category">Неизвестно</div>
+                </div>
+            </div>
+
+            <!-- Статистика операций -->
+            <div class="case-dossier fade-in-up">
+                <div class="dossier-header">
+                    <div class="dossier-icon">
+                        <i data-lucide="activity" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div class="dossier-title">Статистика операций</div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-module interactive">
+                        <div class="stat-value" id="stat-investigations">0</div>
+                        <div class="stat-label">Операции</div>
+                    </div>
+                    <div class="stat-module interactive">
+                        <div class="stat-value" id="stat-solved">0</div>
+                        <div class="stat-label">Раскрыто</div>
+                    </div>
+                    <div class="stat-module interactive">
+                        <div class="stat-value" id="stat-accuracy">0%</div>
+                        <div class="stat-label">Точность</div>
+                    </div>
+                    <div class="stat-module interactive">
+                        <div class="stat-value" id="stat-score">0</div>
+                        <div class="stat-label">Рейтинг</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Статистика расследований -->
-            <div class="case-file">
-                <div class="case-header">
-                    <i data-lucide="bar-chart-3" class="case-icon"></i>
-                    <span class="case-title">Статистика расследований</span>
-                </div>
-                <div class="case-content">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-investigations">0</div>
-                            <div class="stat-label">Всего дел</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-solved">0</div>
-                            <div class="stat-label">Раскрыто</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-accuracy">0%</div>
-                            <div class="stat-label">Точность</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="stat-score">0</div>
-                            <div class="stat-label">Общий счет</div>
-                        </div>
+            <!-- Награды и достижения -->
+            <div class="case-dossier fade-in-up">
+                <div class="dossier-header">
+                    <div class="dossier-icon">
+                        <i data-lucide="award" style="width: 24px; height: 24px;"></i>
                     </div>
+                    <div class="dossier-title">Награды агента</div>
+                </div>
+                <div class="achievements-grid" id="achievements-container">
+                    <!-- Достижения будут добавлены динамически -->
                 </div>
             </div>
 
-            <!-- Достижения -->
-            <div class="case-file">
-                <div class="case-header">
-                    <i data-lucide="award" class="case-icon"></i>
-                    <span class="case-title">Знаки отличия</span>
-                </div>
-                <div class="case-content">
-                    <div class="achievements-grid" id="achievements-container">
-                        <!-- Достижения будут добавлены динамически -->
+            <!-- Рейтинг агентов -->
+            <div class="case-dossier fade-in-up">
+                <div class="dossier-header">
+                    <div class="dossier-icon">
+                        <i data-lucide="crown" style="width: 24px; height: 24px;"></i>
                     </div>
+                    <div class="dossier-title">Рейтинг агентов</div>
                 </div>
-            </div>
-
-            <!-- Таблица лидеров -->
-            <div class="case-file">
-                <div class="case-header">
-                    <i data-lucide="crown" class="case-icon"></i>
-                    <span class="case-title">Рейтинг детективов</span>
-                </div>
-                <div class="case-content">
-                    <div id="leaderboard-container">
-                        <!-- Лидерборд будет загружен динамически -->
-                    </div>
+                <div id="leaderboard-container">
+                    <!-- Лидерборд будет загружен динамически -->
                 </div>
             </div>
 
         </div>
 
-        <!-- Ошибка подключения -->
-        <div id="error-screen" class="case-file hidden">
-            <div class="case-header">
-                <i data-lucide="alert-triangle" class="case-icon"></i>
-                <span class="case-title">Ошибка расследования</span>
+        <!-- Экран ошибки -->
+        <div id="error-screen" class="case-dossier hidden">
+            <div class="dossier-header">
+                <div class="dossier-icon">
+                    <i data-lucide="alert-triangle" style="width: 24px; height: 24px; color: var(--danger-red);"></i>
+                </div>
+                <div class="dossier-title" style="color: var(--danger-red);">Ошибка доступа</div>
             </div>
-            <div class="case-content">
-                <p id="error-message" style="margin-bottom: var(--spacing-md);"></p>
-                <button onclick="window.location.reload()" class="evidence-button">
-                    <i data-lucide="refresh-cw" style="width: 16px; height: 16px; margin-right: var(--spacing-sm);"></i>
+            <div style="text-align: center; padding: var(--space-lg);">
+                <p id="error-message" style="margin-bottom: var(--space-lg); color: rgba(232, 232, 232, 0.8);"></p>
+                <button onclick="window.location.reload()" class="control-button">
+                    <i data-lucide="refresh-cw" style="width: 16px; height: 16px; margin-right: var(--space-sm);"></i>
                     Повторить анализ
                 </button>
             </div>
@@ -689,6 +1069,39 @@
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
+        });
+
+        // Дополнительные анимации для элементов
+        document.addEventListener('DOMContentLoaded', () => {
+            // Добавляем задержки для анимаций появления
+            const fadeElements = document.querySelectorAll('.fade-in-up');
+            fadeElements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+
+            // Интерактивность для статистики
+            const statModules = document.querySelectorAll('.stat-module');
+            statModules.forEach(module => {
+                module.addEventListener('click', () => {
+                    if (window.Telegram?.WebApp?.HapticFeedback) {
+                        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                    }
+                });
+            });
+
+            // Эффект свечения для достижений
+            const achievements = document.querySelectorAll('.achievement-medal');
+            achievements.forEach(achievement => {
+                achievement.addEventListener('mouseenter', () => {
+                    if (achievement.classList.contains('unlocked')) {
+                        achievement.style.transform = 'translateY(-4px) rotateY(10deg) scale(1.05)';
+                    }
+                });
+
+                achievement.addEventListener('mouseleave', () => {
+                    achievement.style.transform = '';
+                });
+            });
         });
     </script>
 </body>
