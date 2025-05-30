@@ -12,7 +12,7 @@ let isInitialized = false;
 /**
  * Инициализация приложения
  */
-function initApp() {
+async function initApp() {
     // НЕ ОЧИЩАЕМ ВЕСЬ localStorage - только сбрасываем игровое состояние
     // Сохраняем токены авторизации перед сбросом
     const savedToken = localStorage.getItem('token');
@@ -95,34 +95,19 @@ function initApp() {
         tg.BackButton.hide();
         tg.BackButton.onClick(() => handleBackButton());
 
-        // Проверяем данные пользователя
-        if (tg.initData && tg.initData.trim() !== '' && !tg.initData.includes('test_mode_data')) {
-            // Проверяем, есть ли корректные данные пользователя в initData
-            try {
-                // Декодируем initData для проверки наличия пользователя
-                const initDataParams = new URLSearchParams(tg.initData);
-                const userParam = initDataParams.get('user');
+        // НОВАЯ ЛОГИКА: Сначала проверяем существующие токены
+        const existingToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
+        console.log('🔑 Проверка существующих токенов:', existingToken ? `${existingToken.substring(0, 20)}...` : 'НЕТ');
 
-                if (userParam) {
-                    const userData = JSON.parse(decodeURIComponent(userParam));
-                    if (userData && userData.id) {
-                        Logger?.debug('✅ Найдены корректные данные пользователя в initData:', userData.id);
-                        authorize();
-                        return;
-                    }
-                }
-
-                Logger?.debug('⚠️ initData присутствует, но не содержит данных пользователя');
-                handleNoValidAuth();
-
-            } catch (error) {
-                Logger?.warn('Ошибка парсинга initData:', error);
-                handleNoValidAuth();
-            }
-        } else {
-            Logger?.debug('❌ Отсутствуют валидные данные Telegram initData');
-            handleNoValidAuth();
+        if (existingToken && !existingToken.includes('test_token_') && !existingToken.includes('guest_')) {
+            // Есть валидный токен - проверяем его на сервере
+            Logger?.debug('✅ Найден сохраненный токен, проверяем валидность');
+            await verifyExistingToken(existingToken);
+            return;
         }
+
+        // Нет валидного токена - проверяем данные Telegram для новой авторизации
+        await checkTelegramAuth();
 
         // Сообщаем Telegram, что приложение готово
         tg.ready();
@@ -358,7 +343,7 @@ async function startGame() {
         // Проверяем инициализацию приложения
         if (!isInitialized) {
             Logger?.warn('Приложение не инициализировано. Выполняем принудительную инициализацию.');
-            initApp();
+            await initApp();
 
             setTimeout(() => {
                 if (!isInitialized) {
@@ -1273,4 +1258,98 @@ function handleNoValidAuth() {
             });
         }
     }, 100);
+}
+
+/**
+ * Проверка существующего токена на сервере
+ */
+async function verifyExistingToken(token) {
+    try {
+        console.log('🔍 Проверяем токен на сервере...');
+
+        const response = await fetch('/api/auth/verify', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+
+            // Токен валиден - обновляем состояние
+            GameState.data.token = token;
+            GameState.data.user = data.user || JSON.parse(localStorage.getItem('user') || '{}');
+            GameState.data.isAuthenticated = true;
+
+            Logger?.info('✅ Токен валиден, пользователь авторизован:', data.user?.name || 'Неизвестно');
+
+            // Показываем контент
+            showContent();
+            isInitialized = true;
+
+        } else {
+            console.warn('⚠️ Токен недействителен, требуется новая авторизация');
+
+            // Токен недействителен - очищаем и требуем новую авторизацию
+            localStorage.removeItem('token');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user');
+
+            GameState.data.token = null;
+            GameState.data.user = null;
+            GameState.data.isAuthenticated = false;
+
+            // Проверяем возможность новой авторизации через Telegram
+            await checkTelegramAuth();
+        }
+
+    } catch (error) {
+        Logger?.error('❌ Ошибка проверки токена:', error);
+
+        // В случае ошибки сети - показываем контент с существующим токеном
+        // (возможно сервер недоступен, но токен может быть валидным)
+        GameState.data.token = token;
+        GameState.data.user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        Logger?.warn('⚠️ Сервер недоступен, используем оффлайн режим');
+
+        showContent();
+        isInitialized = true;
+    }
+}
+
+/**
+ * Проверка возможности авторизации через Telegram
+ */
+async function checkTelegramAuth() {
+    // Проверяем данные Telegram для новой авторизации
+    if (tg.initData && tg.initData.trim() !== '' && !tg.initData.includes('test_mode_data')) {
+        // Проверяем, есть ли корректные данные пользователя в initData
+        try {
+            // Декодируем initData для проверки наличия пользователя
+            const initDataParams = new URLSearchParams(tg.initData);
+            const userParam = initDataParams.get('user');
+
+            if (userParam) {
+                const userData = JSON.parse(decodeURIComponent(userParam));
+                if (userData && userData.id) {
+                    Logger?.debug('✅ Найдены корректные данные пользователя в initData:', userData.id);
+                    await authorize();
+                    return;
+                }
+            }
+
+            Logger?.debug('⚠️ initData присутствует, но не содержит данных пользователя');
+            handleNoValidAuth();
+
+        } catch (error) {
+            Logger?.warn('Ошибка парсинга initData:', error);
+            handleNoValidAuth();
+        }
+    } else {
+        Logger?.debug('❌ Отсутствуют валидные данные Telegram initData');
+        handleNoValidAuth();
+    }
 } 
