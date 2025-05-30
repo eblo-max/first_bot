@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const authMiddleware = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 // Получение профиля пользователя с расширенной статистикой
 router.get('/', authMiddleware, async (req, res) => {
