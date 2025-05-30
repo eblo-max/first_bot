@@ -78,8 +78,9 @@ function initApp() {
         tg.BackButton.onClick(() => handleBackButton());
 
         // Проверяем данные пользователя
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            // Проходим процесс авторизации с реальными данными
+        if (tg.initData && tg.initData.trim() !== '' && !tg.initData.includes('test_mode_data')) {
+            // Если есть initData но нет initDataUnsafe.user, все равно пытаемся авторизоваться
+            Logger?.debug('Есть initData но нет initDataUnsafe.user. Пробуем авторизоваться.');
             authorize();
         } else {
             // Если данные пользователя отсутствуют, показываем заглушку для тестирования
@@ -231,10 +232,12 @@ async function authorize() {
             throw new Error('Отсутствуют данные авторизации Telegram');
         }
 
-        const telegramUser = tg.initDataUnsafe.user;
-        if (!telegramUser) {
-            Logger?.error('Telegram WebApp не содержит данных пользователя');
-            throw new Error('Данные пользователя отсутствуют');
+        // Проверяем данные пользователя только если они есть
+        const telegramUser = tg.initDataUnsafe?.user;
+        if (telegramUser) {
+            Logger?.debug('Найден пользователь Telegram:', telegramUser.id || telegramUser.first_name || 'неизвестно');
+        } else {
+            Logger?.debug('initDataUnsafe.user отсутствует, но initData есть - продолжаем авторизацию');
         }
 
         // Отправляем запрос авторизации
@@ -265,7 +268,13 @@ async function authorize() {
         GameState.data.user = data.data.user;
 
         localStorage.setItem('token', data.data.token);
+        localStorage.setItem('auth_token', data.data.token);
         localStorage.setItem('user', JSON.stringify(data.data.user));
+
+        // Сохраняем initData для будущих использований
+        if (tg.initData) {
+            localStorage.setItem('initData', tg.initData);
+        }
 
         Logger?.info('Пользователь авторизован:', data.data.user?.name || 'Неизвестно');
 
@@ -919,7 +928,7 @@ function handleButtonClick(event) {
             if (feedbackType) provideFeedback(feedbackType);
             break;
         default:
-            
+
     }
 }
 
