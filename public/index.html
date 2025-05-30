@@ -838,11 +838,11 @@
                     gameStateToken: window.GameState?.data?.token ? `${window.GameState.data.token.substring(0, 20)}...` : 'НЕТ',
                     gameStateUser: window.GameState?.data?.user?.name || 'НЕТ',
                     tokenLength: token ? token.length : 0,
-                    isTestToken: token ? (token.includes('test_token_') || token.includes('guest_')) : false
+                    isTestToken: token ? (token.startsWith('test_token_') || token.startsWith('guest_')) : false
                 });
 
                 // Проверяем, есть ли валидная авторизация
-                if (!token || token.includes('test_token_') || token.includes('guest_')) {
+                if (!token || token.startsWith('test_token_') || token.startsWith('guest_')) {
                     // Нет валидной авторизации
                     console.warn('❌ Нет валидной авторизации для профиля');
 

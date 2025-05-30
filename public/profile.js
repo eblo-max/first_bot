@@ -128,20 +128,34 @@ const ProfileManager = {
             // ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ТОЛЬКО ГОСТЕВЫХ ТОКЕНОВ И ДАННЫХ (НЕ ВСЕХ!)
             for (let i = localStorage.length - 1; i >= 0; i--) {
                 const key = localStorage.key(i);
-                if (key && (key.includes('guest_') || key.startsWith('test_token'))) {
+                // БОЛЕЕ СТРОГАЯ ПРОВЕРКА: точное совпадение с префиксами
+                if (key && (key === 'guest_token' || key.startsWith('guest_user_') || key === 'test_token' || key.startsWith('test_token_'))) {
                     localStorage.removeItem(key);
                     console.log('🗑️ Удален ключ:', key);
                 }
             }
 
-            // Проверяем существующие токены на гостевые данные
+            // Проверяем существующие токены на гостевые данные - БОЛЕЕ СТРОГИЕ КРИТЕРИИ
             const existingToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
-            if (existingToken && (existingToken.includes('guest_') || existingToken.startsWith('test_token_'))) {
-                console.log('🗑️ Удаляем тестовый/гостевой токен:', existingToken.substring(0, 20) + '...');
+            console.log('🔍 Анализ существующего токена:', {
+                exists: !!existingToken,
+                length: existingToken ? existingToken.length : 0,
+                prefix: existingToken ? existingToken.substring(0, 20) + '...' : 'НЕТ',
+                isGuest: existingToken ? existingToken.startsWith('guest_') : false,
+                isTestToken: existingToken ? existingToken.startsWith('test_token_') : false,
+                containsGuest: existingToken ? existingToken.includes('guest_') : false,
+                containsTestToken: existingToken ? existingToken.includes('test_token_') : false
+            });
+
+            // БОЛЕЕ СТРОГИЕ КРИТЕРИИ: только если токен НАЧИНАЕТСЯ с этих префиксов
+            if (existingToken && (existingToken.startsWith('guest_') || existingToken.startsWith('test_token_'))) {
+                console.log('🗑️ Удаляем тестовый/гостевой токен (строгая проверка):', existingToken.substring(0, 20) + '...');
                 localStorage.removeItem('token');
                 localStorage.removeItem('auth_token');
                 this.state.token = null;
                 this.state.isAuthenticated = false;
+            } else if (existingToken) {
+                console.log('✅ Токен прошел проверку, сохраняем');
             }
 
             // Проверяем данные из URL (переданные с главной страницы)
@@ -367,7 +381,8 @@ const ProfileManager = {
                 console.warn('⚠️ initData отсутствуют, пытаемся использовать сохраненный токен');
 
                 const savedToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
-                if (savedToken && !savedToken.includes('guest_') && !savedToken.includes('test_')) {
+                // БОЛЕЕ СТРОГАЯ ПРОВЕРКА: только если токен НАЧИНАЕТСЯ с префиксов
+                if (savedToken && !savedToken.startsWith('guest_') && !savedToken.startsWith('test_')) {
                     console.log('💾 Найден сохраненный токен, пытаемся его использовать');
                     this.state.token = savedToken;
                     this.state.isAuthenticated = true;

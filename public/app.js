@@ -43,7 +43,8 @@ async function initApp() {
 
         // Восстанавливаем токен в GameState если он есть в localStorage
         const existingToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
-        if (existingToken && !existingToken.includes('test_token_') && !existingToken.includes('guest_')) {
+        // БОЛЕЕ СТРОГАЯ ПРОВЕРКА: только если токен НАЧИНАЕТСЯ с префиксов
+        if (existingToken && !existingToken.startsWith('test_token_') && !existingToken.startsWith('guest_')) {
             GameState.data.token = existingToken;
             Logger?.debug('Восстановлен токен в GameState из localStorage');
         }
@@ -99,7 +100,8 @@ async function initApp() {
         const existingToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
         console.log('🔑 Проверка существующих токенов:', existingToken ? `${existingToken.substring(0, 20)}...` : 'НЕТ');
 
-        if (existingToken && !existingToken.includes('test_token_') && !existingToken.includes('guest_')) {
+        // БОЛЕЕ СТРОГАЯ ПРОВЕРКА: только если токен НАЧИНАЕТСЯ с префиксов
+        if (existingToken && !existingToken.startsWith('test_token_') && !existingToken.startsWith('guest_')) {
             // Есть валидный токен - проверяем его на сервере
             Logger?.debug('✅ Найден сохраненный токен, проверяем валидность');
             await verifyExistingToken(existingToken);
