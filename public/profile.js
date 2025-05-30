@@ -418,59 +418,59 @@ class CriminalProfileManager {
             }
 
             const achievements = await response.json();
-            this.renderCriminalAchievements(achievements);
+            this.renderForensicEvidence(achievements);
 
         } catch (error) {
             console.error('❌ Ошибка загрузки улик:', error);
         }
     }
 
-    renderCriminalAchievements(achievements) {
+    renderForensicEvidence(achievements) {
         if (!CaseElements.achievementsContainer) return;
 
-        const criminalAchievements = [
+        const forensicEvidence = [
             { id: 'first_case', name: 'ПЕРВОЕ ДЕЛО', icon: '🔍', locked: true, description: 'Начало карьеры' },
             { id: 'rookie', name: 'НОВИЧОК', icon: '🕵️', locked: true, description: 'Первые шаги' },
-            { id: 'expert', name: 'МАСТЕР-СЫЩИК', icon: '💀', locked: true, description: 'Опытный детектив' },
-            { id: 'sharp_eye', name: 'ОСТРЫЙ ГЛАЗ', icon: '👁️', locked: true, description: 'Все видит' },
+            { id: 'expert', name: 'ЭКСПЕРТ', icon: '💀', locked: true, description: 'Опытный криминалист' },
+            { id: 'sharp_eye', name: 'ОСТРЫЙ ГЛАЗ', icon: '👁️', locked: true, description: 'Замечает детали' },
             { id: 'serial_detective', name: 'СЕРИЙНЫЙ СЫЩИК', icon: '🔗', locked: true, description: 'Связанные дела' },
             { id: 'maniac', name: 'ПЕРФЕКЦИОНИСТ', icon: '🎯', locked: true, description: 'Идеальная точность' }
         ];
 
         // Обновление статуса улик
         achievements.forEach(userAchievement => {
-            const achievement = criminalAchievements.find(a => a.id === userAchievement.id);
-            if (achievement) {
-                achievement.locked = false;
-                achievement.name = userAchievement.name || achievement.name;
+            const evidence = forensicEvidence.find(e => e.id === userAchievement.id);
+            if (evidence) {
+                evidence.locked = false;
+                evidence.name = userAchievement.name || evidence.name;
             }
         });
 
-        // Рендер с криминальными эффектами
-        CaseElements.achievementsContainer.innerHTML = criminalAchievements.map((achievement, index) => `
-            <div class="evidence-piece ${achievement.locked ? '' : 'found'}" 
-                 title="${achievement.description}"
-                 style="animation-delay: ${index * 0.1}s">
-                <div class="evidence-icon">${achievement.icon}</div>
-                <div class="evidence-name">${achievement.locked ? '▓▓▓' : achievement.name}</div>
+        // Рендер с криминалистическими эффектами
+        CaseElements.achievementsContainer.innerHTML = forensicEvidence.map((evidence, index) => `
+            <div class="achievement-card hologram-effect interactive-hover ${evidence.locked ? '' : 'unlocked'}" 
+                 title="${evidence.description}"
+                 style="animation-delay: ${index * 0.15}s">
+                <div class="achievement-icon">${evidence.icon}</div>
+                <div class="achievement-name">${evidence.locked ? '▓▓▓' : evidence.name}</div>
             </div>
         `).join('');
 
-        // Криминальная интерактивность
+        // Криминалистическая интерактивность
         setTimeout(() => {
-            const pieces = CaseElements.achievementsContainer.querySelectorAll('.evidence-piece');
-            pieces.forEach(piece => {
-                piece.addEventListener('click', () => {
-                    if (piece.classList.contains('found')) {
-                        createBloodExplosion(piece, 'solved');
-                        triggerBloodGlitch(piece);
+            const cards = CaseElements.achievementsContainer.querySelectorAll('.achievement-card');
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    if (card.classList.contains('unlocked')) {
+                        createForensicExplosion(card, 'solved');
+                        triggerForensicGlitch(card);
                         if (tg?.HapticFeedback) {
-                            tg.HapticFeedback.impactOccurred('medium');
+                            tg.HapticFeedback.impactOccurred('heavy');
                         }
                     }
                 });
             });
-        }, 200);
+        }, 300);
     }
 
     async loadDetectiveRanking() {

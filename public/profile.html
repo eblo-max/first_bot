@@ -988,6 +988,417 @@
                 transform: translateX(100%) skewX(-30deg);
             }
         }
+
+        /* === ДРАМАТИЧНЫЕ ЭФФЕКТЫ === */
+
+        /* Эффект сканирования ДНК */
+        .dna-scanner {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dna-scanner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(139, 0, 0, 0.1) 20%,
+                    rgba(220, 20, 60, 0.15) 50%,
+                    rgba(139, 0, 0, 0.1) 80%,
+                    transparent);
+            animation: dna-scan 4s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes dna-scan {
+            0% {
+                left: -100%;
+            }
+
+            50% {
+                left: 100%;
+            }
+
+            100% {
+                left: 100%;
+            }
+        }
+
+        /* Пульсация сердцебиения */
+        .heartbeat-pulse {
+            animation: heartbeat 2.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+
+            10% {
+                transform: scale(1.05);
+                filter: brightness(1.1);
+            }
+
+            20% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+
+            30% {
+                transform: scale(1.08);
+                filter: brightness(1.15);
+            }
+
+            40% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+        }
+
+        /* Мерцание ультрафиолета */
+        .uv-flicker {
+            animation: uv-light 3s ease-in-out infinite;
+        }
+
+        @keyframes uv-light {
+
+            0%,
+            100% {
+                filter: hue-rotate(0deg) brightness(1);
+                box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
+            }
+
+            20% {
+                filter: hue-rotate(30deg) brightness(1.2);
+                box-shadow: 0 0 40px rgba(139, 0, 0, 0.6);
+            }
+
+            40% {
+                filter: hue-rotate(0deg) brightness(0.9);
+                box-shadow: 0 0 15px rgba(139, 0, 0, 0.2);
+            }
+
+            60% {
+                filter: hue-rotate(45deg) brightness(1.3);
+                box-shadow: 0 0 50px rgba(220, 20, 60, 0.8);
+            }
+
+            80% {
+                filter: hue-rotate(15deg) brightness(1.1);
+                box-shadow: 0 0 30px rgba(139, 0, 0, 0.5);
+            }
+        }
+
+        /* Эффект отпечатков пальцев */
+        .fingerprint-bg {
+            position: relative;
+        }
+
+        .fingerprint-bg::before {
+            content: '';
+            position: absolute;
+            top: 10%;
+            right: 5%;
+            width: 60px;
+            height: 80px;
+            background-image:
+                radial-gradient(ellipse at center, transparent 30%, rgba(139, 0, 0, 0.1) 31%, rgba(139, 0, 0, 0.1) 35%, transparent 36%),
+                radial-gradient(ellipse at center, transparent 40%, rgba(139, 0, 0, 0.08) 41%, rgba(139, 0, 0, 0.08) 44%, transparent 45%),
+                radial-gradient(ellipse at center, transparent 50%, rgba(139, 0, 0, 0.06) 51%, rgba(139, 0, 0, 0.06) 53%, transparent 54%);
+            border-radius: 50% 50% 60% 40%;
+            opacity: 0.4;
+            animation: fingerprint-fade 6s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes fingerprint-fade {
+
+            0%,
+            100% {
+                opacity: 0.2;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* Эффект капель крови */
+        .blood-splatter {
+            position: relative;
+        }
+
+        .blood-splatter::after {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            width: 15px;
+            height: 15px;
+            background: radial-gradient(circle, var(--blood-red) 40%, transparent 50%);
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: splatter-drip 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes splatter-drip {
+
+            0%,
+            90% {
+                transform: scale(1) translateY(0);
+                opacity: 0.6;
+            }
+
+            95% {
+                transform: scale(1.3) translateY(5px);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(0.8) translateY(10px);
+                opacity: 0.3;
+            }
+        }
+
+        /* Эффект сканирования штрих-кода */
+        .barcode-scan {
+            position: relative;
+        }
+
+        .barcode-scan::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(90deg,
+                    transparent,
+                    transparent 1px,
+                    rgba(255, 215, 0, 0.1) 1px,
+                    rgba(255, 215, 0, 0.1) 2px,
+                    transparent 2px,
+                    transparent 8px);
+            animation: barcode-sweep 3s linear infinite;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        @keyframes barcode-sweep {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        /* Интерактивные эффекты */
+        .interactive-hover {
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            cursor: pointer;
+        }
+
+        .interactive-hover:hover {
+            transform: translateY(-8px) scale(1.05) rotateX(10deg);
+            box-shadow:
+                0 0 40px rgba(139, 0, 0, 0.4),
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                inset 0 0 20px rgba(220, 20, 60, 0.2);
+            filter: brightness(1.15) contrast(1.1);
+        }
+
+        .interactive-hover:active {
+            transform: translateY(-4px) scale(1.02) rotateX(5deg);
+            transition: all 0.15s ease-out;
+        }
+
+        /* Мерцание тревоги */
+        .alert-blink {
+            animation: alert-flash 1.5s ease-in-out infinite;
+        }
+
+        @keyframes alert-flash {
+
+            0%,
+            60% {
+                background: var(--blood-red);
+                box-shadow: 0 0 20px var(--blood-red);
+            }
+
+            70%,
+            100% {
+                background: var(--crimson);
+                box-shadow: 0 0 40px var(--crimson);
+            }
+        }
+
+        /* Эффект голограммы */
+        .hologram-effect {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hologram-effect::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: linear-gradient(45deg,
+                    transparent,
+                    rgba(255, 215, 0, 0.1),
+                    rgba(139, 0, 0, 0.15),
+                    rgba(220, 20, 60, 0.1),
+                    transparent);
+            animation: hologram-sweep 4s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes hologram-sweep {
+            0% {
+                transform: translate(-100%, -100%) rotate(45deg);
+            }
+
+            100% {
+                transform: translate(100%, 100%) rotate(45deg);
+            }
+        }
+
+        /* Дыхание интерфейса */
+        .interface-breathing {
+            animation: interface-breath 4s ease-in-out infinite;
+        }
+
+        @keyframes interface-breath {
+
+            0%,
+            100% {
+                filter: brightness(1) contrast(1);
+                transform: scale(1);
+            }
+
+            50% {
+                filter: brightness(1.08) contrast(1.05);
+                transform: scale(1.015);
+            }
+        }
+
+        /* Применение эффектов к элементам */
+
+        /* Усиленные визуальные эффекты */
+        .evidence-folder:hover .folder-tab {
+            transform: perspective(100px) rotateX(20deg) translateY(-5px);
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.5);
+            animation: tab-glow 0.6s ease-out;
+        }
+
+        @keyframes tab-glow {
+            0% {
+                filter: brightness(1);
+            }
+
+            50% {
+                filter: brightness(1.4);
+            }
+
+            100% {
+                filter: brightness(1.2);
+            }
+        }
+
+        .evidence-number {
+            transition: all 0.3s ease;
+        }
+
+        .evidence-card:hover .evidence-number {
+            transform: scale(1.2) rotateY(15deg);
+            text-shadow:
+                0 0 20px var(--blood-red),
+                0 0 40px var(--crimson),
+                2px 2px 4px rgba(0, 0, 0, 0.8);
+            animation: number-glow 0.8s ease-out;
+        }
+
+        @keyframes number-glow {
+
+            0%,
+            100% {
+                filter: hue-rotate(0deg);
+            }
+
+            50% {
+                filter: hue-rotate(30deg);
+            }
+        }
+
+        /* Эффект появления элементов */
+        .dramatic-entrance {
+            animation: dramatic-appear 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+            opacity: 0;
+            transform: translateY(50px) rotateX(30deg);
+        }
+
+        @keyframes dramatic-appear {
+            0% {
+                opacity: 0;
+                transform: translateY(50px) rotateX(30deg) scale(0.8);
+                filter: blur(5px);
+            }
+
+            60% {
+                opacity: 0.8;
+                transform: translateY(-10px) rotateX(-5deg) scale(1.05);
+                filter: blur(1px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) rotateX(0) scale(1);
+                filter: blur(0);
+            }
+        }
+
+        /* Задержки для каскадного появления */
+        .evidence-folder:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .evidence-folder:nth-child(2) {
+            animation-delay: 0.4s;
+        }
+
+        .evidence-folder:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        .evidence-folder:nth-child(4) {
+            animation-delay: 0.8s;
+        }
+
+        .evidence-folder:nth-child(5) {
+            animation-delay: 1.0s;
+        }
+
+        .evidence-folder:nth-child(6) {
+            animation-delay: 1.2s;
+        }
+
+        .case-actions {
+            animation-delay: 1.4s;
+        }
     </style>
 </head>
 
@@ -1006,10 +1417,10 @@
         <!-- Основной интерфейс -->
         <div id="main-content" class="hidden">
             <!-- Заголовок дела -->
-            <div class="case-file-header crime-scene-effect">
+            <div class="case-file-header crime-scene-effect fingerprint-bg interface-breathing">
                 <div class="case-stamps">
-                    <div class="evidence-stamp">СЕКРЕТНО</div>
-                    <div class="evidence-stamp">УЛИКА</div>
+                    <div class="evidence-stamp alert-blink">СЕКРЕТНО</div>
+                    <div class="evidence-stamp alert-blink" style="animation-delay: 0.7s;">УЛИКА</div>
                 </div>
 
                 <div class="case-number">ДЕЛО №2024-001-СУ</div>
@@ -1021,7 +1432,7 @@
                         <span>ДЕТЕКТИВ-КРИМИНАЛИСТ</span>
                     </div>
 
-                    <div class="suspect-photo" id="user-avatar">
+                    <div class="suspect-photo heartbeat-pulse uv-flicker" id="user-avatar">
                         <div id="avatar-placeholder">🕵️</div>
                     </div>
 
@@ -1040,7 +1451,7 @@
             </div>
 
             <!-- Модуль репутации -->
-            <div class="evidence-folder">
+            <div class="evidence-folder dna-scanner interactive-hover dramatic-entrance blood-splatter">
                 <div class="folder-tab">РЕЙТИНГ</div>
                 <div class="folder-header">
                     <div class="evidence-icon">
@@ -1061,7 +1472,7 @@
             </div>
 
             <!-- Модуль статистики -->
-            <div class="evidence-folder">
+            <div class="evidence-folder dna-scanner interactive-hover dramatic-entrance">
                 <div class="folder-tab">СТАТИСТИКА</div>
                 <div class="folder-header">
                     <div class="evidence-icon">
@@ -1070,19 +1481,19 @@
                     <div class="folder-title">Криминальная статистика</div>
                 </div>
                 <div class="evidence-grid">
-                    <div class="evidence-card">
+                    <div class="evidence-card barcode-scan interactive-hover">
                         <div class="evidence-number" id="stat-investigations">0</div>
                         <div class="evidence-label">Дела</div>
                     </div>
-                    <div class="evidence-card">
+                    <div class="evidence-card barcode-scan interactive-hover">
                         <div class="evidence-number" id="stat-solved">0</div>
                         <div class="evidence-label">Раскрыто</div>
                     </div>
-                    <div class="evidence-card">
+                    <div class="evidence-card barcode-scan interactive-hover">
                         <div class="evidence-number" id="stat-accuracy">0%</div>
                         <div class="evidence-label">Точность</div>
                     </div>
-                    <div class="evidence-card">
+                    <div class="evidence-card barcode-scan interactive-hover">
                         <div class="evidence-number" id="stat-score">0</div>
                         <div class="evidence-label">Очки</div>
                     </div>
@@ -1090,7 +1501,7 @@
             </div>
 
             <!-- Модуль достижений -->
-            <div class="evidence-folder">
+            <div class="evidence-folder dna-scanner interactive-hover dramatic-entrance fingerprint-bg">
                 <div class="folder-tab">УЛИКИ</div>
                 <div class="folder-header">
                     <div class="evidence-icon">
@@ -1099,12 +1510,12 @@
                     <div class="folder-title">Найденные улики</div>
                 </div>
                 <div class="achievements-grid" id="achievements-container">
-                    <!-- Динамическое содержимое -->
+                    <!-- Динамическое содержимое с hologram-effect -->
                 </div>
             </div>
 
             <!-- Модуль рейтинга -->
-            <div class="evidence-folder">
+            <div class="evidence-folder dna-scanner interactive-hover dramatic-entrance">
                 <div class="folder-tab">ТОП</div>
                 <div class="folder-header">
                     <div class="evidence-icon">
@@ -1118,17 +1529,17 @@
             </div>
 
             <!-- Навигационные действия (встроенные в дизайн) -->
-            <div class="case-actions">
+            <div class="case-actions dna-scanner interactive-hover dramatic-entrance">
                 <div class="actions-header">
                     <div class="actions-title">Действия по делу</div>
                     <div class="actions-subtitle">Выберите следующий шаг расследования</div>
                 </div>
                 <div class="action-buttons">
-                    <a href="/" class="case-action-btn primary">
+                    <a href="/" class="case-action-btn primary heartbeat-pulse interactive-hover">
                         <div class="btn-icon">🏠</div>
                         <div class="btn-text">Главное<br>меню</div>
                     </a>
-                    <a href="/game" class="case-action-btn secondary">
+                    <a href="/game" class="case-action-btn secondary heartbeat-pulse interactive-hover">
                         <div class="btn-icon">🔍</div>
                         <div class="btn-text">Начать<br>расследование</div>
                     </a>
@@ -1168,47 +1579,113 @@
                 lucide.createIcons();
             }
 
-            // Криминальные глитч эффекты
+            // Драматичное появление элементов
+            setTimeout(() => {
+                document.querySelectorAll('.dramatic-entrance').forEach((element, index) => {
+                    element.style.animationDelay = `${index * 0.2}s`;
+                    element.classList.add('dramatic-entrance');
+                });
+            }, 500);
+
+            // Усиленные криминальные глитч эффекты
             setInterval(() => {
-                const elements = document.querySelectorAll('.evidence-folder, .suspect-photo');
+                const elements = document.querySelectorAll('.evidence-folder, .suspect-photo, .evidence-number');
                 const randomElement = elements[Math.floor(Math.random() * elements.length)];
-                if (randomElement && Math.random() < 0.08) {
+                if (randomElement && Math.random() < 0.12) {
                     randomElement.classList.add('blood-drop');
                     setTimeout(() => {
                         randomElement.classList.remove('blood-drop');
                     }, 400);
                 }
-            }, 4000);
+            }, 3000);
 
-            // Детективная интерактивность
+            // Интерактивные звуковые эффекты
             document.querySelectorAll('.case-action-btn, .evidence-card, .achievement-card').forEach(element => {
                 element.addEventListener('click', () => {
                     if (window.Telegram?.WebApp?.HapticFeedback) {
-                        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+                        window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                    }
+
+                    // Добавляем визуальный эффект клика
+                    element.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        element.style.transform = '';
+                    }, 150);
+                });
+
+                // Эффект наведения с частицами
+                element.addEventListener('mouseenter', () => {
+                    createAdvancedParticles(element, 'hover');
+                    if (window.Telegram?.WebApp?.HapticFeedback) {
+                        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
                     }
                 });
             });
 
-            // Кровавые частицы при наведении
+            // Кровавые частицы при наведении на папки
             document.querySelectorAll('.evidence-folder').forEach(folder => {
                 folder.addEventListener('mouseenter', () => {
-                    createCrimeSceneParticles(folder);
+                    createAdvancedCrimeScene(folder);
+                });
+
+                // Эффект дыхания для папок
+                folder.addEventListener('mouseleave', () => {
+                    folder.style.animation = 'interface-breath 4s ease-in-out infinite';
                 });
             });
+
+            // Эффект сканирования для карточек статистики
+            document.querySelectorAll('.evidence-card').forEach((card, index) => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.animationDelay = `${index * 0.1}s`;
+                    setTimeout(() => {
+                        createScanningEffect(card);
+                    }, index * 100);
+                });
+            });
+
+            // Усиленный эффект для достижений
+            document.querySelectorAll('.achievement-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    createHologramExplosion(card);
+                });
+            });
+
+            // Атмосферные эффекты окружения
+            createAtmosphericEffects();
+
+            // Периодические эффекты сканирования
+            setInterval(() => {
+                createRandomScanEffect();
+            }, 8000);
+
+            // Эффект тревожного мигания для важных элементов
+            setInterval(() => {
+                if (Math.random() < 0.15) {
+                    const stamps = document.querySelectorAll('.evidence-stamp');
+                    stamps.forEach(stamp => {
+                        stamp.style.filter = 'brightness(1.5) hue-rotate(30deg)';
+                        setTimeout(() => {
+                            stamp.style.filter = '';
+                        }, 200);
+                    });
+                }
+            }, 5000);
         });
 
-        function createCrimeSceneParticles(element) {
-            for (let i = 0; i < 4; i++) {
+        // Улучшенные частицы места преступления
+        function createAdvancedCrimeScene(element) {
+            for (let i = 0; i < 8; i++) {
                 const particle = document.createElement('div');
                 particle.style.cssText = `
                     position: absolute;
-                    width: 5px;
-                    height: 5px;
-                    background: var(--blood-red);
+                    width: ${4 + Math.random() * 4}px;
+                    height: ${4 + Math.random() * 4}px;
+                    background: ${['#8B0000', '#DC143C', '#FFD700', '#FF4500'][Math.floor(Math.random() * 4)]};
                     border-radius: 50%;
                     pointer-events: none;
                     z-index: 1000;
-                    box-shadow: 0 0 8px var(--blood-red);
+                    box-shadow: 0 0 ${8 + Math.random() * 8}px currentColor;
                 `;
 
                 const rect = element.getBoundingClientRect();
@@ -1219,28 +1696,235 @@
 
                 let opacity = 1;
                 let scale = 1;
+                let rotation = 0;
                 let x = 0;
                 let y = 0;
 
-                function animateBloodParticle() {
-                    x += (Math.random() - 0.5) * 3;
-                    y += (Math.random() - 0.5) * 3;
-                    opacity -= 0.025;
-                    scale += 0.015;
+                function animateAdvancedParticle() {
+                    x += (Math.random() - 0.5) * 4;
+                    y += (Math.random() - 0.5) * 4;
+                    opacity -= 0.02;
+                    scale += 0.02;
+                    rotation += 5;
 
-                    particle.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+                    particle.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${rotation}deg)`;
                     particle.style.opacity = opacity;
 
                     if (opacity > 0) {
-                        requestAnimationFrame(animateBloodParticle);
+                        requestAnimationFrame(animateAdvancedParticle);
                     } else {
                         document.body.removeChild(particle);
                     }
                 }
 
-                requestAnimationFrame(animateBloodParticle);
+                requestAnimationFrame(animateAdvancedParticle);
             }
         }
+
+        // Продвинутые частицы для интерактивности
+        function createAdvancedParticles(element, type = 'click') {
+            const particleCount = type === 'hover' ? 6 : 12;
+            const colors = {
+                click: ['#8B0000', '#DC143C', '#FFD700'],
+                hover: ['#FF4500', '#FFD700', '#DC143C']
+            };
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 6px;
+                    height: 6px;
+                    background: ${colors[type][Math.floor(Math.random() * colors[type].length)]};
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 2000;
+                    box-shadow: 0 0 15px currentColor;
+                `;
+
+                const rect = element.getBoundingClientRect();
+                particle.style.left = `${rect.left + rect.width / 2}px`;
+                particle.style.top = `${rect.top + rect.height / 2}px`;
+
+                document.body.appendChild(particle);
+
+                const angle = (Math.PI * 2 * i) / particleCount;
+                const velocity = 40 + Math.random() * 60;
+                let opacity = 1;
+                let scale = 1;
+
+                function animateParticle() {
+                    const x = Math.cos(angle) * velocity * (1 - opacity);
+                    const y = Math.sin(angle) * velocity * (1 - opacity);
+
+                    particle.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+                    particle.style.opacity = opacity;
+
+                    opacity -= 0.025;
+                    scale += 0.03;
+
+                    if (opacity > 0) {
+                        requestAnimationFrame(animateParticle);
+                    } else {
+                        document.body.removeChild(particle);
+                    }
+                }
+
+                requestAnimationFrame(animateParticle);
+            }
+        }
+
+        // Эффект сканирования
+        function createScanningEffect(element) {
+            const scanner = document.createElement('div');
+            scanner.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, 
+                    transparent, 
+                    rgba(255, 215, 0, 0.3) 40%, 
+                    rgba(139, 0, 0, 0.4) 60%, 
+                    transparent);
+                pointer-events: none;
+                z-index: 10;
+            `;
+
+            element.style.position = 'relative';
+            element.appendChild(scanner);
+
+            let position = -100;
+            function animateScanner() {
+                position += 4;
+                scanner.style.left = `${position}%`;
+
+                if (position < 120) {
+                    requestAnimationFrame(animateScanner);
+                } else {
+                    element.removeChild(scanner);
+                }
+            }
+
+            requestAnimationFrame(animateScanner);
+        }
+
+        // Голографический взрыв для достижений
+        function createHologramExplosion(element) {
+            for (let i = 0; i < 20; i++) {
+                const fragment = document.createElement('div');
+                fragment.style.cssText = `
+                    position: absolute;
+                    width: 3px;
+                    height: 12px;
+                    background: linear-gradient(45deg, #FFD700, #8B0000, #DC143C);
+                    pointer-events: none;
+                    z-index: 2500;
+                `;
+
+                const rect = element.getBoundingClientRect();
+                fragment.style.left = `${rect.left + rect.width / 2}px`;
+                fragment.style.top = `${rect.top + rect.height / 2}px`;
+
+                document.body.appendChild(fragment);
+
+                const angle = (Math.PI * 2 * i) / 20;
+                const velocity = 80 + Math.random() * 40;
+                let opacity = 1;
+                let rotation = 0;
+
+                function animateFragment() {
+                    const x = Math.cos(angle) * velocity * (1 - opacity);
+                    const y = Math.sin(angle) * velocity * (1 - opacity);
+                    rotation += 15;
+
+                    fragment.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
+                    fragment.style.opacity = opacity;
+
+                    opacity -= 0.02;
+
+                    if (opacity > 0) {
+                        requestAnimationFrame(animateFragment);
+                    } else {
+                        document.body.removeChild(fragment);
+                    }
+                }
+
+                requestAnimationFrame(animateFragment);
+            }
+        }
+
+        // Атмосферные эффекты окружения
+        function createAtmosphericEffects() {
+            // Создаем плавающие частицы пыли
+            for (let i = 0; i < 15; i++) {
+                const dust = document.createElement('div');
+                dust.style.cssText = `
+                    position: fixed;
+                    width: 2px;
+                    height: 2px;
+                    background: rgba(139, 0, 0, 0.3);
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 0;
+                `;
+
+                dust.style.left = `${Math.random() * 100}vw`;
+                dust.style.top = `${Math.random() * 100}vh`;
+
+                document.body.appendChild(dust);
+
+                function floatDust() {
+                    const x = Math.sin(Date.now() * 0.001 + i) * 50;
+                    const y = Math.cos(Date.now() * 0.0008 + i) * 30;
+                    dust.style.transform = `translate(${x}px, ${y}px)`;
+                    requestAnimationFrame(floatDust);
+                }
+                floatDust();
+            }
+        }
+
+        // Случайные эффекты сканирования
+        function createRandomScanEffect() {
+            const elements = document.querySelectorAll('.evidence-folder, .case-actions');
+            const randomElement = elements[Math.floor(Math.random() * elements.length)];
+
+            if (randomElement) {
+                const scanLine = document.createElement('div');
+                scanLine.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 2px;
+                    background: linear-gradient(90deg, transparent, #FFD700, transparent);
+                    pointer-events: none;
+                    z-index: 15;
+                    animation: scan-sweep 2s ease-in-out;
+                `;
+
+                randomElement.style.position = 'relative';
+                randomElement.appendChild(scanLine);
+
+                setTimeout(() => {
+                    if (scanLine.parentNode) {
+                        scanLine.parentNode.removeChild(scanLine);
+                    }
+                }, 2000);
+            }
+        }
+
+        // CSS для дополнительных анимаций
+        const additionalStyles = document.createElement('style');
+        additionalStyles.textContent = `
+            @keyframes scan-sweep {
+                0% { transform: translateY(0); opacity: 0; }
+                50% { transform: translateY(200px); opacity: 1; }
+                100% { transform: translateY(400px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(additionalStyles);
     </script>
 </body>
 
