@@ -1617,39 +1617,103 @@ class DramaticCriminalProfile {
     }
 
     showError(message) {
-        console.error('💥 Показываем ошибку:', message);
+        console.log('🚨 Показываем ошибку:', message);
 
-        // Создаем элемент ошибки если его нет
-        let errorDiv = document.getElementById('profile-error');
-        if (!errorDiv) {
-            errorDiv = document.createElement('div');
-            errorDiv.id = 'profile-error';
-            errorDiv.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: var(--blood-red);
-                color: white;
-                padding: 12px 20px;
-                border-radius: 8px;
-                z-index: 1000;
-                font-size: 14px;
-                max-width: 90%;
-                text-align: center;
-            `;
-            document.body.appendChild(errorDiv);
+        this.hideLoadingState();
+
+        // Создаем элемент ошибки
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-message';
+        errorContainer.innerHTML = `
+            <div class="error-icon">⚠️</div>
+            <div class="error-text">${message}</div>
+            <button class="retry-button" onclick="window.location.reload()">
+                Попробовать снова
+            </button>
+        `;
+
+        // Находим контейнер и показываем ошибку
+        const container = document.querySelector('.profile-container');
+        if (container) {
+            container.innerHTML = '';
+            container.appendChild(errorContainer);
         }
 
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
+        // Применяем стили к ошибке
+        errorContainer.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+            color: #ff4757;
+            min-height: 300px;
+        `;
+    }
 
-        // Скрываем через 5 секунд
-        setTimeout(() => {
-            if (errorDiv) {
-                errorDiv.style.display = 'none';
-            }
-        }, 5000);
+    showAuthError() {
+        console.log('🔒 Показываем ошибку авторизации');
+
+        const authModal = document.createElement('div');
+        authModal.className = 'auth-error-modal';
+        authModal.innerHTML = `
+            <div class="auth-error-content">
+                <div class="auth-error-icon">🔐</div>
+                <h3>Для доступа к профилю необходима авторизация через Telegram</h3>
+                <p>Откройте приложение в Telegram для корректной работы</p>
+                <button class="auth-retry-button" onclick="window.location.reload()">
+                    OK
+                </button>
+            </div>
+        `;
+
+        // Добавляем модальное окно в body
+        document.body.appendChild(authModal);
+
+        // Применяем стили
+        authModal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        `;
+
+        const content = authModal.querySelector('.auth-error-content');
+        content.style.cssText = `
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #333;
+            text-align: center;
+            max-width: 350px;
+            margin: 20px;
+            color: #fff;
+        `;
+
+        const icon = authModal.querySelector('.auth-error-icon');
+        icon.style.cssText = `
+            font-size: 48px;
+            margin-bottom: 20px;
+        `;
+
+        const button = authModal.querySelector('.auth-retry-button');
+        button.style.cssText = `
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            margin-top: 20px;
+            cursor: pointer;
+            font-size: 16px;
+        `;
     }
 
     startPeriodicUpdates() {
