@@ -1003,136 +1003,123 @@
         .player-name {
             font-weight: 600;
             margin-bottom: 4px;
-            background: linear-gradient(90deg, #FF0040 0%, #DC143C 50%, #FFD700 100%);
-            background-size: 150% 150%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: playerNameGlow 3s ease-in-out infinite;
             font-family: 'JetBrains Mono', monospace;
-            text-shadow: 0 0 10px rgba(255, 0, 64, 0.3);
             transition: all 0.3s ease;
             display: inline-block;
+            color: var(--bone);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
 
-        .leaderboard-item:hover .player-name {
-            background: linear-gradient(90deg, #39FF14 0%, #00BFFF 50%, #FF0040 100%);
-            background-size: 150% 150%;
-            animation: playerNameHover 1s ease-in-out infinite;
-            text-shadow: 0 0 15px rgba(57, 255, 20, 0.6);
-        }
-
-        .leaderboard-item.current-user .player-name {
-            background: linear-gradient(90deg, #FFD700 0%, #FFA500 50%, #FF6347 100%);
-            background-size: 150% 150%;
-            animation: currentUserGlow 2s ease-in-out infinite;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        /* Позиции 1-3: Особые цвета */
+        .leaderboard-item:nth-child(1) .player-name {
+            color: #FFD700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
             font-weight: 700;
         }
 
-        @keyframes playerNameGlow {
+        .leaderboard-item:nth-child(2) .player-name {
+            color: #C0C0C0;
+            text-shadow: 0 0 12px rgba(192, 192, 192, 0.5);
+            font-weight: 700;
+        }
+
+        .leaderboard-item:nth-child(3) .player-name {
+            color: #CD7F32;
+            text-shadow: 0 0 10px rgba(205, 127, 50, 0.4);
+            font-weight: 700;
+        }
+
+        /* Позиции 4-10: Красноватые оттенки */
+        .leaderboard-item:nth-child(n+4):nth-child(-n+10) .player-name {
+            color: #FF6B6B;
+            text-shadow: 0 0 8px rgba(255, 107, 107, 0.3);
+        }
+
+        /* Остальные позиции: Обычный цвет */
+        .leaderboard-item:nth-child(n+11) .player-name {
+            color: #E0E0E0;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Текущий пользователь: Яркое выделение */
+        .leaderboard-item.current-user .player-name {
+            color: #00FF88 !important;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8) !important;
+            font-weight: 800 !important;
+            animation: currentUserPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes currentUserPulse {
 
             0%,
             100% {
-                background-position: 0% 50%;
                 filter: brightness(1);
             }
 
             50% {
-                background-position: 100% 50%;
-                filter: brightness(1.1);
+                filter: brightness(1.3);
             }
         }
 
-        @keyframes playerNameHover {
+        /* Эффекты при наведении */
+        .leaderboard-item:hover .player-name {
+            color: #FFFFFF !important;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8) !important;
+            transform: scale(1.05);
+        }
+
+        /* Анимации для топ-3 */
+        .leaderboard-item:nth-child(1):hover .player-name {
+            animation: goldShimmer 1s ease-in-out infinite;
+        }
+
+        .leaderboard-item:nth-child(2):hover .player-name {
+            animation: silverShimmer 1s ease-in-out infinite;
+        }
+
+        .leaderboard-item:nth-child(3):hover .player-name {
+            animation: bronzeShimmer 1s ease-in-out infinite;
+        }
+
+        @keyframes goldShimmer {
 
             0%,
             100% {
-                background-position: 0% 50%;
-                filter: brightness(1) saturate(1);
+                color: #FFD700;
+                filter: brightness(1);
             }
 
             50% {
-                background-position: 100% 50%;
-                filter: brightness(1.2) saturate(1.2);
+                color: #FFF700;
+                filter: brightness(1.4) drop-shadow(0 0 8px #FFD700);
             }
         }
 
-        @keyframes currentUserGlow {
+        @keyframes silverShimmer {
 
             0%,
             100% {
-                background-position: 0% 50%;
-                filter: brightness(1) saturate(1);
+                color: #C0C0C0;
+                filter: brightness(1);
             }
 
             50% {
-                background-position: 100% 50%;
-                filter: brightness(1.15) saturate(1.2);
+                color: #E8E8E8;
+                filter: brightness(1.3) drop-shadow(0 0 6px #C0C0C0);
             }
         }
 
-        /* Упрощенные эффекты для топ-3 игроков */
-        .leaderboard-item:nth-child(1) .player-name {
-            background: linear-gradient(90deg, #FFD700 0%, #FFF200 50%, #DAA520 100%);
-            background-size: 150% 150%;
-            animation: goldGlow 2s ease-in-out infinite;
-            text-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
-        }
-
-        .leaderboard-item:nth-child(2) .player-name {
-            background: linear-gradient(90deg, #C0C0C0 0%, #E5E5E5 50%, #A9A9A9 100%);
-            background-size: 150% 150%;
-            animation: silverGlow 2s ease-in-out infinite;
-            text-shadow: 0 0 20px rgba(192, 192, 192, 0.7);
-        }
-
-        .leaderboard-item:nth-child(3) .player-name {
-            background: linear-gradient(90deg, #CD7F32 0%, #D2691E 50%, #A0522D 100%);
-            background-size: 150% 150%;
-            animation: bronzeGlow 2s ease-in-out infinite;
-            text-shadow: 0 0 15px rgba(205, 127, 50, 0.5);
-        }
-
-        @keyframes goldGlow {
+        @keyframes bronzeShimmer {
 
             0%,
             100% {
-                background-position: 0% 50%;
-                filter: brightness(1) saturate(1);
+                color: #CD7F32;
+                filter: brightness(1);
             }
 
             50% {
-                background-position: 100% 50%;
-                filter: brightness(1.25) saturate(1.3);
-            }
-        }
-
-        @keyframes silverGlow {
-
-            0%,
-            100% {
-                background-position: 0% 50%;
-                filter: brightness(1) saturate(1);
-            }
-
-            50% {
-                background-position: 100% 50%;
-                filter: brightness(1.2) saturate(1.1);
-            }
-        }
-
-        @keyframes bronzeGlow {
-
-            0%,
-            100% {
-                background-position: 0% 50%;
-                filter: brightness(1) saturate(1);
-            }
-
-            50% {
-                background-position: 100% 50%;
-                filter: brightness(1.15) saturate(1.05);
+                color: #E69546;
+                filter: brightness(1.2) drop-shadow(0 0 5px #CD7F32);
             }
         }
 
@@ -1743,5 +1730,7 @@
         }
     </script>
 </body>
+
+</html>
 
 </html>
