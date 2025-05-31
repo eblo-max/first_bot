@@ -1,6 +1,5 @@
 /**
- * Профессиональная система логирования для сервера "Криминальный Блеф"
- * Поддерживает различные уровни логирования в зависимости от окружения NODE_ENV
+ * Упрощенная система логирования для сервера "Криминальный Блеф"
  */
 
 class ServerLogger {
@@ -19,22 +18,7 @@ class ServerLogger {
         // Устанавливаем уровень в зависимости от окружения
         this.currentLevel = this.setLogLevel();
 
-        // Сохраняем оригинальные методы консоли
-        this.originalConsole = {
-            log: console.log,
-            warn: console.warn,
-            error: console.error,
-            info: console.info,
-            debug: console.debug
-        };
-
-        // В production заменяем console методы на наши
-        if (this.environment === 'production') {
-            this.overrideConsole();
-        }
-
-        // Информируем о состоянии логирования
-        this.info(`🔧 Server Logger инициализирован: ${this.environment} (уровень: ${this.getLevelName()})`);
+        // НЕ логируем при инициализации чтобы избежать цикличности
     }
 
     /**
@@ -43,27 +27,13 @@ class ServerLogger {
     setLogLevel() {
         switch (this.environment) {
             case 'production':
-                return this.levels.ERROR; // Только ошибки в production
+                return this.levels.INFO; // В production показываем INFO и выше
             case 'test':
-                return this.levels.WARN;  // Предупреждения и ошибки в тестах
+                return this.levels.WARN;  // В тестах только предупреждения и ошибки
             case 'development':
             default:
-                return this.levels.DEBUG; // Все логи в development
+                return this.levels.DEBUG; // В development все логи
         }
-    }
-
-    /**
-     * Перехват console методов в production
-     */
-    overrideConsole() {
-        // Заменяем console.log на пустую функцию в production
-        console.log = () => { };
-        console.debug = () => { };
-
-        // Оставляем только важные методы с фильтрацией
-        console.info = (...args) => this.info(...args);
-        console.warn = (...args) => this.warn(...args);
-        console.error = (...args) => this.error(...args);
     }
 
     /**
@@ -106,20 +76,11 @@ class ServerLogger {
             if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
                 sanitized[key] = '[HIDDEN]';
             } else if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
-                // Рекурсивно обрабатываем вложенные объекты
                 sanitized[key] = this.sanitizeObject(sanitized[key]);
             }
         }
 
         return sanitized;
-    }
-
-    /**
-     * Получение имени текущего уровня
-     */
-    getLevelName() {
-        const levelNames = ['ERROR', 'WARN', 'INFO', 'DEBUG'];
-        return levelNames[this.currentLevel] || 'UNKNOWN';
     }
 
     /**
@@ -138,7 +99,7 @@ class ServerLogger {
         if (this.currentLevel >= this.levels.ERROR) {
             const filteredArgs = this.sanitizeLogData(args);
             const formattedArgs = this.formatMessage('ERROR', ['🔴', ...filteredArgs]);
-            this.originalConsole.error(...formattedArgs);
+            console.error(...formattedArgs);
         }
     }
 
@@ -146,7 +107,7 @@ class ServerLogger {
         if (this.currentLevel >= this.levels.WARN) {
             const filteredArgs = this.sanitizeLogData(args);
             const formattedArgs = this.formatMessage('WARN', ['🟡', ...filteredArgs]);
-            this.originalConsole.warn(...formattedArgs);
+            console.warn(...formattedArgs);
         }
     }
 
@@ -154,7 +115,7 @@ class ServerLogger {
         if (this.currentLevel >= this.levels.INFO) {
             const filteredArgs = this.sanitizeLogData(args);
             const formattedArgs = this.formatMessage('INFO', ['🔵', ...filteredArgs]);
-            this.originalConsole.info(...formattedArgs);
+            console.info(...formattedArgs);
         }
     }
 
@@ -162,83 +123,43 @@ class ServerLogger {
         if (this.currentLevel >= this.levels.DEBUG) {
             const filteredArgs = this.sanitizeLogData(args);
             const formattedArgs = this.formatMessage('DEBUG', ['⚪', ...filteredArgs]);
-            this.originalConsole.log(...formattedArgs);
+            console.log(...formattedArgs);
         }
     }
 
     /**
-     * Принудительный лог (игнорирует уровни, для критических ошибок)
-     */
-    force(...args) {
-        const filteredArgs = this.sanitizeLogData(args);
-        const formattedArgs = this.formatMessage('FORCE', ['🔥', ...filteredArgs]);
-        this.originalConsole.error(...formattedArgs);
-    }
-
-    /**
-     * Логирование API запросов (только в development)
-     */
-    api(method, url, status, responseTime) {
-        if (this.currentLevel >= this.levels.DEBUG) {
-            const emoji = status >= 400 ? '🔴' : status >= 300 ? '🟡' : '🟢';
-            this.debug(`${emoji} ${method} ${url} - ${status} (${responseTime}ms)`);
-        }
-    }
-
-    /**
-     * Логирование подключений к БД
-     */
-    db(operation, collection, details) {
-        if (this.currentLevel >= this.levels.DEBUG) {
-            this.debug(`🗃️ DB ${operation} ${collection}:`, details);
-        }
-    }
-
-    /**
-     * Включение debug режима (для разработки)
-     */
-    enableDebug() {
-        this.currentLevel = this.levels.DEBUG;
-        this.info('🐛 Debug режим включен на сервере');
-    }
-
-    /**
-     * Отключение всех логов (для производительности)
-     */
-    disable() {
-        this.currentLevel = -1;
-    }
-
-    /**
-     * Middleware для логирования HTTP запросов
+     * HTTP Middleware для логирования запросов
      */
     httpMiddleware() {
         return (req, res, next) => {
-            if (this.currentLevel >= this.levels.INFO) {
+            if (this.currentLevel >= this.levels.DEBUG) {
                 const start = Date.now();
 
-                res.on('finish', () => {
+                // Логируем запрос
+                this.debug(`📤 ${req.method} ${req.originalUrl} от ${req.ip || 'unknown'}`);
+
+                // Перехватываем окончание ответа
+                const originalSend = res.send;
+                res.send = function (data) {
                     const duration = Date.now() - start;
-                    this.api(req.method, req.originalUrl, res.statusCode, duration);
-                });
+                    const emoji = res.statusCode >= 400 ? '🔴' : res.statusCode >= 300 ? '🟡' : '🟢';
+                    console.log(`📥 ${emoji} ${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+                    originalSend.call(this, data);
+                };
             }
             next();
         };
     }
 }
 
-// Создаем глобальный экземпляр логгера
+// Создаем singleton экземпляр
 const logger = new ServerLogger();
 
-// Экспортируем логгер и его методы для удобства
 module.exports = {
     logger,
     error: (...args) => logger.error(...args),
     warn: (...args) => logger.warn(...args),
     info: (...args) => logger.info(...args),
     debug: (...args) => logger.debug(...args),
-    force: (...args) => logger.force(...args),
-    api: (...args) => logger.api(...args),
-    db: (...args) => logger.db(...args),
     httpMiddleware: () => logger.httpMiddleware()
 }; 
