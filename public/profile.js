@@ -540,6 +540,56 @@ class DramaticCriminalProfile {
         if (profileContent) {
             profileContent.style.display = 'block';
         }
+
+        // Проверяем наличие всех необходимых элементов
+        this.checkDOMElements();
+    }
+
+    // Новый метод для проверки элементов DOM
+    checkDOMElements() {
+        const requiredElements = [
+            'detective-name',
+            'user-id',
+            'user-level',
+            'detective-rank',
+            'user-avatar',
+            'avatar-placeholder',
+            'current-xp',
+            'max-xp',
+            'xp-bar',
+            'stat-investigations',
+            'stat-solved',
+            'stat-streak',
+            'stat-accuracy'
+        ];
+
+        console.log('🔍 Проверка элементов DOM:');
+
+        requiredElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                console.log(`✅ ${id}: найден`);
+            } else {
+                console.error(`❌ ${id}: НЕ НАЙДЕН!`);
+            }
+        });
+
+        // Дополнительная проверка контейнеров
+        const containers = [
+            '.profile-card',
+            '.stats-grid',
+            '.achievements-scroll',
+            '.leaderboard-container'
+        ];
+
+        containers.forEach(selector => {
+            const element = document.querySelector(selector);
+            if (element) {
+                console.log(`✅ ${selector}: найден`);
+            } else {
+                console.error(`❌ ${selector}: НЕ НАЙДЕН!`);
+            }
+        });
     }
 
     showDeveloperMessage() {
@@ -763,13 +813,28 @@ class DramaticCriminalProfile {
     async loadUserProfile() {
         try {
             console.log('📊 Загружаем реальный профиль пользователя...');
+            console.log('🔑 Используемый токен:', this.token ? `${this.token.substring(0, 20)}...` : 'ОТСУТСТВУЕТ');
+
             ProfileState.isLoading = true;
 
             const response = await fetch('/api/profile', {
-                headers: { 'Authorization': `Bearer ${this.token}` }
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                }
             });
 
+            console.log('📡 Ответ сервера профиля:');
+            console.log('  - Status:', response.status);
+            console.log('  - Status Text:', response.statusText);
+            console.log('  - Headers:', [...response.headers.entries()]);
+
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Ошибка ответа сервера:');
+                console.error('  - Status:', response.status);
+                console.error('  - Error Text:', errorText);
+
                 if (response.status === 404) {
                     throw new Error('Пользователь не найден');
                 } else if (response.status === 401) {
@@ -780,17 +845,52 @@ class DramaticCriminalProfile {
             }
 
             const userData = await response.json();
-            console.log('✅ Реальные данные профиля получены:', userData);
+            console.log('✅ ПОЛНЫЕ данные профиля получены:');
+            console.log('📋 Структура userData:', JSON.stringify(userData, null, 2));
 
-            ProfileState.user = userData;
-            this.updateProfileUI(userData);
+            // Детальный анализ структуры данных
+            console.log('🔍 Анализ структуры данных:');
+            console.log('  - Тип userData:', typeof userData);
+            console.log('  - Ключи userData:', Object.keys(userData));
+
+            if (userData.data) {
+                console.log('  - Есть userData.data:', typeof userData.data);
+                console.log('  - Ключи userData.data:', Object.keys(userData.data));
+            }
+
+            if (userData.user) {
+                console.log('  - Есть userData.user:', typeof userData.user);
+                console.log('  - Ключи userData.user:', Object.keys(userData.user));
+            }
+
+            // Поиск данных пользователя в различных местах
+            let actualUserData = null;
+
+            if (userData.data && typeof userData.data === 'object') {
+                actualUserData = userData.data;
+                console.log('📊 Используем userData.data');
+            } else if (userData.user && typeof userData.user === 'object') {
+                actualUserData = userData.user;
+                console.log('📊 Используем userData.user');
+            } else if (userData.firstName || userData.username || userData.telegramId) {
+                actualUserData = userData;
+                console.log('📊 Используем userData напрямую');
+            } else {
+                console.error('❌ Не найдены данные пользователя в ответе сервера!');
+                actualUserData = userData; // попробуем anyway
+            }
+
+            console.log('🎯 Финальные данные для обработки:', actualUserData);
+
+            ProfileState.user = actualUserData;
+            this.updateProfileUI(actualUserData);
 
         } catch (error) {
             console.error('❌ Ошибка загрузки профиля:', error);
+            console.error('❌ Stack trace:', error.stack);
             this.showError(`Не удалось загрузить профиль: ${error.message}`);
         } finally {
             ProfileState.isLoading = false;
-            // НЕ вызываем hideLoadingState здесь - это делается в hideProfileSkeleton
         }
     }
 
@@ -2224,13 +2324,19 @@ class DramaticCriminalProfile {
     // Утилиты
     updateElement(id, value) {
         const element = document.getElementById(id);
+        console.log(`🔧 updateElement: id="${id}", value="${value}", element=${element ? 'найден' : 'НЕ НАЙДЕН'}`);
+
         if (element) {
             element.textContent = value;
+            console.log(`✅ Элемент ${id} обновлен значением: "${value}"`);
 
             // Для имени пользователя также обновляем data-text атрибут для голографического эффекта
             if (id === 'detective-name') {
                 element.setAttribute('data-text', value);
+                console.log(`✅ Установлен data-text для ${id}: "${value}"`);
             }
+        } else {
+            console.error(`❌ Элемент с ID "${id}" не найден в DOM!`);
         }
     }
 
