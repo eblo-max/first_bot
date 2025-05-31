@@ -54,6 +54,7 @@ class DramaticCriminalProfile {
     constructor() {
         this.initTelegramWebApp();
         this.initCriminalEffects();
+        this.initAchievementModal();
         this.initProfile();
     }
 
@@ -303,28 +304,71 @@ class DramaticCriminalProfile {
     }
 
     async loadUserAvatar(telegramId) {
+        const avatarImg = document.querySelector('#user-avatar img');
+        const avatarPlaceholder = document.getElementById('avatar-placeholder');
+
+        if (!telegramId) return;
+
         try {
-            console.log('🖼️ Загружаем аватар пользователя...');
             const response = await fetch('/api/user/avatar', {
-                headers: { 'Authorization': `Bearer ${this.token}` }
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
             });
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.status === 'success' && data.data?.avatarUrl) {
-                    const avatarPlaceholder = document.getElementById('avatar-placeholder');
-                    if (avatarPlaceholder) {
-                        avatarPlaceholder.innerHTML = `<img src="${data.data.avatarUrl}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
-                        console.log('✅ Аватар загружен');
+
+                if (data.status === 'success' && data.data.hasAvatar) {
+                    // Создаем новый img элемент если его нет
+                    let img = avatarImg;
+                    if (!img) {
+                        img = document.createElement('img');
+                        img.alt = 'Аватар детектива';
+                        img.style.cssText = `
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            object-position: center;
+                            border-radius: 50%;
+                        `;
+                        document.getElementById('user-avatar').appendChild(img);
                     }
+
+                    // Загружаем изображение
+                    img.src = data.data.avatarUrl;
+                    img.onload = () => {
+                        if (avatarPlaceholder) {
+                            avatarPlaceholder.style.display = 'none';
+                        }
+                        img.style.display = 'block';
+
+                        // Эффект появления
+                        img.style.opacity = '0';
+                        img.style.transition = 'opacity 0.5s ease';
+                        setTimeout(() => {
+                            img.style.opacity = '1';
+                        }, 100);
+                    };
+
+                    img.onerror = () => {
+                        console.log('❌ Ошибка загрузки аватара');
+                        if (avatarPlaceholder) {
+                            avatarPlaceholder.style.display = 'flex';
+                        }
+                    };
                 } else {
-                    console.log('⚠️ Аватар не найден в ответе API');
+                    console.log('ℹ️ Аватар не найден, показываем заглушку');
+                    if (avatarPlaceholder) {
+                        avatarPlaceholder.style.display = 'flex';
+                    }
                 }
-            } else {
-                console.log('⚠️ Не удалось загрузить аватар, используем заглушку');
             }
         } catch (error) {
-            console.log('⚠️ Ошибка загрузки аватара:', error);
+            console.error('❌ Ошибка при загрузке аватара:', error);
+            if (avatarPlaceholder) {
+                avatarPlaceholder.style.display = 'flex';
+            }
         }
     }
 
@@ -357,26 +401,28 @@ class DramaticCriminalProfile {
         const container = document.getElementById('achievements-container');
         if (!container) return;
 
-        const unlockedIds = userAchievements.map(a => a.id || a);
-        let unlockedCount = 0;
+        const achievements = ProfileConfig.achievements.map(achievement => {
+            const isUnlocked = userAchievements.some(ua => ua.id === achievement.id);
+            return {
+                ...achievement,
+                unlocked: isUnlocked
+            };
+        });
 
-        const achievementsHTML = ProfileConfig.achievements.map(achievement => {
-            const isUnlocked = unlockedIds.includes(achievement.id);
-            if (isUnlocked) unlockedCount++;
-
-            return `
-                <div class="achievement-item ${isUnlocked ? '' : 'locked'}" 
-                     title="${achievement.description}">
-                    <div class="achievement-icon">${achievement.icon}</div>
-                    <div class="achievement-name">${achievement.name}</div>
-                </div>
-            `;
-        }).join('');
-
-        container.innerHTML = achievementsHTML;
+        container.innerHTML = achievements.map(achievement => `
+            <div class="achievement-item ${achievement.unlocked ? '' : 'locked'}" 
+                 data-achievement-id="${achievement.id}">
+                <div class="achievement-icon">${achievement.icon}</div>
+                <div class="achievement-name">${achievement.name}</div>
+            </div>
+        `).join('');
 
         // Обновляем счетчик
-        this.updateElement('achievements-count', unlockedCount);
+        const unlockedCount = achievements.filter(a => a.unlocked).length;
+        const countElement = document.getElementById('achievements-count');
+        if (countElement) {
+            countElement.textContent = unlockedCount;
+        }
 
         // Добавляем интерактивность
         this.addAchievementInteractivity();
@@ -386,8 +432,18 @@ class DramaticCriminalProfile {
         document.querySelectorAll('.achievement-item').forEach((item, index) => {
             item.addEventListener('click', () => {
                 this.provideCriminalFeedback('achievement');
-                this.createHologramExplosion(item);
-                this.createAdvancedParticles(item, item.classList.contains('locked') ? 'evidence' : 'crime');
+
+                // Получаем данные достижения
+                const achievementId = item.dataset.achievementId || `achievement_${index}`;
+                const isLocked = item.classList.contains('locked');
+
+                // Показываем модальное окно
+                this.showAchievementModal(achievementId, !isLocked);
+
+                if (!isLocked) {
+                    this.createHologramExplosion(item);
+                    this.createAdvancedParticles(item, 'crime');
+                }
             });
 
             item.addEventListener('mouseenter', () => {
@@ -401,6 +457,121 @@ class DramaticCriminalProfile {
 
             // Задержка появления с драматичным эффектом
             item.style.animationDelay = `${index * 0.1}s`;
+        });
+    }
+
+    showAchievementModal(achievementId, isUnlocked) {
+        const modal = document.getElementById('achievement-modal');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDescription = document.getElementById('modal-description');
+        const modalStatus = document.getElementById('modal-status');
+
+        // Находим данные достижения
+        const achievement = ProfileConfig.achievements.find(a => a.id === achievementId) || {
+            id: achievementId,
+            name: 'Неизвестное достижение',
+            icon: '❓',
+            description: 'Секретное достижение. Продолжайте расследования, чтобы узнать больше.'
+        };
+
+        // Заполняем данные
+        modalIcon.textContent = achievement.icon;
+        modalTitle.textContent = achievement.name;
+        modalDescription.textContent = achievement.description;
+
+        // Устанавливаем статус
+        if (isUnlocked) {
+            modalStatus.textContent = 'ПОЛУЧЕНО';
+            modalStatus.className = 'achievement-modal-status unlocked';
+        } else {
+            modalStatus.textContent = 'ЗАБЛОКИРОВАНО';
+            modalStatus.className = 'achievement-modal-status locked';
+        }
+
+        // Показываем модальное окно
+        modal.classList.add('show');
+
+        // Добавляем драматичные эффекты
+        if (isUnlocked) {
+            this.createCelebrationEffect();
+        }
+
+        // Haptic feedback
+        this.provideCriminalFeedback('achievement');
+    }
+
+    hideAchievementModal() {
+        const modal = document.getElementById('achievement-modal');
+        modal.classList.remove('show');
+    }
+
+    createCelebrationEffect() {
+        // Создаем золотые частицы
+        for (let i = 0; i < 15; i++) {
+            const particle = document.createElement('div');
+            particle.style.cssText = `
+                position: fixed;
+                width: ${4 + Math.random() * 6}px;
+                height: ${4 + Math.random() * 6}px;
+                background: ${['#FFD700', '#FFA500', '#FF6347'][Math.floor(Math.random() * 3)]};
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 1001;
+                left: 50%;
+                top: 50%;
+                box-shadow: 0 0 15px currentColor;
+            `;
+
+            document.body.appendChild(particle);
+
+            const angle = (Math.PI * 2 * i) / 15;
+            const velocity = 80 + Math.random() * 40;
+            let opacity = 1;
+            let scale = 1;
+
+            function animate() {
+                const x = Math.cos(angle) * velocity * (1 - opacity);
+                const y = Math.sin(angle) * velocity * (1 - opacity) - 50;
+
+                particle.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+                particle.style.opacity = opacity;
+
+                opacity -= 0.02;
+                scale += 0.03;
+
+                if (opacity > 0) {
+                    requestAnimationFrame(animate);
+                } else {
+                    document.body.removeChild(particle);
+                }
+            }
+
+            setTimeout(() => requestAnimationFrame(animate), i * 50);
+        }
+    }
+
+    initAchievementModal() {
+        const modal = document.getElementById('achievement-modal');
+        const closeBtn = document.getElementById('modal-close');
+
+        // Закрытие по кнопке
+        closeBtn.addEventListener('click', () => {
+            this.hideAchievementModal();
+        });
+
+        // Закрытие по клику вне модального окна
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.hideAchievementModal();
+            }
+        });
+
+        // Закрытие по Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('show')) {
+                this.hideAchievementModal();
+            }
         });
     }
 
