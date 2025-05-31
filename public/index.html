@@ -74,8 +74,8 @@
             animation: bloodFlow 25s ease-in-out infinite;
             pointer-events: none;
             z-index: 1;
-            filter: blur(3px);
-            /* Размытие фонового градиента */
+            filter: blur(1.5px);
+            /* Уменьшено размытие фонового градиента с 3px до 1.5px */
         }
 
         /* Тематические элементы фона */
@@ -111,8 +111,8 @@
             pointer-events: none;
             z-index: 1;
             animation: evidenceFloat 30s ease-in-out infinite;
-            filter: blur(2px);
-            /* Размытие декоративных элементов */
+            filter: blur(1px);
+            /* Уменьшено размытие декоративных элементов с 2px до 1px */
         }
 
         @keyframes evidenceFloat {
@@ -149,8 +149,8 @@
             pointer-events: none;
             z-index: 3;
             overflow: hidden;
-            filter: blur(1px);
-            /* Легкое размытие полицейской ленты */
+            filter: blur(0.5px);
+            /* Уменьшено размытие полицейской ленты с 1px до 0.5px */
         }
 
         .police-tape::before {
@@ -257,8 +257,8 @@
             height: 100%;
             pointer-events: none;
             z-index: 2;
-            filter: blur(1.5px);
-            /* Размытие маркеров улик */
+            filter: blur(0.5px);
+            /* Уменьшено размытие маркеров улик с 1px до 0.5px */
         }
 
         .evidence-marker {
@@ -335,9 +335,9 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 1;
-            filter: blur(2px);
-            /* Размытие кровавых капель */
+            z-index: 2;
+            filter: blur(1px);
+            /* Уменьшено размытие кровавых капель с 2px до 1px */
         }
 
         .blood-drop {
@@ -398,8 +398,8 @@
             opacity: 0.3;
             pointer-events: none;
             animation: fingerprintFade 10s ease-in-out infinite;
-            filter: blur(1px);
-            /* Размытие отпечатков пальцев */
+            filter: blur(0.8px);
+            /* Уменьшено размытие отпечатков пальцев с 1.5px до 0.8px */
         }
 
         .fingerprint:nth-child(1) {
@@ -456,8 +456,8 @@
             height: 100%;
             pointer-events: none;
             z-index: 2;
-            filter: blur(1.5px);
-            /* Размытие частиц */
+            filter: blur(0.8px);
+            /* Уменьшено размытие частиц с 1.5px до 0.8px */
         }
 
         .main-container {
