@@ -3,1566 +3,652 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>ДЕЛО №2024-001 | КРИМИНАЛИСТИЧЕСКАЯ ЭКСПЕРТИЗА</title>
-
-    <!-- Telegram WebApp API -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль детектива - Criminal Trust</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-    <!-- Chart.js для графиков -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Иконки Lucide -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
-    <!-- Шрифты Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Special+Elite&family=JetBrains+Mono:wght@400;700&display=swap"
-        rel="stylesheet">
-
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
         :root {
-            /* Криминалистическая палитра */
-            --blood-red: #8B0000;
-            --dark-blood: #4A0000;
-            --crimson: #DC143C;
-            --crime-orange: #FF4500;
-            --evidence-yellow: #FFD700;
+            /* Современная цветовая палитра Criminal Trust */
+            --bg-primary: #0A0A0A;
+            --bg-secondary: #161616;
+            --bg-card: #1C1C1C;
+            --bg-overlay: rgba(28, 28, 28, 0.9);
 
-            --void-black: #0A0A0A;
-            --coal-black: #1A1A1A;
-            --ash-gray: #2A2A2A;
-            --steel-gray: #4A4A4A;
-            --smoke-gray: #6A6A6A;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --text-muted: #666666;
 
-            --bone-white: #F5F5DC;
-            --paper-white: #FFFEF7;
-            --faded-white: #E8E8E8;
+            --accent-red: #DC2626;
+            --accent-red-dark: #B91C1C;
+            --accent-green: #10B981;
+            --accent-blue: #3B82F6;
+            --accent-purple: #8B5CF6;
 
-            /* Криминалистические градиенты */
-            --blood-spatter: linear-gradient(45deg, var(--blood-red), var(--dark-blood), var(--crimson));
-            --case-file: linear-gradient(135deg, var(--paper-white), var(--faded-white), var(--bone-white));
-            --evidence-tag: linear-gradient(90deg, var(--evidence-yellow), var(--crime-orange));
-            --police-tape: repeating-linear-gradient(45deg, var(--evidence-yellow), var(--evidence-yellow) 10px, var(--void-black) 10px, var(--void-black) 20px);
+            --border-color: #2A2A2A;
+            --border-active: #DC2626;
 
-            /* Криминалистические тени */
-            --shadow-blood: 0 0 20px var(--blood-red), 0 0 40px var(--blood-red);
-            --shadow-evidence: 0 4px 20px rgba(139, 0, 0, 0.3), inset 0 1px 0 rgba(245, 245, 220, 0.1);
-            --shadow-file: 0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
 
-            /* Размеры */
-            --space-xs: 0.25rem;
-            --space-sm: 0.5rem;
-            --space-md: 1rem;
-            --space-lg: 1.5rem;
-            --space-xl: 2rem;
-            --space-2xl: 3rem;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
 
-            /* Радиусы */
-            --radius-sm: 0.25rem;
-            --radius-md: 0.5rem;
-            --radius-lg: 0.75rem;
-
-            /* Переходы */
-            --transition-evidence: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            --transition-blood: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background: var(--void-black);
-            background-image:
-                /* Старая бумага текстура */
-                radial-gradient(circle at 20% 20%, rgba(139, 0, 0, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(26, 26, 26, 0.8) 0%, transparent 50%),
-                /* Пятна крови */
-                radial-gradient(circle at 60% 30%, rgba(139, 0, 0, 0.1) 0%, transparent 30%),
-                radial-gradient(circle at 30% 70%, rgba(139, 0, 0, 0.08) 0%, transparent 25%);
-            color: var(--bone-white);
-            font-family: 'Courier Prime', 'Courier New', monospace;
-            line-height: 1.4;
-            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
             overflow-x: hidden;
-            position: relative;
         }
 
-        /* Эффект старой бумаги */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background:
-                /* Линии записей */
-                repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(139, 0, 0, 0.02) 24px, rgba(139, 0, 0, 0.02) 25px),
-                /* Вертикальные направляющие */
-                repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(42, 42, 42, 0.03) 50px, rgba(42, 42, 42, 0.03) 51px);
-            animation: paper-age 8s ease-in-out infinite;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        @keyframes paper-age {
-
-            0%,
-            100% {
-                opacity: 0.3;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        /* Пыль и улики */
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                radial-gradient(1px 1px at 15px 25px, var(--blood-red), transparent),
-                radial-gradient(1px 1px at 45px 65px, var(--evidence-yellow), transparent),
-                radial-gradient(1px 1px at 85px 35px, var(--steel-gray), transparent);
-            background-repeat: repeat;
-            background-size: 150px 150px;
-            animation: evidence-drift 12s linear infinite;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.3;
-        }
-
-        @keyframes evidence-drift {
-            0% {
-                transform: translate(0, 0);
-            }
-
-            100% {
-                transform: translate(150px, 150px);
-            }
-        }
-
-        /* Главный контейнер */
-        .case-file-container {
-            max-width: 480px;
-            margin: 0 auto;
+        .profile-container {
             min-height: 100vh;
-            position: relative;
-            z-index: 1;
-            padding: var(--space-lg) var(--space-md);
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-lg);
+            background: linear-gradient(180deg, #0A0A0A 0%, #161616 100%);
         }
 
-        /* === ЗАГОЛОВОК ДЕЛА === */
-        .case-file-header {
-            background: var(--case-file);
-            border: 3px solid var(--steel-gray);
-            border-radius: var(--radius-lg);
+        /* Header */
+        .profile-header {
+            position: sticky;
+            top: 0;
+            background: var(--bg-overlay);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--space-md);
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            padding: var(--space-sm);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .back-button:hover {
+            background: var(--bg-card);
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, var(--accent-red), #FF6B6B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .profile-content {
+            padding: var(--space-lg);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
             padding: var(--space-xl);
+            text-align: center;
             position: relative;
             overflow: hidden;
-            box-shadow: var(--shadow-file);
-            color: var(--void-black);
-
-            /* Эффект старой бумаги */
-            background-image:
-                repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(42, 42, 42, 0.1) 20px),
-                radial-gradient(circle at 80% 20%, rgba(139, 0, 0, 0.05) 0%, transparent 40%);
+            margin-bottom: var(--space-lg);
         }
 
-        .case-file-header::before {
+        .profile-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background: repeating-linear-gradient(45deg,
-                    transparent,
-                    transparent 2px,
-                    rgba(139, 0, 0, 0.03) 2px,
-                    rgba(139, 0, 0, 0.03) 4px);
-            pointer-events: none;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-purple), var(--accent-blue));
         }
 
-        .case-stamps {
-            position: absolute;
-            top: var(--space-md);
-            right: var(--space-md);
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-sm);
-        }
-
-        .evidence-stamp {
-            background: var(--blood-red);
-            color: var(--paper-white);
-            padding: var(--space-xs) var(--space-md);
-            border-radius: var(--radius-sm);
-            font-family: 'Special Elite', monospace;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transform: rotate(12deg);
-            border: 2px dashed var(--paper-white);
-            box-shadow: 0 0 15px rgba(139, 0, 0, 0.5);
-            animation: stamp-flicker 3s ease-in-out infinite;
-        }
-
-        .evidence-stamp:nth-child(2) {
-            transform: rotate(-8deg);
-            background: var(--crime-orange);
-            animation-delay: 1s;
-        }
-
-        @keyframes stamp-flicker {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            97% {
-                opacity: 1;
-            }
-
-            98% {
-                opacity: 0.8;
-            }
-
-            99% {
-                opacity: 1;
-            }
-        }
-
-        .case-number {
-            font-family: 'Special Elite', monospace;
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--blood-red);
-            margin-bottom: var(--space-sm);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .case-title {
-            font-family: 'Special Elite', serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: var(--space-lg);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Детективный аватар */
-        .suspect-photo {
+        .avatar-container {
+            position: relative;
             width: 120px;
             height: 120px;
-            border: 4px solid var(--void-black);
-            border-radius: var(--radius-md);
-            background: var(--steel-gray);
+            margin: 0 auto var(--space-md);
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-red-dark));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3.5rem;
-            margin: 0 auto var(--space-lg);
+            font-size: 3rem;
             position: relative;
-            box-shadow: var(--shadow-evidence);
-            transition: all var(--transition-evidence);
+            border: 4px solid var(--bg-card);
+            box-shadow: var(--shadow-lg);
         }
 
-        .suspect-photo::before {
-            content: 'ФОТО';
+        .level-badge {
             position: absolute;
             bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--evidence-yellow);
-            color: var(--void-black);
-            padding: 2px 8px;
-            font-size: 0.6rem;
+            right: -8px;
+            background: var(--accent-red);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
             font-weight: 700;
-            font-family: 'Special Elite', monospace;
-            border-radius: var(--radius-sm);
+            border: 3px solid var(--bg-card);
+            box-shadow: var(--shadow-md);
         }
 
-        .suspect-photo:hover {
-            transform: scale(1.05) rotate(2deg);
-            box-shadow: var(--shadow-blood);
-        }
-
-        .detective-info {
-            text-align: center;
-            position: relative;
-            z-index: 2;
-        }
-
-        .detective-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-sm);
-            background: var(--void-black);
-            color: var(--evidence-yellow);
-            padding: var(--space-sm) var(--space-md);
-            border-radius: var(--radius-md);
-            border: 2px solid var(--evidence-yellow);
-            margin-bottom: var(--space-md);
-            font-family: 'Special Elite', monospace;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-        }
-
-        .detective-name {
-            font-size: 2rem;
-            font-weight: 700;
-            font-family: 'Courier Prime', monospace;
-            margin-bottom: var(--space-sm);
-            color: var(--void-black);
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-            animation: typewriter-text 2s ease-out;
-        }
-
-        @keyframes typewriter-text {
-            from {
-                opacity: 0;
-                letter-spacing: 10px;
-            }
-
-            to {
-                opacity: 1;
-                letter-spacing: normal;
-            }
-        }
-
-        .detective-rank {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-sm);
-            background: var(--blood-red);
-            color: var(--paper-white);
-            padding: var(--space-md) var(--space-xl);
-            border-radius: var(--radius-md);
-            font-weight: 700;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: var(--shadow-evidence);
-            font-family: 'Special Elite', monospace;
-            border: 2px solid var(--dark-blood);
-        }
-
-        /* === ПОЛИЦЕЙСКАЯ ЛЕНТА === */
-        .police-tape {
-            height: 40px;
-            background: var(--police-tape);
-            margin: var(--space-lg) calc(-1 * var(--space-md));
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Special Elite', monospace;
-            font-weight: 700;
-            color: var(--void-black);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            font-size: 0.9rem;
-            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-            animation: tape-flicker 4s ease-in-out infinite;
-        }
-
-        @keyframes tape-flicker {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.9;
-            }
-        }
-
-        .police-tape::before,
-        .police-tape::after {
-            content: '⚠️';
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1.2rem;
-            animation: warning-blink 2s ease-in-out infinite;
-        }
-
-        .police-tape::before {
-            left: 20px;
-        }
-
-        .police-tape::after {
-            right: 20px;
-        }
-
-        @keyframes warning-blink {
-
-            0%,
-            50% {
-                opacity: 1;
-            }
-
-            51%,
-            100% {
-                opacity: 0.3;
-            }
-        }
-
-        /* === ДОСЬЕ МОДУЛИ === */
-        .evidence-folder {
-            background: var(--case-file);
-            border: 2px solid var(--steel-gray);
-            border-radius: var(--radius-lg);
-            padding: var(--space-xl);
-            position: relative;
-            overflow: hidden;
-            box-shadow: var(--shadow-file);
-            color: var(--void-black);
-            transition: all var(--transition-evidence);
-
-            /* Эффект старой папки */
-            background-image:
-                linear-gradient(135deg, transparent 0%, rgba(139, 0, 0, 0.02) 50%, transparent 100%),
-                repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(42, 42, 42, 0.05) 20px);
-        }
-
-        .evidence-folder:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-file), 0 0 20px rgba(139, 0, 0, 0.2);
-            border-color: var(--blood-red);
-        }
-
-        .evidence-folder::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--blood-spatter);
-            animation: evidence-scan 3s ease-in-out infinite;
-        }
-
-        @keyframes evidence-scan {
-
-            0%,
-            100% {
-                opacity: 0.8;
-            }
-
-            50% {
-                opacity: 1;
-            }
-        }
-
-        .folder-tab {
-            position: absolute;
-            top: -8px;
-            right: var(--space-lg);
-            background: var(--evidence-yellow);
-            color: var(--void-black);
+        .rank-badge {
+            background: var(--accent-red);
+            color: white;
             padding: var(--space-xs) var(--space-md);
-            border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-            font-family: 'Special Elite', monospace;
-            font-size: 0.7rem;
-            font-weight: 700;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: var(--space-md);
             text-transform: uppercase;
-            letter-spacing: 1px;
-            transform: perspective(100px) rotateX(20deg);
+            letter-spacing: 0.5px;
         }
 
-        .folder-header {
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
+        .profile-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: var(--space-sm);
+            letter-spacing: 0.5px;
+        }
+
+        .profile-id {
+            color: var(--text-muted);
+            font-size: 0.875rem;
             margin-bottom: var(--space-lg);
-            padding-bottom: var(--space-md);
-            border-bottom: 2px dashed var(--steel-gray);
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        .evidence-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--blood-red);
-            color: var(--paper-white);
-            border-radius: var(--radius-md);
+        /* Ultra Modern XP Bar */
+        .xp-section {
+            margin-bottom: var(--space-lg);
+        }
+
+        .xp-label {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-            box-shadow: 0 0 15px rgba(139, 0, 0, 0.4);
-            border: 2px solid var(--dark-blood);
+            margin-bottom: var(--space-sm);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
         }
 
-        .folder-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            font-family: 'Special Elite', serif;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--blood-red);
-        }
-
-        /* === НАВИГАЦИОННЫЕ КНОПКИ В ДИЗАЙНЕ === */
-        .case-actions {
-            background: var(--case-file);
-            border: 2px solid var(--steel-gray);
-            border-radius: var(--radius-lg);
-            padding: var(--space-xl);
-            color: var(--void-black);
-            box-shadow: var(--shadow-file);
+        .xp-progress-container {
             position: relative;
-            margin-top: var(--space-lg);
+            height: 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        .case-actions::before {
+        .xp-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-purple));
+            border-radius: 6px;
+            position: relative;
+            transition: width 1s ease-out;
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.4);
+        }
+
+        .xp-progress::after {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
-            background: var(--evidence-tag);
+            height: 50%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+            border-radius: 6px 6px 0 0;
         }
 
-        .actions-header {
-            text-align: center;
+        .xp-glow {
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-purple));
+            border-radius: 8px;
+            opacity: 0.5;
+            filter: blur(4px);
+            z-index: -1;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-md);
             margin-bottom: var(--space-lg);
         }
 
-        .actions-title {
-            font-family: 'Special Elite', serif;
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--blood-red);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: var(--space-sm);
-        }
-
-        .actions-subtitle {
-            font-family: 'Courier Prime', monospace;
-            font-size: 0.8rem;
-            color: var(--steel-gray);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--space-md);
-        }
-
-        .case-action-btn {
-            background: var(--blood-red);
-            color: var(--paper-white);
-            border: 2px solid var(--dark-blood);
-            border-radius: var(--radius-md);
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
             padding: var(--space-lg);
-            font-family: 'Special Elite', monospace;
-            font-weight: 700;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            text-align: center;
+            transition: all 0.3s ease;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition: all var(--transition-evidence);
-            text-decoration: none;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent-red);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        /* Achievements Section */
+        .section {
+            margin-bottom: var(--space-xl);
+        }
+
+        .section-header {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-md);
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            display: flex;
             align-items: center;
             gap: var(--space-sm);
-            box-shadow: var(--shadow-evidence);
         }
 
-        .case-action-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(245, 245, 220, 0.2), transparent);
-            animation: case-btn-scan 3s ease-in-out infinite;
-        }
-
-        @keyframes case-btn-scan {
-            0% {
-                left: -100%;
-            }
-
-            50% {
-                left: 100%;
-            }
-
-            100% {
-                left: 100%;
-            }
-        }
-
-        .case-action-btn:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: var(--shadow-blood), 0 8px 25px rgba(0, 0, 0, 0.3);
-            background: var(--crimson);
-        }
-
-        .case-action-btn:active {
-            transform: translateY(0) scale(0.98);
-        }
-
-        .case-action-btn.primary {
-            background: var(--blood-red);
-            animation: primary-alert 4s ease-in-out infinite;
-        }
-
-        @keyframes primary-alert {
-
-            0%,
-            100% {
-                box-shadow: var(--shadow-evidence);
-            }
-
-            50% {
-                box-shadow: var(--shadow-blood);
-            }
-        }
-
-        .case-action-btn.secondary {
-            background: var(--steel-gray);
-            border-color: var(--smoke-gray);
-        }
-
-        .case-action-btn.secondary:hover {
-            background: var(--smoke-gray);
-        }
-
-        .btn-icon {
-            font-size: 1.5rem;
-        }
-
-        .btn-text {
-            font-size: 0.8rem;
-            line-height: 1.2;
-            text-align: center;
-        }
-
-        /* === СТАТИСТИКА === */
-        .evidence-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-            gap: var(--space-md);
-        }
-
-        .evidence-card {
-            background: var(--paper-white);
-            border: 2px solid var(--steel-gray);
-            border-radius: var(--radius-md);
-            padding: var(--space-lg);
-            text-align: center;
-            position: relative;
-            transition: all var(--transition-evidence);
-            cursor: pointer;
-            color: var(--void-black);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .evidence-card:hover {
-            transform: translateY(-4px) rotateX(5deg);
-            border-color: var(--blood-red);
-            box-shadow: var(--shadow-blood), 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .evidence-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: var(--blood-spatter);
-            transform: scaleX(0);
-            transition: transform var(--transition-evidence);
-        }
-
-        .evidence-card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .evidence-number {
-            font-size: 2.2rem;
+        .section-count {
+            background: var(--bg-card);
+            color: var(--accent-red);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
             font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--blood-red);
-            margin-bottom: var(--space-sm);
-            text-shadow: 1px 1px 2px rgba(139, 0, 0, 0.2);
-            animation: number-pulse 3s ease-in-out infinite;
         }
 
-        @keyframes number-pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            98% {
-                opacity: 1;
-            }
-
-            99% {
-                opacity: 0.7;
-            }
-        }
-
-        .evidence-label {
-            font-size: 0.7rem;
-            color: var(--steel-gray);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 700;
-            font-family: 'Special Elite', monospace;
-        }
-
-        /* === ДОСТИЖЕНИЯ === */
-        .achievements-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        .achievements-scroll {
+            display: flex;
             gap: var(--space-md);
+            overflow-x: auto;
+            padding-bottom: var(--space-sm);
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
-        .achievement-card {
-            background: var(--paper-white);
-            border: 2px solid var(--ash-gray);
-            border-radius: var(--radius-md);
+        .achievements-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .achievement-item {
+            min-width: 120px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
             padding: var(--space-md);
             text-align: center;
-            position: relative;
-            transition: all var(--transition-evidence);
+            transition: all 0.3s ease;
             cursor: pointer;
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: var(--void-black);
         }
 
-        .achievement-card.unlocked {
-            border-color: var(--blood-red);
-            background: linear-gradient(135deg, var(--paper-white), var(--bone-white));
-            box-shadow: var(--shadow-evidence);
+        .achievement-item:hover {
+            border-color: var(--accent-green);
+            transform: translateY(-2px);
         }
 
-        .achievement-card.unlocked::before {
-            content: 'УЛИКА';
-            position: absolute;
-            top: -6px;
-            left: -6px;
-            background: var(--blood-red);
-            color: var(--paper-white);
-            padding: 2px 6px;
-            font-size: 0.5rem;
-            font-weight: 700;
-            font-family: 'Special Elite', monospace;
-            border-radius: var(--radius-sm);
-            transform: rotate(-15deg);
-            box-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
-        }
-
-        .achievement-card:hover {
-            transform: translateY(-4px) scale(1.05);
+        .achievement-item.locked {
+            opacity: 0.5;
+            border-color: var(--text-muted);
         }
 
         .achievement-icon {
             font-size: 2rem;
             margin-bottom: var(--space-sm);
-        }
-
-        .achievement-card.unlocked .achievement-icon {
-            filter: drop-shadow(0 0 8px var(--blood-red));
-            animation: evidence-glow 2s ease-in-out infinite;
-        }
-
-        @keyframes evidence-glow {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.1);
-            }
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         }
 
         .achievement-name {
-            font-size: 0.6rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--steel-gray);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
             line-height: 1.2;
-            font-family: 'Special Elite', monospace;
         }
 
-        .achievement-card.unlocked .achievement-name {
-            color: var(--blood-red);
+        /* Leaderboard */
+        .leaderboard-tabs {
+            display: flex;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 4px;
+            margin-bottom: var(--space-md);
+            border: 1px solid var(--border-color);
         }
 
-        /* === ЗАГРУЗКА === */
-        .investigation-loading {
+        .leaderboard-tab {
+            flex: 1;
+            padding: var(--space-sm) var(--space-md);
+            text-align: center;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.875rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .leaderboard-tab.active {
+            background: var(--accent-red);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .position-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--space-xl);
+            text-align: center;
+            margin-bottom: var(--space-lg);
+        }
+
+        .position-rank {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: var(--space-xs);
+        }
+
+        .position-text {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-sm);
+        }
+
+        .total-players {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .leaderboard-list {
             display: flex;
             flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .leaderboard-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            transition: all 0.2s ease;
+        }
+
+        .leaderboard-item:hover {
+            border-color: var(--accent-red);
+        }
+
+        .leaderboard-item.current-user {
+            border-color: var(--accent-red);
+            background: rgba(220, 38, 38, 0.1);
+        }
+
+        .player-rank {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-radius: 50%;
+            display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            text-align: center;
-            color: var(--bone-white);
-        }
-
-        .evidence-scanner {
-            width: 80px;
-            height: 80px;
-            border: 3px solid transparent;
-            border-top: 3px solid var(--blood-red);
-            border-right: 3px solid var(--crimson);
-            border-radius: 50%;
-            animation: evidence-scan-rotate 1.5s linear infinite;
-            margin-bottom: var(--space-xl);
-            position: relative;
-        }
-
-        .evidence-scanner::before {
-            content: '';
-            position: absolute;
-            top: -3px;
-            left: -3px;
-            right: -3px;
-            bottom: -3px;
-            border: 2px solid transparent;
-            border-bottom: 2px solid var(--evidence-yellow);
-            border-left: 2px solid var(--crime-orange);
-            border-radius: 50%;
-            animation: evidence-scan-rotate 1s linear infinite reverse;
-        }
-
-        @keyframes evidence-scan-rotate {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .loading-text {
-            font-size: 1.2rem;
             font-weight: 700;
-            font-family: 'Special Elite', serif;
-            color: var(--blood-red);
-            margin-bottom: var(--space-sm);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            animation: text-fade 1.5s ease-in-out infinite;
+            font-size: 0.875rem;
         }
 
-        @keyframes text-fade {
+        .player-rank.top3 {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-purple));
+            color: white;
+        }
 
-            0%,
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .player-score {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Loading States */
+        .loading-skeleton {
+            background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-secondary) 50%, var(--bg-card) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: var(--radius-md);
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+
             100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.7;
+                background-position: -200% 0;
             }
         }
 
-        /* === СКРЫТИЕ === */
         .hidden {
             display: none !important;
         }
 
-        /* === RESPONSIVE === */
+        /* Mobile Optimizations */
         @media (max-width: 480px) {
-            .case-file-container {
-                padding: var(--space-md) var(--space-sm);
-                gap: var(--space-md);
+            .profile-content {
+                padding: var(--space-md);
             }
 
-            .evidence-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .profile-card {
+                padding: var(--space-lg);
             }
 
-            .achievements-grid {
-                grid-template-columns: repeat(3, 1fr);
+            .avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 2.5rem;
             }
 
-            .detective-name {
-                font-size: 1.6rem;
+            .avatar-container {
+                width: 100px;
+                height: 100px;
             }
-
-            .action-buttons {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* === ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ === */
-        .blood-drop {
-            animation: blood-drip 0.4s ease-in-out infinite;
-        }
-
-        @keyframes blood-drip {
-
-            0%,
-            100% {
-                transform: translate(0);
-            }
-
-            25% {
-                transform: translate(-1px, 1px);
-            }
-
-            50% {
-                transform: translate(1px, -1px);
-            }
-
-            75% {
-                transform: translate(-1px, -1px);
-            }
-        }
-
-        .crime-scene-effect {
-            position: relative;
-        }
-
-        .crime-scene-effect::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(139, 0, 0, 0.05) 50%, transparent 70%);
-            animation: crime-sweep 5s ease-in-out infinite;
-            pointer-events: none;
-        }
-
-        @keyframes crime-sweep {
-            0% {
-                transform: translateX(-100%) skewX(-30deg);
-            }
-
-            50% {
-                transform: translateX(100%) skewX(-30deg);
-            }
-
-            100% {
-                transform: translateX(100%) skewX(-30deg);
-            }
-        }
-
-        /* === ДРАМАТИЧНЫЕ ЭФФЕКТЫ === */
-
-        /* Эффект сканирования ДНК */
-        .dna-scanner {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .dna-scanner::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg,
-                    transparent,
-                    rgba(139, 0, 0, 0.1) 20%,
-                    rgba(220, 20, 60, 0.15) 50%,
-                    rgba(139, 0, 0, 0.1) 80%,
-                    transparent);
-            animation: dna-scan 4s ease-in-out infinite;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        @keyframes dna-scan {
-            0% {
-                left: -100%;
-            }
-
-            50% {
-                left: 100%;
-            }
-
-            100% {
-                left: 100%;
-            }
-        }
-
-        /* Пульсация сердцебиения */
-        .heartbeat-pulse {
-            animation: heartbeat 2.5s ease-in-out infinite;
-        }
-
-        @keyframes heartbeat {
-
-            0%,
-            100% {
-                transform: scale(1);
-                filter: brightness(1);
-            }
-
-            10% {
-                transform: scale(1.05);
-                filter: brightness(1.1);
-            }
-
-            20% {
-                transform: scale(1);
-                filter: brightness(1);
-            }
-
-            30% {
-                transform: scale(1.08);
-                filter: brightness(1.15);
-            }
-
-            40% {
-                transform: scale(1);
-                filter: brightness(1);
-            }
-        }
-
-        /* Мерцание ультрафиолета */
-        .uv-flicker {
-            animation: uv-light 3s ease-in-out infinite;
-        }
-
-        @keyframes uv-light {
-
-            0%,
-            100% {
-                filter: hue-rotate(0deg) brightness(1);
-                box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
-            }
-
-            20% {
-                filter: hue-rotate(30deg) brightness(1.2);
-                box-shadow: 0 0 40px rgba(139, 0, 0, 0.6);
-            }
-
-            40% {
-                filter: hue-rotate(0deg) brightness(0.9);
-                box-shadow: 0 0 15px rgba(139, 0, 0, 0.2);
-            }
-
-            60% {
-                filter: hue-rotate(45deg) brightness(1.3);
-                box-shadow: 0 0 50px rgba(220, 20, 60, 0.8);
-            }
-
-            80% {
-                filter: hue-rotate(15deg) brightness(1.1);
-                box-shadow: 0 0 30px rgba(139, 0, 0, 0.5);
-            }
-        }
-
-        /* Эффект отпечатков пальцев */
-        .fingerprint-bg {
-            position: relative;
-        }
-
-        .fingerprint-bg::before {
-            content: '';
-            position: absolute;
-            top: 10%;
-            right: 5%;
-            width: 60px;
-            height: 80px;
-            background-image:
-                radial-gradient(ellipse at center, transparent 30%, rgba(139, 0, 0, 0.1) 31%, rgba(139, 0, 0, 0.1) 35%, transparent 36%),
-                radial-gradient(ellipse at center, transparent 40%, rgba(139, 0, 0, 0.08) 41%, rgba(139, 0, 0, 0.08) 44%, transparent 45%),
-                radial-gradient(ellipse at center, transparent 50%, rgba(139, 0, 0, 0.06) 51%, rgba(139, 0, 0, 0.06) 53%, transparent 54%);
-            border-radius: 50% 50% 60% 40%;
-            opacity: 0.4;
-            animation: fingerprint-fade 6s ease-in-out infinite;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        @keyframes fingerprint-fade {
-
-            0%,
-            100% {
-                opacity: 0.2;
-            }
-
-            50% {
-                opacity: 0.6;
-            }
-        }
-
-        /* Эффект капель крови */
-        .blood-splatter {
-            position: relative;
-        }
-
-        .blood-splatter::after {
-            content: '';
-            position: absolute;
-            top: 20%;
-            left: 10%;
-            width: 15px;
-            height: 15px;
-            background: radial-gradient(circle, var(--blood-red) 40%, transparent 50%);
-            border-radius: 50%;
-            opacity: 0.6;
-            animation: splatter-drip 8s ease-in-out infinite;
-            pointer-events: none;
-        }
-
-        @keyframes splatter-drip {
-
-            0%,
-            90% {
-                transform: scale(1) translateY(0);
-                opacity: 0.6;
-            }
-
-            95% {
-                transform: scale(1.3) translateY(5px);
-                opacity: 0.8;
-            }
-
-            100% {
-                transform: scale(0.8) translateY(10px);
-                opacity: 0.3;
-            }
-        }
-
-        /* Эффект сканирования штрих-кода */
-        .barcode-scan {
-            position: relative;
-        }
-
-        .barcode-scan::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: repeating-linear-gradient(90deg,
-                    transparent,
-                    transparent 1px,
-                    rgba(255, 215, 0, 0.1) 1px,
-                    rgba(255, 215, 0, 0.1) 2px,
-                    transparent 2px,
-                    transparent 8px);
-            animation: barcode-sweep 3s linear infinite;
-            pointer-events: none;
-            opacity: 0.7;
-        }
-
-        @keyframes barcode-sweep {
-            0% {
-                transform: translateX(-100%);
-            }
-
-            100% {
-                transform: translateX(100%);
-            }
-        }
-
-        /* Интерактивные эффекты */
-        .interactive-hover {
-            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            cursor: pointer;
-        }
-
-        .interactive-hover:hover {
-            transform: translateY(-8px) scale(1.05) rotateX(10deg);
-            box-shadow:
-                0 0 40px rgba(139, 0, 0, 0.4),
-                0 20px 60px rgba(0, 0, 0, 0.3),
-                inset 0 0 20px rgba(220, 20, 60, 0.2);
-            filter: brightness(1.15) contrast(1.1);
-        }
-
-        .interactive-hover:active {
-            transform: translateY(-4px) scale(1.02) rotateX(5deg);
-            transition: all 0.15s ease-out;
-        }
-
-        /* Мерцание тревоги */
-        .alert-blink {
-            animation: alert-flash 1.5s ease-in-out infinite;
-        }
-
-        @keyframes alert-flash {
-
-            0%,
-            60% {
-                background: var(--blood-red);
-                box-shadow: 0 0 20px var(--blood-red);
-            }
-
-            70%,
-            100% {
-                background: var(--crimson);
-                box-shadow: 0 0 40px var(--crimson);
-            }
-        }
-
-        /* Эффект голограммы */
-        .hologram-effect {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hologram-effect::before {
-            content: '';
-            position: absolute;
-            top: -100%;
-            left: -100%;
-            width: 300%;
-            height: 300%;
-            background: linear-gradient(45deg,
-                    transparent,
-                    rgba(255, 215, 0, 0.1),
-                    rgba(139, 0, 0, 0.15),
-                    rgba(220, 20, 60, 0.1),
-                    transparent);
-            animation: hologram-sweep 4s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes hologram-sweep {
-            0% {
-                transform: translate(-100%, -100%) rotate(45deg);
-            }
-
-            100% {
-                transform: translate(100%, 100%) rotate(45deg);
-            }
-        }
-
-        /* Дыхание интерфейса */
-        .interface-breathing {
-            animation: interface-breath 4s ease-in-out infinite;
-        }
-
-        @keyframes interface-breath {
-
-            0%,
-            100% {
-                filter: brightness(1) contrast(1);
-                transform: scale(1);
-            }
-
-            50% {
-                filter: brightness(1.08) contrast(1.05);
-                transform: scale(1.015);
-            }
-        }
-
-        /* Эффект появления элементов */
-        .dramatic-entrance {
-            animation: dramatic-appear 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-            opacity: 0;
-            transform: translateY(50px) rotateX(30deg);
-        }
-
-        @keyframes dramatic-appear {
-            0% {
-                opacity: 0;
-                transform: translateY(50px) rotateX(30deg) scale(0.8);
-                filter: blur(5px);
-            }
-
-            60% {
-                opacity: 0.8;
-                transform: translateY(-10px) rotateX(-5deg) scale(1.05);
-                filter: blur(1px);
-            }
-
-            100% {
-                opacity: 1;
-                transform: translateY(0) rotateX(0) scale(1);
-                filter: blur(0);
-            }
-        }
-
-        /* Усиленные визуальные эффекты */
-        .evidence-folder:hover .folder-tab {
-            transform: perspective(100px) rotateX(20deg) translateY(-5px);
-            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.5);
-            animation: tab-glow 0.6s ease-out;
-        }
-
-        @keyframes tab-glow {
-            0% {
-                filter: brightness(1);
-            }
-
-            50% {
-                filter: brightness(1.4);
-            }
-
-            100% {
-                filter: brightness(1.2);
-            }
-        }
-
-        .evidence-number {
-            transition: all 0.3s ease;
-        }
-
-        .evidence-card:hover .evidence-number {
-            transform: scale(1.2) rotateY(15deg);
-            text-shadow:
-                0 0 20px var(--blood-red),
-                0 0 40px var(--crimson),
-                2px 2px 4px rgba(0, 0, 0, 0.8);
-            animation: number-glow 0.8s ease-out;
-        }
-
-        @keyframes number-glow {
-
-            0%,
-            100% {
-                filter: hue-rotate(0deg);
-            }
-
-            50% {
-                filter: hue-rotate(30deg);
-            }
-        }
-
-        /* Задержки для каскадного появления */
-        .evidence-folder:nth-child(1) {
-            animation-delay: 0.2s;
-        }
-
-        .evidence-folder:nth-child(2) {
-            animation-delay: 0.4s;
-        }
-
-        .evidence-folder:nth-child(3) {
-            animation-delay: 0.6s;
-        }
-
-        .evidence-folder:nth-child(4) {
-            animation-delay: 0.8s;
-        }
-
-        .evidence-folder:nth-child(5) {
-            animation-delay: 1.0s;
-        }
-
-        .evidence-folder:nth-child(6) {
-            animation-delay: 1.2s;
-        }
-
-        .case-actions {
-            animation-delay: 1.4s;
         }
     </style>
 </head>
 
 <body>
-    <div class="case-file-container">
-        <!-- Экран загрузки -->
-        <div id="loading-screen" class="investigation-loading">
-            <div class="evidence-scanner"></div>
-            <div class="loading-text">Анализ улик</div>
-            <div
-                style="font-size: 0.8rem; color: var(--steel-gray); font-family: 'Courier Prime', monospace; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px;">
-                Криминалистическая экспертиза
+    <div class="profile-container">
+        <!-- Header -->
+        <div class="profile-header">
+            <div class="header-content">
+                <button class="back-button" onclick="window.history.back()">
+                    <i data-lucide="arrow-left" style="width: 20px; height: 20px;"></i>
+                </button>
+                <div class="header-title">CRIMINAL TRUST</div>
             </div>
         </div>
 
-        <!-- Основной интерфейс -->
-        <div id="main-content" class="hidden">
-            <!-- Заголовок дела -->
-            <div class="case-file-header crime-scene-effect fingerprint-bg interface-breathing">
-                <div class="case-stamps">
-                    <div class="evidence-stamp alert-blink">СЕКРЕТНО</div>
-                    <div class="evidence-stamp alert-blink" style="animation-delay: 0.7s;">УЛИКА</div>
+        <!-- Main Content -->
+        <div class="profile-content">
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="rank-badge" id="detective-rank">ЭКСПЕРТ</div>
+
+                <div class="avatar-container">
+                    <div class="avatar" id="user-avatar">
+                        <div id="avatar-placeholder">Л</div>
+                        <div class="level-badge">LVL <span id="user-level">15</span></div>
+                    </div>
                 </div>
 
-                <div class="case-number">ДЕЛО №2024-001-СУ</div>
-                <div class="case-title">Криминалистическое досье</div>
+                <div class="profile-name" id="detective-name">ЛАТА</div>
+                <div class="profile-id">ID: <span id="user-id">573113459</span></div>
 
-                <div class="detective-info">
-                    <div class="detective-badge">
-                        <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
-                        <span>ДЕТЕКТИВ-КРИМИНАЛИСТ</span>
+                <!-- Ultra Modern XP Bar -->
+                <div class="xp-section">
+                    <div class="xp-label">
+                        <span>Опыт</span>
+                        <span><span id="current-xp">3,750</span> / <span id="max-xp">5,000</span> XP</span>
                     </div>
-
-                    <div class="suspect-photo heartbeat-pulse uv-flicker" id="user-avatar">
-                        <div id="avatar-placeholder">🕵️</div>
-                    </div>
-
-                    <div class="detective-name" id="detective-name">ДЕТЕКТИВ</div>
-
-                    <div class="detective-rank">
-                        <i data-lucide="badge" style="width: 16px; height: 16px;"></i>
-                        <span id="detective-rank">НОВИЧОК</span>
+                    <div class="xp-progress-container">
+                        <div class="xp-glow"></div>
+                        <div class="xp-progress" id="xp-bar" style="width: 75%;"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Полицейская лента -->
-            <div class="police-tape">
-                МЕСТО ПРЕСТУПЛЕНИЯ • НЕ ПЕРЕСЕКАТЬ • POLICE LINE
-            </div>
-
-            <!-- Модуль репутации -->
-            <div class="evidence-folder dna-scanner interactive-hover dramatic-entrance blood-splatter">
-                <div class="folder-tab">РЕЙТИНГ</div>
-                <div class="folder-header">
-                    <div class="evidence-icon">
-                        <i data-lucide="trending-up" style="width: 20px; height: 20px;"></i>
-                    </div>
-                    <div class="folder-title">Репутация детектива</div>
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-investigations">10</div>
+                    <div class="stat-label">Расследований</div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr auto; gap: var(--space-lg); align-items: center;">
-                    <div style="font-size: 3.5rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; 
-                                color: var(--blood-red); text-shadow: 2px 2px 4px rgba(139, 0, 0, 0.3);"
-                        id="reputation-level">0</div>
-                    <div style="background: var(--steel-gray); color: var(--paper-white); 
-                                padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); 
-                                font-weight: 700; text-transform: uppercase; letter-spacing: 1px; 
-                                font-family: 'Special Elite', monospace; border: 2px solid var(--smoke-gray);"
-                        id="reputation-category">НЕОПРЕДЕЛЕНО</div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-solved">35</div>
+                    <div class="stat-label">Раскрыто дел</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-streak">0</div>
+                    <div class="stat-label">Серия успехов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-accuracy">70<span style="color: var(--accent-red);">%</span></div>
+                    <div class="stat-label">Точность</div>
                 </div>
             </div>
 
-            <!-- Модуль статистики -->
-            <div class="evidence-folder dna-scanner interactive-hover dramatic-entrance">
-                <div class="folder-tab">СТАТИСТИКА</div>
-                <div class="folder-header">
-                    <div class="evidence-icon">
-                        <i data-lucide="activity" style="width: 20px; height: 20px;"></i>
+            <!-- Achievements Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">
+                        🏆 Достижения
+                        <div class="section-count"><span id="achievements-count">4</span>/12</div>
                     </div>
-                    <div class="folder-title">Криминальная статистика</div>
                 </div>
-                <div class="evidence-grid">
-                    <div class="evidence-card barcode-scan interactive-hover">
-                        <div class="evidence-number" id="stat-investigations">0</div>
-                        <div class="evidence-label">Дела</div>
+                <div class="achievements-scroll" id="achievements-container">
+                    <div class="achievement-item">
+                        <div class="achievement-icon">⭐</div>
+                        <div class="achievement-name">Первое дело</div>
                     </div>
-                    <div class="evidence-card barcode-scan interactive-hover">
-                        <div class="evidence-number" id="stat-solved">0</div>
-                        <div class="evidence-label">Раскрыто</div>
+                    <div class="achievement-item">
+                        <div class="achievement-icon">🥇</div>
+                        <div class="achievement-name">Новичок</div>
                     </div>
-                    <div class="evidence-card barcode-scan interactive-hover">
-                        <div class="evidence-number" id="stat-accuracy">0%</div>
-                        <div class="evidence-label">Точность</div>
+                    <div class="achievement-item locked">
+                        <div class="achievement-icon">🏆</div>
+                        <div class="achievement-name">Эксперт</div>
                     </div>
-                    <div class="evidence-card barcode-scan interactive-hover">
-                        <div class="evidence-number" id="stat-score">0</div>
-                        <div class="evidence-label">Очки</div>
+                    <div class="achievement-item">
+                        <div class="achievement-icon">👁️</div>
+                        <div class="achievement-name">Меткий глаз</div>
+                    </div>
+                    <div class="achievement-item">
+                        <div class="achievement-icon">🔍</div>
+                        <div class="achievement-name">Детектив</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Модуль достижений -->
-            <div class="evidence-folder dna-scanner interactive-hover dramatic-entrance fingerprint-bg">
-                <div class="folder-tab">УЛИКИ</div>
-                <div class="folder-header">
-                    <div class="evidence-icon">
-                        <i data-lucide="search" style="width: 20px; height: 20px;"></i>
-                    </div>
-                    <div class="folder-title">Найденные улики</div>
+            <!-- Leaderboard Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">🏆 Позиция в рейтинге</div>
                 </div>
-                <div class="achievements-grid" id="achievements-container">
-                    <!-- Динамическое содержимое с hologram-effect -->
-                </div>
-            </div>
 
-            <!-- Модуль рейтинга -->
-            <div class="evidence-folder dna-scanner interactive-hover dramatic-entrance">
-                <div class="folder-tab">ТОП</div>
-                <div class="folder-header">
-                    <div class="evidence-icon">
-                        <i data-lucide="crown" style="width: 20px; height: 20px;"></i>
-                    </div>
-                    <div class="folder-title">Лучшие детективы</div>
+                <!-- Position Card -->
+                <div class="position-card">
+                    <div class="position-rank">#<span id="user-position">247</span></div>
+                    <div class="position-text">из <span id="total-players">12,459</span> детективов</div>
                 </div>
-                <div id="leaderboard-container">
+
+                <!-- Leaderboard Tabs -->
+                <div class="leaderboard-tabs">
+                    <button class="leaderboard-tab active" data-period="day">Сегодня</button>
+                    <button class="leaderboard-tab" data-period="week">Неделя</button>
+                    <button class="leaderboard-tab" data-period="month">Месяц</button>
+                    <button class="leaderboard-tab" data-period="all">Все время</button>
+                </div>
+
+                <!-- Leaderboard Content -->
+                <div class="leaderboard-list" id="leaderboard-container">
                     <!-- Динамическое содержимое -->
                 </div>
-            </div>
-
-            <!-- Навигационные действия (встроенные в дизайн) -->
-            <div class="case-actions dna-scanner interactive-hover dramatic-entrance">
-                <div class="actions-header">
-                    <div class="actions-title">Действия по делу</div>
-                    <div class="actions-subtitle">Выберите следующий шаг расследования</div>
-                </div>
-                <div class="action-buttons">
-                    <a href="/" class="case-action-btn primary heartbeat-pulse interactive-hover">
-                        <div class="btn-icon">🏠</div>
-                        <div class="btn-text">Главное<br>меню</div>
-                    </a>
-                    <a href="/game" class="case-action-btn secondary heartbeat-pulse interactive-hover">
-                        <div class="btn-icon">🔍</div>
-                        <div class="btn-text">Начать<br>расследование</div>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Экран ошибки -->
-        <div id="error-screen" class="evidence-folder hidden">
-            <div class="folder-tab">ОШИБКА</div>
-            <div class="folder-header">
-                <div class="evidence-icon" style="background: var(--crime-orange);">
-                    <i data-lucide="alert-triangle" style="width: 20px; height: 20px;"></i>
-                </div>
-                <div class="folder-title" style="color: var(--crime-orange);">Ошибка расследования</div>
-            </div>
-            <div style="text-align: center; padding: var(--space-lg);">
-                <p id="error-message"
-                    style="margin-bottom: var(--space-lg); color: var(--blood-red); font-family: 'Courier Prime', monospace;">
-                </p>
-                <button onclick="window.location.reload()" class="case-action-btn"
-                    style="display: inline-flex; margin: 0 auto;">
-                    <div class="btn-icon">🔄</div>
-                    <div class="btn-text">Перезагрузка</div>
-                </button>
             </div>
         </div>
     </div>
@@ -1571,358 +657,79 @@
     <script src="profile.js"></script>
 
     <script>
-        // Инициализация
+        // Инициализация Lucide иконок
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
 
-            // Драматичное появление элементов
-            setTimeout(() => {
-                document.querySelectorAll('.dramatic-entrance').forEach((element, index) => {
-                    element.style.animationDelay = `${index * 0.2}s`;
-                    element.classList.add('dramatic-entrance');
-                });
-            }, 500);
-
-            // Усиленные криминальные глитч эффекты
-            setInterval(() => {
-                const elements = document.querySelectorAll('.evidence-folder, .suspect-photo, .evidence-number');
-                const randomElement = elements[Math.floor(Math.random() * elements.length)];
-                if (randomElement && Math.random() < 0.12) {
-                    randomElement.classList.add('blood-drop');
-                    setTimeout(() => {
-                        randomElement.classList.remove('blood-drop');
-                    }, 400);
-                }
-            }, 3000);
-
-            // Интерактивные звуковые эффекты
-            document.querySelectorAll('.case-action-btn, .evidence-card, .achievement-card').forEach(element => {
-                element.addEventListener('click', () => {
-                    if (window.Telegram?.WebApp?.HapticFeedback) {
-                        window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
-                    }
-
-                    // Добавляем визуальный эффект клика
-                    element.style.transform = 'scale(0.95)';
-                    setTimeout(() => {
-                        element.style.transform = '';
-                    }, 150);
-                });
-
-                // Эффект наведения с частицами
-                element.addEventListener('mouseenter', () => {
-                    createAdvancedParticles(element, 'hover');
-                    if (window.Telegram?.WebApp?.HapticFeedback) {
-                        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-                    }
-                });
-            });
-
-            // Кровавые частицы при наведении на папки
-            document.querySelectorAll('.evidence-folder').forEach(folder => {
-                folder.addEventListener('mouseenter', () => {
-                    createAdvancedCrimeScene(folder);
-                });
-
-                // Эффект дыхания для папок
-                folder.addEventListener('mouseleave', () => {
-                    folder.style.animation = 'interface-breath 4s ease-in-out infinite';
-                });
-            });
-
-            // Эффект сканирования для карточек статистики
-            document.querySelectorAll('.evidence-card').forEach((card, index) => {
-                card.addEventListener('mouseenter', () => {
-                    card.style.animationDelay = `${index * 0.1}s`;
-                    setTimeout(() => {
-                        createScanningEffect(card);
-                    }, index * 100);
-                });
-            });
-
-            // Усиленный эффект для достижений
-            document.querySelectorAll('.achievement-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    createHologramExplosion(card);
-                });
-            });
-
-            // Атмосферные эффекты окружения
-            createAtmosphericEffects();
-
-            // Периодические эффекты сканирования
-            setInterval(() => {
-                createRandomScanEffect();
-            }, 8000);
-
-            // Эффект тревожного мигания для важных элементов
-            setInterval(() => {
-                if (Math.random() < 0.15) {
-                    const stamps = document.querySelectorAll('.evidence-stamp');
-                    stamps.forEach(stamp => {
-                        stamp.style.filter = 'brightness(1.5) hue-rotate(30deg)';
-                        setTimeout(() => {
-                            stamp.style.filter = '';
-                        }, 200);
-                    });
-                }
-            }, 5000);
+            // Инициализация вкладок лидербоарда
+            initLeaderboardTabs();
         });
 
-        // Улучшенные частицы места преступления
-        function createAdvancedCrimeScene(element) {
-            for (let i = 0; i < 8; i++) {
-                const particle = document.createElement('div');
-                particle.style.cssText = `
-                    position: absolute;
-                    width: ${4 + Math.random() * 4}px;
-                    height: ${4 + Math.random() * 4}px;
-                    background: ${['#8B0000', '#DC143C', '#FFD700', '#FF4500'][Math.floor(Math.random() * 4)]};
-                    border-radius: 50%;
-                    pointer-events: none;
-                    z-index: 1000;
-                    box-shadow: 0 0 ${8 + Math.random() * 8}px currentColor;
-                `;
+        function initLeaderboardTabs() {
+            const tabs = document.querySelectorAll('.leaderboard-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Убираем активный класс у всех вкладок
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Добавляем активный класс к нажатой вкладке
+                    tab.classList.add('active');
 
-                const rect = element.getBoundingClientRect();
-                particle.style.left = `${rect.left + Math.random() * rect.width}px`;
-                particle.style.top = `${rect.top + Math.random() * rect.height}px`;
-
-                document.body.appendChild(particle);
-
-                let opacity = 1;
-                let scale = 1;
-                let rotation = 0;
-                let x = 0;
-                let y = 0;
-
-                function animateAdvancedParticle() {
-                    x += (Math.random() - 0.5) * 4;
-                    y += (Math.random() - 0.5) * 4;
-                    opacity -= 0.02;
-                    scale += 0.02;
-                    rotation += 5;
-
-                    particle.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${rotation}deg)`;
-                    particle.style.opacity = opacity;
-
-                    if (opacity > 0) {
-                        requestAnimationFrame(animateAdvancedParticle);
-                    } else {
-                        document.body.removeChild(particle);
-                    }
-                }
-
-                requestAnimationFrame(animateAdvancedParticle);
-            }
+                    // Загружаем данные для выбранного периода
+                    const period = tab.dataset.period;
+                    loadLeaderboardData(period);
+                });
+            });
         }
 
-        // Продвинутые частицы для интерактивности
-        function createAdvancedParticles(element, type = 'click') {
-            const particleCount = type === 'hover' ? 6 : 12;
-            const colors = {
-                click: ['#8B0000', '#DC143C', '#FFD700'],
-                hover: ['#FF4500', '#FFD700', '#DC143C']
-            };
+        function loadLeaderboardData(period) {
+            const container = document.getElementById('leaderboard-container');
 
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.style.cssText = `
-                    position: absolute;
-                    width: 6px;
-                    height: 6px;
-                    background: ${colors[type][Math.floor(Math.random() * colors[type].length)]};
-                    border-radius: 50%;
-                    pointer-events: none;
-                    z-index: 2000;
-                    box-shadow: 0 0 15px currentColor;
-                `;
-
-                const rect = element.getBoundingClientRect();
-                particle.style.left = `${rect.left + rect.width / 2}px`;
-                particle.style.top = `${rect.top + rect.height / 2}px`;
-
-                document.body.appendChild(particle);
-
-                const angle = (Math.PI * 2 * i) / particleCount;
-                const velocity = 40 + Math.random() * 60;
-                let opacity = 1;
-                let scale = 1;
-
-                function animateParticle() {
-                    const x = Math.cos(angle) * velocity * (1 - opacity);
-                    const y = Math.sin(angle) * velocity * (1 - opacity);
-
-                    particle.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
-                    particle.style.opacity = opacity;
-
-                    opacity -= 0.025;
-                    scale += 0.03;
-
-                    if (opacity > 0) {
-                        requestAnimationFrame(animateParticle);
-                    } else {
-                        document.body.removeChild(particle);
-                    }
-                }
-
-                requestAnimationFrame(animateParticle);
-            }
-        }
-
-        // Эффект сканирования
-        function createScanningEffect(element) {
-            const scanner = document.createElement('div');
-            scanner.style.cssText = `
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(90deg, 
-                    transparent, 
-                    rgba(255, 215, 0, 0.3) 40%, 
-                    rgba(139, 0, 0, 0.4) 60%, 
-                    transparent);
-                pointer-events: none;
-                z-index: 10;
+            // Показываем загрузку
+            container.innerHTML = `
+                <div class="loading-skeleton" style="height: 60px; margin-bottom: 8px;"></div>
+                <div class="loading-skeleton" style="height: 60px; margin-bottom: 8px;"></div>
+                <div class="loading-skeleton" style="height: 60px;"></div>
             `;
 
-            element.style.position = 'relative';
-            element.appendChild(scanner);
-
-            let position = -100;
-            function animateScanner() {
-                position += 4;
-                scanner.style.left = `${position}%`;
-
-                if (position < 120) {
-                    requestAnimationFrame(animateScanner);
-                } else {
-                    element.removeChild(scanner);
-                }
-            }
-
-            requestAnimationFrame(animateScanner);
+            // Имитация загрузки данных
+            setTimeout(() => {
+                const mockData = generateMockLeaderboard(period);
+                renderLeaderboard(mockData);
+            }, 800);
         }
 
-        // Голографический взрыв для достижений
-        function createHologramExplosion(element) {
-            for (let i = 0; i < 20; i++) {
-                const fragment = document.createElement('div');
-                fragment.style.cssText = `
-                    position: absolute;
-                    width: 3px;
-                    height: 12px;
-                    background: linear-gradient(45deg, #FFD700, #8B0000, #DC143C);
-                    pointer-events: none;
-                    z-index: 2500;
-                `;
-
-                const rect = element.getBoundingClientRect();
-                fragment.style.left = `${rect.left + rect.width / 2}px`;
-                fragment.style.top = `${rect.top + rect.height / 2}px`;
-
-                document.body.appendChild(fragment);
-
-                const angle = (Math.PI * 2 * i) / 20;
-                const velocity = 80 + Math.random() * 40;
-                let opacity = 1;
-                let rotation = 0;
-
-                function animateFragment() {
-                    const x = Math.cos(angle) * velocity * (1 - opacity);
-                    const y = Math.sin(angle) * velocity * (1 - opacity);
-                    rotation += 15;
-
-                    fragment.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
-                    fragment.style.opacity = opacity;
-
-                    opacity -= 0.02;
-
-                    if (opacity > 0) {
-                        requestAnimationFrame(animateFragment);
-                    } else {
-                        document.body.removeChild(fragment);
-                    }
-                }
-
-                requestAnimationFrame(animateFragment);
-            }
+        function generateMockLeaderboard(period) {
+            const names = ['Шерлок', 'Коломбо', 'Пуаро', 'Морс', 'Холмс'];
+            return names.map((name, index) => ({
+                rank: index + 1,
+                name: name,
+                score: 2500 - (index * 300),
+                isCurrentUser: index === 2 && period === 'all'
+            }));
         }
 
-        // Атмосферные эффекты окружения
-        function createAtmosphericEffects() {
-            // Создаем плавающие частицы пыли
-            for (let i = 0; i < 15; i++) {
-                const dust = document.createElement('div');
-                dust.style.cssText = `
-                    position: fixed;
-                    width: 2px;
-                    height: 2px;
-                    background: rgba(139, 0, 0, 0.3);
-                    border-radius: 50%;
-                    pointer-events: none;
-                    z-index: 0;
-                `;
+        function renderLeaderboard(data) {
+            const container = document.getElementById('leaderboard-container');
 
-                dust.style.left = `${Math.random() * 100}vw`;
-                dust.style.top = `${Math.random() * 100}vh`;
-
-                document.body.appendChild(dust);
-
-                function floatDust() {
-                    const x = Math.sin(Date.now() * 0.001 + i) * 50;
-                    const y = Math.cos(Date.now() * 0.0008 + i) * 30;
-                    dust.style.transform = `translate(${x}px, ${y}px)`;
-                    requestAnimationFrame(floatDust);
-                }
-                floatDust();
-            }
+            container.innerHTML = data.map(player => `
+                <div class="leaderboard-item ${player.isCurrentUser ? 'current-user' : ''}">
+                    <div class="player-rank ${player.rank <= 3 ? 'top3' : ''}">${player.rank}</div>
+                    <div class="player-info">
+                        <div class="player-name">${player.name}${player.isCurrentUser ? ' (Вы)' : ''}</div>
+                        <div class="player-score">${player.score.toLocaleString()} очков</div>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // Случайные эффекты сканирования
-        function createRandomScanEffect() {
-            const elements = document.querySelectorAll('.evidence-folder, .case-actions');
-            const randomElement = elements[Math.floor(Math.random() * elements.length)];
-
-            if (randomElement) {
-                const scanLine = document.createElement('div');
-                scanLine.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 2px;
-                    background: linear-gradient(90deg, transparent, #FFD700, transparent);
-                    pointer-events: none;
-                    z-index: 15;
-                    animation: scan-sweep 2s ease-in-out;
-                `;
-
-                randomElement.style.position = 'relative';
-                randomElement.appendChild(scanLine);
-
-                setTimeout(() => {
-                    if (scanLine.parentNode) {
-                        scanLine.parentNode.removeChild(scanLine);
-                    }
-                }, 2000);
-            }
-        }
-
-        // CSS для дополнительных анимаций
-        const additionalStyles = document.createElement('style');
-        additionalStyles.textContent = `
-            @keyframes scan-sweep {
-                0% { transform: translateY(0); opacity: 0; }
-                50% { transform: translateY(200px); opacity: 1; }
-                100% { transform: translateY(400px); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(additionalStyles);
+        // Загружаем начальные данные
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                loadLeaderboardData('day');
+            }, 100);
+        });
     </script>
 </body>
 
