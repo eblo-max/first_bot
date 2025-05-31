@@ -128,6 +128,10 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
     try {
         const period = req.params.period || 'all';
         const limit = parseInt(req.query.limit) || 50;
+        const currentUser = req.user;
+
+        console.log(`\n🔍 === ОТЛАДКА ЛИДЕРБОАРДА ${period.toUpperCase()} ===`);
+        console.log(`👤 Текущий пользователь: ${currentUser.telegramId}`);
 
         let dateFilter = {};
         const now = new Date();
@@ -169,16 +173,42 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
                 break;
         }
 
-        console.log(`📊 Получаем лидербоард ${period} с фильтром:`, JSON.stringify(dateFilter, null, 2));
+        console.log(`📊 Фильтр запроса:`, JSON.stringify(dateFilter, null, 2));
 
         // Получаем топ игроков по общему счету
         const totalScoreLeaderboard = await User.find(dateFilter)
             .sort({ 'stats.totalScore': -1 })
             .limit(limit)
-            .select('telegramId username firstName lastName nickname rank stats.totalScore')
+            .select('telegramId username firstName lastName nickname rank stats.totalScore lastVisit')
             .lean();
 
         console.log(`✅ Найдено ${totalScoreLeaderboard.length} игроков для лидербоарда ${period}`);
+
+        // Отладочная информация о найденных пользователях
+        if (totalScoreLeaderboard.length > 0) {
+            console.log('📋 Первые 3 игрока:');
+            totalScoreLeaderboard.slice(0, 3).forEach((user, index) => {
+                const name = user.nickname || user.firstName || user.username || `Игрок${user.telegramId.slice(-4)}`;
+                console.log(`  ${index + 1}. ${name} (${user.telegramId}) - ${user.stats?.totalScore || 0} очков (lastVisit: ${user.lastVisit || 'НЕТ'})`);
+            });
+
+            // Проверяем есть ли текущий пользователь в результатах
+            const currentUserInResults = totalScoreLeaderboard.find(u => u.telegramId === currentUser.telegramId);
+            console.log(`🔍 Текущий пользователь в результатах: ${currentUserInResults ? 'ДА' : 'НЕТ'}`);
+            if (currentUserInResults) {
+                const position = totalScoreLeaderboard.findIndex(u => u.telegramId === currentUser.telegramId) + 1;
+                console.log(`📍 Позиция текущего пользователя: ${position}`);
+            }
+        } else {
+            console.log('⚠️ НЕ НАЙДЕНО ИГРОКОВ! Проверим общую статистику...');
+
+            // Проверяем общую статистику
+            const totalUsers = await User.countDocuments();
+            const usersWithScore = await User.countDocuments({ 'stats.totalScore': { $gt: 0 } });
+            const usersWithLastVisit = await User.countDocuments({ lastVisit: { $exists: true } });
+
+            console.log(`📊 Статистика БД: всего ${totalUsers} пользователей, с очками ${usersWithScore}, с lastVisit ${usersWithLastVisit}`);
+        }
 
         // Форматируем данные для frontend
         const formattedLeaderboard = totalScoreLeaderboard.map((user, index) => {
@@ -205,6 +235,8 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
         };
 
         console.log(`📤 Отправляем лидербоард ${period} с ${result.totalScore.length} игроками`);
+        console.log(`🔚 === КОНЕЦ ОТЛАДКИ ЛИДЕРБОАРДА ===\n`);
+
         res.json(result);
     } catch (error) {
         console.error('❌ Ошибка получения лидерборда:', error);

@@ -105,6 +105,10 @@ class DramaticCriminalProfile {
                 ]);
 
                 this.hideLoadingState();
+
+                // Инициализируем переключение вкладок лидербоарда
+                this.initLeaderboardTabs();
+
                 this.startPeriodicUpdates();
             } else {
                 // Если авторизация не удалась, пробуем режим разработки
@@ -123,6 +127,39 @@ class DramaticCriminalProfile {
         } catch (error) {
             console.error('❌ Ошибка инициализации профиля:', error);
             this.showError('Ошибка загрузки профиля');
+        }
+    }
+
+    initLeaderboardTabs() {
+        const tabs = document.querySelectorAll('.leaderboard-tab');
+        if (!tabs.length) return;
+
+        console.log('🔧 Инициализируем переключение вкладок лидербоарда');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', async () => {
+                // Убираем активный класс у всех вкладок
+                tabs.forEach(t => t.classList.remove('active'));
+
+                // Добавляем активный класс к нажатой вкладке
+                tab.classList.add('active');
+
+                // Получаем период из data-period
+                const period = tab.dataset.period;
+                console.log(`📊 Переключаемся на период: ${period}`);
+
+                // Загружаем данные для выбранного периода
+                await this.loadLeaderboardData(period);
+
+                // Haptic feedback
+                this.provideCriminalFeedback('leaderboard');
+            });
+        });
+
+        // Устанавливаем активную вкладку "день" по умолчанию
+        const dayTab = document.querySelector('.leaderboard-tab[data-period="day"]');
+        if (dayTab) {
+            dayTab.classList.add('active');
         }
     }
 
