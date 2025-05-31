@@ -364,6 +364,8 @@
             font-size: 3rem;
             color: var(--bone);
             z-index: 1;
+            text-decoration: none;
+            border-bottom: none;
         }
 
         .avatar::before {
@@ -1152,17 +1154,20 @@
         .rank-badge {
             background: var(--blood-gradient);
             color: var(--bone);
-            padding: 8px 20px;
-            border-radius: 25px;
-            font-size: 1rem;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 700;
             display: inline-block;
-            margin-bottom: 20px;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
             box-shadow: var(--shadow-glow);
             animation: rankGlow 3s ease-in-out infinite;
             font-family: 'JetBrains Mono', monospace;
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 10;
         }
 
         @keyframes rankGlow {
@@ -1175,6 +1180,119 @@
             50% {
                 box-shadow: 0 0 30px rgba(220, 20, 60, 0.6);
             }
+        }
+
+        /* Стили для прогресса достижений */
+        .achievement-progress {
+            margin: 20px 0;
+            padding: 16px;
+            background: rgba(26, 26, 26, 0.6);
+            border-radius: 12px;
+            border: 1px solid var(--blood-red);
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--silver);
+            font-weight: 600;
+        }
+
+        .progress-bar-container {
+            height: 12px;
+            background: var(--ash);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            border: 1px solid rgba(139, 0, 0, 0.3);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--blood-red), var(--crimson));
+            border-radius: 6px;
+            transition: width 0.8s ease;
+            position: relative;
+            box-shadow: 0 0 10px rgba(220, 20, 60, 0.4);
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: progressShine 2s linear infinite;
+        }
+
+        @keyframes progressShine {
+            0% {
+                left: -100%;
+            }
+
+            100% {
+                left: 100%;
+            }
+        }
+
+        .progress-percentage {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--crimson);
+            font-weight: 700;
+        }
+
+        /* Стили для требований достижений */
+        .achievement-requirement {
+            margin: 16px 0;
+            padding: 12px;
+            background: rgba(139, 0, 0, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid var(--blood-red);
+        }
+
+        .requirement-title {
+            font-size: 0.85rem;
+            color: var(--crimson);
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .requirement-text {
+            color: var(--silver);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        /* Стили для наград достижений */
+        .achievement-reward {
+            margin: 16px 0;
+            padding: 12px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #FFD700;
+        }
+
+        .reward-title {
+            font-size: 0.85rem;
+            color: #FFD700;
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .reward-text {
+            color: var(--bone);
+            font-size: 0.9rem;
+            line-height: 1.4;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -1314,6 +1432,31 @@
             <div class="achievement-modal-icon" id="modal-icon">🏆</div>
             <div class="achievement-modal-title" id="modal-title">Название достижения</div>
             <div class="achievement-modal-description" id="modal-description">Описание достижения</div>
+
+            <!-- Прогресс к достижению -->
+            <div class="achievement-progress" id="modal-progress" style="display: none;">
+                <div class="progress-label">
+                    <span>Прогресс</span>
+                    <span><span id="progress-current">5</span> / <span id="progress-target">10</span></span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar" style="width: 50%;"></div>
+                </div>
+                <div class="progress-percentage" id="progress-percentage">50%</div>
+            </div>
+
+            <!-- Как получить достижение -->
+            <div class="achievement-requirement" id="modal-requirement">
+                <div class="requirement-title">Как получить:</div>
+                <div class="requirement-text" id="requirement-text">Выполните определенные условия</div>
+            </div>
+
+            <!-- Награда за достижение -->
+            <div class="achievement-reward" id="modal-reward" style="display: none;">
+                <div class="reward-title">Награда:</div>
+                <div class="reward-text" id="reward-text">+100 очков опыта</div>
+            </div>
+
             <div class="achievement-modal-status unlocked" id="modal-status">Получено</div>
         </div>
     </div>

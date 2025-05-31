@@ -543,6 +543,9 @@ class DramaticCriminalProfile {
         const modalTitle = document.getElementById('modal-title');
         const modalDescription = document.getElementById('modal-description');
         const modalStatus = document.getElementById('modal-status');
+        const modalProgress = document.getElementById('modal-progress');
+        const modalRequirement = document.getElementById('modal-requirement');
+        const modalReward = document.getElementById('modal-reward');
 
         // Находим данные достижения
         const achievement = ProfileConfig.achievements.find(a => a.id === achievementId) || {
@@ -552,18 +555,53 @@ class DramaticCriminalProfile {
             description: 'Секретное достижение. Продолжайте расследования, чтобы узнать больше.'
         };
 
-        // Заполняем данные
+        // Заполняем основные данные
         modalIcon.textContent = achievement.icon;
         modalTitle.textContent = achievement.name;
         modalDescription.textContent = achievement.description;
+
+        // Получаем требования и прогресс
+        const requirementInfo = this.getAchievementRequirement(achievementId);
+        const progressInfo = this.getAchievementProgress(achievementId);
+
+        // Показываем требования
+        const requirementText = document.getElementById('requirement-text');
+        requirementText.textContent = requirementInfo.text;
 
         // Устанавливаем статус
         if (isUnlocked) {
             modalStatus.textContent = 'ПОЛУЧЕНО';
             modalStatus.className = 'achievement-modal-status unlocked';
+            modalProgress.style.display = 'none';
+            modalReward.style.display = 'block';
+
+            // Показываем награду
+            const rewardText = document.getElementById('reward-text');
+            rewardText.textContent = requirementInfo.reward || '+100 очков опыта';
         } else {
-            modalStatus.textContent = 'ЗАБЛОКИРОВАНО';
+            modalStatus.textContent = 'НЕ ПОЛУЧЕНО';
             modalStatus.className = 'achievement-modal-status locked';
+
+            // Показываем прогресс только если есть данные
+            if (progressInfo.current !== undefined && progressInfo.target > 0) {
+                modalProgress.style.display = 'block';
+
+                const progressCurrent = document.getElementById('progress-current');
+                const progressTarget = document.getElementById('progress-target');
+                const progressBar = document.getElementById('progress-bar');
+                const progressPercentage = document.getElementById('progress-percentage');
+
+                progressCurrent.textContent = progressInfo.current;
+                progressTarget.textContent = progressInfo.target;
+
+                const percentage = Math.min((progressInfo.current / progressInfo.target) * 100, 100);
+                progressBar.style.width = `${percentage}%`;
+                progressPercentage.textContent = `${Math.round(percentage)}%`;
+            } else {
+                modalProgress.style.display = 'none';
+            }
+
+            modalReward.style.display = 'none';
         }
 
         // Показываем модальное окно
@@ -576,6 +614,125 @@ class DramaticCriminalProfile {
 
         // Haptic feedback
         this.provideCriminalFeedback('achievement');
+    }
+
+    getAchievementRequirement(achievementId) {
+        const requirements = {
+            'first_case': {
+                text: 'Завершите первое расследование',
+                reward: '+50 очков опыта'
+            },
+            'rookie': {
+                text: 'Проведите 5 расследований',
+                reward: '+100 очков опыта'
+            },
+            'expert': {
+                text: 'Проведите 25 расследований',
+                reward: '+250 очков опыта'
+            },
+            'sharp_eye': {
+                text: 'Достигните 80% точности при минимум 10 играх',
+                reward: '+200 очков опыта'
+            },
+            'detective': {
+                text: 'Проведите 50 расследований',
+                reward: '+300 очков опыта'
+            },
+            'perfectionist': {
+                text: 'Завершите 5 игр с идеальным результатом (5/5)',
+                reward: '+400 очков опыта'
+            },
+            'speedster': {
+                text: 'Достигните среднего времени ответа менее 20 секунд',
+                reward: '+150 очков опыта'
+            },
+            'veteran': {
+                text: 'Играйте в течение 6 месяцев',
+                reward: '+500 очков опыта'
+            },
+            'genius': {
+                text: 'Достигните 95% точности при минимум 20 играх',
+                reward: '+600 очков опыта'
+            },
+            'legend': {
+                text: 'Проведите 100 расследований',
+                reward: '+1000 очков опыта'
+            },
+            'master': {
+                text: 'Наберите 10,000 очков',
+                reward: '+800 очков опыта'
+            },
+            'criminal_hunter': {
+                text: 'Достигните серии из 10 правильных ответов подряд',
+                reward: '+300 очков опыта'
+            }
+        };
+
+        return requirements[achievementId] || {
+            text: 'Продолжайте расследования для получения подсказок',
+            reward: '+100 очков опыта'
+        };
+    }
+
+    getAchievementProgress(achievementId) {
+        if (!ProfileState.user?.stats) {
+            return { current: 0, target: 1 };
+        }
+
+        const stats = ProfileState.user.stats;
+        const progressMap = {
+            'first_case': {
+                current: Math.min(stats.investigations || 0, 1),
+                target: 1
+            },
+            'rookie': {
+                current: Math.min(stats.investigations || 0, 5),
+                target: 5
+            },
+            'expert': {
+                current: Math.min(stats.investigations || 0, 25),
+                target: 25
+            },
+            'sharp_eye': {
+                current: (stats.investigations >= 10 && stats.accuracy >= 80) ? 1 : 0,
+                target: 1
+            },
+            'detective': {
+                current: Math.min(stats.investigations || 0, 50),
+                target: 50
+            },
+            'perfectionist': {
+                current: Math.min(stats.perfectGames || 0, 5),
+                target: 5
+            },
+            'speedster': {
+                current: (stats.averageTime && stats.averageTime <= 20000) ? 1 : 0,
+                target: 1
+            },
+            'veteran': {
+                // Проверяем дату регистрации (примерно)
+                current: 0, // Заглушка, нужно проверить реальную дату
+                target: 1
+            },
+            'genius': {
+                current: (stats.investigations >= 20 && stats.accuracy >= 95) ? 1 : 0,
+                target: 1
+            },
+            'legend': {
+                current: Math.min(stats.investigations || 0, 100),
+                target: 100
+            },
+            'master': {
+                current: Math.min(stats.totalScore || 0, 10000),
+                target: 10000
+            },
+            'criminal_hunter': {
+                current: Math.min(stats.maxWinStreak || 0, 10),
+                target: 10
+            }
+        };
+
+        return progressMap[achievementId] || { current: 0, target: 1 };
     }
 
     hideAchievementModal() {
