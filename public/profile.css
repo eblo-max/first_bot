@@ -2,44 +2,87 @@
 .loading-message {
     text-align: center;
     padding: 20px;
-    color: var(--text-secondary);
+    color: #888;
     font-style: italic;
 }
 
 .empty-leaderboard {
     text-align: center;
-    padding: 30px 20px;
-    color: var(--text-secondary);
+    padding: 40px 20px;
+    color: var(--fog, #666);
+    border: 2px dashed var(--blood-red, #8B0000);
+    border-radius: 12px;
+    background: rgba(26, 26, 26, 0.3);
 }
 
 .empty-leaderboard-icon {
     font-size: 48px;
-    margin-bottom: 10px;
-    opacity: 0.5;
+    margin-bottom: 16px;
+    opacity: 0.6;
 }
 
 .empty-leaderboard-text {
-    font-size: 16px;
-    margin-bottom: 5px;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--silver, #C0C0C0);
 }
 
 .empty-leaderboard-subtext {
     font-size: 14px;
-    opacity: 0.7;
+    opacity: 0.8;
+    color: var(--fog, #666);
 }
 
 /* Анимация загрузки */
 .loading-spinner {
-    border: 3px solid var(--bg-secondary);
-    border-top: 3px solid var(--accent-primary);
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(139, 0, 0, 0.1);
     border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    animation: spin 1s linear infinite;
-    margin: 20px auto;
+    border-top-color: var(--blood-red, #8B0000);
+    animation: spin 1s ease-in-out infinite;
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Стили для ошибок */
+#profile-error {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--blood-red, #8B0000);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    z-index: 1000;
+    font-size: 14px;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: none;
+}
+
+/* Улучшенные стили для скелетона загрузки */
+.loading-skeleton {
+    background: linear-gradient(90deg, var(--ash, #2A2A2A) 25%, var(--charcoal, #1A1A1A) 50%, var(--ash, #2A2A2A) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 12px;
+    height: 60px;
+    margin-bottom: 8px;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 } 

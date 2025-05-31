@@ -12,7 +12,7 @@ router.get('/', authMiddleware, async (req, res) => {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
 
-        // Формируем расширенный профиль
+        // Формируем простой профиль
         const profileData = {
             basic: {
                 telegramId: user.telegramId,
@@ -26,67 +26,41 @@ router.get('/', authMiddleware, async (req, res) => {
 
             // 🏆 Детективное звание
             rank: {
-                current: user.rank,
-                displayName: user.getRankDisplayName(),
-                rarity: user.getRankRarity(),
-                progress: user.rewards.nextRankProgress
+                current: user.rank || 'НОВИЧОК',
+                displayName: user.rank || 'НОВИЧОК'
             },
 
-            // ⭐ Репутационная система
-            reputation: user.getReputationBreakdown(),
-
-            // 📊 Расширенная статистика
+            // 📊 Статистика
             stats: {
                 // Основные показатели
-                investigations: user.stats.investigations,
-                solvedCases: user.stats.solvedCases,
-                totalQuestions: user.stats.totalQuestions,
-                totalScore: user.stats.totalScore,
-                accuracy: user.stats.accuracy,
+                investigations: user.stats?.investigations || user.stats?.totalGames || 0,
+                solvedCases: user.stats?.solvedCases || user.stats?.correctAnswers || 0,
+                totalQuestions: user.stats?.totalQuestions || 0,
+                totalScore: user.stats?.totalScore || 0,
+                accuracy: user.stats?.accuracy || 0,
 
                 // Серии и достижения
-                winStreak: user.stats.winStreak,
-                maxWinStreak: user.stats.maxWinStreak,
-                perfectGames: user.stats.perfectGames,
+                winStreak: user.stats?.winStreak || user.stats?.currentStreak || 0,
+                maxWinStreak: user.stats?.maxWinStreak || user.stats?.maxStreak || 0,
+                perfectGames: user.stats?.perfectGames || 0,
 
                 // Скорость
-                averageTime: user.stats.averageTime,
-                fastestGame: user.stats.fastestGame,
+                averageTime: user.stats?.averageTime || 0,
+                fastestGame: user.stats?.fastestGame || 0,
 
                 // Активность
-                dailyStreakCurrent: user.stats.dailyStreakCurrent,
-                dailyStreakBest: user.stats.dailyStreakBest,
-
-                // По сложности
-                gamesBySifficulty: {
-                    easy: user.stats.easyGames,
-                    medium: user.stats.mediumGames,
-                    hard: user.stats.hardGames,
-                    expert: user.stats.expertGames
-                }
+                dailyStreakCurrent: user.stats?.dailyStreakCurrent || 0,
+                dailyStreakBest: user.stats?.dailyStreakBest || 0
             },
 
             // 🏅 Достижения
-            achievements: {
-                progress: user.getAchievementsProgress(),
-                list: user.achievements.map(achievement => ({
-                    ...achievement.toObject(),
-                    isRecent: achievement.unlockedAt &&
-                        (Date.now() - achievement.unlockedAt.getTime()) < 7 * 24 * 60 * 60 * 1000 // последние 7 дней
-                }))
-            },
+            achievements: user.achievements || [],
 
             // 📈 Недавние игры
-            recentGames: user.gameHistory
-                .slice(-10)
-                .reverse()
-                .map(game => ({
-                    ...game.toObject(),
-                    efficiency: game.totalQuestions > 0 ?
-                        Math.round((game.correctAnswers / game.totalQuestions) * 100) : 0
-                }))
+            recentGames: user.gameHistory ? user.gameHistory.slice(-10).reverse() : []
         };
 
+        console.log('Отправляем данные профиля:', JSON.stringify(profileData, null, 2));
         res.json(profileData);
     } catch (error) {
         console.error('Ошибка получения профиля:', error);
@@ -159,64 +133,62 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
         const now = new Date();
 
         switch (period) {
+            case 'day':
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                dateFilter = { lastVisit: { $gte: today } };
+                break;
             case 'week':
                 dateFilter = { lastVisit: { $gte: new Date(now - 7 * 24 * 60 * 60 * 1000) } };
                 break;
             case 'month':
                 dateFilter = { lastVisit: { $gte: new Date(now - 30 * 24 * 60 * 60 * 1000) } };
                 break;
-            case 'today':
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                dateFilter = { lastVisit: { $gte: today } };
+            default:
+                // Для 'all' не добавляем фильтр по дате
                 break;
         }
 
-        // Топ по различным метрикам
-        const leaderboards = {
-            // Общий рейтинг (очки)
-            totalScore: await User.find(dateFilter)
-                .sort({ 'stats.totalScore': -1 })
-                .limit(limit)
-                .select('telegramId username firstName lastName nickname rank stats.totalScore reputation.level')
-                .lean(),
+        console.log(`Получаем лидербоард ${period} с фильтром:`, dateFilter);
 
-            // Репутация
-            reputation: await User.find(dateFilter)
-                .sort({ 'reputation.level': -1 })
-                .limit(limit)
-                .select('telegramId username firstName lastName nickname rank reputation stats.investigations')
-                .lean(),
+        // Получаем топ игроков по общему счету
+        const totalScoreLeaderboard = await User.find({
+            ...dateFilter,
+            'stats.totalScore': { $gt: 0 } // Только игроки с очками
+        })
+            .sort({ 'stats.totalScore': -1 })
+            .limit(limit)
+            .select('telegramId username firstName lastName nickname rank stats.totalScore')
+            .lean();
 
-            // Точность
-            accuracy: await User.find({
-                ...dateFilter,
-                'stats.investigations': { $gte: 10 } // минимум 10 игр
-            })
-                .sort({ 'stats.accuracy': -1 })
-                .limit(limit)
-                .select('telegramId username firstName lastName nickname rank stats.accuracy stats.investigations')
-                .lean(),
+        console.log(`Найдено ${totalScoreLeaderboard.length} игроков для лидербоарда`);
 
-            // Серии
-            streaks: await User.find(dateFilter)
-                .sort({ 'stats.maxWinStreak': -1 })
-                .limit(limit)
-                .select('telegramId username firstName lastName nickname rank stats.maxWinStreak stats.winStreak')
-                .lean(),
+        // Форматируем данные для frontend
+        const formattedLeaderboard = totalScoreLeaderboard.map((user, index) => {
+            const displayName = user.nickname ||
+                (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() :
+                    (user.username || `Игрок ${user.telegramId.toString().slice(-4)}`));
 
-            // Скорость (только у кого есть время)
-            speed: await User.find({
-                ...dateFilter,
-                'stats.fastestGame': { $gt: 0 }
-            })
-                .sort({ 'stats.fastestGame': 1 }) // меньше времени = лучше
-                .limit(limit)
-                .select('telegramId username firstName lastName nickname rank stats.fastestGame stats.averageTime')
-                .lean()
+            return {
+                rank: index + 1,
+                telegramId: user.telegramId,
+                name: displayName,
+                username: user.username,
+                userRank: user.rank || 'НОВИЧОК',
+                stats: {
+                    totalScore: user.stats?.totalScore || 0
+                }
+            };
+        });
+
+        const result = {
+            totalScore: formattedLeaderboard,
+            period: period,
+            total: formattedLeaderboard.length
         };
 
-        res.json(leaderboards);
+        console.log('Отправляем лидербоард:', JSON.stringify(result, null, 2));
+        res.json(result);
     } catch (error) {
         console.error('Ошибка получения лидерборда:', error);
         res.status(500).json({ error: 'Внутренняя ошибка сервера' });

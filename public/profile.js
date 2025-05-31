@@ -206,68 +206,88 @@ class DramaticCriminalProfile {
 
     async loadUserProfile() {
         try {
-            console.log('📊 Загружаем профиль пользователя...');
+            console.log('📊 Загружаем реальный профиль пользователя...');
+            ProfileState.isLoading = true;
+
             const response = await fetch('/api/profile', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
             if (!response.ok) {
-                throw new Error(`Ошибка загрузки профиля: ${response.status}`);
+                if (response.status === 404) {
+                    throw new Error('Пользователь не найден');
+                } else if (response.status === 401) {
+                    throw new Error('Ошибка авторизации');
+                } else {
+                    throw new Error(`Ошибка сервера: ${response.status}`);
+                }
             }
 
             const userData = await response.json();
-            ProfileState.user = userData;
+            console.log('✅ Реальные данные профиля получены:', userData);
 
-            console.log('✅ Профиль загружен:', userData);
+            ProfileState.user = userData;
             this.updateProfileUI(userData);
 
         } catch (error) {
             console.error('❌ Ошибка загрузки профиля:', error);
-            this.showTestData();
+            this.showError(`Не удалось загрузить профиль: ${error.message}`);
+        } finally {
+            ProfileState.isLoading = false;
+            this.hideLoadingState();
         }
     }
 
     updateProfileUI(userData) {
-        console.log('🔄 Обновляем UI профиля:', userData);
+        try {
+            console.log('🎨 Обновляем UI профиля с реальными данными');
 
-        // Базовая информация
-        const firstName = userData.basic?.firstName || userData.firstName || 'ДЕТЕКТИВ';
-        const telegramId = userData.basic?.telegramId || userData.telegramId || '000000000';
+            // Основные данные пользователя
+            const basic = userData.basic || userData;
 
-        this.updateElement('detective-name', firstName.toUpperCase());
-        this.updateElement('user-id', telegramId);
+            // Обновляем основную информацию
+            this.updateElement('detective-name', basic.firstName || basic.username || 'Детектив');
+            this.updateElement('user-id', basic.telegramId);
 
-        // Уровень и XP
-        const totalScore = userData.stats?.totalScore || 0;
-        const level = this.calculateLevel(totalScore);
-        const xpData = this.calculateXP(totalScore, level);
+            // Обновляем ранг
+            const rank = userData.rank || basic.rank || 'НОВИЧОК';
+            this.updateElement('detective-rank', rank.current || rank.displayName || rank);
 
-        this.updateElement('user-level', level);
-        this.updateElement('detective-rank', ProfileConfig.levels.getRankByLevel(level));
-        this.updateElement('current-xp', xpData.current.toLocaleString());
-        this.updateElement('max-xp', xpData.max.toLocaleString());
+            // Обновляем статистику
+            const stats = userData.stats || {};
+            this.updateElement('stat-investigations', stats.investigations || 0);
+            this.updateElement('stat-solved', stats.solvedCases || stats.correctAnswers || 0);
+            this.updateElement('stat-streak', stats.winStreak || stats.currentStreak || 0);
 
-        // Обновляем прогресс-бар с анимацией
-        this.animateXPBar(xpData.percentage);
+            // Рассчитываем точность
+            let accuracy = stats.accuracy || 0;
+            if (accuracy === 0 && stats.totalQuestions > 0) {
+                accuracy = Math.round((stats.solvedCases / stats.totalQuestions) * 100);
+            }
+            this.updateElement('stat-accuracy', `${accuracy}%`);
 
-        // Статистика
-        const stats = userData.stats || {};
-        this.updateElement('stat-investigations', stats.investigations || 0);
-        this.updateElement('stat-solved', stats.solvedCases || 0);
-        this.updateElement('stat-streak', stats.winStreak || 0);
+            // Обновляем уровень и XP
+            const level = this.calculateLevel(stats.totalScore || 0);
+            this.updateElement('user-level', level);
 
-        // Точность с символом %
-        const accuracy = Math.round(stats.accuracy || 0);
-        const accuracyElement = document.getElementById('stat-accuracy');
-        if (accuracyElement) {
-            accuracyElement.innerHTML = `${accuracy}<span style="color: var(--accent-red);">%</span>`;
+            const { current, max } = this.calculateXP(stats.totalScore || 0, level);
+            this.updateElement('current-xp', current.toLocaleString());
+            this.updateElement('max-xp', max.toLocaleString());
+
+            const xpPercentage = max > 0 ? (current / max) * 100 : 0;
+            this.animateXPBar(xpPercentage);
+
+            // Обновляем позицию в рейтинге
+            this.updateElement('user-position', ProfileState.userPosition || '—');
+            this.updateElement('total-players', ProfileState.totalPlayers || '1,000+');
+
+            // Загружаем аватар
+            this.loadUserAvatar(basic.telegramId);
+
+            console.log('✅ UI профиля обновлен');
+        } catch (error) {
+            console.error('❌ Ошибка обновления UI:', error);
         }
-
-        // Аватар
-        this.loadUserAvatar(telegramId);
-
-        // Анимации появления
-        this.animateStatsCards();
     }
 
     calculateLevel(totalScore) {
@@ -598,24 +618,21 @@ class DramaticCriminalProfile {
     async loadLeaderboardData(period) {
         try {
             console.log(`📊 Загружаем лидербоард за ${period}...`);
-            // Показываем скелетон загрузки
             this.showLeaderboardSkeleton();
 
             const response = await fetch(`/api/profile/leaderboard/${period}`, {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
-            let data;
-            if (response.ok) {
-                const result = await response.json();
-                // Преобразуем данные в нужный формат
-                data = this.transformLeaderboardData(result, period);
-                console.log('✅ Лидербоард загружен:', data);
-            } else {
-                console.log('⚠️ Не удалось загрузить лидербоард, используем тестовые данные');
-                // Генерируем тестовые данные
-                data = this.generateMockLeaderboard(period);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${await response.text()}`);
             }
+
+            const result = await response.json();
+            console.log('✅ Данные лидербоарда получены:', result);
+
+            // Преобразуем данные в нужный формат
+            const data = this.transformLeaderboardData(result, period);
 
             ProfileState.leaderboard.data[period] = data;
             ProfileState.leaderboard.current = period;
@@ -624,39 +641,53 @@ class DramaticCriminalProfile {
             this.updateUserPosition(data);
 
         } catch (error) {
-            console.error('❌ Ошибка загрузки рейтинга:', error);
-            const mockData = this.generateMockLeaderboard(period);
-            this.renderLeaderboard(mockData);
+            console.error('❌ Ошибка загрузки лидербоарда:', error);
+            this.showError(`Не удалось загрузить рейтинг: ${error.message}`);
+
+            // Показываем пустой лидербоард вместо mock данных
+            this.renderEmptyLeaderboard();
         }
     }
 
     transformLeaderboardData(apiData, period) {
-        // Преобразуем данные API в формат, ожидаемый фронтендом
-        const leaderboardData = apiData.totalScore || [];
-        const currentUserId = ProfileState.user?.basic?.telegramId || ProfileState.user?.telegramId;
+        try {
+            // Проверяем структуру ответа API
+            const leaderboardData = apiData.totalScore || apiData.data?.leaderboard || [];
+            const currentUserId = ProfileState.user?.basic?.telegramId || ProfileState.user?.telegramId;
 
-        const transformedLeaderboard = leaderboardData.map((user, index) => ({
-            rank: index + 1,
-            name: this.getUserDisplayName(user),
-            score: user.stats?.totalScore || 0,
-            isCurrentUser: user.telegramId === currentUserId
-        }));
+            console.log('🔄 Трансформируем данные лидербоарда:', { leaderboardData, currentUserId });
 
-        // Найдем позицию текущего пользователя
-        const currentUserEntry = transformedLeaderboard.find(entry => entry.isCurrentUser);
-        const currentUser = currentUserEntry || {
-            rank: Math.floor(Math.random() * 500) + 100, // Случайная позиция если не найден
-            score: ProfileState.user?.stats?.totalScore || 0
-        };
+            const transformedLeaderboard = leaderboardData.map((user, index) => ({
+                rank: index + 1,
+                name: this.getUserDisplayName(user),
+                score: user.stats?.totalScore || user.score || 0,
+                isCurrentUser: user.telegramId === currentUserId
+            }));
 
-        return {
-            leaderboard: transformedLeaderboard,
-            currentUser: currentUser,
-            meta: {
-                period: period,
-                total: Math.max(transformedLeaderboard.length, 1000) // Минимум показываем 1000 игроков
-            }
-        };
+            // Найдем позицию текущего пользователя
+            const currentUserEntry = transformedLeaderboard.find(entry => entry.isCurrentUser);
+
+            const currentUser = currentUserEntry || {
+                rank: '—',
+                score: ProfileState.user?.stats?.totalScore || 0
+            };
+
+            return {
+                leaderboard: transformedLeaderboard,
+                currentUser: currentUser,
+                meta: {
+                    period: period,
+                    total: Math.max(transformedLeaderboard.length, transformedLeaderboard.length)
+                }
+            };
+        } catch (error) {
+            console.error('❌ Ошибка трансформации данных лидербоарда:', error);
+            return {
+                leaderboard: [],
+                currentUser: { rank: '—', score: 0 },
+                meta: { period: period, total: 0 }
+            };
+        }
     }
 
     getUserDisplayName(user) {
@@ -670,28 +701,6 @@ class DramaticCriminalProfile {
             return user.nickname;
         }
         return 'Детектив';
-    }
-
-    generateMockLeaderboard(period) {
-        const names = ['Шерлок Холмс', 'Эркюль Пуаро', 'Мисс Марпл', 'Коломбо', 'Морс', 'Ватсон'];
-        const isCurrentUserInList = Math.random() > 0.5;
-
-        return {
-            leaderboard: names.map((name, index) => ({
-                rank: index + 1,
-                name: name,
-                score: 5000 - (index * 500),
-                isCurrentUser: isCurrentUserInList && index === 2
-            })),
-            currentUser: {
-                rank: isCurrentUserInList ? 3 : 247,
-                score: isCurrentUserInList ? 4000 : 1250
-            },
-            meta: {
-                period: period,
-                total: 12459
-            }
-        };
     }
 
     renderLeaderboard(data) {
@@ -1118,33 +1127,40 @@ class DramaticCriminalProfile {
         ProfileState.isLoading = false;
     }
 
-    showTestData() {
-        console.log('📊 Показываем тестовые данные');
-
-        // Тестовые данные для демонстрации
-        const testUser = {
-            basic: { firstName: 'ЛАТА' },
-            telegramId: '573113459',
-            stats: {
-                investigations: 10,
-                solvedCases: 35,
-                winStreak: 0,
-                accuracy: 70,
-                totalScore: 3750
-            }
-        };
-
-        this.updateProfileUI(testUser);
-    }
-
-    showAuthError() {
-        console.log('❌ Ошибка авторизации, показываем тестовые данные');
-        this.showTestData();
-    }
-
     showError(message) {
-        console.error('❌', message);
-        // Можно добавить toast уведомление
+        console.error('💥 Показываем ошибку:', message);
+
+        // Создаем элемент ошибки если его нет
+        let errorDiv = document.getElementById('profile-error');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.id = 'profile-error';
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--blood-red);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                z-index: 1000;
+                font-size: 14px;
+                max-width: 90%;
+                text-align: center;
+            `;
+            document.body.appendChild(errorDiv);
+        }
+
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+
+        // Скрываем через 5 секунд
+        setTimeout(() => {
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+        }, 5000);
     }
 
     startPeriodicUpdates() {
@@ -1154,6 +1170,19 @@ class DramaticCriminalProfile {
                 this.loadLeaderboardData(ProfileState.leaderboard.current);
             }
         }, 5 * 60 * 1000);
+    }
+
+    renderEmptyLeaderboard() {
+        const container = document.getElementById('leaderboard-container');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="empty-leaderboard">
+                <div class="empty-leaderboard-icon">📊</div>
+                <div class="empty-leaderboard-text">Нет данных</div>
+                <div class="empty-leaderboard-subtext">Рейтинг временно недоступен</div>
+            </div>
+        `;
     }
 }
 
