@@ -5,10 +5,19 @@ const path = require('path');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+console.log('🚀 === ЗАПУСК СЕРВЕРА CRIMINAL BLUFF ===');
+console.log('📅 Время запуска:', new Date().toISOString());
+console.log('🌍 NODE_ENV:', process.env.NODE_ENV || 'development');
+console.log('💻 Platform:', process.platform);
+console.log('⚡ Node version:', process.version);
+
 // Подключение системы логирования в самом начале
+console.log('📝 Подключение системы логирования...');
 const { logger, error, warn, info, debug, httpMiddleware } = require('./utils/logger');
+console.log('✅ Система логирования подключена');
 
 // Импорт middleware безопасности
+console.log('🔒 Подключение middleware безопасности...');
 const {
     generalLimiter,
     authLimiter,
@@ -16,13 +25,15 @@ const {
     apiLimiter,
     staticLimiter
 } = require('./middleware/rateLimiter');
+console.log('✅ Rate limiters подключены');
 
 // Импорт маршрутов
+console.log('🛣️  Подключение маршрутов...');
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/game');
 const userRoutes = require('./routes/user'); // Добавляем маршруты пользователя
 const profileRoutes = require('./routes/profile'); // Новые расширенные роуты профиля
-const leaderboardRoutes = require('./routes/leaderboard'); // Будет добавлено в фазе 2
+console.log('✅ Все маршруты подключены');
 
 // Импорт функции для заполнения базы тестовыми данными
 const seedDatabase = require('./utils/seedData');
@@ -30,8 +41,10 @@ const seedDatabase = require('./utils/seedData');
 const leaderboardService = require('./services/leaderboardService');
 
 // Создание приложения Express
+console.log('🏗️  Создание Express приложения...');
 const app = express();
 const PORT = process.env.PORT || 3000;
+console.log('✅ Express приложение создано');
 
 // ====================================
 // MIDDLEWARE БЕЗОПАСНОСТИ (ПОРЯДОК ВАЖЕН!)
@@ -69,18 +82,27 @@ app.use(helmet({
         preload: true
     }
 }));
+console.log('✅ Helmet настроен');
 
 // 3. CORS с улучшенной конфигурацией
+console.log('🛡️  Настройка middleware безопасности...');
 const corsOptions = {
-    origin: process.env.CORS_ORIGIN === '*' ? true : process.env.CORS_ORIGIN?.split(','),
+    origin: [
+        'https://t.me',
+        'https://web.telegram.org',
+        /https:\/\/.*\.railway\.app$/,
+        /https:\/\/.*\.vercel\.app$/,
+        process.env.FRONTEND_URL,
+        'http://localhost:3000'
+    ].filter(Boolean),
     credentials: true,
-    optionsSuccessStatus: 200,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
+console.log('✅ CORS настроен');
 
 // 4. Парсинг JSON с ограничением размера
+console.log('📦 Настройка парсинга JSON...');
 app.use(express.json({
     limit: process.env.MAX_JSON_SIZE || '1mb',
     strict: true
@@ -89,29 +111,40 @@ app.use(express.urlencoded({
     extended: true,
     limit: process.env.MAX_JSON_SIZE || '1mb'
 }));
+console.log('✅ JSON парсинг настроен');
 
 // 5. Базовый rate limiter для всех запросов
+console.log('⏱️  Настройка rate limiting...');
 app.use(generalLimiter);
+console.log('✅ Rate limiting настроен');
 
 // 6. Middleware для отключения кеширования
+console.log('🔄 Настройка cache control...');
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
     next();
 });
+console.log('✅ Cache control настроен');
 
 // 7. Подключаем middleware для логирования HTTP запросов
+console.log('📊 Настройка HTTP логирования...');
 app.use(httpMiddleware());
+console.log('✅ HTTP логирование настроено');
 
 // 8. Дополнительные заголовки безопасности
+console.log('🔐 Настройка дополнительных заголовков безопасности...');
 app.use((req, res, next) => {
     res.set('X-Content-Type-Options', 'nosniff');
     res.set('X-Frame-Options', 'DENY');
     res.set('X-XSS-Protection', '1; mode=block');
+    res.set('X-Download-Options', 'noopen');
+    res.set('X-Permitted-Cross-Domain-Policies', 'none');
     res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     next();
 });
+console.log('✅ Дополнительные заголовки настроены');
 
 // ====================================
 // МАРШРУТЫ С СООТВЕТСТВУЮЩИМИ ЛИМИТЕРАМИ
@@ -147,6 +180,7 @@ app.use(staticLimiter, express.static(path.join(__dirname, '../public'), {
     etag: true,
     lastModified: true
 }));
+console.log('✅ Статические файлы настроены');
 
 // ====================================
 // API МАРШРУТЫ С СПЕЦИФИЧНЫМИ ЛИМИТЕРАМИ
@@ -157,7 +191,6 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/game', gameLimiter, gameRoutes);
 app.use('/api/user', apiLimiter, userRoutes);
 app.use('/api/profile', apiLimiter, profileRoutes);
-app.use('/api/leaderboard', apiLimiter, leaderboardRoutes);
 
 // Маршрут для проверки здоровья приложения
 app.get('/api/health', (req, res) => {
