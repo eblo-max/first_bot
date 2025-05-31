@@ -1201,32 +1201,114 @@
         }
 
         .method-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(220, 20, 60, 0.2);
-            border-radius: 8px;
+            position: relative;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(26, 26, 26, 0.8);
+            border: 1px solid rgba(220, 20, 60, 0.3);
+            border-radius: 12px;
             transition: all 0.3s ease;
         }
 
         .method-item:hover {
             border-color: var(--neon-red);
-            box-shadow: 0 0 10px rgba(220, 20, 60, 0.2);
-            transform: scale(1.02);
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(220, 20, 60, 0.2);
         }
 
-        .method-icon {
-            font-size: 1.2rem;
-            width: 20px;
+        .method-exp {
+            font-size: 0.75rem;
+            color: var(--neon-red);
+            opacity: 0.8;
+            margin-top: 4px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* 🎯 СТИЛИ ДЛЯ СПЕЦИАЛИЗАЦИЙ */
+        .specializations-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: rgba(26, 26, 26, 0.6);
+            border: 2px solid var(--blood-red);
+            border-radius: 16px;
+            backdrop-filter: var(--blur-light);
+        }
+
+        .specializations-section h4 {
+            color: var(--neon-red);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
             text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .method-name {
+        .specializations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .spec-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: rgba(26, 26, 26, 0.8);
+            border: 1px solid rgba(220, 20, 60, 0.4);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .spec-item:hover {
+            border-color: var(--neon-red);
+            transform: translateY(-1px);
+            box-shadow: 0 0 10px rgba(220, 20, 60, 0.3);
+        }
+
+        .spec-icon {
+            font-size: 1.4rem;
+            filter: drop-shadow(0 0 5px currentColor);
+        }
+
+        .spec-name {
             font-size: 0.8rem;
             color: var(--bone);
             font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .spec-description {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--bone);
+            opacity: 0.8;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        /* 📱 АДАПТИВНОСТЬ ДЛЯ НОВЫХ ЭЛЕМЕНТОВ */
+        @media (max-width: 400px) {
+            .specializations-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .spec-item {
+                padding: 8px 10px;
+            }
+
+            .spec-name {
+                font-size: 0.75rem;
+            }
+
+            .method-exp {
+                font-size: 0.7rem;
+            }
         }
     </style>
 </head>
@@ -1312,13 +1394,14 @@
                     <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12,2L13.09,8.26L20,9L13.09,9.74L12,16L10.91,9.74L4,9L10.91,8.26L12,2Z" />
                     </svg>
-                    <h2 class="card-title">Типы преступлений</h2>
+                    <h2 class="card-title">🎯 Новая система опыта v2.0</h2>
                 </div>
                 <p class="card-description">
-                    <strong>Ограбления</strong> - кражи со взломом, угоны<br>
-                    <strong>Мошенничество</strong> - финансовые преступления<br>
-                    <strong>Убийства</strong> - дела об отравлениях<br>
-                    <strong>Более 1000+</strong> реальных криминальных историй
+                    <strong>📊 Опыт ≠ Очки:</strong> Отдельная система прогрессии<br>
+                    <strong>🚀 20 рангов:</strong> От Подозреваемого до Легенды<br>
+                    <strong>⚡ Множители:</strong> До +500% опыта за мастерство<br>
+                    <strong>🎯 Специализации:</strong> Мастерство по типам дел<br>
+                    <strong>⚖️ Анти-фарм:</strong> Качество важнее количества
                 </p>
             </div>
 
@@ -1329,14 +1412,15 @@
                         <path
                             d="M5,16H3V4H20V6H18V16H5M18,6V16H15V4H20V6H18M3,16V19H4V18H5V20H4V21H18V20H17V18H18V19H19V16H3Z" />
                     </svg>
-                    <h2 class="card-title">Система очков и бонусов</h2>
+                    <h2 class="card-title">🔥 Система множителей опыта</h2>
                 </div>
                 <p class="card-description">
-                    <strong>Базовые очки:</strong> 100 за правильный ответ<br>
-                    <strong>Бонус скорости:</strong> до +75 очков (прогрессивно)<br>
-                    <strong>Бонус сложности:</strong> medium +25, hard +50<br>
-                    <strong>Бонус совершенства:</strong> до +25 очков<br>
-                    Максимум <strong>250 очков</strong> за идеальное дело!
+                    <strong>🎯 Идеальная игра (5/5):</strong> +50% опыта<br>
+                    <strong>⚡ Быстрая реакция (&lt;30 сек):</strong> +30% опыта<br>
+                    <strong>🏆 Hard дела:</strong> +40%, Expert +60%<br>
+                    <strong>🔥 Серии побед (3+):</strong> до +100% опыта<br>
+                    <strong>🌅 Первая игра дня:</strong> +25% опыта<br>
+                    <strong>📅 Выходные:</strong> +10% бонус
                 </p>
             </div>
 
@@ -1347,13 +1431,15 @@
                         <path
                             d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22H9M6,12V14H18V12H6M6,9V11H18V9H6M6,6V8H18V6H6Z" />
                     </svg>
-                    <h2 class="card-title">Игровая механика</h2>
+                    <h2 class="card-title">💎 Система очков (обновлено)</h2>
                 </div>
                 <p class="card-description">
-                    Анализируй улики, находи ошибки преступников.<br>
-                    <strong>Haptic feedback</strong> для лучшего погружения<br>
-                    <strong>Реальные методы</strong> криминалистики<br>
-                    Развивай <strong>логическое мышление</strong> детектива
+                    <strong>🎯 Базовые очки:</strong> 100 за правильный ответ<br>
+                    <strong>⚡ Бонус скорости:</strong> до +75 очков (прогрессивно)<br>
+                    <strong>🎖️ Бонус сложности:</strong> Medium +25, Hard +50<br>
+                    <strong>💫 Бонус совершенства:</strong> до +25 очков<br>
+                    <strong>👑 Максимум:</strong> 250 очков за идеальное дело!<br>
+                    <strong>🛡️ Анти-фарм:</strong> Штрафы за чрезмерную игру
                 </p>
             </div>
         </div>
@@ -1368,8 +1454,8 @@
                     </svg>
                 </div>
                 <div class="mini-content">
-                    <div class="mini-title">6 детективных рангов</div>
-                    <div class="mini-desc">От Новичка до Криминалиста</div>
+                    <div class="mini-title">🎖️ 20 детективных рангов</div>
+                    <div class="mini-desc">От Подозреваемого до Легенды</div>
                 </div>
             </div>
 
@@ -1381,8 +1467,8 @@
                     </svg>
                 </div>
                 <div class="mini-content">
-                    <div class="mini-title">Достижения за мастерство</div>
-                    <div class="mini-desc">Перфекционист, Спидстер, Ветеран</div>
+                    <div class="mini-title">🎯 Мастерство по типам дел</div>
+                    <div class="mini-desc">5 специализаций × 10 уровней</div>
                 </div>
             </div>
 
@@ -1394,8 +1480,8 @@
                     </svg>
                 </div>
                 <div class="mini-content">
-                    <div class="mini-title">Система статистики</div>
-                    <div class="mini-desc">Точность, серии, раскрытые дела</div>
+                    <div class="mini-title">⚖️ Умная анти-фарм система</div>
+                    <div class="mini-desc">Качество важнее количества</div>
                 </div>
             </div>
 
@@ -1406,38 +1492,93 @@
                     </svg>
                 </div>
                 <div class="mini-content">
-                    <div class="mini-title">3 уровня сложности</div>
-                    <div class="mini-desc">Легкий, Средний, Сложный</div>
+                    <div class="mini-title">🔥 Экспоненциальная прогрессия</div>
+                    <div class="mini-desc">Уровень 20: ~3700 игр</div>
                 </div>
             </div>
         </div>
 
-        <!-- Система рангов и прогрессии -->
+        <!-- Система рангов и прогрессии (ПОЛНОСТЬЮ ОБНОВЛЕННАЯ) -->
         <div class="detective-methods">
             <div class="methods-header">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path
                         d="M12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5M12,2A7,7 0 0,1 19,9C19,14.25 12,22 12,22C12,22 5,14.25 5,9A7,7 0 0,1 12,2M12,4A5,5 0 0,0 7,9C7,13 12,19.71 12,19.71C12,19.71 17,13 17,9A5,5 0 0,0 12,4Z" />
                 </svg>
-                <h3>Детективные ранги и прогрессия</h3>
+                <h3>🎖️ Новая система рангов (20 уровней)</h3>
             </div>
             <div class="methods-grid">
                 <div class="method-item">
                     <div class="method-icon">🔰</div>
-                    <div class="method-name">Новичок (0-299)</div>
+                    <div class="method-name">Подозреваемый (Ур. 1)</div>
+                    <div class="method-exp">500 XP</div>
+                </div>
+                <div class="method-item">
+                    <div class="method-icon">👮‍♂️</div>
+                    <div class="method-name">Стажер (Ур. 2)</div>
+                    <div class="method-exp">1,200 XP</div>
                 </div>
                 <div class="method-item">
                     <div class="method-icon">🕵️</div>
-                    <div class="method-name">Детектив (300-799)</div>
+                    <div class="method-name">Детектив (Ур. 5)</div>
+                    <div class="method-exp">7,500 XP</div>
                 </div>
                 <div class="method-item">
-                    <div class="method-icon">👮</div>
-                    <div class="method-name">Инспектор (800-1999)</div>
+                    <div class="method-icon">👑</div>
+                    <div class="method-name">Капитан (Ур. 10)</div>
+                    <div class="method-exp">50,000 XP</div>
+                </div>
+                <div class="method-item">
+                    <div class="method-icon">🎖️</div>
+                    <div class="method-name">Генерал (Ур. 14)</div>
+                    <div class="method-exp">175,000 XP</div>
+                </div>
+                <div class="method-item">
+                    <div class="method-icon">👨‍⚖️</div>
+                    <div class="method-name">Шеф Полиции (Ур. 15)</div>
+                    <div class="method-exp">235,000 XP</div>
                 </div>
                 <div class="method-item">
                     <div class="method-icon">🏆</div>
-                    <div class="method-name">Криминалист (10000+)</div>
+                    <div class="method-name">Мастер-Детектив (Ур. 18)</div>
+                    <div class="method-exp">560,000 XP</div>
                 </div>
+                <div class="method-item">
+                    <div class="method-icon">👑</div>
+                    <div class="method-name">Легенда (Ур. 20)</div>
+                    <div class="method-exp">1,000,000 XP</div>
+                </div>
+            </div>
+
+            <!-- Новый блок про специализации -->
+            <div class="specializations-section">
+                <h4>🎯 Мастерство по типам преступлений:</h4>
+                <div class="specializations-grid">
+                    <div class="spec-item">
+                        <span class="spec-icon">🔪</span>
+                        <span class="spec-name">Убийства</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-icon">💰</span>
+                        <span class="spec-name">Ограбления</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-icon">💳</span>
+                        <span class="spec-name">Мошенничество</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-icon">🏃‍♂️</span>
+                        <span class="spec-name">Кражи</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-icon">💻</span>
+                        <span class="spec-name">Киберпреступления</span>
+                    </div>
+                </div>
+                <p class="spec-description">
+                    Каждая специализация имеет 10 уровней мастерства.<br>
+                    Получайте 30% от общего опыта за дела определенного типа.
+                </p>
             </div>
         </div>
 

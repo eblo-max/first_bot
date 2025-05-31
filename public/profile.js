@@ -9,10 +9,101 @@ let tg = window.Telegram?.WebApp;
 // Конфигурация мрачного профиля
 const ProfileConfig = {
     levels: {
-        maxXP: [1000, 2500, 5000, 10000, 20000, 35000, 50000, 75000, 100000, 150000, 200000, 300000, 500000, 750000, 1000000],
+        // 🔥 НОВАЯ ЭКСПОНЕНЦИАЛЬНАЯ СИСТЕМА УРОВНЕЙ
+        maxXP: [
+            // Первые уровни (новички) - медленная прогрессия
+            500,     // 1: ~10 игр
+            1200,    // 2: ~14 игр  
+            2500,    // 3: ~26 игр
+            4500,    // 4: ~40 игр
+            7500,    // 5: ~60 игр
+
+            // Средние уровни (детективы) - нормальная прогрессия  
+            12000,   // 6: ~84 игры
+            18000,   // 7: ~120 игр
+            26000,   // 8: ~160 игр
+            36000,   // 9: ~200 игр
+            50000,   // 10: ~250 игр
+
+            // Высокие уровни (эксперты) - замедление
+            70000,   // 11: ~320 игр
+            95000,   // 12: ~420 игр
+            130000,  // 13: ~550 игр
+            175000,  // 14: ~700 игр
+            235000,  // 15: ~900 игр
+
+            // Мастерские уровни (легенды) - очень медленно
+            315000,  // 16: ~1200 игр
+            420000,  // 17: ~1600 игр
+            560000,  // 18: ~2100 игр
+            750000,  // 19: ~2800 игр
+            1000000  // 20: ~3700 игр (максимум)
+        ],
+
+        // 🎖️ УЛУЧШЕННЫЕ РАНГИ С ПОДРАНГАМИ
         getRankByLevel: (level) => {
-            const ranks = ['ПОДОЗРЕВАЕМЫЙ', 'ДЕТЕКТИВ', 'ИНСПЕКТОР', 'СЛЕДОВАТЕЛЬ', 'ЭКСПЕРТ', 'ОХОТНИК', 'ЛЕГЕНДА'];
-            return ranks[Math.min(Math.floor(level / 3), ranks.length - 1)];
+            const ranks = [
+                // Новички (1-5)
+                { name: 'ПОДОЗРЕВАЕМЫЙ', color: '#666666', icon: '🔰' },
+                { name: 'СТАЖЕР', color: '#888888', icon: '👮‍♂️' },
+                { name: 'ПАТРУЛЬНЫЙ', color: '#999999', icon: '🚔' },
+                { name: 'СЕРЖАНТ', color: '#AAAAAA', icon: '⭐' },
+                { name: 'ДЕТЕКТИВ', color: '#4169E1', icon: '🕵️' },
+
+                // Средние (6-10) 
+                { name: 'СТ.ДЕТЕКТИВ', color: '#1E90FF', icon: '🕵️‍♂️' },
+                { name: 'ИНСПЕКТОР', color: '#00BFFF', icon: '👨‍💼' },
+                { name: 'СТ.ИНСПЕКТОР', color: '#87CEEB', icon: '👨‍💼' },
+                { name: 'ЛЕЙТЕНАНТ', color: '#FFD700', icon: '🎖️' },
+                { name: 'КАПИТАН', color: '#FFA500', icon: '👑' },
+
+                // Высокие (11-15)
+                { name: 'МАЙОР', color: '#FF6347', icon: '🔥' },
+                { name: 'ПОДПОЛКОВНИК', color: '#FF4500', icon: '💫' },
+                { name: 'ПОЛКОВНИК', color: '#DC143C', icon: '⚡' },
+                { name: 'ГЕНЕРАЛ', color: '#B22222', icon: '💎' },
+                { name: 'ШЕФ ПОЛИЦИИ', color: '#8B0000', icon: '👨‍⚖️' },
+
+                // Легендарные (16-20)
+                { name: 'КОМИССАР', color: '#800080', icon: '🌟' },
+                { name: 'СУП.КОМИССАР', color: '#9400D3', icon: '✨' },
+                { name: 'МАСТЕР-ДЕТЕКТИВ', color: '#4B0082', icon: '🏆' },
+                { name: 'ГРАНД-МАСТЕР', color: '#191970', icon: '💫' },
+                { name: 'ЛЕГЕНДА', color: '#000080', icon: '👑' }
+            ];
+
+            const index = Math.min(Math.max(level - 1, 0), ranks.length - 1);
+            return ranks[index];
+        },
+
+        // 📊 СИСТЕМА МНОЖИТЕЛЕЙ ОПЫТА
+        experienceMultipliers: {
+            // Базовые множители по типам активности
+            perfect_game: 1.5,        // +50% за идеальную игру (5/5)
+            speed_bonus: 1.3,         // +30% за быстрые ответы
+            difficulty_master: 1.4,   // +40% за сложные дела
+            consistency: 1.2,         // +20% за ежедневную игру
+            streak_bonus: 1.6,        // +60% за серии побед
+
+            // Достижения
+            achievement_unlock: 2.0,  // +100% при разблокировке достижения
+
+            // Сезонные события
+            weekend_bonus: 1.1,       // +10% в выходные
+            daily_first_game: 1.25,   // +25% за первую игру дня
+
+            // Штрафы за "фарм"
+            same_hour_penalty: 0.8,   // -20% за >3 игр в час
+            same_day_penalty: 0.9     // -10% за >10 игр в день
+        },
+
+        // 🎯 СИСТЕМА МАСТЕРСТВА ПО ТИПАМ ПРЕСТУПЛЕНИЙ
+        crimeTypeMastery: {
+            murder: { name: 'Убийства', icon: '🔪', maxLevel: 10 },
+            robbery: { name: 'Ограбления', icon: '💰', maxLevel: 10 },
+            fraud: { name: 'Мошенничество', icon: '💳', maxLevel: 10 },
+            theft: { name: 'Кражи', icon: '🏃‍♂️', maxLevel: 10 },
+            cybercrime: { name: 'Киберпреступления', icon: '💻', maxLevel: 10 }
         }
     },
     achievements: [
@@ -472,55 +563,48 @@ class DramaticCriminalProfile {
     }
 
     updateProfileUI(userData) {
-        try {
-            console.log('🎨 Обновляем UI профиля с реальными данными');
+        console.log('🔄 Обновление UI профиля...', userData);
 
-            // Основные данные пользователя
-            const basic = userData.basic || userData;
+        const stats = userData.stats || {};
 
-            // Обновляем основную информацию
-            this.updateElement('detective-name', basic.firstName || basic.username || 'Детектив');
-            this.updateElement('user-id', basic.telegramId);
+        // Обновляем уровень и XP
+        const level = this.calculateLevel(stats.totalScore || 0);
+        this.updateElement('user-level', level);
 
-            // Обновляем ранг
-            const rank = userData.rank || basic.rank || 'НОВИЧОК';
-            this.updateElement('detective-rank', rank.current || rank.displayName || rank);
+        const { current, max } = this.calculateXP(stats.totalScore || 0, level);
+        this.updateElement('current-xp', current.toLocaleString());
+        this.updateElement('max-xp', max.toLocaleString());
 
-            // Обновляем статистику
-            const stats = userData.stats || {};
-            this.updateElement('stat-investigations', stats.investigations || 0);
-            this.updateElement('stat-solved', stats.solvedCases || stats.correctAnswers || 0);
-            this.updateElement('stat-streak', stats.winStreak || stats.currentStreak || 0);
+        const xpPercentage = max > 0 ? (current / max) * 100 : 0;
+        this.animateXPBar(xpPercentage);
 
-            // Рассчитываем точность
-            let accuracy = stats.accuracy || 0;
-            if (accuracy === 0 && stats.totalQuestions > 0) {
-                accuracy = Math.round((stats.solvedCases / stats.totalQuestions) * 100);
-            }
-            this.updateElement('stat-accuracy', `${accuracy}%`);
+        // 🎖️ ОБНОВЛЯЕМ РАНГ С НОВОЙ СИСТЕМОЙ
+        this.updateRankDisplay(level);
 
-            // Обновляем уровень и XP
-            const level = this.calculateLevel(stats.totalScore || 0);
-            this.updateElement('user-level', level);
+        // Обновляем статистику
+        this.updateElement('stat-investigations', stats.investigations || 0);
+        this.updateElement('stat-solved', stats.solvedCases || 0);
+        this.updateElement('stat-streak', stats.winStreak || 0);
+        this.updateElement('stat-accuracy', stats.accuracy || 0);
 
-            const { current, max } = this.calculateXP(stats.totalScore || 0, level);
-            this.updateElement('current-xp', current.toLocaleString());
-            this.updateElement('max-xp', max.toLocaleString());
-
-            const xpPercentage = max > 0 ? (current / max) * 100 : 0;
-            this.animateXPBar(xpPercentage);
-
-            // Обновляем позицию в рейтинге
-            this.updateElement('user-position', ProfileState.userPosition || '—');
-            this.updateElement('total-players', ProfileState.totalPlayers || '1,000+');
-
-            // Загружаем аватар
-            this.loadUserAvatar(basic.telegramId);
-
-            console.log('✅ UI профиля обновлен');
-        } catch (error) {
-            console.error('❌ Ошибка обновления UI:', error);
+        // Обновляем имя и ID пользователя
+        if (userData.firstName || userData.username) {
+            const displayName = userData.firstName || userData.username || 'Детектив';
+            this.updateElement('detective-name', displayName.toUpperCase());
+            document.getElementById('detective-name').setAttribute('data-text', displayName.toUpperCase());
         }
+
+        if (userData.telegramId) {
+            this.updateElement('user-id', userData.telegramId);
+        }
+
+        // Загружаем аватар если есть telegramId
+        if (userData.telegramId) {
+            this.loadUserAvatar(userData.telegramId);
+        }
+
+        this.hideLoadingState();
+        console.log('✅ UI профиля обновлен');
     }
 
     calculateLevel(totalScore) {
@@ -1885,6 +1969,117 @@ class DramaticCriminalProfile {
                 <div class="empty-leaderboard-subtext">Рейтинг временно недоступен</div>
             </div>
         `;
+    }
+
+    // 🔥 НОВАЯ СИСТЕМА РАСЧЕТА ОПЫТА С МНОЖИТЕЛЯМИ
+    calculateAdvancedExperience(gameResult, userStats) {
+        let baseExperience = gameResult.totalScore || 0;
+        let multiplier = 1.0;
+        let bonusReasons = [];
+
+        const multipliers = ProfileConfig.levels.experienceMultipliers;
+        const now = new Date();
+        const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+
+        // 🎯 БОНУС ЗА ИДЕАЛЬНУЮ ИГРУ
+        if (gameResult.correctAnswers === gameResult.totalQuestions) {
+            multiplier *= multipliers.perfect_game;
+            bonusReasons.push(`Идеальная игра: +${Math.round((multipliers.perfect_game - 1) * 100)}%`);
+        }
+
+        // ⚡ БОНУС ЗА СКОРОСТЬ (среднее время < 30 сек)
+        const avgTime = gameResult.averageTime || gameResult.timeSpent / gameResult.totalQuestions;
+        if (avgTime < 30000) { // менее 30 секунд
+            multiplier *= multipliers.speed_bonus;
+            bonusReasons.push(`Быстрая реакция: +${Math.round((multipliers.speed_bonus - 1) * 100)}%`);
+        }
+
+        // 🎖️ БОНУС ЗА СЛОЖНОСТЬ (hard дела)
+        if (gameResult.difficulty === 'hard') {
+            multiplier *= multipliers.difficulty_master;
+            bonusReasons.push(`Мастер сложности: +${Math.round((multipliers.difficulty_master - 1) * 100)}%`);
+        }
+
+        // 🔥 БОНУС ЗА СЕРИЮ ПОБЕД
+        if (userStats.winStreak >= 3) {
+            const streakMultiplier = Math.min(1 + (userStats.winStreak * 0.1), 2.0); // до +100%
+            multiplier *= streakMultiplier;
+            bonusReasons.push(`Серия побед x${userStats.winStreak}: +${Math.round((streakMultiplier - 1) * 100)}%`);
+        }
+
+        // 📅 СЕЗОННЫЕ БОНУСЫ
+        if (isWeekend) {
+            multiplier *= multipliers.weekend_bonus;
+            bonusReasons.push(`Выходные: +${Math.round((multipliers.weekend_bonus - 1) * 100)}%`);
+        }
+
+        // 🌅 БОНУС ЗА ПЕРВУЮ ИГРУ ДНЯ
+        const today = now.toDateString();
+        const lastPlayDate = userStats.lastPlayed ? new Date(userStats.lastPlayed).toDateString() : null;
+        if (lastPlayDate !== today) {
+            multiplier *= multipliers.daily_first_game;
+            bonusReasons.push(`Первая игра дня: +${Math.round((multipliers.daily_first_game - 1) * 100)}%`);
+        }
+
+        // ⚠️ ШТРАФЫ ЗА ЧРЕЗМЕРНУЮ ИГРУ
+        const gamesThisHour = this.getGamesInLastHour(userStats);
+        const gamesToday = this.getGamesToday(userStats);
+
+        if (gamesThisHour > 3) {
+            multiplier *= multipliers.same_hour_penalty;
+            bonusReasons.push(`Слишком много игр в час: ${Math.round((multipliers.same_hour_penalty - 1) * 100)}%`);
+        }
+
+        if (gamesToday > 10) {
+            multiplier *= multipliers.same_day_penalty;
+            bonusReasons.push(`Слишком много игр за день: ${Math.round((multipliers.same_day_penalty - 1) * 100)}%`);
+        }
+
+        // 📊 ФИНАЛЬНЫЙ РАСЧЕТ
+        const finalExperience = Math.round(baseExperience * multiplier);
+        const bonusExperience = finalExperience - baseExperience;
+
+        return {
+            base: baseExperience,
+            multiplier: multiplier,
+            bonus: bonusExperience,
+            final: finalExperience,
+            reasons: bonusReasons
+        };
+    }
+
+    // 🕐 ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ ПОДСЧЕТА ИГР
+    getGamesInLastHour(userStats) {
+        // В реальной системе это будет запрос к БД
+        // Пока заглушка, возвращает случайное число 0-5
+        return Math.floor(Math.random() * 6);
+    }
+
+    getGamesToday(userStats) {
+        // В реальной системе это будет запрос к БД
+        // Пока заглушка, возвращает случайное число 0-15
+        return Math.floor(Math.random() * 16);
+    }
+
+    // 🎖️ СИСТЕМА РАНГОВ С ЦВЕТАМИ И ИКОНКАМИ
+    updateRankDisplay(level) {
+        const rankInfo = ProfileConfig.levels.getRankByLevel(level);
+        const rankElement = document.getElementById('detective-rank');
+
+        if (rankElement && rankInfo) {
+            rankElement.textContent = rankInfo.name;
+            rankElement.style.color = rankInfo.color;
+            rankElement.style.borderColor = rankInfo.color;
+
+            // Добавляем иконку если есть
+            const iconSpan = rankElement.querySelector('.rank-icon') || document.createElement('span');
+            iconSpan.className = 'rank-icon';
+            iconSpan.textContent = rankInfo.icon;
+
+            if (!rankElement.querySelector('.rank-icon')) {
+                rankElement.prepend(iconSpan);
+            }
+        }
     }
 }
 

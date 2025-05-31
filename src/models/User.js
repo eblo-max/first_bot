@@ -80,69 +80,51 @@ const userSchema = new mongoose.Schema({
         }
     },
 
-    // 📊 РАСШИРЕННАЯ СТАТИСТИКА
+    // 📊 СТАТИСТИКА ПОЛЬЗОВАТЕЛЯ
     stats: {
-        // Основные показатели
-        investigations: {
-            type: Number,
-            default: 0
-        },
-        solvedCases: {
-            type: Number,
-            default: 0
-        },
-        totalQuestions: {
-            type: Number,
-            default: 0
-        },
-        totalScore: {
-            type: Number,
-            default: 0
-        },
+        // Базовые показатели
+        investigations: { type: Number, default: 0 },
+        solvedCases: { type: Number, default: 0 },
+        totalQuestions: { type: Number, default: 0 },
+        accuracy: { type: Number, default: 0 },
+
+        // 🆕 НОВАЯ СИСТЕМА ОПЫТА (отдельно от очков)
+        experience: { type: Number, default: 0 },        // Отдельный опыт
+        level: { type: Number, default: 1 },             // Текущий уровень
+
+        // Очки (остаются для статистики)
+        totalScore: { type: Number, default: 0 },        // Очки за игры
 
         // Серии и достижения
-        winStreak: {
-            type: Number,
-            default: 0
-        },
-        maxWinStreak: {
-            type: Number,
-            default: 0
-        },
-        perfectGames: {
-            type: Number,
-            default: 0
-        },
+        winStreak: { type: Number, default: 0 },
+        maxWinStreak: { type: Number, default: 0 },
+        perfectGames: { type: Number, default: 0 },
 
-        // Точность и скорость
-        accuracy: {
-            type: Number,
-            default: 0
-        },
-        averageTime: {
-            type: Number,
-            default: 0
-        },
-        fastestGame: {
-            type: Number,
-            default: 0
-        },
+        // Время и скорость
+        averageTime: { type: Number, default: 0 },
+        fastestGame: { type: Number, default: 0 },
 
         // Активность
-        dailyStreakCurrent: {
-            type: Number,
-            default: 0
-        },
-        dailyStreakBest: {
-            type: Number,
-            default: 0
-        },
-        lastActiveDate: {
-            type: Date,
-            default: Date.now
+        dailyStreakCurrent: { type: Number, default: 0 },
+        dailyStreakBest: { type: Number, default: 0 },
+        lastActiveDate: { type: Date, default: Date.now },
+
+        // 🎯 МАСТЕРСТВО ПО ТИПАМ ПРЕСТУПЛЕНИЙ
+        crimeTypeMastery: {
+            murder: { level: { type: Number, default: 0 }, experience: { type: Number, default: 0 } },
+            robbery: { level: { type: Number, default: 0 }, experience: { type: Number, default: 0 } },
+            fraud: { level: { type: Number, default: 0 }, experience: { type: Number, default: 0 } },
+            theft: { level: { type: Number, default: 0 }, experience: { type: Number, default: 0 } },
+            cybercrime: { level: { type: Number, default: 0 }, experience: { type: Number, default: 0 } }
         },
 
-        // Сложность дел
+        // 📊 ПРОДВИНУТАЯ СТАТИСТИКА
+        gamesThisHour: { type: Number, default: 0 },
+        gamesToday: { type: Number, default: 0 },
+        lastGameTime: { type: Date },
+        experienceMultiplier: { type: Number, default: 1.0 },
+
+        // Статистика по сложности
         easyGames: { type: Number, default: 0 },
         mediumGames: { type: Number, default: 0 },
         hardGames: { type: Number, default: 0 },
@@ -177,6 +159,8 @@ const userSchema = new mongoose.Schema({
             default: Date.now
         },
         score: Number,
+        experience: Number,
+        experienceBreakdown: Object,
         correctAnswers: Number,
         totalQuestions: Number,
         timeSpent: Number,
@@ -185,6 +169,7 @@ const userSchema = new mongoose.Schema({
             enum: ['EASY', 'MEDIUM', 'HARD', 'EXPERT'],
             default: 'MEDIUM'
         },
+        crimeType: String,
         perfectGame: {
             type: Boolean,
             default: false
@@ -225,12 +210,33 @@ userSchema.methods.updateStatsAfterGame = function (gameResult) {
     this.stats.totalQuestions += gameResult.totalQuestions;
     this.stats.totalScore += gameResult.totalScore;
 
+    // 🔥 НОВАЯ СИСТЕМА ОПЫТА С МНОЖИТЕЛЯМИ
+    const experienceData = this.calculateAdvancedExperience(gameResult);
+    this.stats.experience += experienceData.finalExperience;
+
+    // Пересчитываем уровень на основе опыта
+    this.stats.level = this.calculateLevelFromExperience(this.stats.experience);
+
+    // Обновляем счетчики игр за час/день
+    this.updateGameCounters();
+
     // Обновляем статистику по сложности
     const difficulty = gameResult.difficulty || 'MEDIUM';
     if (difficulty === 'EASY') this.stats.easyGames += 1;
     else if (difficulty === 'MEDIUM') this.stats.mediumGames += 1;
     else if (difficulty === 'HARD') this.stats.hardGames += 1;
     else if (difficulty === 'EXPERT') this.stats.expertGames += 1;
+
+    // 🎯 ОБНОВЛЯЕМ МАСТЕРСТВО ПО ТИПУ ПРЕСТУПЛЕНИЯ
+    const crimeType = gameResult.crimeType || 'murder';
+    if (this.stats.crimeTypeMastery[crimeType]) {
+        const typeXP = Math.round(experienceData.finalExperience * 0.3); // 30% от общего опыта
+        this.stats.crimeTypeMastery[crimeType].experience += typeXP;
+
+        // Пересчитываем уровень мастерства (1-10)
+        const masteryLevel = Math.min(Math.floor(this.stats.crimeTypeMastery[crimeType].experience / 500) + 1, 10);
+        this.stats.crimeTypeMastery[crimeType].level = masteryLevel;
+    }
 
     // Подсчет идеальных игр и серий
     const isPerfectGame = gameResult.correctAnswers === gameResult.totalQuestions;
@@ -275,10 +281,13 @@ userSchema.methods.updateStatsAfterGame = function (gameResult) {
     this.gameHistory.push({
         gameId: gameResult.gameId || `game_${Date.now()}`,
         score: gameResult.totalScore,
+        experience: experienceData.finalExperience,
+        experienceBreakdown: experienceData,
         correctAnswers: gameResult.correctAnswers,
         totalQuestions: gameResult.totalQuestions,
         timeSpent: gameResult.timeSpent || 0,
         difficulty: difficulty,
+        crimeType: crimeType,
         perfectGame: isPerfectGame,
         reputationGained: gameResult.reputationGained || 0
     });
@@ -287,7 +296,122 @@ userSchema.methods.updateStatsAfterGame = function (gameResult) {
     this.checkAchievements();
 
     this.lastVisit = new Date();
+    this.stats.lastGameTime = new Date();
+
     return this.save();
+};
+
+// 🔥 НОВАЯ СИСТЕМА РАСЧЕТА ОПЫТА С МНОЖИТЕЛЯМИ
+userSchema.methods.calculateAdvancedExperience = function (gameResult) {
+    let baseExperience = gameResult.totalScore || 0;
+    let multiplier = 1.0;
+    let bonusReasons = [];
+
+    const now = new Date();
+    const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+
+    // 🎯 БОНУС ЗА ИДЕАЛЬНУЮ ИГРУ
+    if (gameResult.correctAnswers === gameResult.totalQuestions) {
+        multiplier *= 1.5; // +50%
+        bonusReasons.push('Идеальная игра: +50%');
+    }
+
+    // ⚡ БОНУС ЗА СКОРОСТЬ (среднее время < 30 сек)
+    const avgTime = gameResult.averageTime || gameResult.timeSpent / gameResult.totalQuestions;
+    if (avgTime < 30000) { // менее 30 секунд
+        multiplier *= 1.3; // +30%
+        bonusReasons.push('Быстрая реакция: +30%');
+    }
+
+    // 🎖️ БОНУС ЗА СЛОЖНОСТЬ
+    if (gameResult.difficulty === 'hard') {
+        multiplier *= 1.4; // +40%
+        bonusReasons.push('Мастер сложности: +40%');
+    } else if (gameResult.difficulty === 'expert') {
+        multiplier *= 1.6; // +60%
+        bonusReasons.push('Эксперт уровень: +60%');
+    }
+
+    // 🔥 БОНУС ЗА СЕРИЮ ПОБЕД
+    if (this.stats.winStreak >= 3) {
+        const streakMultiplier = Math.min(1 + (this.stats.winStreak * 0.1), 2.0);
+        multiplier *= streakMultiplier;
+        bonusReasons.push(`Серия побед x${this.stats.winStreak}: +${Math.round((streakMultiplier - 1) * 100)}%`);
+    }
+
+    // 📅 СЕЗОННЫЕ БОНУСЫ
+    if (isWeekend) {
+        multiplier *= 1.1; // +10%
+        bonusReasons.push('Выходные: +10%');
+    }
+
+    // 🌅 БОНУС ЗА ПЕРВУЮ ИГРУ ДНЯ
+    const today = now.toDateString();
+    const lastPlayDate = this.stats.lastActiveDate ? new Date(this.stats.lastActiveDate).toDateString() : null;
+    if (lastPlayDate !== today) {
+        multiplier *= 1.25; // +25%
+        bonusReasons.push('Первая игра дня: +25%');
+    }
+
+    // ⚠️ ШТРАФЫ ЗА ЧРЕЗМЕРНУЮ ИГРУ
+    if (this.stats.gamesThisHour > 3) {
+        multiplier *= 0.8; // -20%
+        bonusReasons.push('Слишком много игр в час: -20%');
+    }
+
+    if (this.stats.gamesToday > 10) {
+        multiplier *= 0.9; // -10%
+        bonusReasons.push('Слишком много игр за день: -10%');
+    }
+
+    // 📊 ФИНАЛЬНЫЙ РАСЧЕТ
+    const finalExperience = Math.round(baseExperience * multiplier);
+    const bonusExperience = finalExperience - baseExperience;
+
+    return {
+        baseExperience,
+        multiplier,
+        bonusExperience,
+        finalExperience,
+        bonusReasons
+    };
+};
+
+// 📊 РАСЧЕТ УРОВНЯ НА ОСНОВЕ ОПЫТА
+userSchema.methods.calculateLevelFromExperience = function (experience) {
+    const levelThresholds = [
+        500, 1200, 2500, 4500, 7500,           // 1-5
+        12000, 18000, 26000, 36000, 50000,     // 6-10
+        70000, 95000, 130000, 175000, 235000,  // 11-15
+        315000, 420000, 560000, 750000, 1000000 // 16-20
+    ];
+
+    for (let i = 0; i < levelThresholds.length; i++) {
+        if (experience < levelThresholds[i]) {
+            return i + 1;
+        }
+    }
+    return levelThresholds.length; // Максимальный уровень
+};
+
+// 🕐 ОБНОВЛЕНИЕ СЧЕТЧИКОВ ИГР
+userSchema.methods.updateGameCounters = function () {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Сбрасываем счетчики если прошло время
+    if (!this.stats.lastGameTime || this.stats.lastGameTime < oneHourAgo) {
+        this.stats.gamesThisHour = 0;
+    }
+
+    if (!this.stats.lastGameTime || this.stats.lastGameTime < startOfDay) {
+        this.stats.gamesToday = 0;
+    }
+
+    // Увеличиваем счетчики
+    this.stats.gamesThisHour += 1;
+    this.stats.gamesToday += 1;
 };
 
 // ⭐ СИСТЕМА РАСЧЕТА РЕПУТАЦИИ
