@@ -1,33 +1,33 @@
 /**
- * Criminal Trust - Modern Profile Interface
- * Современный интерфейс профиля детектива
+ * Criminal Trust - Ultra Dramatic Profile Interface
+ * Мрачный интерфейс профиля детектива с элементами true crime
  */
 
 // Telegram WebApp API
 let tg = window.Telegram?.WebApp;
 
-// Конфигурация современного профиля
+// Конфигурация мрачного профиля
 const ProfileConfig = {
     levels: {
         maxXP: [1000, 2500, 5000, 10000, 20000, 35000, 50000, 75000, 100000, 150000, 200000, 300000, 500000, 750000, 1000000],
         getRankByLevel: (level) => {
-            const ranks = ['НОВИЧОК', 'ДЕТЕКТИВ', 'ИНСПЕКТОР', 'СЛЕДОВАТЕЛЬ', 'ЭКСПЕРТ', 'МАСТЕР', 'ЛЕГЕНДА'];
+            const ranks = ['ПОДОЗРЕВАЕМЫЙ', 'ДЕТЕКТИВ', 'ИНСПЕКТОР', 'СЛЕДОВАТЕЛЬ', 'ЭКСПЕРТ', 'ОХОТНИК', 'ЛЕГЕНДА'];
             return ranks[Math.min(Math.floor(level / 3), ranks.length - 1)];
         }
     },
     achievements: [
-        { id: 'first_case', name: 'Первое дело', icon: '⭐', description: 'Завершено первое расследование' },
-        { id: 'rookie', name: 'Новичок', icon: '🥇', description: '5 завершенных дел' },
-        { id: 'expert', name: 'Эксперт', icon: '🏆', description: '50 завершенных дел' },
-        { id: 'sharp_eye', name: 'Меткий глаз', icon: '👁️', description: '80% точность' },
-        { id: 'detective', name: 'Детектив', icon: '🔍', description: '100 раскрытых дел' },
-        { id: 'perfectionist', name: 'Перфекционист', icon: '💎', description: '10 идеальных игр' },
-        { id: 'speedster', name: 'Спидстер', icon: '⚡', description: 'Быстрое решение' },
-        { id: 'veteran', name: 'Ветеран', icon: '🎖️', description: '1 год в игре' },
-        { id: 'genius', name: 'Гений', icon: '🧠', description: '95% точность' },
-        { id: 'legend', name: 'Легенда', icon: '👑', description: '1000 дел' },
-        { id: 'master', name: 'Мастер', icon: '🔥', description: '500 побед подряд' },
-        { id: 'criminal_hunter', name: 'Охотник', icon: '🎯', description: 'Специальное достижение' }
+        { id: 'first_case', name: 'Первое дело', icon: '⭐', description: 'Первая жертва найдена' },
+        { id: 'rookie', name: 'Новичок', icon: '🥇', description: '5 трупов исследовано' },
+        { id: 'expert', name: 'Эксперт', icon: '🏆', description: '50 убийц поймано' },
+        { id: 'sharp_eye', name: 'Меткий глаз', icon: '👁️', description: '80% точность расследований' },
+        { id: 'detective', name: 'Детектив', icon: '🔍', description: '100 преступлений раскрыто' },
+        { id: 'perfectionist', name: 'Перфекционист', icon: '💎', description: '10 идеальных расследований' },
+        { id: 'speedster', name: 'Охотник', icon: '⚡', description: 'Быстрая поимка серийника' },
+        { id: 'veteran', name: 'Ветеран', icon: '🎖️', description: '1 год охоты на убийц' },
+        { id: 'genius', name: 'Гений', icon: '🧠', description: '95% точность профилирования' },
+        { id: 'legend', name: 'Легенда', icon: '👑', description: '1000 дел закрыто' },
+        { id: 'master', name: 'Мастер', icon: '🔥', description: '500 серийных убийц поймано' },
+        { id: 'criminal_hunter', name: 'Охотник на убийц', icon: '🎯', description: 'Поймал опасного маньяка' }
     ]
 };
 
@@ -39,15 +39,21 @@ const ProfileState = {
         current: 'day',
         data: {}
     },
-    isLoading: false
+    isLoading: false,
+    criminalEffects: {
+        glitchActive: false,
+        bloodParticles: [],
+        scanEffect: false
+    }
 };
 
 /**
- * Основной класс управления профилем
+ * Основной класс управления профилем с криминальными эффектами
  */
-class ModernProfileManager {
+class DramaticCriminalProfile {
     constructor() {
         this.initTelegramWebApp();
+        this.initCriminalEffects();
         this.initProfile();
     }
 
@@ -58,28 +64,25 @@ class ModernProfileManager {
 
             // Настройка темы
             if (tg.themeParams) {
-                this.applyTelegramTheme();
+                this.applyDarkCriminalTheme();
             }
 
             // Кнопка назад
             if (tg.BackButton) {
                 tg.BackButton.show();
                 tg.BackButton.onClick(() => {
-                    this.provideFeedback('navigation');
+                    this.provideCriminalFeedback('navigation');
+                    this.createBloodSpatter();
                     window.history.back();
                 });
             }
         }
     }
 
-    applyTelegramTheme() {
+    applyDarkCriminalTheme() {
         const theme = tg.themeParams;
-        if (theme.bg_color) {
-            document.documentElement.style.setProperty('--bg-primary', theme.bg_color);
-        }
-        if (theme.text_color) {
-            document.documentElement.style.setProperty('--text-primary', theme.text_color);
-        }
+        document.documentElement.style.setProperty('--midnight', theme.bg_color || '#0A0A0A');
+        document.documentElement.style.setProperty('--bone', theme.text_color || '#F5F5DC');
     }
 
     async initProfile() {
@@ -382,11 +385,21 @@ class ModernProfileManager {
     addAchievementInteractivity() {
         document.querySelectorAll('.achievement-item').forEach((item, index) => {
             item.addEventListener('click', () => {
-                this.provideFeedback('achievement');
-                this.createParticleEffect(item, item.classList.contains('locked') ? 'locked' : 'unlocked');
+                this.provideCriminalFeedback('achievement');
+                this.createHologramExplosion(item);
+                this.createAdvancedParticles(item, item.classList.contains('locked') ? 'evidence' : 'crime');
             });
 
-            // Задержка появления
+            item.addEventListener('mouseenter', () => {
+                this.createAdvancedCrimeScene();
+                item.classList.add('evidence-highlight');
+            });
+
+            item.addEventListener('mouseleave', () => {
+                item.classList.remove('evidence-highlight');
+            });
+
+            // Задержка появления с драматичным эффектом
             item.style.animationDelay = `${index * 0.1}s`;
         });
     }
@@ -522,8 +535,19 @@ class ModernProfileManager {
     addLeaderboardInteractivity() {
         document.querySelectorAll('.leaderboard-item').forEach(item => {
             item.addEventListener('click', () => {
-                this.provideFeedback('leaderboard');
-                this.createRippleEffect(item);
+                this.provideCriminalFeedback('leaderboard');
+                this.createScanningEffect(item);
+                this.createAdvancedParticles(item, 'blood');
+            });
+
+            item.addEventListener('mouseenter', () => {
+                if (Math.random() < 0.3) {
+                    item.classList.add('blood-drip');
+                }
+            });
+
+            item.addEventListener('mouseleave', () => {
+                item.classList.remove('blood-drip');
             });
         });
     }
@@ -539,44 +563,38 @@ class ModernProfileManager {
         `;
     }
 
-    // Визуальные эффекты
-    createParticleEffect(element, type = 'unlocked') {
-        const colors = {
-            unlocked: ['#DC2626', '#10B981', '#3B82F6'],
-            locked: ['#666666', '#888888', '#AAAAAA']
-        };
-
+    // Новые драматичные эффекты
+    createAdvancedCrimeScene() {
+        // Создаем 8 частиц при наведении
         for (let i = 0; i < 8; i++) {
             const particle = document.createElement('div');
             particle.style.cssText = `
                 position: absolute;
-                width: 4px;
-                height: 4px;
-                background: ${colors[type][Math.floor(Math.random() * colors[type].length)]};
+                width: 6px;
+                height: 6px;
+                background: ${['#8B0000', '#FF0040', '#DC143C', '#4A0000'][Math.floor(Math.random() * 4)]};
                 border-radius: 50%;
                 pointer-events: none;
                 z-index: 1000;
                 box-shadow: 0 0 10px currentColor;
+                filter: blur(1px);
             `;
-
-            const rect = element.getBoundingClientRect();
-            particle.style.left = `${rect.left + rect.width / 2}px`;
-            particle.style.top = `${rect.top + rect.height / 2}px`;
-
             document.body.appendChild(particle);
 
             const angle = (Math.PI * 2 * i) / 8;
-            const velocity = 50 + Math.random() * 30;
+            const velocity = 40 + Math.random() * 20;
             let opacity = 1;
+            let scale = 1;
 
             function animate() {
                 const x = Math.cos(angle) * velocity * (1 - opacity);
-                const y = Math.sin(angle) * velocity * (1 - opacity);
+                const y = Math.sin(angle) * velocity * (1 - opacity) - 20;
 
-                particle.style.transform = `translate(${x}px, ${y}px)`;
+                particle.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
                 particle.style.opacity = opacity;
 
-                opacity -= 0.03;
+                opacity -= 0.025;
+                scale += 0.02;
 
                 if (opacity > 0) {
                     requestAnimationFrame(animate);
@@ -589,41 +607,286 @@ class ModernProfileManager {
         }
     }
 
-    createRippleEffect(element) {
-        const ripple = document.createElement('div');
-        ripple.style.cssText = `
+    createAdvancedParticles(element, type = 'crime') {
+        const colors = {
+            crime: ['#8B0000', '#FF0040', '#DC143C'],
+            evidence: ['#FFD700', '#FFF200', '#DAA520'],
+            blood: ['#8B0000', '#4A0000', '#5C1010']
+        };
+
+        for (let i = 0; i < 12; i++) {
+            const particle = document.createElement('div');
+            particle.style.cssText = `
+                position: absolute;
+                width: ${2 + Math.random() * 4}px;
+                height: ${2 + Math.random() * 4}px;
+                background: ${colors[type][Math.floor(Math.random() * colors[type].length)]};
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 1000;
+                box-shadow: 0 0 8px currentColor;
+            `;
+
+            const rect = element.getBoundingClientRect();
+            particle.style.left = `${rect.left + rect.width / 2}px`;
+            particle.style.top = `${rect.top + rect.height / 2}px`;
+
+            document.body.appendChild(particle);
+
+            const angle = (Math.PI * 2 * i) / 12;
+            const velocity = 30 + Math.random() * 40;
+            let opacity = 1;
+
+            function animate() {
+                const x = Math.cos(angle) * velocity * (1 - opacity);
+                const y = Math.sin(angle) * velocity * (1 - opacity);
+
+                particle.style.transform = `translate(${x}px, ${y}px)`;
+                particle.style.opacity = opacity;
+
+                opacity -= 0.02;
+
+                if (opacity > 0) {
+                    requestAnimationFrame(animate);
+                } else {
+                    document.body.removeChild(particle);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+    }
+
+    createScanningEffect(element) {
+        const scanner = document.createElement('div');
+        scanner.style.cssText = `
             position: absolute;
-            border-radius: 50%;
-            background: rgba(220, 38, 38, 0.3);
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 0, 64, 0.3), transparent);
             pointer-events: none;
-            transform: scale(0);
-            animation: ripple 0.6s ease-out;
-            top: 50%;
-            left: 50%;
-            width: 100px;
-            height: 100px;
-            margin: -50px 0 0 -50px;
+            z-index: 10;
         `;
 
         element.style.position = 'relative';
-        element.appendChild(ripple);
+        element.appendChild(scanner);
 
-        setTimeout(() => {
-            element.removeChild(ripple);
-        }, 600);
+        scanner.animate([
+            { left: '-100%' },
+            { left: '100%' }
+        ], {
+            duration: 800,
+            easing: 'ease-out'
+        }).addEventListener('finish', () => {
+            element.removeChild(scanner);
+        });
     }
 
-    animateStatsCards() {
-        document.querySelectorAll('.stat-card').forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
+    createHologramExplosion(element) {
+        // Создаем 20 светящихся фрагментов
+        for (let i = 0; i < 20; i++) {
+            const fragment = document.createElement('div');
+            fragment.style.cssText = `
+                position: absolute;
+                width: ${3 + Math.random() * 6}px;
+                height: ${3 + Math.random() * 6}px;
+                background: ${['#FF0040', '#00BFFF', '#39FF14'][Math.floor(Math.random() * 3)]};
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 1000;
+                box-shadow: 0 0 15px currentColor;
+                filter: blur(0.5px);
+            `;
 
-            setTimeout(() => {
-                card.style.transition = 'all 0.5s ease';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
+            const rect = element.getBoundingClientRect();
+            fragment.style.left = `${rect.left + rect.width / 2}px`;
+            fragment.style.top = `${rect.top + rect.height / 2}px`;
+
+            document.body.appendChild(fragment);
+
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = 60 + Math.random() * 40;
+            let opacity = 1;
+            let scale = 1;
+
+            function animate() {
+                const x = Math.cos(angle) * velocity * (1 - opacity);
+                const y = Math.sin(angle) * velocity * (1 - opacity);
+
+                fragment.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+                fragment.style.opacity = opacity;
+
+                opacity -= 0.015;
+                scale += 0.03;
+
+                if (opacity > 0) {
+                    requestAnimationFrame(animate);
+                } else {
+                    document.body.removeChild(fragment);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+    }
+
+    createAtmosphericEffects() {
+        // Создаем 15 медленно плавающих частиц пыли
+        for (let i = 0; i < 15; i++) {
+            const dust = document.createElement('div');
+            dust.style.cssText = `
+                position: fixed;
+                width: 1px;
+                height: 1px;
+                background: rgba(245, 245, 220, 0.3);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 5;
+                left: ${Math.random() * 100}%;
+                top: ${Math.random() * 100}%;
+                animation: floatDust ${10 + Math.random() * 20}s linear infinite;
+            `;
+
+            document.body.appendChild(dust);
+        }
+    }
+
+    createRandomScanEffect() {
+        // Случайные сканирования элементов каждые 8 секунд
+        setInterval(() => {
+            const elements = document.querySelectorAll('.stat-card, .achievement-item, .leaderboard-item');
+            if (elements.length > 0 && Math.random() < 0.3) {
+                const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                this.createScanningEffect(randomElement);
+            }
+        }, 8000);
+    }
+
+    initCriminalEffects() {
+        // Добавляем CSS для новых анимаций
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes floatDust {
+                0% {
+                    transform: translateY(0) translateX(0) rotate(0deg);
+                    opacity: 0;
+                }
+                10%, 90% {
+                    opacity: 0.3;
+                }
+                100% {
+                    transform: translateY(-100vh) translateX(50px) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+
+            @keyframes criminalGlitch {
+                0%, 98%, 100% {
+                    transform: translate(0);
+                    filter: hue-rotate(0deg);
+                }
+                1% {
+                    transform: translate(-2px, 1px);
+                    filter: hue-rotate(90deg) contrast(1.5);
+                }
+                3% {
+                    transform: translate(2px, -1px);
+                    filter: hue-rotate(180deg) saturate(2);
+                }
+                5% {
+                    transform: translate(-1px, -1px);
+                    filter: hue-rotate(270deg) invert(0.1);
+                }
+            }
+
+            .glitch-effect {
+                animation: criminalGlitch 0.3s ease-in-out;
+            }
+
+            .blood-drip {
+                position: relative;
+                overflow: hidden;
+            }
+
+            .blood-drip::after {
+                content: '';
+                position: absolute;
+                top: -5px;
+                left: 50%;
+                width: 2px;
+                height: 0;
+                background: #8B0000;
+                border-radius: 0 0 50% 50%;
+                animation: bloodDrip 2s ease-in-out infinite;
+            }
+
+            @keyframes bloodDrip {
+                0% { height: 0; top: -5px; }
+                50% { height: 20px; top: 100%; }
+                100% { height: 0; top: 100%; }
+            }
+
+            .evidence-highlight {
+                position: relative;
+            }
+
+            .evidence-highlight::before {
+                content: '';
+                position: absolute;
+                top: -2px;
+                left: -2px;
+                right: -2px;
+                bottom: -2px;
+                background: linear-gradient(45deg, transparent, #FFD700, transparent);
+                opacity: 0;
+                z-index: -1;
+                border-radius: inherit;
+                animation: evidenceGlow 1s ease-in-out;
+            }
+
+            @keyframes evidenceGlow {
+                0%, 100% { opacity: 0; }
+                50% { opacity: 0.5; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Запускаем атмосферные эффекты
+        this.createAtmosphericEffects();
+        this.createRandomScanEffect();
+        this.startPeriodicCriminalEffects();
+    }
+
+    startPeriodicCriminalEffects() {
+        // Случайные глитчи каждые 3 секунды
+        setInterval(() => {
+            if (Math.random() < 0.12) {
+                const elements = document.querySelectorAll('.profile-name, .header-title, .position-rank');
+                elements.forEach(el => {
+                    el.classList.add('glitch-effect');
+                    setTimeout(() => el.classList.remove('glitch-effect'), 300);
+                });
+            }
+        }, 3000);
+
+        // Тревожное мигание каждые 5 секунд
+        setInterval(() => {
+            if (Math.random() < 0.15) {
+                const alertElements = document.querySelectorAll('.crime-stamp, .rank-badge, .level-badge');
+                alertElements.forEach((el, index) => {
+                    setTimeout(() => {
+                        el.style.animation = 'none';
+                        el.style.background = '#FF0040';
+                        setTimeout(() => {
+                            el.style.animation = '';
+                            el.style.background = '';
+                        }, 200);
+                    }, index * 100);
+                });
+            }
+        }, 5000);
     }
 
     // Утилиты
@@ -634,15 +897,24 @@ class ModernProfileManager {
         }
     }
 
-    provideFeedback(type) {
+    provideCriminalFeedback(type) {
         if (tg?.HapticFeedback) {
             const feedbackTypes = {
                 navigation: 'heavy',
-                achievement: 'medium',
-                leaderboard: 'light'
+                achievement: 'heavy',
+                leaderboard: 'medium',
+                crime: 'heavy'
             };
 
             tg.HapticFeedback.impactOccurred(feedbackTypes[type] || 'light');
+        }
+
+        // Добавляем визуальную обратную связь
+        if (type === 'achievement' || type === 'crime') {
+            document.body.style.filter = 'hue-rotate(180deg) contrast(1.3)';
+            setTimeout(() => {
+                document.body.style.filter = '';
+            }, 150);
         }
     }
 
@@ -696,28 +968,12 @@ class ModernProfileManager {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Запуск Criminal Trust Profile');
+    console.log('🔪 Запуск Dramatic Criminal Trust Profile');
 
-    // CSS для анимаций
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes ripple {
-            to {
-                transform: scale(2);
-                opacity: 0;
-            }
-        }
-        
-        .stat-card {
-            transition: all 0.3s ease;
-        }
-    `;
-    document.head.appendChild(style);
-
-    // Запускаем профиль
-    new ModernProfileManager();
+    // Запускаем мрачный профиль
+    new DramaticCriminalProfile();
 });
 
 // Экспорт для использования в других модулях
-window.ModernProfileManager = ModernProfileManager;
+window.DramaticCriminalProfile = DramaticCriminalProfile;
 window.ProfileState = ProfileState; 
