@@ -3,7 +3,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const mongoose = require('mongoose');
-const compression = require('compression');
 require('dotenv').config();
 
 // Подключение системы логирования в самом начале
@@ -81,19 +80,7 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// 4. Сжатие gzip
-app.use(compression({
-    filter: (req, res) => {
-        if (req.headers['x-no-compression']) {
-            return false;
-        }
-        return compression.filter(req, res);
-    },
-    level: 6,
-    threshold: 1024
-}));
-
-// 5. Парсинг JSON с ограничением размера
+// 4. Парсинг JSON с ограничением размера
 app.use(express.json({
     limit: process.env.MAX_JSON_SIZE || '1mb',
     strict: true
@@ -103,10 +90,10 @@ app.use(express.urlencoded({
     limit: process.env.MAX_JSON_SIZE || '1mb'
 }));
 
-// 6. Базовый rate limiter для всех запросов
+// 5. Базовый rate limiter для всех запросов
 app.use(generalLimiter);
 
-// 7. Middleware для отключения кеширования
+// 6. Middleware для отключения кеширования
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Pragma', 'no-cache');
@@ -114,10 +101,10 @@ app.use((req, res, next) => {
     next();
 });
 
-// 8. Подключаем middleware для логирования HTTP запросов
+// 7. Подключаем middleware для логирования HTTP запросов
 app.use(httpMiddleware());
 
-// 9. Дополнительные заголовки безопасности
+// 8. Дополнительные заголовки безопасности
 app.use((req, res, next) => {
     res.set('X-Content-Type-Options', 'nosniff');
     res.set('X-Frame-Options', 'DENY');
