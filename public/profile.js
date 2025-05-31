@@ -232,8 +232,8 @@ class DramaticCriminalProfile {
             const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             console.log('📱 Мобильное устройство:', isMobile);
 
-            // Показываем загрузку
-            this.showLoadingState();
+            // ВАЖНО: Показываем loading БЕЗ отображения любых данных
+            this.showProfileSkeleton();
 
             // Авторизация с дополнительными попытками для мобильных
             let isAuth = await this.authenticate();
@@ -330,7 +330,7 @@ class DramaticCriminalProfile {
                     this.loadLeaderboardData('day')
                 ]);
 
-                this.hideLoadingState();
+                this.hideProfileSkeleton();
 
                 // Инициализируем переключение вкладок лидербоарда
                 this.initLeaderboardTabs();
@@ -344,6 +344,265 @@ class DramaticCriminalProfile {
         } catch (error) {
             console.error('❌ Ошибка инициализации профиля:', error);
             this.showError('Ошибка загрузки профиля');
+        }
+    }
+
+    async tryDeveloperAuth() {
+        try {
+            // В режиме разработки НЕ показываем никаких данных
+            console.log('🔧 Режим разработчика - создаем временного пользователя для тестирования');
+
+            // Показываем сообщение о тестовом режиме
+            this.showDeveloperMessage();
+
+        } catch (error) {
+            console.error('❌ Ошибка в режиме разработки:', error);
+            this.showDeveloperMessage();
+        }
+    }
+
+    // 🔄 НОВЫЕ МЕТОДЫ ДЛЯ ПРАВИЛЬНОГО СОСТОЯНИЯ ЗАГРУЗКИ
+
+    showProfileSkeleton() {
+        console.log('⏳ Показываем skeleton загрузки профиля');
+
+        // Скрываем весь контент профиля
+        const profileContent = document.querySelector('.profile-container');
+        if (profileContent) {
+            profileContent.style.display = 'none';
+        }
+
+        // Показываем skeleton loader
+        const existingSkeleton = document.getElementById('profile-skeleton');
+        if (existingSkeleton) {
+            existingSkeleton.style.display = 'block';
+            return;
+        }
+
+        // Создаем skeleton loader
+        const skeleton = document.createElement('div');
+        skeleton.id = 'profile-skeleton';
+        skeleton.className = 'profile-skeleton-container';
+        skeleton.innerHTML = `
+            <div class="skeleton-header">
+                <div class="skeleton-avatar"></div>
+                <div class="skeleton-info">
+                    <div class="skeleton-name"></div>
+                    <div class="skeleton-rank"></div>
+                    <div class="skeleton-level"></div>
+                </div>
+            </div>
+            
+            <div class="skeleton-progress">
+                <div class="skeleton-progress-bar"></div>
+                <div class="skeleton-progress-text"></div>
+            </div>
+            
+            <div class="skeleton-stats">
+                <div class="skeleton-stat"></div>
+                <div class="skeleton-stat"></div>
+                <div class="skeleton-stat"></div>
+                <div class="skeleton-stat"></div>
+            </div>
+            
+            <div class="skeleton-loading-text">
+                <div class="loading-dots">Загрузка профиля<span class="dots">...</span></div>
+            </div>
+        `;
+
+        // Добавляем стили для skeleton
+        const style = document.createElement('style');
+        style.textContent = `
+            .profile-skeleton-container {
+                max-width: 500px;
+                margin: 0 auto;
+                padding: 20px;
+                color: #F5F5DC;
+            }
+
+            .skeleton-header {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+                margin-bottom: 30px;
+                padding: 20px;
+                background: rgba(26, 26, 26, 0.8);
+                border: 1px solid rgba(220, 20, 60, 0.3);
+                border-radius: 16px;
+            }
+
+            .skeleton-avatar {
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                background: linear-gradient(90deg, rgba(220, 20, 60, 0.2) 25%, rgba(220, 20, 60, 0.4) 50%, rgba(220, 20, 60, 0.2) 75%);
+                background-size: 200% 100%;
+                animation: skeletonPulse 1.5s ease-in-out infinite;
+            }
+
+            .skeleton-info {
+                flex: 1;
+            }
+
+            .skeleton-name, .skeleton-rank, .skeleton-level {
+                height: 16px;
+                background: linear-gradient(90deg, rgba(220, 20, 60, 0.2) 25%, rgba(220, 20, 60, 0.4) 50%, rgba(220, 20, 60, 0.2) 75%);
+                background-size: 200% 100%;
+                animation: skeletonPulse 1.5s ease-in-out infinite;
+                border-radius: 8px;
+                margin-bottom: 8px;
+            }
+
+            .skeleton-name { width: 60%; }
+            .skeleton-rank { width: 80%; }
+            .skeleton-level { width: 40%; }
+
+            .skeleton-progress {
+                margin-bottom: 30px;
+                padding: 15px;
+                background: rgba(26, 26, 26, 0.6);
+                border: 1px solid rgba(220, 20, 60, 0.2);
+                border-radius: 12px;
+            }
+
+            .skeleton-progress-bar {
+                height: 12px;
+                background: linear-gradient(90deg, rgba(220, 20, 60, 0.2) 25%, rgba(220, 20, 60, 0.4) 50%, rgba(220, 20, 60, 0.2) 75%);
+                background-size: 200% 100%;
+                animation: skeletonPulse 1.5s ease-in-out infinite;
+                border-radius: 6px;
+                margin-bottom: 8px;
+            }
+
+            .skeleton-progress-text {
+                height: 14px;
+                width: 50%;
+                background: linear-gradient(90deg, rgba(220, 20, 60, 0.2) 25%, rgba(220, 20, 60, 0.4) 50%, rgba(220, 20, 60, 0.2) 75%);
+                background-size: 200% 100%;
+                animation: skeletonPulse 1.5s ease-in-out infinite;
+                border-radius: 7px;
+            }
+
+            .skeleton-stats {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                margin-bottom: 30px;
+            }
+
+            .skeleton-stat {
+                height: 60px;
+                background: linear-gradient(90deg, rgba(220, 20, 60, 0.2) 25%, rgba(220, 20, 60, 0.4) 50%, rgba(220, 20, 60, 0.2) 75%);
+                background-size: 200% 100%;
+                animation: skeletonPulse 1.5s ease-in-out infinite;
+                border-radius: 12px;
+            }
+
+            .skeleton-loading-text {
+                text-align: center;
+                padding: 20px;
+            }
+
+            .loading-dots {
+                font-size: 1.1rem;
+                color: #DC143C;
+                font-weight: 600;
+            }
+
+            .dots {
+                animation: dotAnimation 1.5s infinite;
+            }
+
+            @keyframes skeletonPulse {
+                0% { background-position: -200% 0; }
+                100% { background-position: 200% 0; }
+            }
+
+            @keyframes dotAnimation {
+                0%, 20% { color: transparent; }
+                40% { color: #DC143C; }
+                100% { color: #DC143C; }
+            }
+        `;
+
+        document.head.appendChild(style);
+        document.body.appendChild(skeleton);
+    }
+
+    hideProfileSkeleton() {
+        console.log('✅ Скрываем skeleton и показываем реальный профиль');
+
+        const skeleton = document.getElementById('profile-skeleton');
+        if (skeleton) {
+            skeleton.style.display = 'none';
+        }
+
+        const profileContent = document.querySelector('.profile-container');
+        if (profileContent) {
+            profileContent.style.display = 'block';
+        }
+    }
+
+    showDeveloperMessage() {
+        const skeleton = document.getElementById('profile-skeleton');
+        if (skeleton) {
+            skeleton.innerHTML = `
+                <div class="developer-message">
+                    <div class="dev-icon">🔧</div>
+                    <h3>Режим разработчика</h3>
+                    <p>Профиль недоступен в режиме разработки.<br>Для полного функционала откройте приложение в Telegram.</p>
+                    <button onclick="window.location.reload()" class="dev-reload-btn">
+                        Перезагрузить
+                    </button>
+                </div>
+            `;
+
+            // Добавляем стили для сообщения разработчика
+            const style = document.createElement('style');
+            style.textContent = `
+                .developer-message {
+                    text-align: center;
+                    padding: 40px;
+                    background: rgba(26, 26, 26, 0.9);
+                    border: 2px solid #DC143C;
+                    border-radius: 16px;
+                    color: #F5F5DC;
+                }
+
+                .dev-icon {
+                    font-size: 3rem;
+                    margin-bottom: 20px;
+                }
+
+                .developer-message h3 {
+                    color: #DC143C;
+                    margin-bottom: 15px;
+                    font-size: 1.3rem;
+                }
+
+                .developer-message p {
+                    opacity: 0.8;
+                    line-height: 1.5;
+                    margin-bottom: 25px;
+                }
+
+                .dev-reload-btn {
+                    background: #DC143C;
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                }
+
+                .dev-reload-btn:hover {
+                    background: #B91C3C;
+                    transform: translateY(-2px);
+                }
+            `;
+            document.head.appendChild(style);
         }
     }
 
@@ -499,32 +758,6 @@ class DramaticCriminalProfile {
             console.error('❌ Критическая ошибка авторизации:', error);
             console.error('❌ Stack trace:', error.stack);
             return false;
-        }
-    }
-
-    async tryDeveloperAuth() {
-        try {
-            // Пытаемся создать тестового пользователя для разработки
-            const testToken = localStorage.getItem('dev_token');
-
-            if (testToken) {
-                console.log('🔧 Используем сохраненный dev токен');
-                this.token = testToken;
-                await this.loadUserProfile();
-                await this.loadUserAchievements();
-                await this.loadLeaderboardData('day');
-                this.hideLoadingState();
-                return;
-            }
-
-            console.log('🔧 Показываем тестовые данные для разработки');
-            this.showTestData();
-            this.hideLoadingState();
-
-        } catch (error) {
-            console.error('❌ Ошибка в режиме разработки:', error);
-            this.showTestData();
-            this.hideLoadingState();
         }
     }
 
