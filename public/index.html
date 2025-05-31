@@ -78,6 +78,368 @@
             z-index: 1;
         }
 
+        /* Тематические элементы фона */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                /* Отпечатки пальцев */
+                radial-gradient(circle at 15% 25%, rgba(220, 20, 60, 0.15) 2px, transparent 3px),
+                radial-gradient(circle at 85% 75%, rgba(220, 20, 60, 0.12) 1.5px, transparent 2.5px),
+                radial-gradient(circle at 25% 80%, rgba(220, 20, 60, 0.1) 2.5px, transparent 3.5px),
+                radial-gradient(circle at 75% 30%, rgba(220, 20, 60, 0.08) 1px, transparent 2px),
+                /* Следы крови */
+                radial-gradient(ellipse 8px 3px at 30% 15%, rgba(139, 0, 0, 0.3) 30%, transparent 70%),
+                radial-gradient(ellipse 5px 2px at 70% 85%, rgba(139, 0, 0, 0.25) 30%, transparent 70%),
+                radial-gradient(ellipse 6px 2.5px at 90% 40%, rgba(139, 0, 0, 0.2) 30%, transparent 70%),
+                /* Линии сетки доказательств */
+                linear-gradient(90deg, transparent 49%, rgba(255, 215, 0, 0.05) 50%, transparent 51%),
+                linear-gradient(0deg, transparent 49%, rgba(255, 215, 0, 0.05) 50%, transparent 51%);
+            background-size:
+                150px 150px, 200px 200px, 180px 180px, 120px 120px,
+                60px 20px, 80px 25px, 70px 22px,
+                100px 100px, 100px 100px;
+            background-position:
+                10% 20%, 80% 70%, 20% 75%, 70% 25%,
+                25% 10%, 65% 80%, 85% 35%,
+                0 0, 0 0;
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 1;
+            animation: evidenceFloat 30s ease-in-out infinite;
+        }
+
+        @keyframes evidenceFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+                opacity: 0.4;
+            }
+
+            25% {
+                transform: translate(5px, -5px) rotate(1deg);
+                opacity: 0.6;
+            }
+
+            50% {
+                transform: translate(-3px, 3px) rotate(-0.5deg);
+                opacity: 0.5;
+            }
+
+            75% {
+                transform: translate(3px, -2px) rotate(0.5deg);
+                opacity: 0.45;
+            }
+        }
+
+        /* Полицейская лента декорация */
+        .police-tape {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+            overflow: hidden;
+        }
+
+        .police-tape::before {
+            content: 'CRIME SCENE - DO NOT CROSS • МЕСТО ПРЕСТУПЛЕНИЯ - НЕ ПЕРЕСЕКАТЬ • ДОКАЗАТЕЛЬСТВА • EVIDENCE • ';
+            position: absolute;
+            top: 8%;
+            left: -100%;
+            width: 200%;
+            height: 25px;
+            background: repeating-linear-gradient(45deg,
+                    #FFD700 0px,
+                    #FFD700 10px,
+                    #FFA500 10px,
+                    #FFA500 20px);
+            color: #000;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: bold;
+            line-height: 25px;
+            text-align: center;
+            letter-spacing: 2px;
+            transform: rotate(-5deg);
+            animation: tapeMove 25s linear infinite, tapeFlicker 3s ease-in-out infinite;
+            opacity: 0.8;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border-top: 1px solid rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .police-tape::after {
+            content: 'EVIDENCE • УЛИКИ • INVESTIGATION • РАССЛЕДОВАНИЕ • ';
+            position: absolute;
+            bottom: 12%;
+            right: -100%;
+            width: 200%;
+            height: 20px;
+            background: repeating-linear-gradient(-45deg,
+                    #DC143C 0px,
+                    #DC143C 8px,
+                    #8B0000 8px,
+                    #8B0000 16px);
+            color: #FFF;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            font-weight: bold;
+            line-height: 20px;
+            text-align: center;
+            letter-spacing: 1px;
+            transform: rotate(3deg);
+            animation: tapeMove 30s linear infinite reverse;
+            opacity: 0.7;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        @keyframes tapeMove {
+            0% {
+                left: -100%;
+                opacity: 0.6;
+            }
+
+            10% {
+                opacity: 0.8;
+            }
+
+            90% {
+                opacity: 0.8;
+            }
+
+            100% {
+                left: 100%;
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes tapeFlicker {
+
+            0%,
+            100% {
+                opacity: 0.8;
+                filter: brightness(1);
+            }
+
+            50% {
+                opacity: 0.9;
+                filter: brightness(1.1);
+            }
+        }
+
+        /* Улучшенные частицы */
+        .particle {
+            position: absolute;
+            background: var(--neon-red);
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: floatParticle 20s linear infinite;
+        }
+
+        .particle:nth-child(3n) {
+            width: 3px;
+            height: 3px;
+            background: #FFD700;
+            animation-duration: 25s;
+        }
+
+        .particle:nth-child(4n) {
+            width: 1px;
+            height: 4px;
+            background: #8B0000;
+            border-radius: 2px;
+            animation-duration: 15s;
+        }
+
+        .particle:nth-child(5n) {
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.6);
+            animation-duration: 18s;
+        }
+
+        /* Дополнительные декоративные элементы */
+        .evidence-markers {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .evidence-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #FFD700;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: markerPulse 4s ease-in-out infinite;
+        }
+
+        .evidence-marker::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            background: #FFD700;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .evidence-marker::after {
+            content: attr(data-number);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        .evidence-marker:nth-child(1) {
+            top: 25%;
+            left: 15%;
+            animation-delay: 0s;
+        }
+
+        .evidence-marker:nth-child(2) {
+            top: 60%;
+            right: 20%;
+            animation-delay: 1s;
+        }
+
+        .evidence-marker:nth-child(3) {
+            bottom: 30%;
+            left: 25%;
+            animation-delay: 2s;
+        }
+
+        @keyframes markerPulse {
+
+            0%,
+            100% {
+                opacity: 0.4;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.1);
+            }
+        }
+
+        /* Кровавые капли */
+        .blood-drops {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .blood-drop {
+            position: absolute;
+            width: 4px;
+            height: 6px;
+            background: radial-gradient(ellipse at center, #8B0000 0%, #4A0404 70%, transparent 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            opacity: 0.7;
+            animation: bloodDrip 8s ease-in-out infinite;
+        }
+
+        .blood-drop:nth-child(1) {
+            top: 10%;
+            left: 30%;
+            animation-delay: 0s;
+        }
+
+        .blood-drop:nth-child(2) {
+            top: 70%;
+            right: 25%;
+            animation-delay: 3s;
+        }
+
+        .blood-drop:nth-child(3) {
+            bottom: 40%;
+            left: 80%;
+            animation-delay: 6s;
+        }
+
+        @keyframes bloodDrip {
+
+            0%,
+            90%,
+            100% {
+                opacity: 0.5;
+                transform: translateY(0) scale(1);
+            }
+
+            45% {
+                opacity: 0.8;
+                transform: translateY(3px) scale(1.1);
+            }
+        }
+
+        /* Отпечатки пальцев декоративные */
+        .fingerprint {
+            position: absolute;
+            width: 30px;
+            height: 40px;
+            background-image:
+                radial-gradient(ellipse 1px 2px at 50% 20%, #DC143C 50%, transparent 50%),
+                radial-gradient(ellipse 1px 2px at 50% 40%, #DC143C 50%, transparent 50%),
+                radial-gradient(ellipse 1px 2px at 50% 60%, #DC143C 50%, transparent 50%),
+                radial-gradient(ellipse 1px 2px at 50% 80%, #DC143C 50%, transparent 50%);
+            background-size: 25px 3px;
+            background-repeat: no-repeat;
+            opacity: 0.3;
+            pointer-events: none;
+            animation: fingerprintFade 10s ease-in-out infinite;
+        }
+
+        .fingerprint:nth-child(1) {
+            top: 15%;
+            right: 10%;
+            transform: rotate(15deg);
+            animation-delay: 0s;
+        }
+
+        .fingerprint:nth-child(2) {
+            bottom: 25%;
+            left: 5%;
+            transform: rotate(-10deg);
+            animation-delay: 4s;
+        }
+
+        @keyframes fingerprintFade {
+
+            0%,
+            100% {
+                opacity: 0.2;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
         @keyframes bloodFlow {
 
             0%,
@@ -106,36 +468,6 @@
             height: 100%;
             pointer-events: none;
             z-index: 2;
-        }
-
-        .particle {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: var(--neon-red);
-            border-radius: 50%;
-            opacity: 0.7;
-            animation: floatParticle 20s linear infinite;
-        }
-
-        @keyframes floatParticle {
-            0% {
-                transform: translateY(100vh) translateX(0) rotate(0deg);
-                opacity: 0;
-            }
-
-            10% {
-                opacity: 0.7;
-            }
-
-            90% {
-                opacity: 0.7;
-            }
-
-            100% {
-                transform: translateY(-10vh) translateX(150px) rotate(360deg);
-                opacity: 0;
-            }
         }
 
         .main-container {
@@ -618,10 +950,90 @@
             letter-spacing: 1px;
             opacity: 0.8;
         }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateY(100vh) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.7;
+            }
+
+            90% {
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: translateY(-10vh) translateX(150px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Зловещий мерцающий эффект для заголовка */
+        .title::after {
+            content: 'КРИМИНАЛЬНЫЙ\AБЛЕФ';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--blood-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0;
+            animation: flickerGhost 8s ease-in-out infinite;
+            pointer-events: none;
+            white-space: pre;
+        }
+
+        @keyframes flickerGhost {
+
+            0%,
+            94%,
+            100% {
+                opacity: 0;
+            }
+
+            95%,
+            97% {
+                opacity: 0.7;
+                filter: blur(1px);
+            }
+
+            96% {
+                opacity: 1;
+                filter: blur(0px);
+                text-shadow: 0 0 20px var(--neon-red);
+            }
+        }
     </style>
 </head>
 
 <body>
+    <!-- Полицейская лента -->
+    <div class="police-tape"></div>
+
+    <!-- Улики и маркеры -->
+    <div class="evidence-markers">
+        <div class="evidence-marker" data-number="1"></div>
+        <div class="evidence-marker" data-number="2"></div>
+        <div class="evidence-marker" data-number="3"></div>
+    </div>
+
+    <!-- Кровавые капли -->
+    <div class="blood-drops">
+        <div class="blood-drop"></div>
+        <div class="blood-drop"></div>
+        <div class="blood-drop"></div>
+    </div>
+
+    <!-- Отпечатки пальцев -->
+    <div class="fingerprint"></div>
+    <div class="fingerprint"></div>
+
     <!-- Частицы -->
     <div class="crime-particles" id="particles"></div>
 
@@ -761,16 +1173,64 @@
         // Инициализация частиц
         function createParticles() {
             const container = document.getElementById('particles');
-            const particleCount = 15;
+            const particleCount = 20;
 
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
+
+                // Разнообразие частиц
+                const particleType = Math.random();
+                if (particleType < 0.3) {
+                    // Кровавые частицы
+                    particle.style.width = '2px';
+                    particle.style.height = '2px';
+                    particle.style.background = '#8B0000';
+                } else if (particleType < 0.5) {
+                    // Золотые улики
+                    particle.style.width = '3px';
+                    particle.style.height = '3px';
+                    particle.style.background = '#FFD700';
+                    particle.style.boxShadow = '0 0 4px #FFD700';
+                } else if (particleType < 0.7) {
+                    // Белые пылинки
+                    particle.style.width = '1px';
+                    particle.style.height = '1px';
+                    particle.style.background = 'rgba(255, 255, 255, 0.8)';
+                } else {
+                    // Красные неоновые
+                    particle.style.width = '2px';
+                    particle.style.height = '2px';
+                    particle.style.background = '#FF073A';
+                    particle.style.boxShadow = '0 0 3px #FF073A';
+                }
+
                 particle.style.left = Math.random() * 100 + '%';
                 particle.style.animationDelay = Math.random() * 20 + 's';
-                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                particle.style.animationDuration = (15 + Math.random() * 15) + 's';
                 container.appendChild(particle);
             }
+
+            // Добавляем дополнительные эффекты каждые несколько секунд
+            setInterval(() => {
+                if (container.children.length > 30) return;
+
+                const extraParticle = document.createElement('div');
+                extraParticle.className = 'particle';
+                extraParticle.style.width = '1px';
+                extraParticle.style.height = '1px';
+                extraParticle.style.background = '#DC143C';
+                extraParticle.style.left = Math.random() * 100 + '%';
+                extraParticle.style.animationDuration = '10s';
+                container.appendChild(extraParticle);
+
+                // Удаляем через время
+                setTimeout(() => {
+                    if (extraParticle.parentNode) {
+                        extraParticle.parentNode.removeChild(extraParticle);
+                    }
+                }, 10000);
+            }, 5000);
         }
 
         // Инициализация Telegram WebApp
