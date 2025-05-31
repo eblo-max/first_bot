@@ -134,34 +134,51 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
 
         switch (period) {
             case 'day':
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                dateFilter = { lastVisit: { $gte: today } };
+                // За последние 24 часа ИЛИ если у пользователя нет lastVisit, но есть очки
+                const last24h = new Date(now - 24 * 60 * 60 * 1000);
+                dateFilter = {
+                    $or: [
+                        { lastVisit: { $gte: last24h } },
+                        { lastVisit: { $exists: false }, 'stats.totalScore': { $gt: 0 } }
+                    ]
+                };
                 break;
             case 'week':
-                dateFilter = { lastVisit: { $gte: new Date(now - 7 * 24 * 60 * 60 * 1000) } };
+                // За последнюю неделю ИЛИ если у пользователя нет lastVisit, но есть очки
+                const lastWeek = new Date(now - 7 * 24 * 60 * 60 * 1000);
+                dateFilter = {
+                    $or: [
+                        { lastVisit: { $gte: lastWeek } },
+                        { lastVisit: { $exists: false }, 'stats.totalScore': { $gt: 0 } }
+                    ]
+                };
                 break;
             case 'month':
-                dateFilter = { lastVisit: { $gte: new Date(now - 30 * 24 * 60 * 60 * 1000) } };
+                // За последний месяц ИЛИ если у пользователя нет lastVisit, но есть очки
+                const lastMonth = new Date(now - 30 * 24 * 60 * 60 * 1000);
+                dateFilter = {
+                    $or: [
+                        { lastVisit: { $gte: lastMonth } },
+                        { lastVisit: { $exists: false }, 'stats.totalScore': { $gt: 0 } }
+                    ]
+                };
                 break;
             default:
-                // Для 'all' не добавляем фильтр по дате
+                // Для 'all' берем всех пользователей с очками
+                dateFilter = { 'stats.totalScore': { $gt: 0 } };
                 break;
         }
 
-        console.log(`Получаем лидербоард ${period} с фильтром:`, dateFilter);
+        console.log(`📊 Получаем лидербоард ${period} с фильтром:`, JSON.stringify(dateFilter, null, 2));
 
         // Получаем топ игроков по общему счету
-        const totalScoreLeaderboard = await User.find({
-            ...dateFilter,
-            'stats.totalScore': { $gt: 0 } // Только игроки с очками
-        })
+        const totalScoreLeaderboard = await User.find(dateFilter)
             .sort({ 'stats.totalScore': -1 })
             .limit(limit)
             .select('telegramId username firstName lastName nickname rank stats.totalScore')
             .lean();
 
-        console.log(`Найдено ${totalScoreLeaderboard.length} игроков для лидербоарда`);
+        console.log(`✅ Найдено ${totalScoreLeaderboard.length} игроков для лидербоарда ${period}`);
 
         // Форматируем данные для frontend
         const formattedLeaderboard = totalScoreLeaderboard.map((user, index) => {
@@ -187,10 +204,10 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
             total: formattedLeaderboard.length
         };
 
-        console.log('Отправляем лидербоард:', JSON.stringify(result, null, 2));
+        console.log(`📤 Отправляем лидербоард ${period} с ${result.totalScore.length} игроками`);
         res.json(result);
     } catch (error) {
-        console.error('Ошибка получения лидерборда:', error);
+        console.error('❌ Ошибка получения лидерборда:', error);
         res.status(500).json({ error: 'Внутренняя ошибка сервера' });
     }
 });

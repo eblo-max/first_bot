@@ -1331,9 +1331,6 @@
             // Создаем криминальные частицы
             createCrimeParticles();
 
-            // Инициализация вкладок лидербоарда
-            initLeaderboardTabs();
-
             // Запускаем драматические эффекты
             startCriminalEffects();
         });
@@ -1376,70 +1373,6 @@
                 });
             }, 5000);
         }
-
-        function initLeaderboardTabs() {
-            const tabs = document.querySelectorAll('.leaderboard-tab');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    // Убираем активный класс у всех вкладок
-                    tabs.forEach(t => t.classList.remove('active'));
-                    // Добавляем активный класс к нажатой вкладке
-                    tab.classList.add('active');
-
-                    // Загружаем данные для выбранного периода
-                    const period = tab.dataset.period;
-                    loadLeaderboardData(period);
-                });
-            });
-        }
-
-        function loadLeaderboardData(period) {
-            const container = document.getElementById('leaderboard-container');
-
-            // Показываем загрузку
-            container.innerHTML = `
-                <div class="loading-skeleton" style="height: 60px; margin-bottom: 12px;"></div>
-                <div class="loading-skeleton" style="height: 60px; margin-bottom: 12px;"></div>
-                <div class="loading-skeleton" style="height: 60px;"></div>
-            `;
-
-            // Имитация загрузки данных
-            setTimeout(() => {
-                const mockData = generateMockLeaderboard(period);
-                renderLeaderboard(mockData);
-            }, 800);
-        }
-
-        function generateMockLeaderboard(period) {
-            const names = ['Шерлок Холмс', 'Эркюль Пуаро', 'Мисс Марпл', 'Коломбо', 'Морс'];
-            return names.map((name, index) => ({
-                rank: index + 1,
-                name: name,
-                score: 2500 - (index * 300),
-                isCurrentUser: index === 2 && period === 'all'
-            }));
-        }
-
-        function renderLeaderboard(data) {
-            const container = document.getElementById('leaderboard-container');
-
-            container.innerHTML = data.map(player => `
-                <div class="leaderboard-item ${player.isCurrentUser ? 'current-user' : ''}">
-                    <div class="player-rank ${player.rank <= 3 ? 'top3' : ''}">${player.rank}</div>
-                    <div class="player-info">
-                        <div class="player-name">${player.name}${player.isCurrentUser ? ' (Вы)' : ''}</div>
-                        <div class="player-score">${player.score.toLocaleString()} очков</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Загружаем начальные данные
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                loadLeaderboardData('day');
-            }, 100);
-        });
     </script>
 </body>
 
