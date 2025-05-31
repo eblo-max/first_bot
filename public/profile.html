@@ -401,8 +401,53 @@
             font-weight: 800;
             margin-bottom: 8px;
             letter-spacing: 2px;
-            text-shadow: var(--shadow-text);
-            animation: nameGlitch 8s ease-in-out infinite;
+            background: linear-gradient(135deg, #FF0040, #DC143C, #8B0000, #FFD700);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: nameGradientFlow 4s ease-in-out infinite, nameGlitch 8s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(255, 0, 64, 0.5);
+            position: relative;
+        }
+
+        .profile-name::before {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, #FF0040, #00BFFF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0;
+            animation: hologramFlicker 6s ease-in-out infinite;
+        }
+
+        @keyframes nameGradientFlow {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @keyframes hologramFlicker {
+
+            0%,
+            90%,
+            100% {
+                opacity: 0;
+            }
+
+            92%,
+            95% {
+                opacity: 0.8;
+            }
         }
 
         @keyframes nameGlitch {
@@ -931,7 +976,131 @@
         .player-name {
             font-weight: 600;
             margin-bottom: 4px;
-            color: var(--bone);
+            background: linear-gradient(90deg, #FF0040, #DC143C, #FFD700);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: playerNameGlow 3s ease-in-out infinite;
+            font-family: 'JetBrains Mono', monospace;
+            text-shadow: 0 0 10px rgba(255, 0, 64, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .leaderboard-item:hover .player-name {
+            background: linear-gradient(90deg, #39FF14, #00BFFF, #FF0040);
+            background-size: 200% 200%;
+            animation: playerNameHover 1s ease-in-out infinite;
+            text-shadow: 0 0 15px rgba(57, 255, 20, 0.6);
+        }
+
+        .leaderboard-item.current-user .player-name {
+            background: linear-gradient(90deg, #FFD700, #FFA500, #FF6347);
+            background-size: 200% 200%;
+            animation: currentUserGlow 2s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            font-weight: 700;
+        }
+
+        @keyframes playerNameGlow {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @keyframes playerNameHover {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+                filter: brightness(1);
+            }
+
+            50% {
+                background-position: 100% 50%;
+                filter: brightness(1.3);
+            }
+        }
+
+        @keyframes currentUserGlow {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+                filter: brightness(1) saturate(1);
+            }
+
+            50% {
+                background-position: 100% 50%;
+                filter: brightness(1.2) saturate(1.3);
+            }
+        }
+
+        /* Дополнительные эффекты для топ-3 игроков */
+        .leaderboard-item:nth-child(1) .player-name {
+            background: linear-gradient(90deg, #FFD700, #FFF200, #DAA520);
+            animation: goldGlow 2s ease-in-out infinite;
+            text-shadow: 0 0 25px rgba(255, 215, 0, 1);
+        }
+
+        .leaderboard-item:nth-child(2) .player-name {
+            background: linear-gradient(90deg, #C0C0C0, #E5E5E5, #A9A9A9);
+            animation: silverGlow 2s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(192, 192, 192, 0.8);
+        }
+
+        .leaderboard-item:nth-child(3) .player-name {
+            background: linear-gradient(90deg, #CD7F32, #D2691E, #A0522D);
+            animation: bronzeGlow 2s ease-in-out infinite;
+            text-shadow: 0 0 15px rgba(205, 127, 50, 0.6);
+        }
+
+        @keyframes goldGlow {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+                filter: brightness(1) saturate(1);
+            }
+
+            50% {
+                background-position: 100% 50%;
+                filter: brightness(1.4) saturate(1.5);
+            }
+        }
+
+        @keyframes silverGlow {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+                filter: brightness(1) saturate(1);
+            }
+
+            50% {
+                background-position: 100% 50%;
+                filter: brightness(1.3) saturate(1.2);
+            }
+        }
+
+        @keyframes bronzeGlow {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+                filter: brightness(1) saturate(1);
+            }
+
+            50% {
+                background-position: 100% 50%;
+                filter: brightness(1.2) saturate(1.1);
+            }
         }
 
         .player-score {
@@ -1330,7 +1499,7 @@
                     </div>
                 </div>
 
-                <div class="profile-name" id="detective-name">ЛАТА</div>
+                <div class="profile-name" id="detective-name" data-text="ЛАТА">ЛАТА</div>
                 <div class="level-badge-center">LVL <span id="user-level">15</span></div>
                 <div class="profile-id">ДОСЬЕ: <span id="user-id">573113459</span></div>
 

@@ -1288,6 +1288,11 @@ class DramaticCriminalProfile {
         const element = document.getElementById(id);
         if (element) {
             element.textContent = value;
+
+            // Для имени пользователя также обновляем data-text атрибут для голографического эффекта
+            if (id === 'detective-name') {
+                element.setAttribute('data-text', value);
+            }
         }
     }
 
