@@ -1711,12 +1711,18 @@
             console.log('[Profile] tg.initData:', tg?.initData);
 
             try {
-                // Проверяем существующий токен
+                // Проверяем существующий токен и его свежесть
                 const existingToken = localStorage.getItem('detective_token');
-                console.log('[Profile] Существующий токен:', existingToken ? 'есть' : 'нет');
+                const tokenTimestamp = localStorage.getItem('detective_token_timestamp');
+                const tokenAge = tokenTimestamp ? Date.now() - parseInt(tokenTimestamp) : Infinity;
+                const tokenExpired = tokenAge > 24 * 60 * 60 * 1000; // 24 часа
 
-                if (!existingToken) {
-                    console.log('[Profile] Токена нет, выполняю авторизацию...');
+                console.log('[Profile] Существующий токен:', existingToken ? 'есть' : 'нет');
+                console.log('[Profile] Возраст токена (часов):', Math.round(tokenAge / (60 * 60 * 1000)));
+                console.log('[Profile] Токен истек:', tokenExpired);
+
+                if (!existingToken || tokenExpired) {
+                    console.log('[Profile] Токена нет или истек, выполняю авторизацию...');
 
                     if (!tg || !tg.initData) {
                         console.error('[Profile] Нет данных Telegram WebApp');
@@ -1744,6 +1750,14 @@
                     if (!response.ok) {
                         const errorText = await response.text();
                         console.error('[Profile] Ошибка авторизации:', response.status, errorText);
+
+                        if (response.status === 429) {
+                            // Если rate limit - все равно пробуем перейти
+                            console.log('[Profile] Rate limit, но пробуем перейти...');
+                            window.location.href = '/profile';
+                            return;
+                        }
+
                         alert('Ошибка авторизации. Попробуйте позже.');
                         return;
                     }
@@ -1753,8 +1767,11 @@
 
                     if (data.token) {
                         localStorage.setItem('detective_token', data.token);
-                        console.log('[Profile] Токен сохранён');
+                        localStorage.setItem('detective_token_timestamp', Date.now().toString());
+                        console.log('[Profile] Токен сохранён с временной меткой');
                     }
+                } else {
+                    console.log('[Profile] Используем существующий токен');
                 }
 
                 // Переходим в профиль
@@ -1764,7 +1781,10 @@
             } catch (error) {
                 console.error('[Profile] Ошибка:', error);
                 console.error('[Profile] Стек ошибки:', error.stack);
-                alert('Ошибка доступа к профилю. Проверьте соединение и попробуйте снова.');
+
+                // Если ошибка сети или другая - все равно пробуем перейти
+                console.log('[Profile] Ошибка, но пробуем перейти в профиль...');
+                window.location.href = '/profile';
             }
         }
 
