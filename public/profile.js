@@ -1176,29 +1176,6 @@ class DramaticCriminalProfile {
                 }
             }
 
-            @keyframes criminalGlitch {
-                0%, 98%, 100% {
-                    transform: translate(0);
-                    filter: hue-rotate(0deg);
-                }
-                1% {
-                    transform: translate(-2px, 1px);
-                    filter: hue-rotate(90deg) contrast(1.5);
-                }
-                3% {
-                    transform: translate(2px, -1px);
-                    filter: hue-rotate(180deg) saturate(2);
-                }
-                5% {
-                    transform: translate(-1px, -1px);
-                    filter: hue-rotate(270deg) invert(0.1);
-                }
-            }
-
-            .glitch-effect {
-                animation: criminalGlitch 0.3s ease-in-out;
-            }
-
             .blood-drip {
                 position: relative;
                 overflow: hidden;
@@ -1254,13 +1231,19 @@ class DramaticCriminalProfile {
     }
 
     startPeriodicCriminalEffects() {
-        // Случайные глитчи каждые 3 секунды
+        // Случайные глитчи каждые 3 секунды - БЕЗ СДВИГОВ
         setInterval(() => {
             if (Math.random() < 0.12) {
                 const elements = document.querySelectorAll('.profile-name, .header-title, .position-rank');
                 elements.forEach(el => {
-                    el.classList.add('glitch-effect');
-                    setTimeout(() => el.classList.remove('glitch-effect'), 300);
+                    // Только цветовые эффекты, без сдвигов
+                    el.style.filter = 'hue-rotate(180deg) contrast(1.3) saturate(2)';
+                    setTimeout(() => {
+                        el.style.filter = 'hue-rotate(90deg) invert(0.1)';
+                        setTimeout(() => {
+                            el.style.filter = '';
+                        }, 50);
+                    }, 50);
                 });
             }
         }, 3000);
@@ -1268,14 +1251,20 @@ class DramaticCriminalProfile {
         // Тревожное мигание каждые 5 секунд
         setInterval(() => {
             if (Math.random() < 0.15) {
-                const alertElements = document.querySelectorAll('.crime-stamp, .rank-badge, .level-badge');
+                const alertElements = document.querySelectorAll('.crime-stamp, .rank-badge, .level-badge-center');
                 alertElements.forEach((el, index) => {
                     setTimeout(() => {
+                        const originalBg = el.style.background;
+                        const originalAnimation = el.style.animation;
+
                         el.style.animation = 'none';
-                        el.style.background = '#FF0040';
+                        el.style.background = 'linear-gradient(135deg, #FF0040, #8B0000)';
+                        el.style.boxShadow = '0 0 20px #FF0040';
+
                         setTimeout(() => {
-                            el.style.animation = '';
-                            el.style.background = '';
+                            el.style.animation = originalAnimation;
+                            el.style.background = originalBg;
+                            el.style.boxShadow = '';
                         }, 200);
                     }, index * 100);
                 });
