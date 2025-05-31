@@ -771,15 +771,85 @@
             box-shadow: var(--shadow-glow);
         }
 
+        /* 🔓 ОТКРЫТЫЕ ДОСТИЖЕНИЯ */
+        .achievement-item:not(.locked) {
+            background: rgba(26, 26, 26, 0.95);
+            border-color: #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            animation: unlockedGlow 3s ease-in-out infinite;
+        }
+
+        .achievement-item:not(.locked):hover {
+            border-color: #FFF700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+            transform: translateY(-6px) scale(1.08);
+        }
+
+        @keyframes unlockedGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+            }
+        }
+
+        /* 🔒 ЗАБЛОКИРОВАННЫЕ ДОСТИЖЕНИЯ */
         .achievement-item.locked {
             opacity: 0.4;
             border-color: var(--fog);
             filter: grayscale(1);
+            background: rgba(16, 16, 16, 0.7);
         }
 
         .achievement-item.locked:hover {
             opacity: 0.6;
             border-color: var(--silver);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .achievement-item.locked .achievement-icon {
+            filter: grayscale(1) brightness(0.6);
+        }
+
+        .achievement-item.locked .achievement-name {
+            color: var(--fog);
+        }
+
+        /* ✅ ГАЛОЧКА ДЛЯ ОТКРЫТЫХ ДОСТИЖЕНИЙ */
+        .achievement-checkmark {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: #00FF88;
+            color: #000000;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+            animation: checkmarkPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes checkmarkPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+            }
+
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 15px rgba(0, 255, 136, 0.8);
+            }
         }
 
         .achievement-icon {
@@ -787,6 +857,25 @@
             margin-bottom: 12px;
             filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
             animation: iconFloat 3s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        /* Открытые достижения - яркие иконки */
+        .achievement-item:not(.locked) .achievement-icon {
+            filter: drop-shadow(0 0 8px #FFD700) brightness(1.2);
+            animation: iconFloat 3s ease-in-out infinite, iconGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes iconGlow {
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 8px #FFD700) brightness(1.2);
+            }
+
+            50% {
+                filter: drop-shadow(0 0 15px #FFD700) brightness(1.4);
+            }
         }
 
         @keyframes iconFloat {
@@ -806,6 +895,14 @@
             font-weight: 600;
             color: var(--silver);
             line-height: 1.2;
+            transition: all 0.3s ease;
+        }
+
+        /* Открытые достижения - яркие названия */
+        .achievement-item:not(.locked) .achievement-name {
+            color: #FFD700;
+            font-weight: 700;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
         }
 
         /* Лидербоард с драматичным дизайном */
@@ -1518,27 +1615,27 @@
                     CLASSIFIED
                 </div>
 
-                <div class="rank-badge" id="detective-rank">ЭКСПЕРТ</div>
+                <div class="rank-badge" id="detective-rank">—</div>
 
                 <div class="avatar-container">
                     <div class="avatar" id="user-avatar">
-                        <div id="avatar-placeholder" style="transition: opacity 0.5s ease;">Л</div>
+                        <div id="avatar-placeholder" style="transition: opacity 0.5s ease;">?</div>
                     </div>
                 </div>
 
-                <div class="level-badge-center">LVL <span id="user-level">15</span></div>
-                <div class="profile-name" id="detective-name" data-text="ЛАТА">ЛАТА</div>
-                <div class="profile-id">ДОСЬЕ: <span id="user-id">573113459</span></div>
+                <div class="level-badge-center">LVL <span id="user-level">—</span></div>
+                <div class="profile-name" id="detective-name" data-text="—">—</div>
+                <div class="profile-id">ДОСЬЕ: <span id="user-id">—</span></div>
 
                 <!-- Ультра-современная шкала опыта -->
                 <div class="xp-section">
                     <div class="xp-label">
                         <span>ОПЫТ РАССЛЕДОВАНИЙ</span>
-                        <span><span id="current-xp">3,750</span> / <span id="max-xp">5,000</span> XP</span>
+                        <span><span id="current-xp">—</span> / <span id="max-xp">—</span> XP</span>
                     </div>
                     <div class="xp-progress-container">
                         <div class="xp-glow"></div>
-                        <div class="xp-progress" id="xp-bar" style="width: 75%;"></div>
+                        <div class="xp-progress" id="xp-bar" style="width: 0%;"></div>
                     </div>
                 </div>
             </div>
@@ -1546,19 +1643,19 @@
             <!-- Криминальная статистика -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-value" id="stat-investigations">10</div>
+                    <div class="stat-value" id="stat-investigations">—</div>
                     <div class="stat-label">Расследований</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="stat-solved">35</div>
+                    <div class="stat-value" id="stat-solved">—</div>
                     <div class="stat-label">Раскрыто дел</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="stat-streak">0</div>
+                    <div class="stat-value" id="stat-streak">—</div>
                     <div class="stat-label">Серия успехов</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="stat-accuracy">70<span style="color: var(--neon-red);">%</span></div>
+                    <div class="stat-value" id="stat-accuracy">—<span style="color: var(--neon-red);">%</span></div>
                     <div class="stat-label">Точность</div>
                 </div>
             </div>
@@ -1568,30 +1665,11 @@
                 <div class="section-header">
                     <div class="section-title">
                         🏆 ЗАСЛУГИ
-                        <div class="section-count"><span id="achievements-count">4</span>/37</div>
+                        <div class="section-count"><span id="achievements-count">—</span>/37</div>
                     </div>
                 </div>
                 <div class="achievements-scroll" id="achievements-container">
-                    <div class="achievement-item">
-                        <div class="achievement-icon">⭐</div>
-                        <div class="achievement-name">Первое дело</div>
-                    </div>
-                    <div class="achievement-item">
-                        <div class="achievement-icon">🥇</div>
-                        <div class="achievement-name">Новичок</div>
-                    </div>
-                    <div class="achievement-item locked">
-                        <div class="achievement-icon">🏆</div>
-                        <div class="achievement-name">Эксперт</div>
-                    </div>
-                    <div class="achievement-item">
-                        <div class="achievement-icon">👁️</div>
-                        <div class="achievement-name">Меткий глаз</div>
-                    </div>
-                    <div class="achievement-item">
-                        <div class="achievement-icon">🔍</div>
-                        <div class="achievement-name">Детектив</div>
-                    </div>
+                    <!-- Будет заполнено динамически -->
                 </div>
             </div>
 
@@ -1603,8 +1681,8 @@
 
                 <!-- Позиция в рейтинге -->
                 <div class="position-card">
-                    <div class="position-rank">#<span id="user-position">247</span></div>
-                    <div class="position-text">из <span id="total-players">12,459</span> детективов</div>
+                    <div class="position-rank">#<span id="user-position">—</span></div>
+                    <div class="position-text">из <span id="total-players">—</span> детективов</div>
                 </div>
 
                 <!-- Вкладки рейтинга -->
@@ -1635,24 +1713,24 @@
             <div class="achievement-progress" id="modal-progress" style="display: none;">
                 <div class="progress-label">
                     <span>Прогресс</span>
-                    <span><span id="progress-current">5</span> / <span id="progress-target">10</span></span>
+                    <span><span id="progress-current">—</span> / <span id="progress-target">—</span></span>
                 </div>
                 <div class="progress-bar-container">
-                    <div class="progress-bar" id="progress-bar" style="width: 50%;"></div>
+                    <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
                 </div>
-                <div class="progress-percentage" id="progress-percentage">50%</div>
+                <div class="progress-percentage" id="progress-percentage">—%</div>
             </div>
 
             <!-- Как получить достижение -->
             <div class="achievement-requirement" id="modal-requirement">
                 <div class="requirement-title">Как получить:</div>
-                <div class="requirement-text" id="requirement-text">Выполните определенные условия</div>
+                <div class="requirement-text" id="requirement-text">—</div>
             </div>
 
             <!-- Награда за достижение -->
             <div class="achievement-reward" id="modal-reward" style="display: none;">
                 <div class="reward-title">Награда:</div>
-                <div class="reward-text" id="reward-text">+100 очков опыта</div>
+                <div class="reward-text" id="reward-text">—</div>
             </div>
 
             <div class="achievement-modal-status unlocked" id="modal-status">Получено</div>
@@ -1737,5 +1815,7 @@
         }
     </script>
 </body>
+
+</html>
 
 </html>

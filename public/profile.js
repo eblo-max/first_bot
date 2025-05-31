@@ -791,7 +791,7 @@ class DramaticCriminalProfile {
             this.showError(`Не удалось загрузить профиль: ${error.message}`);
         } finally {
             ProfileState.isLoading = false;
-            this.hideLoadingState();
+            // НЕ вызываем hideLoadingState здесь - это делается в hideProfileSkeleton
         }
     }
 
@@ -836,7 +836,7 @@ class DramaticCriminalProfile {
             this.loadUserAvatar(userData.telegramId);
         }
 
-        this.hideLoadingState();
+        // НЕ вызываем hideLoadingState здесь - это делается в hideProfileSkeleton
         console.log('✅ UI профиля обновлен');
     }
 
@@ -965,45 +965,180 @@ class DramaticCriminalProfile {
     async loadUserAchievements() {
         try {
             console.log('🏆 Загружаем достижения пользователя...');
+
+            // Сначала пробуем загрузить конкретные достижения пользователя
             const response = await fetch('/api/profile/achievements/available', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
-            let achievements = [];
+            let userAchievements = [];
+
             if (response.ok) {
                 const data = await response.json();
-                achievements = data.unlocked || [];
-                console.log('✅ Достижения загружены:', achievements);
+                console.log('📊 Ответ API достижений:', data);
+
+                // Проверяем различные форматы ответа API
+                if (data.unlocked && Array.isArray(data.unlocked)) {
+                    userAchievements = data.unlocked;
+                } else if (data.achievements && Array.isArray(data.achievements)) {
+                    userAchievements = data.achievements;
+                } else if (data.data && data.data.unlocked && Array.isArray(data.data.unlocked)) {
+                    userAchievements = data.data.unlocked;
+                } else if (data.data && data.data.achievements && Array.isArray(data.data.achievements)) {
+                    userAchievements = data.data.achievements;
+                } else if (Array.isArray(data)) {
+                    userAchievements = data;
+                }
+
+                console.log('✅ Открытые достижения пользователя:', userAchievements);
             } else {
-                console.log('⚠️ Не удалось загрузить достижения, используем пустой список');
+                console.log('⚠️ API достижений недоступен, пробуем альтернативные методы');
+
+                // Альтернативный метод - попробуем получить достижения из профиля
+                if (ProfileState.user?.achievements) {
+                    userAchievements = ProfileState.user.achievements;
+                    console.log('📋 Достижения из профиля пользователя:', userAchievements);
+                }
+
+                // Если и это не сработало, генерируем основные достижения на основе статистики
+                if (userAchievements.length === 0 && ProfileState.user?.stats) {
+                    userAchievements = this.generateBasicAchievements(ProfileState.user.stats);
+                    console.log('🔧 Сгенерированные достижения на основе статистики:', userAchievements);
+                }
             }
 
-            ProfileState.achievements = achievements;
-            this.renderAchievements(achievements);
+            ProfileState.achievements = userAchievements;
+            this.renderAchievements(userAchievements);
 
         } catch (error) {
             console.error('❌ Ошибка загрузки достижений:', error);
-            this.renderAchievements([]);
+
+            // В случае ошибки пытаемся сгенерировать базовые достижения
+            if (ProfileState.user?.stats) {
+                const basicAchievements = this.generateBasicAchievements(ProfileState.user.stats);
+                console.log('🛠️ Fallback: сгенерированные достижения:', basicAchievements);
+                this.renderAchievements(basicAchievements);
+            } else {
+                this.renderAchievements([]);
+            }
         }
+    }
+
+    // Новый метод для генерации базовых достижений на основе статистики
+    generateBasicAchievements(stats) {
+        const achievements = [];
+
+        console.log('📊 Статистика для генерации достижений:', stats);
+
+        // Проверяем каждое достижение на основе статистики
+        const investigations = stats.investigations || stats.totalGames || 0;
+        const accuracy = stats.accuracy || 0;
+        const winStreak = stats.winStreak || stats.currentStreak || 0;
+        const totalScore = stats.totalScore || 0;
+        const solvedCases = stats.solvedCases || stats.correctAnswers || 0;
+
+        // Основные достижения по количеству дел
+        if (investigations >= 1) {
+            achievements.push({ id: 'first_blood', unlockedAt: new Date() });
+        }
+        if (investigations >= 10) {
+            achievements.push({ id: 'rookie_investigator', unlockedAt: new Date() });
+        }
+        if (investigations >= 50) {
+            achievements.push({ id: 'case_closer', unlockedAt: new Date() });
+        }
+        if (investigations >= 100) {
+            achievements.push({ id: 'crime_solver', unlockedAt: new Date() });
+        }
+        if (investigations >= 250) {
+            achievements.push({ id: 'detective_veteran', unlockedAt: new Date() });
+        }
+
+        // Достижения по точности
+        if (investigations >= 50 && accuracy >= 70) {
+            achievements.push({ id: 'sharp_shooter', unlockedAt: new Date() });
+        }
+        if (investigations >= 100 && accuracy >= 80) {
+            achievements.push({ id: 'eagle_eye', unlockedAt: new Date() });
+        }
+        if (investigations >= 200 && accuracy >= 90) {
+            achievements.push({ id: 'master_detective', unlockedAt: new Date() });
+        }
+
+        // Достижения по сериям
+        if (winStreak >= 10) {
+            achievements.push({ id: 'hot_streak', unlockedAt: new Date() });
+        }
+        if (winStreak >= 25) {
+            achievements.push({ id: 'unstoppable', unlockedAt: new Date() });
+        }
+
+        // Достижения по общему счету
+        if (totalScore >= 100000) {
+            achievements.push({ id: 'score_hunter', unlockedAt: new Date() });
+        }
+        if (totalScore >= 1000000) {
+            achievements.push({ id: 'point_legend', unlockedAt: new Date() });
+        }
+
+        // Достижения по количеству правильных ответов
+        if (solvedCases >= 500) {
+            achievements.push({ id: 'crime_fighter', unlockedAt: new Date() });
+        }
+        if (solvedCases >= 1000) {
+            achievements.push({ id: 'elite_investigator', unlockedAt: new Date() });
+        }
+
+        console.log('🎖️ Сгенерированные достижения:', achievements);
+        return achievements;
     }
 
     renderAchievements(userAchievements = []) {
         const container = document.getElementById('achievements-container');
         if (!container) return;
 
+        console.log('🎨 Рендерим достижения. Пользовательские:', userAchievements);
+        console.log('📋 Все доступные достижения:', ProfileConfig.achievements.length);
+
+        // Создаем мапу открытых достижений для быстрого поиска
+        const unlockedAchievementsMap = new Map();
+
+        userAchievements.forEach(achievement => {
+            if (typeof achievement === 'string') {
+                // Если достижение просто строка (ID)
+                unlockedAchievementsMap.set(achievement, true);
+            } else if (achievement && achievement.id) {
+                // Если достижение объект с ID
+                unlockedAchievementsMap.set(achievement.id, achievement);
+            }
+        });
+
+        console.log('🗺️ Карта открытых достижений:', unlockedAchievementsMap);
+
+        // Объединяем все достижения с информацией о разблокировке
         const achievements = ProfileConfig.achievements.map(achievement => {
-            const isUnlocked = userAchievements.some(ua => ua.id === achievement.id);
+            const isUnlocked = unlockedAchievementsMap.has(achievement.id);
+            const unlockedData = unlockedAchievementsMap.get(achievement.id);
+
+            console.log(`🔍 Достижение ${achievement.id}: ${isUnlocked ? 'ОТКРЫТО' : 'ЗАКРЫТО'}`);
+
             return {
                 ...achievement,
-                unlocked: isUnlocked
+                unlocked: isUnlocked,
+                unlockedAt: unlockedData && typeof unlockedData === 'object' ? unlockedData.unlockedAt : null
             };
         });
 
+        console.log('🎯 Финальный список достижений для рендера:', achievements);
+
+        // Рендерим HTML
         container.innerHTML = achievements.map(achievement => `
             <div class="achievement-item ${achievement.unlocked ? '' : 'locked'}" 
-                 data-achievement-id="${achievement.id}">
+                 data-achievement-id="${achievement.id}"
+                 title="${achievement.unlocked ? 'Получено' : 'Заблокировано'}: ${achievement.description}">
                 <div class="achievement-icon">${achievement.icon}</div>
                 <div class="achievement-name">${achievement.name}</div>
+                ${achievement.unlocked ? '<div class="achievement-checkmark">✓</div>' : ''}
             </div>
         `).join('');
 
@@ -1013,6 +1148,8 @@ class DramaticCriminalProfile {
         if (countElement) {
             countElement.textContent = unlockedCount;
         }
+
+        console.log(`📊 Отображено ${unlockedCount} из ${achievements.length} достижений`);
 
         // Добавляем интерактивность
         this.addAchievementInteractivity();
