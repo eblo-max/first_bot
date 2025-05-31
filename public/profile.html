@@ -73,6 +73,7 @@
             animation: bloodFlow 20s ease-in-out infinite;
             pointer-events: none;
             z-index: 1;
+            filter: blur(3px);
         }
 
         @keyframes bloodFlow {
@@ -103,6 +104,8 @@
             height: 100%;
             pointer-events: none;
             z-index: 2;
+            filter: blur(1.5px);
+            /* Размытие частиц */
         }
 
         .particle {
@@ -139,6 +142,8 @@
             min-height: 100vh;
             position: relative;
             z-index: 10;
+            backdrop-filter: blur(5px);
+            background: rgba(10, 10, 10, 0.1);
         }
 
         /* Мрачный заголовок */
@@ -221,7 +226,8 @@
 
         /* Карточка досье детектива */
         .profile-card {
-            background: rgba(26, 26, 26, 0.9);
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.98) 0%, rgba(20, 20, 20, 0.99) 100%);
+            /* Более плотный фон */
             border: 2px solid var(--blood-red);
             border-radius: 20px;
             padding: 32px 24px;
@@ -230,7 +236,8 @@
             overflow: hidden;
             margin-bottom: 24px;
             box-shadow: var(--shadow-deep);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
+            /* Усиленное размытие фона */
             animation: criminalEntry 1s ease-out;
         }
 
@@ -611,7 +618,8 @@
         }
 
         .stat-card {
-            background: rgba(26, 26, 26, 0.8);
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.98) 0%, rgba(20, 20, 20, 0.99) 100%);
+            /* Более плотный фон */
             border: 1px solid var(--blood-red);
             border-radius: 16px;
             padding: 20px;
@@ -620,7 +628,8 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
+            /* Усиленное размытие */
             animation: criminalEntry 0.8s ease-out backwards;
         }
 
@@ -727,7 +736,8 @@
 
         .achievement-item {
             min-width: 120px;
-            background: rgba(26, 26, 26, 0.9);
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.98) 0%, rgba(20, 20, 20, 0.99) 100%);
+            /* Более плотный фон */
             border: 2px solid var(--blood-red);
             border-radius: 16px;
             padding: 16px;
@@ -736,6 +746,8 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(15px);
+            /* Добавляем размытие фона */
         }
 
         .achievement-item::before {
@@ -1589,12 +1601,242 @@
             line-height: 1.4;
             font-weight: 600;
         }
+
+        /* Декоративные элементы фона */
+
+        /* Кровавые капли */
+        .blood-drops {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            filter: blur(2px);
+            /* Размытие кровавых капель */
+        }
+
+        .blood-drop {
+            position: absolute;
+            width: 4px;
+            height: 6px;
+            background: radial-gradient(ellipse at center, #8B0000 0%, #4A0000 70%, transparent 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            opacity: 0.7;
+            animation: bloodDrip 8s ease-in-out infinite;
+        }
+
+        .blood-drop:nth-child(1) {
+            top: 15%;
+            left: 25%;
+            animation-delay: 0s;
+        }
+
+        .blood-drop:nth-child(2) {
+            top: 60%;
+            right: 20%;
+            animation-delay: 3s;
+        }
+
+        .blood-drop:nth-child(3) {
+            bottom: 30%;
+            left: 70%;
+            animation-delay: 6s;
+        }
+
+        .blood-drop:nth-child(4) {
+            top: 80%;
+            right: 60%;
+            animation-delay: 2s;
+        }
+
+        .blood-drop:nth-child(5) {
+            top: 40%;
+            left: 80%;
+            animation-delay: 5s;
+        }
+
+        @keyframes bloodDrip {
+
+            0%,
+            90%,
+            100% {
+                opacity: 0.5;
+                transform: translateY(0) scale(1);
+            }
+
+            45% {
+                opacity: 0.8;
+                transform: translateY(3px) scale(1.1);
+            }
+        }
+
+        /* Отпечатки пальцев декоративные */
+        .fingerprint {
+            position: absolute;
+            width: 25px;
+            height: 35px;
+            background-image:
+                radial-gradient(ellipse 1px 2px at 50% 20%, #DC143C 50%, transparent 50%),
+                radial-gradient(ellipse 1px 2px at 50% 40%, #DC143C 50%, transparent 50%),
+                radial-gradient(ellipse 1px 2px at 50% 60%, #DC143C 50%, transparent 50%),
+                radial-gradient(ellipse 1px 2px at 50% 80%, #DC143C 50%, transparent 50%);
+            background-size: 20px 3px;
+            background-repeat: no-repeat;
+            opacity: 0.3;
+            pointer-events: none;
+            animation: fingerprintFade 12s ease-in-out infinite;
+            filter: blur(1px);
+            /* Размытие отпечатков пальцев */
+        }
+
+        .fingerprint:nth-child(1) {
+            top: 20%;
+            right: 15%;
+            transform: rotate(20deg);
+            animation-delay: 0s;
+        }
+
+        .fingerprint:nth-child(2) {
+            bottom: 35%;
+            left: 10%;
+            transform: rotate(-15deg);
+            animation-delay: 4s;
+        }
+
+        .fingerprint:nth-child(3) {
+            top: 70%;
+            right: 80%;
+            transform: rotate(45deg);
+            animation-delay: 8s;
+        }
+
+        @keyframes fingerprintFade {
+
+            0%,
+            100% {
+                opacity: 0.2;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* Маркеры улик */
+        .evidence-markers {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+            filter: blur(1.5px);
+            /* Размытие маркеров улик */
+        }
+
+        .evidence-marker {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #FFD700;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: markerPulse 4s ease-in-out infinite;
+        }
+
+        .evidence-marker::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: #FFD700;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .evidence-marker::after {
+            content: attr(data-number);
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7px;
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        .evidence-marker:nth-child(1) {
+            top: 30%;
+            left: 20%;
+            animation-delay: 0s;
+        }
+
+        .evidence-marker:nth-child(2) {
+            top: 55%;
+            right: 25%;
+            animation-delay: 1s;
+        }
+
+        .evidence-marker:nth-child(3) {
+            bottom: 40%;
+            left: 30%;
+            animation-delay: 2s;
+        }
+
+        .evidence-marker:nth-child(4) {
+            top: 75%;
+            right: 15%;
+            animation-delay: 1.5s;
+        }
+
+        @keyframes markerPulse {
+
+            0%,
+            100% {
+                opacity: 0.4;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.1);
+            }
+        }
     </style>
 </head>
 
 <body>
     <!-- Анимированные частицы -->
     <div class="crime-particles" id="crime-particles"></div>
+
+    <!-- Декоративные элементы фона -->
+    <!-- Кровавые капли -->
+    <div class="blood-drops">
+        <div class="blood-drop"></div>
+        <div class="blood-drop"></div>
+        <div class="blood-drop"></div>
+        <div class="blood-drop"></div>
+        <div class="blood-drop"></div>
+    </div>
+
+    <!-- Отпечатки пальцев -->
+    <div class="fingerprint"></div>
+    <div class="fingerprint"></div>
+    <div class="fingerprint"></div>
+
+    <!-- Маркеры улик -->
+    <div class="evidence-markers">
+        <div class="evidence-marker" data-number="1"></div>
+        <div class="evidence-marker" data-number="2"></div>
+        <div class="evidence-marker" data-number="3"></div>
+        <div class="evidence-marker" data-number="4"></div>
+    </div>
 
     <div class="profile-container">
         <!-- Мрачный заголовок -->
@@ -1777,16 +2019,65 @@
 
         function createCrimeParticles() {
             const container = document.getElementById('crime-particles');
-            const particleCount = 20;
+            const particleCount = 50;
 
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
+
+                // Разнообразие частиц
+                const particleType = Math.random();
+                if (particleType < 0.3) {
+                    // Кровавые частицы
+                    particle.style.width = '2px';
+                    particle.style.height = '2px';
+                    particle.style.background = '#8B0000';
+                    particle.style.boxShadow = '0 0 3px #8B0000';
+                } else if (particleType < 0.5) {
+                    // Золотые улики
+                    particle.style.width = '3px';
+                    particle.style.height = '3px';
+                    particle.style.background = '#FFD700';
+                    particle.style.boxShadow = '0 0 4px #FFD700';
+                } else if (particleType < 0.7) {
+                    // Белые пылинки
+                    particle.style.width = '1px';
+                    particle.style.height = '1px';
+                    particle.style.background = 'rgba(255, 255, 255, 0.8)';
+                } else {
+                    // Красные неоновые
+                    particle.style.width = '2px';
+                    particle.style.height = '2px';
+                    particle.style.background = '#FF0040';
+                    particle.style.boxShadow = '0 0 3px #FF0040';
+                }
+
                 particle.style.left = Math.random() * 100 + '%';
                 particle.style.animationDelay = Math.random() * 15 + 's';
                 particle.style.animationDuration = (15 + Math.random() * 10) + 's';
                 container.appendChild(particle);
             }
+
+            // Добавляем дополнительные эффекты каждые несколько секунд
+            setInterval(() => {
+                if (container.children.length > 70) return; // Ограничиваем максимальное количество
+
+                const extraParticle = document.createElement('div');
+                extraParticle.className = 'particle';
+                extraParticle.style.width = '1px';
+                extraParticle.style.height = '1px';
+                extraParticle.style.background = '#DC143C';
+                extraParticle.style.left = Math.random() * 100 + '%';
+                extraParticle.style.animationDuration = '10s';
+                container.appendChild(extraParticle);
+
+                // Удаляем через время
+                setTimeout(() => {
+                    if (extraParticle.parentNode) {
+                        extraParticle.parentNode.removeChild(extraParticle);
+                    }
+                }, 10000);
+            }, 4000); // Каждые 4 секунды добавляем новую частицу
         }
 
         function startCriminalEffects() {
@@ -1815,7 +2106,5 @@
         }
     </script>
 </body>
-
-</html>
 
 </html>
