@@ -323,10 +323,9 @@ class DramaticCriminalProfile {
             }
 
             if (isAuth) {
-                // Загружаем данные параллельно
+                // Загружаем данные параллельно (достижения теперь грузятся в updateProfileUI)
                 await Promise.all([
                     this.loadUserProfile(),
-                    this.loadUserAchievements(),
                     this.loadLeaderboardData('day')
                 ]);
 
@@ -820,15 +819,37 @@ class DramaticCriminalProfile {
         this.updateElement('stat-streak', stats.winStreak || 0);
         this.updateElement('stat-accuracy', stats.accuracy || 0);
 
-        // Обновляем имя и ID пользователя
-        if (userData.firstName || userData.username) {
-            const displayName = userData.firstName || userData.username || 'Детектив';
-            this.updateElement('detective-name', displayName.toUpperCase());
-            document.getElementById('detective-name').setAttribute('data-text', displayName.toUpperCase());
+        // 🔧 ИСПРАВЛЕННОЕ ОБНОВЛЕНИЕ ИМЕНИ И ID ПОЛЬЗОВАТЕЛЯ
+        console.log('📝 Обрабатываем имя пользователя:', {
+            firstName: userData.firstName,
+            username: userData.username,
+            telegramId: userData.telegramId
+        });
+
+        // Определяем имя для отображения
+        let displayName = '';
+        if (userData.firstName && userData.firstName.trim()) {
+            displayName = userData.firstName.trim();
+        } else if (userData.username && userData.username.trim()) {
+            displayName = userData.username.trim();
+        } else {
+            displayName = 'Детектив';
         }
 
+        console.log('✅ Финальное имя для отображения:', displayName);
+
+        // Обновляем имя пользователя
+        this.updateElement('detective-name', displayName.toUpperCase());
+        const nameElement = document.getElementById('detective-name');
+        if (nameElement) {
+            nameElement.setAttribute('data-text', displayName.toUpperCase());
+        }
+
+        // Обновляем ID пользователя
         if (userData.telegramId) {
             this.updateElement('user-id', userData.telegramId);
+        } else {
+            this.updateElement('user-id', '—');
         }
 
         // Загружаем аватар если есть telegramId
@@ -836,8 +857,18 @@ class DramaticCriminalProfile {
             this.loadUserAvatar(userData.telegramId);
         }
 
-        // НЕ вызываем hideLoadingState здесь - это делается в hideProfileSkeleton
-        console.log('✅ UI профиля обновлен');
+        console.log('✅ UI профиля обновлен, генерируем достижения...');
+
+        // 🎖️ ПРИНУДИТЕЛЬНО ГЕНЕРИРУЕМ ДОСТИЖЕНИЯ НА ОСНОВЕ СТАТИСТИКИ
+        if (stats && (stats.investigations > 0 || stats.totalScore > 0)) {
+            console.log('🔧 Принудительная генерация достижений на основе статистики...');
+            const generatedAchievements = this.generateBasicAchievements(stats);
+            if (generatedAchievements.length > 0) {
+                console.log('🎯 Применяем сгенерированные достижения:', generatedAchievements);
+                ProfileState.achievements = generatedAchievements;
+                this.renderAchievements(generatedAchievements);
+            }
+        }
     }
 
     calculateLevel(totalScore) {
@@ -966,60 +997,74 @@ class DramaticCriminalProfile {
         try {
             console.log('🏆 Загружаем достижения пользователя...');
 
-            // Сначала пробуем загрузить конкретные достижения пользователя
-            const response = await fetch('/api/profile/achievements/available', {
-                headers: { 'Authorization': `Bearer ${this.token}` }
-            });
-
             let userAchievements = [];
 
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 Ответ API достижений:', data);
+            // Сначала пробуем загрузить конкретные достижения пользователя
+            try {
+                const response = await fetch('/api/profile/achievements/available', {
+                    headers: { 'Authorization': `Bearer ${this.token}` }
+                });
 
-                // Проверяем различные форматы ответа API
-                if (data.unlocked && Array.isArray(data.unlocked)) {
-                    userAchievements = data.unlocked;
-                } else if (data.achievements && Array.isArray(data.achievements)) {
-                    userAchievements = data.achievements;
-                } else if (data.data && data.data.unlocked && Array.isArray(data.data.unlocked)) {
-                    userAchievements = data.data.unlocked;
-                } else if (data.data && data.data.achievements && Array.isArray(data.data.achievements)) {
-                    userAchievements = data.data.achievements;
-                } else if (Array.isArray(data)) {
-                    userAchievements = data;
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('📊 Ответ API достижений:', data);
+
+                    // Проверяем различные форматы ответа API
+                    if (data.unlocked && Array.isArray(data.unlocked)) {
+                        userAchievements = data.unlocked;
+                    } else if (data.achievements && Array.isArray(data.achievements)) {
+                        userAchievements = data.achievements;
+                    } else if (data.data && data.data.unlocked && Array.isArray(data.data.unlocked)) {
+                        userAchievements = data.data.unlocked;
+                    } else if (data.data && data.data.achievements && Array.isArray(data.data.achievements)) {
+                        userAchievements = data.data.achievements;
+                    } else if (Array.isArray(data)) {
+                        userAchievements = data;
+                    }
+
+                    console.log('✅ Открытые достижения из API:', userAchievements);
+                } else {
+                    console.log(`⚠️ API недоступен (${response.status}), переходим к генерации`);
                 }
+            } catch (apiError) {
+                console.log('⚠️ Ошибка API достижений:', apiError.message);
+            }
 
-                console.log('✅ Открытые достижения пользователя:', userAchievements);
-            } else {
-                console.log('⚠️ API достижений недоступен, пробуем альтернативные методы');
+            // Если API не вернул достижения, пытаемся сгенерировать на основе статистики
+            if (userAchievements.length === 0) {
+                console.log('🔧 API не вернул достижения, генерируем на основе статистики...');
 
-                // Альтернативный метод - попробуем получить достижения из профиля
-                if (ProfileState.user?.achievements) {
+                // Альтернативный метод - из профиля пользователя
+                if (ProfileState.user?.achievements && Array.isArray(ProfileState.user.achievements)) {
                     userAchievements = ProfileState.user.achievements;
                     console.log('📋 Достижения из профиля пользователя:', userAchievements);
                 }
 
-                // Если и это не сработало, генерируем основные достижения на основе статистики
+                // Генерируем основные достижения на основе статистики
                 if (userAchievements.length === 0 && ProfileState.user?.stats) {
                     userAchievements = this.generateBasicAchievements(ProfileState.user.stats);
-                    console.log('🔧 Сгенерированные достижения на основе статистики:', userAchievements);
+                    console.log('🎖️ Сгенерированные достижения:', userAchievements);
                 }
             }
 
             ProfileState.achievements = userAchievements;
             this.renderAchievements(userAchievements);
 
-        } catch (error) {
-            console.error('❌ Ошибка загрузки достижений:', error);
+            return userAchievements;
 
-            // В случае ошибки пытаемся сгенерировать базовые достижения
+        } catch (error) {
+            console.error('❌ Критическая ошибка загрузки достижений:', error);
+
+            // Последняя попытка - генерируем базовые достижения
             if (ProfileState.user?.stats) {
                 const basicAchievements = this.generateBasicAchievements(ProfileState.user.stats);
-                console.log('🛠️ Fallback: сгенерированные достижения:', basicAchievements);
+                console.log('🛠️ Fallback достижения:', basicAchievements);
                 this.renderAchievements(basicAchievements);
+                return basicAchievements;
             } else {
+                console.log('❌ Нет данных для генерации достижений');
                 this.renderAchievements([]);
+                return [];
             }
         }
     }
