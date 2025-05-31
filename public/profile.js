@@ -137,11 +137,99 @@ class DramaticCriminalProfile {
         try {
             console.log('🚀 Инициализация современного профиля...');
 
+            // Детектируем мобильное устройство
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            console.log('📱 Мобильное устройство:', isMobile);
+
             // Показываем загрузку
             this.showLoadingState();
 
-            // Авторизация
-            const isAuth = await this.authenticate();
+            // Авторизация с дополнительными попытками для мобильных
+            let isAuth = await this.authenticate();
+
+            // СПЕЦИАЛЬНЫЙ FALLBACK ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ
+            if (!isAuth && isMobile) {
+                console.log('🔄 Первая попытка авторизации на мобильном не удалась, пробуем альтернативные методы...');
+
+                // Попытка 1: Переинициализация Telegram WebApp
+                if (tg) {
+                    console.log('🔄 Попытка 1: Переинициализация Telegram WebApp...');
+                    try {
+                        tg.ready();
+                        tg.expand();
+
+                        // Ждем немного для стабилизации
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+
+                        isAuth = await this.authenticate();
+                        if (isAuth) {
+                            console.log('✅ Авторизация успешна после переинициализации Telegram WebApp');
+                        }
+                    } catch (e) {
+                        console.error('❌ Ошибка переинициализации Telegram WebApp:', e);
+                    }
+                }
+
+                // Попытка 2: Использование данных из URL параметров
+                if (!isAuth) {
+                    console.log('🔄 Попытка 2: Проверка токена в URL параметрах...');
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const urlToken = urlParams.get('token') || urlParams.get('auth_token');
+
+                    if (urlToken) {
+                        console.log('🔍 Найден токен в URL:', urlToken.substring(0, 20) + '...');
+                        localStorage.setItem('token', urlToken);
+                        this.token = urlToken;
+                        isAuth = true;
+                    }
+                }
+
+                // Попытка 3: Проверка initData в localStorage 
+                if (!isAuth) {
+                    console.log('🔄 Попытка 3: Использование сохраненных initData...');
+                    const savedInitData = localStorage.getItem('initData');
+
+                    if (savedInitData && savedInitData !== tg?.initData) {
+                        console.log('🔍 Найдены сохраненные initData, пробуем авторизацию...');
+                        try {
+                            const response = await fetch('/api/auth/init', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Mobile-Fallback': 'true'
+                                },
+                                body: JSON.stringify({ initData: savedInitData })
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data.status === 'success' && data.data?.token) {
+                                    localStorage.setItem('token', data.data.token);
+                                    this.token = data.data.token;
+                                    isAuth = true;
+                                    console.log('✅ Авторизация успешна с сохраненными initData');
+                                }
+                            }
+                        } catch (e) {
+                            console.error('❌ Ошибка авторизации с сохраненными initData:', e);
+                        }
+                    }
+                }
+
+                // Попытка 4: Режим разработчика для мобильных
+                if (!isAuth) {
+                    console.log('🔄 Попытка 4: Проверка режима разработчика...');
+                    const isDeveloperMode = window.location.search.includes('dev=true') ||
+                        window.location.search.includes('debug=true') ||
+                        window.location.hostname === 'localhost';
+
+                    if (isDeveloperMode) {
+                        console.log('🔧 Режим разработчика активен - пробуем тестовую авторизацию');
+                        await this.tryDeveloperAuth();
+                        isAuth = true;
+                    }
+                }
+            }
 
             if (isAuth) {
                 // Загружаем данные параллельно
@@ -158,17 +246,8 @@ class DramaticCriminalProfile {
 
                 this.startPeriodicUpdates();
             } else {
-                // Если авторизация не удалась, пробуем режим разработки
-                const isDeveloperMode = window.location.search.includes('dev=true') ||
-                    window.location.hostname === 'localhost' ||
-                    window.location.hostname === '127.0.0.1';
-
-                if (isDeveloperMode) {
-                    console.log('🔧 Режим разработки: пробуем авторизацию с тестовым токеном');
-                    await this.tryDeveloperAuth();
-                } else {
-                    this.showAuthError();
-                }
+                // Если все попытки не удались
+                this.showAuthError();
             }
 
         } catch (error) {
@@ -212,52 +291,122 @@ class DramaticCriminalProfile {
 
     async authenticate() {
         try {
+            console.log('🔐 === НАЧАЛО ДЕТАЛЬНОЙ ДИАГНОСТИКИ АВТОРИЗАЦИИ ===');
+            console.log('🔍 Platform:', tg?.platform || 'UNKNOWN');
+            console.log('🔍 Version:', tg?.version || 'UNKNOWN');
+            console.log('🔍 User-Agent:', navigator.userAgent);
+            console.log('🔍 Is Mobile:', /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+            console.log('🔍 Screen:', `${screen.width}x${screen.height}`);
+
+            // Диагностика Telegram WebApp состояния
+            if (tg) {
+                console.log('🔍 Telegram WebApp State:');
+                console.log('  - initData length:', tg.initData?.length || 0);
+                console.log('  - initData sample:', tg.initData?.substring(0, 100) + '...' || 'EMPTY');
+                console.log('  - initDataUnsafe:', JSON.stringify(tg.initDataUnsafe, null, 2));
+                console.log('  - isExpanded:', tg.isExpanded);
+                console.log('  - viewportHeight:', tg.viewportHeight);
+                console.log('  - colorScheme:', tg.colorScheme);
+            } else {
+                console.error('❌ Telegram WebApp объект недоступен!');
+            }
+
             // Получаем токен из различных источников
             let token = new URLSearchParams(window.location.search).get('token') ||
                 localStorage.getItem('token') ||
                 localStorage.getItem('auth_token');
 
+            console.log('🔍 Поиск существующего токена:', token ? `НАЙДЕН (${token.substring(0, 20)}...)` : 'НЕТ');
+
             // Если нет токена и есть Telegram WebApp, пытаемся авторизоваться
             if (!token && tg?.initData) {
-                console.log('🔐 Авторизация через Telegram WebApp...');
+                console.log('🔐 Попытка авторизации через Telegram WebApp...');
+                console.log('🔍 Отправляемые данные на сервер:');
+                console.log('  - initData длина:', tg.initData.length);
+                console.log('  - initData начало:', tg.initData.substring(0, 200));
+
+                const authPayload = { initData: tg.initData };
+                console.log('🔍 Auth payload:', JSON.stringify(authPayload, null, 2));
+
                 const response = await fetch('/api/auth/init', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ initData: tg.initData })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'User-Agent': navigator.userAgent
+                    },
+                    body: JSON.stringify(authPayload)
                 });
+
+                console.log('🔍 Ответ сервера:');
+                console.log('  - Status:', response.status);
+                console.log('  - Status Text:', response.statusText);
+                console.log('  - Headers:', [...response.headers.entries()]);
 
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('  - Response Data:', JSON.stringify(data, null, 2));
+
                     if (data.status === 'success' && data.data?.token) {
                         token = data.data.token;
                         localStorage.setItem('token', token);
                         console.log('✅ Токен получен через Telegram');
+                    } else {
+                        console.error('❌ Сервер не вернул токен:', data);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ Ошибка авторизации:');
+                    console.error('  - Status:', response.status);
+                    console.error('  - Error:', errorText);
+
+                    // Пытаемся парсить как JSON для детальной диагностики
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        console.error('  - Parsed Error:', JSON.stringify(errorData, null, 2));
+                    } catch (e) {
+                        console.error('  - Raw Error Text:', errorText);
                     }
                 }
+            } else if (!tg?.initData) {
+                console.error('❌ initData отсутствует в Telegram WebApp!');
+                console.log('🔍 Доступные данные Telegram:');
+                console.log('  - tg объект:', !!tg);
+                console.log('  - tg.initData:', tg?.initData || 'UNDEFINED');
+                console.log('  - tg.initDataUnsafe:', tg?.initDataUnsafe || 'UNDEFINED');
             }
 
             // Проверяем валидность токена
             if (token) {
+                console.log('🔍 Проверка валидности токена...');
                 const response = await fetch('/api/auth/verify', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'User-Agent': navigator.userAgent
+                    }
                 });
+
+                console.log('🔍 Результат проверки токена:');
+                console.log('  - Status:', response.status);
+                console.log('  - Status Text:', response.statusText);
 
                 if (response.ok) {
                     this.token = token;
                     console.log('✅ Токен валиден');
                     return true;
                 } else {
-                    console.log('❌ Токен недействителен');
+                    const errorText = await response.text();
+                    console.log('❌ Токен недействителен:', errorText);
                     localStorage.removeItem('token');
                     localStorage.removeItem('auth_token');
                 }
             }
 
-            console.log('❌ Токен не найден или недействителен');
+            console.log('❌ Авторизация не удалась - токен отсутствует или недействителен');
             return false;
 
         } catch (error) {
-            console.error('❌ Ошибка авторизации:', error);
+            console.error('❌ Критическая ошибка авторизации:', error);
+            console.error('❌ Stack trace:', error.stack);
             return false;
         }
     }
@@ -1046,13 +1195,13 @@ class DramaticCriminalProfile {
         for (let i = 0; i < 15; i++) {
             const particle = document.createElement('div');
             particle.style.cssText = `
-                position: fixed;
+                    position: fixed;
                 width: ${4 + Math.random() * 6}px;
                 height: ${4 + Math.random() * 6}px;
                 background: ${['#FFD700', '#FFA500', '#FF6347'][Math.floor(Math.random() * 3)]};
                 border-radius: 50%;
                 pointer-events: none;
-                z-index: 1001;
+                    z-index: 1001;
                 left: 50%;
                 top: 50%;
                 box-shadow: 0 0 15px currentColor;
