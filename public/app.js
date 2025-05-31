@@ -694,26 +694,80 @@ async function selectAnswer(mistakeId) {
 }
 
 /**
- * Расчет очков в тестовом режиме
+ * Расчет очков за ответ (УНИФИЦИРОВАННАЯ ТЕСТОВАЯ ВЕРСИЯ - соответствует серверной)
+ * @param {boolean} isCorrect - Правильный ли ответ
+ * @param {number} timeSpent - Время ответа в миллисекундах 
+ * @param {string} difficulty - Сложность вопроса ('easy', 'medium', 'hard')
+ * @returns {object} - Объект с деталями начисления очков
  */
 function calculateTestPoints(isCorrect, timeSpent, difficulty = 'medium') {
+    // Если ответ неверный, очки не начисляются
     if (!isCorrect) {
-        return { base: 0, timeBonus: 0, difficultyBonus: 0, total: 0 };
+        return { base: 0, timeBonus: 0, difficultyBonus: 0, perfectionBonus: 0, total: 0 };
     }
 
-    const basePoints = 100;
-    const maxTimeBonus = 50;
-    const timeBonus = Math.max(0, Math.round(maxTimeBonus * (1 - timeSpent / 60)));
+    // Базовые очки за правильный ответ (соответствует серверу)
+    const BASE_POINTS = 100;
 
+    // ========== УЛУЧШЕННЫЙ БОНУС ЗА СКОРОСТЬ ==========
+    const MAX_TIME = 15000; // 15 секунд
+
+    // Прогрессивная формула с ускорением для очень быстрых ответов
+    let timeBonus = 0;
+    if (timeSpent <= MAX_TIME) {
+        const timeRatio = timeSpent / MAX_TIME;
+
+        // Квадратичная формула для более высоких бонусов за скорость
+        const speedMultiplier = Math.pow(1 - timeRatio, 1.5);
+        timeBonus = Math.round(50 * speedMultiplier);
+
+        // Дополнительный бонус за исключительную скорость
+        if (timeSpent < 3000) { // Менее 3 секунд
+            timeBonus += 10; // Дополнительные 10 очков
+        }
+        if (timeSpent < 1500) { // Менее 1.5 секунд  
+            timeBonus += 15; // Еще 15 очков (итого +25)
+        }
+    }
+
+    // ========== БОНУС ЗА СЛОЖНОСТЬ ==========
     let difficultyBonus = 0;
     switch (difficulty) {
-        case 'easy': difficultyBonus = 10; break;
-        case 'medium': difficultyBonus = 25; break;
-        case 'hard': difficultyBonus = 50; break;
+        case 'easy':
+            difficultyBonus = 0;
+            break;
+        case 'medium':
+            difficultyBonus = 25;
+            break;
+        case 'hard':
+            difficultyBonus = 50;
+            break;
+        default:
+            difficultyBonus = 0;
     }
 
-    const total = basePoints + timeBonus + difficultyBonus;
-    return { base: basePoints, timeBonus, difficultyBonus, total };
+    // ========== БОНУС ЗА СОВЕРШЕНСТВО ==========
+    // Дополнительный бонус для сочетания скорости и сложности
+    let perfectionBonus = 0;
+
+    if (difficulty === 'hard' && timeSpent < 5000) {
+        perfectionBonus = 25; // Бонус за быстрое решение сложной задачи
+    } else if (difficulty === 'medium' && timeSpent < 3000) {
+        perfectionBonus = 15; // Бонус за очень быстрое решение средней задачи  
+    } else if (difficulty === 'easy' && timeSpent < 2000) {
+        perfectionBonus = 10; // Небольшой бонус за мгновенное решение легкой задачи
+    }
+
+    // Общий счет
+    const total = BASE_POINTS + timeBonus + difficultyBonus + perfectionBonus;
+
+    return {
+        base: BASE_POINTS,
+        timeBonus,
+        difficultyBonus,
+        perfectionBonus,
+        total
+    };
 }
 
 /**

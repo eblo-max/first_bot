@@ -37,7 +37,7 @@ function initApp() {
     try {
         // Проверяем наличие Telegram WebApp API
         if (!window.Telegram || !window.Telegram.WebApp) {
-            
+
             handleNoTelegramApi();
             return;
         }
@@ -58,7 +58,7 @@ function initApp() {
 
         // Убеждаемся, что GameInterface инициализирован
         if (typeof GameInterface === 'undefined') {
-            
+
             document.addEventListener('DOMContentLoaded', () => {
 
                 loadGameData();
@@ -79,7 +79,7 @@ function initApp() {
  * Обработка отсутствия Telegram WebApp API
  */
 function handleNoTelegramApi() {
-    
+
     GameData.isTestMode = true;
 
     // Создаем тестовую заглушку для Telegram WebApp API если её ещё нет
@@ -377,7 +377,7 @@ function timeExpired() {
         GameData.timer = null;
 
     } else {
-        
+
     }
 
     // Если ответ уже был выбран, пропускаем обработку истечения времени
@@ -436,6 +436,7 @@ function timeExpired() {
                 base: 0,
                 timeBonus: 0,
                 difficultyBonus: 0,
+                perfectionBonus: 0,
                 total: 0
             }
         };
@@ -475,7 +476,7 @@ function selectAnswer(mistakeId) {
         GameData.timer = null;
 
     } else {
-        
+
         // Пытаемся остановить все интервалы, которые могут быть связаны с таймером
         const highestIntervalId = setInterval(() => { }, 100000);
         for (let i = 0; i < highestIntervalId; i++) {
@@ -550,49 +551,84 @@ function selectAnswer(mistakeId) {
 }
 
 /**
- * Расчет очков за ответ
- * @param {boolean} isCorrect - Флаг правильности ответа
- * @param {number} timeSpent - Затраченное время в секундах
- * @param {string} difficulty - Сложность вопроса
- * @returns {Object} Детали начисления очков
+ * Расчет очков за ответ (УНИФИЦИРОВАННАЯ ВЕРСИЯ - соответствует серверной)
+ * @param {boolean} isCorrect - Правильный ли ответ
+ * @param {number} timeSpent - Время ответа в миллисекундах
+ * @param {string} difficulty - Сложность вопроса ('easy', 'medium', 'hard')
+ * @returns {object} - Объект с деталями начисления очков
  */
 function calculatePoints(isCorrect, timeSpent, difficulty) {
+    // Если ответ неверный, очки не начисляются
     if (!isCorrect) {
         return {
             base: 0,
             timeBonus: 0,
             difficultyBonus: 0,
+            perfectionBonus: 0,
             total: 0
         };
     }
 
-    // Базовые очки за правильный ответ
-    let basePoints = 100;
+    // Базовые очки за правильный ответ (соответствует серверу)
+    const BASE_POINTS = 100;
 
-    // Бонус за скорость ответа
-    const timeBonus = Math.max(0, Math.floor((GameData.timerDuration - timeSpent) * 3));
+    // ========== УЛУЧШЕННЫЙ БОНУС ЗА СКОРОСТЬ ==========
+    const MAX_TIME = 15000; // 15 секунд
 
-    // Бонус за сложность
+    // Прогрессивная формула с ускорением для очень быстрых ответов
+    let timeBonus = 0;
+    if (timeSpent <= MAX_TIME) {
+        const timeRatio = timeSpent / MAX_TIME;
+
+        // Квадратичная формула для более высоких бонусов за скорость
+        const speedMultiplier = Math.pow(1 - timeRatio, 1.5);
+        timeBonus = Math.round(50 * speedMultiplier);
+
+        // Дополнительный бонус за исключительную скорость
+        if (timeSpent < 3000) { // Менее 3 секунд
+            timeBonus += 10; // Дополнительные 10 очков
+        }
+        if (timeSpent < 1500) { // Менее 1.5 секунд  
+            timeBonus += 15; // Еще 15 очков (итого +25)
+        }
+    }
+
+    // ========== БОНУС ЗА СЛОЖНОСТЬ ==========
     let difficultyBonus = 0;
     switch (difficulty) {
         case 'easy':
             difficultyBonus = 0;
             break;
         case 'medium':
-            difficultyBonus = 20;
+            difficultyBonus = 25;
             break;
         case 'hard':
             difficultyBonus = 50;
             break;
+        default:
+            difficultyBonus = 0;
+    }
+
+    // ========== БОНУС ЗА СОВЕРШЕНСТВО ==========
+    // Дополнительный бонус для сочетания скорости и сложности
+    let perfectionBonus = 0;
+
+    if (difficulty === 'hard' && timeSpent < 5000) {
+        perfectionBonus = 25; // Бонус за быстрое решение сложной задачи
+    } else if (difficulty === 'medium' && timeSpent < 3000) {
+        perfectionBonus = 15; // Бонус за очень быстрое решение средней задачи  
+    } else if (difficulty === 'easy' && timeSpent < 2000) {
+        perfectionBonus = 10; // Небольшой бонус за мгновенное решение легкой задачи
     }
 
     // Общее количество очков
-    const totalPoints = basePoints + timeBonus + difficultyBonus;
+    const totalPoints = BASE_POINTS + timeBonus + difficultyBonus + perfectionBonus;
 
     return {
-        base: basePoints,
+        base: BASE_POINTS,
         timeBonus: timeBonus,
         difficultyBonus: difficultyBonus,
+        perfectionBonus: perfectionBonus,
         total: totalPoints
     };
 }
@@ -720,7 +756,7 @@ async function finishGame() {
                         // Показываем уведомления о новых достижениях
                         window.AchievementSystem.handleNewAchievements(data.data.newAchievements);
                     } else {
-                        
+
                         // Fallback: показываем простое уведомление
                         data.data.newAchievements.forEach(achievement => {
                             if (window.Telegram?.WebApp?.showAlert) {
@@ -735,7 +771,7 @@ async function finishGame() {
                 console.error('Ошибка при сохранении результатов на сервере:', await response.text());
             }
         } else {
-            
+
         }
     } catch (error) {
         console.error('❌ Ошибка при отправке результатов игры:', error);
