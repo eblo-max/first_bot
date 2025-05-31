@@ -74,6 +74,8 @@
             animation: bloodFlow 25s ease-in-out infinite;
             pointer-events: none;
             z-index: 1;
+            filter: blur(3px);
+            /* Размытие фонового градиента */
         }
 
         /* Тематические элементы фона */
@@ -109,6 +111,8 @@
             pointer-events: none;
             z-index: 1;
             animation: evidenceFloat 30s ease-in-out infinite;
+            filter: blur(2px);
+            /* Размытие декоративных элементов */
         }
 
         @keyframes evidenceFloat {
@@ -145,6 +149,8 @@
             pointer-events: none;
             z-index: 3;
             overflow: hidden;
+            filter: blur(1px);
+            /* Легкое размытие полицейской ленты */
         }
 
         .police-tape::before {
@@ -251,6 +257,8 @@
             height: 100%;
             pointer-events: none;
             z-index: 2;
+            filter: blur(1.5px);
+            /* Размытие маркеров улик */
         }
 
         .evidence-marker {
@@ -328,6 +336,8 @@
             height: 100%;
             pointer-events: none;
             z-index: 1;
+            filter: blur(2px);
+            /* Размытие кровавых капель */
         }
 
         .blood-drop {
@@ -388,6 +398,8 @@
             opacity: 0.3;
             pointer-events: none;
             animation: fingerprintFade 10s ease-in-out infinite;
+            filter: blur(1px);
+            /* Размытие отпечатков пальцев */
         }
 
         .fingerprint:nth-child(1) {
@@ -444,6 +456,8 @@
             height: 100%;
             pointer-events: none;
             z-index: 2;
+            filter: blur(1.5px);
+            /* Размытие частиц */
         }
 
         .main-container {
@@ -453,6 +467,12 @@
             max-width: 500px;
             margin: 0 auto;
             padding: 16px;
+            backdrop-filter: blur(5px);
+            /* Дополнительное размытие фона за контентом */
+            background: rgba(10, 10, 10, 0.1);
+            /* Легкий полупрозрачный фон */
+            border-radius: 0;
+            /* Убираем скругления для полноэкранного эффекта */
         }
 
         /* Заголовок отдела */
@@ -580,9 +600,10 @@
             padding: 24px;
             position: relative;
             overflow: hidden;
-            backdrop-filter: var(--blur-light);
+            backdrop-filter: blur(15px);
             box-shadow: var(--shadow-deep);
             transition: all 0.4s ease;
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.98) 0%, rgba(20, 20, 20, 0.99) 100%);
         }
 
         .info-card::before {
