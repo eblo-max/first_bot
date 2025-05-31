@@ -825,53 +825,103 @@
             });
 
             // Кнопка перехода в профиль
-            document.getElementById('goToProfile').addEventListener('click', function () {
-                // Проверяем, есть ли авторизация
-                let token = localStorage.getItem('token') || localStorage.getItem('auth_token') || window.GameState?.data?.token;
-                let initData = localStorage.getItem('initData') || window.Telegram?.WebApp?.initData;
-
-                console.log('🔍 Отладка перехода к профилю:', {
-                    token: token ? `${token.substring(0, 20)}...` : 'НЕТ',
-                    initData: initData ? `${initData.substring(0, 50)}...` : 'НЕТ',
-                    localStorageKeys: Object.keys(localStorage),
-                    telegramWebApp: !!window.Telegram?.WebApp,
-                    gameStateToken: window.GameState?.data?.token ? `${window.GameState.data.token.substring(0, 20)}...` : 'НЕТ',
-                    gameStateUser: window.GameState?.data?.user?.name || 'НЕТ',
-                    tokenLength: token ? token.length : 0,
-                    isTestToken: token ? (token.startsWith('test_token_') || token.startsWith('guest_')) : false
-                });
-
-                // Проверяем, есть ли валидная авторизация
-                if (!token || token.startsWith('test_token_') || token.startsWith('guest_')) {
-                    // Нет валидной авторизации
-                    console.warn('❌ Нет валидной авторизации для профиля');
-
-                    if (window.Telegram?.WebApp?.showAlert) {
-                        window.Telegram.WebApp.showAlert('Для доступа к профилю необходима авторизация через Telegram');
-                    } else {
-                        alert('Для доступа к профилю необходима авторизация через Telegram');
-                    }
-                    return;
-                }
+            document.getElementById('goToProfile').addEventListener('click', async function () {
+                console.log('🔍 Клик по кнопке профиля');
 
                 // Визуальная обратная связь при нажатии
                 if (window.Telegram?.WebApp?.HapticFeedback) {
                     window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
                 }
 
-                console.log('✅ Переходим в профиль с валидными данными');
+                // Проверяем, есть ли существующий токен
+                let token = localStorage.getItem('token') || localStorage.getItem('auth_token');
+                let initData = localStorage.getItem('initData') || window.Telegram?.WebApp?.initData;
 
-                // Безопасный переход с передачей токена и initData через URL
-                const profileUrl = new URL('/profile.html', window.location.origin);
+                console.log('🔍 Отладка перехода к профилю:', {
+                    hasToken: !!token,
+                    hasInitData: !!initData,
+                    tokenStart: token ? token.substring(0, 20) + '...' : 'НЕТ',
+                    initDataStart: initData ? initData.substring(0, 50) + '...' : 'НЕТ',
+                    telegramWebApp: !!window.Telegram?.WebApp
+                });
 
-                if (token) {
-                    profileUrl.searchParams.set('token', token);
+                // Если нет валидного токена, пытаемся авторизоваться через Telegram WebApp
+                if (!token || token.startsWith('test_token_') || token.startsWith('guest_')) {
+                    console.log('🔐 Начинаем авторизацию через Telegram WebApp...');
+
+                    if (!window.Telegram?.WebApp?.initData) {
+                        console.error('❌ Telegram WebApp initData недоступны');
+
+                        if (window.Telegram?.WebApp?.showAlert) {
+                            window.Telegram.WebApp.showAlert('Для доступа к профилю необходима авторизация через Telegram');
+                        } else {
+                            alert('Для доступа к профилю необходима авторизация через Telegram');
+                        }
+                        return;
+                    }
+
+                    try {
+                        console.log('📤 Отправляем запрос авторизации...');
+
+                        const response = await fetch('/api/auth/init', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                initData: window.Telegram.WebApp.initData
+                            })
+                        });
+
+                        console.log('📥 Ответ авторизации:', response.status, response.statusText);
+
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('❌ Ошибка авторизации:', errorText);
+
+                            if (window.Telegram?.WebApp?.showAlert) {
+                                window.Telegram.WebApp.showAlert('Ошибка авторизации. Попробуйте позже.');
+                            } else {
+                                alert('Ошибка авторизации. Попробуйте позже.');
+                            }
+                            return;
+                        }
+
+                        const authData = await response.json();
+                        console.log('✅ Авторизация успешна:', authData);
+
+                        if (authData.status === 'success' && authData.data?.token) {
+                            // Сохраняем токен
+                            token = authData.data.token;
+                            localStorage.setItem('token', token);
+                            console.log('💾 Токен сохранен в localStorage');
+                        } else {
+                            console.error('❌ Токен не получен от сервера');
+
+                            if (window.Telegram?.WebApp?.showAlert) {
+                                window.Telegram.WebApp.showAlert('Не удалось получить токен авторизации');
+                            } else {
+                                alert('Не удалось получить токен авторизации');
+                            }
+                            return;
+                        }
+
+                    } catch (error) {
+                        console.error('❌ Критическая ошибка авторизации:', error);
+
+                        if (window.Telegram?.WebApp?.showAlert) {
+                            window.Telegram.WebApp.showAlert('Ошибка подключения к серверу');
+                        } else {
+                            alert('Ошибка подключения к серверу');
+                        }
+                        return;
+                    }
                 }
-                if (initData) {
-                    profileUrl.searchParams.set('initData', initData);
-                }
 
-                window.location.href = profileUrl.toString();
+                console.log('✅ Переходим в профиль с валидным токеном');
+
+                // Безопасный переход в профиль
+                window.location.href = '/profile';
             });
         });
     </script>
