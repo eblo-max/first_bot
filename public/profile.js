@@ -103,7 +103,17 @@ class ModernProfileManager {
                 this.hideLoadingState();
                 this.startPeriodicUpdates();
             } else {
-                this.showAuthError();
+                // Если авторизация не удалась, пробуем режим разработки
+                const isDeveloperMode = window.location.search.includes('dev=true') ||
+                    window.location.hostname === 'localhost' ||
+                    window.location.hostname === '127.0.0.1';
+
+                if (isDeveloperMode) {
+                    console.log('🔧 Режим разработки: пробуем авторизацию с тестовым токеном');
+                    await this.tryDeveloperAuth();
+                } else {
+                    this.showAuthError();
+                }
             }
 
         } catch (error) {
@@ -121,7 +131,8 @@ class ModernProfileManager {
 
             // Если нет токена и есть Telegram WebApp, пытаемся авторизоваться
             if (!token && tg?.initData) {
-                const response = await fetch('/api/auth/telegram', {
+                console.log('🔐 Авторизация через Telegram WebApp...');
+                const response = await fetch('/api/auth/init', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ initData: tg.initData })
@@ -129,8 +140,11 @@ class ModernProfileManager {
 
                 if (response.ok) {
                     const data = await response.json();
-                    token = data.token;
-                    localStorage.setItem('token', token);
+                    if (data.status === 'success' && data.data?.token) {
+                        token = data.data.token;
+                        localStorage.setItem('token', token);
+                        console.log('✅ Токен получен через Telegram');
+                    }
                 }
             }
 
@@ -142,10 +156,16 @@ class ModernProfileManager {
 
                 if (response.ok) {
                     this.token = token;
+                    console.log('✅ Токен валиден');
                     return true;
+                } else {
+                    console.log('❌ Токен недействителен');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('auth_token');
                 }
             }
 
+            console.log('❌ Токен не найден или недействителен');
             return false;
 
         } catch (error) {
@@ -154,19 +174,48 @@ class ModernProfileManager {
         }
     }
 
+    async tryDeveloperAuth() {
+        try {
+            // Пытаемся создать тестового пользователя для разработки
+            const testToken = localStorage.getItem('dev_token');
+
+            if (testToken) {
+                console.log('🔧 Используем сохраненный dev токен');
+                this.token = testToken;
+                await this.loadUserProfile();
+                await this.loadUserAchievements();
+                await this.loadLeaderboardData('day');
+                this.hideLoadingState();
+                return;
+            }
+
+            console.log('🔧 Показываем тестовые данные для разработки');
+            this.showTestData();
+            this.hideLoadingState();
+
+        } catch (error) {
+            console.error('❌ Ошибка в режиме разработки:', error);
+            this.showTestData();
+            this.hideLoadingState();
+        }
+    }
+
     async loadUserProfile() {
         try {
-            const response = await fetch('/api/user/profile', {
+            console.log('📊 Загружаем профиль пользователя...');
+            const response = await fetch('/api/profile', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
-            if (!response.ok) throw new Error('Ошибка загрузки профиля');
+            if (!response.ok) {
+                throw new Error(`Ошибка загрузки профиля: ${response.status}`);
+            }
 
             const userData = await response.json();
             ProfileState.user = userData;
 
-            this.updateProfileUI(userData);
             console.log('✅ Профиль загружен:', userData);
+            this.updateProfileUI(userData);
 
         } catch (error) {
             console.error('❌ Ошибка загрузки профиля:', error);
@@ -175,13 +224,19 @@ class ModernProfileManager {
     }
 
     updateProfileUI(userData) {
+        console.log('🔄 Обновляем UI профиля:', userData);
+
         // Базовая информация
-        this.updateElement('detective-name', userData.basic?.firstName || userData.username || 'ДЕТЕКТИВ');
-        this.updateElement('user-id', userData.telegramId || '000000000');
+        const firstName = userData.basic?.firstName || userData.firstName || 'ДЕТЕКТИВ';
+        const telegramId = userData.basic?.telegramId || userData.telegramId || '000000000';
+
+        this.updateElement('detective-name', firstName.toUpperCase());
+        this.updateElement('user-id', telegramId);
 
         // Уровень и XP
-        const level = this.calculateLevel(userData.stats?.totalScore || 0);
-        const xpData = this.calculateXP(userData.stats?.totalScore || 0, level);
+        const totalScore = userData.stats?.totalScore || 0;
+        const level = this.calculateLevel(totalScore);
+        const xpData = this.calculateXP(totalScore, level);
 
         this.updateElement('user-level', level);
         this.updateElement('detective-rank', ProfileConfig.levels.getRankByLevel(level));
@@ -196,10 +251,16 @@ class ModernProfileManager {
         this.updateElement('stat-investigations', stats.investigations || 0);
         this.updateElement('stat-solved', stats.solvedCases || 0);
         this.updateElement('stat-streak', stats.winStreak || 0);
-        this.updateElement('stat-accuracy', Math.round(stats.accuracy || 0));
+
+        // Точность с символом %
+        const accuracy = Math.round(stats.accuracy || 0);
+        const accuracyElement = document.getElementById('stat-accuracy');
+        if (accuracyElement) {
+            accuracyElement.innerHTML = `${accuracy}<span style="color: var(--accent-red);">%</span>`;
+        }
 
         // Аватар
-        this.loadUserAvatar(userData.telegramId);
+        this.loadUserAvatar(telegramId);
 
         // Анимации появления
         this.animateStatsCards();
@@ -240,40 +301,51 @@ class ModernProfileManager {
 
     async loadUserAvatar(telegramId) {
         try {
+            console.log('🖼️ Загружаем аватар пользователя...');
             const response = await fetch('/api/user/avatar', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.data?.avatarUrl) {
+                if (data.status === 'success' && data.data?.avatarUrl) {
                     const avatarPlaceholder = document.getElementById('avatar-placeholder');
                     if (avatarPlaceholder) {
                         avatarPlaceholder.innerHTML = `<img src="${data.data.avatarUrl}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                        console.log('✅ Аватар загружен');
                     }
+                } else {
+                    console.log('⚠️ Аватар не найден в ответе API');
                 }
+            } else {
+                console.log('⚠️ Не удалось загрузить аватар, используем заглушку');
             }
         } catch (error) {
-            console.log('⚠️ Аватар недоступен, используем заглушку');
+            console.log('⚠️ Ошибка загрузки аватара:', error);
         }
     }
 
     async loadUserAchievements() {
         try {
-            const response = await fetch('/api/user/achievements', {
+            console.log('🏆 Загружаем достижения пользователя...');
+            const response = await fetch('/api/profile/achievements/available', {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
             let achievements = [];
             if (response.ok) {
-                achievements = await response.json();
+                const data = await response.json();
+                achievements = data.unlocked || [];
+                console.log('✅ Достижения загружены:', achievements);
+            } else {
+                console.log('⚠️ Не удалось загрузить достижения, используем пустой список');
             }
 
             ProfileState.achievements = achievements;
             this.renderAchievements(achievements);
 
         } catch (error) {
-            console.log('⚠️ Достижения недоступны, показываем тестовые');
+            console.error('❌ Ошибка загрузки достижений:', error);
             this.renderAchievements([]);
         }
     }
@@ -321,18 +393,22 @@ class ModernProfileManager {
 
     async loadLeaderboardData(period) {
         try {
+            console.log(`📊 Загружаем лидербоард за ${period}...`);
             // Показываем скелетон загрузки
             this.showLeaderboardSkeleton();
 
-            const response = await fetch(`/api/leaderboard/${period}`, {
+            const response = await fetch(`/api/profile/leaderboard/${period}`, {
                 headers: { 'Authorization': `Bearer ${this.token}` }
             });
 
             let data;
             if (response.ok) {
                 const result = await response.json();
-                data = result.data;
+                // Преобразуем данные в нужный формат
+                data = this.transformLeaderboardData(result, period);
+                console.log('✅ Лидербоард загружен:', data);
             } else {
+                console.log('⚠️ Не удалось загрузить лидербоард, используем тестовые данные');
                 // Генерируем тестовые данные
                 data = this.generateMockLeaderboard(period);
             }
@@ -348,6 +424,48 @@ class ModernProfileManager {
             const mockData = this.generateMockLeaderboard(period);
             this.renderLeaderboard(mockData);
         }
+    }
+
+    transformLeaderboardData(apiData, period) {
+        // Преобразуем данные API в формат, ожидаемый фронтендом
+        const leaderboardData = apiData.totalScore || [];
+        const currentUserId = ProfileState.user?.basic?.telegramId || ProfileState.user?.telegramId;
+
+        const transformedLeaderboard = leaderboardData.map((user, index) => ({
+            rank: index + 1,
+            name: this.getUserDisplayName(user),
+            score: user.stats?.totalScore || 0,
+            isCurrentUser: user.telegramId === currentUserId
+        }));
+
+        // Найдем позицию текущего пользователя
+        const currentUserEntry = transformedLeaderboard.find(entry => entry.isCurrentUser);
+        const currentUser = currentUserEntry || {
+            rank: Math.floor(Math.random() * 500) + 100, // Случайная позиция если не найден
+            score: ProfileState.user?.stats?.totalScore || 0
+        };
+
+        return {
+            leaderboard: transformedLeaderboard,
+            currentUser: currentUser,
+            meta: {
+                period: period,
+                total: Math.max(transformedLeaderboard.length, 1000) // Минимум показываем 1000 игроков
+            }
+        };
+    }
+
+    getUserDisplayName(user) {
+        if (user.firstName) {
+            return user.firstName + (user.lastName ? ` ${user.lastName}` : '');
+        }
+        if (user.username) {
+            return user.username;
+        }
+        if (user.nickname) {
+            return user.nickname;
+        }
+        return 'Детектив';
     }
 
     generateMockLeaderboard(period) {
