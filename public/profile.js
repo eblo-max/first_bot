@@ -303,13 +303,15 @@ class DramaticCriminalProfile {
         }
     }
 
+    // Исправленная загрузка аватара для идеального круглого отображения
     async loadUserAvatar(telegramId) {
-        const avatarImg = document.querySelector('#user-avatar img');
+        const avatarContainer = document.getElementById('user-avatar');
         const avatarPlaceholder = document.getElementById('avatar-placeholder');
 
-        if (!telegramId) return;
+        if (!telegramId || !avatarContainer) return;
 
         try {
+            console.log('🖼️ Загружаем аватар пользователя...');
             const response = await fetch('/api/user/avatar', {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -320,32 +322,37 @@ class DramaticCriminalProfile {
                 const data = await response.json();
 
                 if (data.status === 'success' && data.data.hasAvatar) {
-                    // Создаем новый img элемент если его нет
-                    let img = avatarImg;
-                    if (!img) {
-                        img = document.createElement('img');
-                        img.alt = 'Аватар детектива';
-                        img.style.cssText = `
-                            width: 100%;
-                            height: 100%;
-                            object-fit: cover;
-                            object-position: center;
-                            border-radius: 50%;
-                        `;
-                        document.getElementById('user-avatar').appendChild(img);
+                    // Удаляем существующее изображение если есть
+                    const existingImg = avatarContainer.querySelector('img');
+                    if (existingImg) {
+                        existingImg.remove();
                     }
 
-                    // Загружаем изображение
-                    img.src = data.data.avatarUrl;
-                    img.onload = () => {
-                        if (avatarPlaceholder) {
-                            avatarPlaceholder.style.display = 'none';
-                        }
-                        img.style.display = 'block';
+                    // Создаем новый img элемент
+                    const img = document.createElement('img');
+                    img.alt = 'Аватар детектива';
+                    img.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        object-position: center;
+                        border-radius: 50%;
+                        z-index: 2;
+                        opacity: 0;
+                        transition: opacity 0.5s ease;
+                    `;
 
-                        // Эффект появления
-                        img.style.opacity = '0';
-                        img.style.transition = 'opacity 0.5s ease';
+                    // Обработчики загрузки изображения
+                    img.onload = () => {
+                        console.log('✅ Аватар успешно загружен');
+                        if (avatarPlaceholder) {
+                            avatarPlaceholder.style.opacity = '0';
+                        }
+
+                        // Плавное появление аватара
                         setTimeout(() => {
                             img.style.opacity = '1';
                         }, 100);
@@ -353,21 +360,34 @@ class DramaticCriminalProfile {
 
                     img.onerror = () => {
                         console.log('❌ Ошибка загрузки аватара');
+                        img.remove();
                         if (avatarPlaceholder) {
-                            avatarPlaceholder.style.display = 'flex';
+                            avatarPlaceholder.style.opacity = '1';
                         }
                     };
+
+                    // Добавляем изображение в контейнер
+                    avatarContainer.appendChild(img);
+
+                    // Начинаем загрузку
+                    img.src = data.data.avatarUrl;
+
                 } else {
                     console.log('ℹ️ Аватар не найден, показываем заглушку');
                     if (avatarPlaceholder) {
-                        avatarPlaceholder.style.display = 'flex';
+                        avatarPlaceholder.style.opacity = '1';
                     }
+                }
+            } else {
+                console.log('⚠️ Не удалось получить данные аватара');
+                if (avatarPlaceholder) {
+                    avatarPlaceholder.style.opacity = '1';
                 }
             }
         } catch (error) {
             console.error('❌ Ошибка при загрузке аватара:', error);
             if (avatarPlaceholder) {
-                avatarPlaceholder.style.display = 'flex';
+                avatarPlaceholder.style.opacity = '1';
             }
         }
     }
