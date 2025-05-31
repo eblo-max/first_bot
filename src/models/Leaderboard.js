@@ -24,8 +24,17 @@ const leaderboardSchema = new mongoose.Schema({
     },
     userRank: {
         type: String,
-        enum: ['НОВИЧОК', 'ДЕТЕКТИВ', 'ИНСПЕКТОР', 'СЛЕДОВАТЕЛЬ', 'ЭКСПЕРТ', 'КРИМИНАЛИСТ'],
-        default: 'НОВИЧОК'
+        enum: [
+            'СТАЖЕР',
+            'СЛЕДОВАТЕЛЬ',
+            'ДЕТЕКТИВ',
+            'СТАРШИЙ_ДЕТЕКТИВ',
+            'ИНСПЕКТОР',
+            'КОМИССАР',
+            'ГЛАВНЫЙ_ИНСПЕКТОР',
+            'ШЕФ_ПОЛИЦИИ'
+        ],
+        default: 'СТАЖЕР'
     },
     period: {
         type: String,
@@ -71,7 +80,7 @@ leaderboardSchema.index({ updatedAt: 1 });
  * Обновление рейтинга для конкретного периода
  */
 leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
-    
+
     const User = mongoose.model('User');
     let dateFilter = {};
     const now = new Date();
@@ -136,7 +145,7 @@ leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
         // Вставляем новые записи пакетом
         if (leaderboardEntries.length > 0) {
             await this.insertMany(leaderboardEntries);
-            
+
         }
 
         return leaderboardEntries.length;
@@ -150,7 +159,7 @@ leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
  * Обновление всех рейтингов
  */
 leaderboardSchema.statics.updateAllLeaderboards = async function () {
-    
+
     const periods = ['day', 'week', 'month', 'all'];
     const results = {};
 
@@ -210,7 +219,7 @@ leaderboardSchema.statics.cleanupOldEntries = async function () {
         });
 
         if (result.deletedCount > 0) {
-            
+
         }
 
         return result.deletedCount;
