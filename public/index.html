@@ -880,12 +880,68 @@
                 font-size: 2.4rem;
             }
 
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
             .main-container {
                 padding: 12px;
+            }
+
+            .quick-stats {
+                flex-direction: column;
+                gap: 8px;
+                padding: 12px;
+            }
+
+            .quick-stat {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .quick-stat-value,
+            .quick-stat-label {
+                display: inline;
+            }
+
+            .quick-stat-value {
+                font-size: 1.2rem;
+                margin-bottom: 0;
+            }
+
+            .mini-info-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .mini-info-card {
+                padding: 12px;
+            }
+
+            .mini-title {
+                font-size: 0.8rem;
+            }
+
+            .methods-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .detective-methods {
+                padding: 16px;
+            }
+
+            .info-cards {
+                gap: 16px;
+            }
+
+            .info-card {
+                padding: 20px;
+            }
+
+            .card-title {
+                font-size: 1.1rem;
+            }
+
+            .card-description {
+                font-size: 0.9rem;
             }
         }
 
@@ -987,6 +1043,191 @@
                 text-shadow: 0 0 20px var(--neon-red);
             }
         }
+
+        /* Быстрая статистика */
+        .quick-stats {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: rgba(26, 26, 26, 0.6);
+            border: 1px solid var(--blood-red);
+            border-radius: 16px;
+            backdrop-filter: var(--blur-light);
+        }
+
+        .quick-stat {
+            text-align: center;
+            flex: 1;
+        }
+
+        .quick-stat-value {
+            display: block;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--neon-red);
+            margin-bottom: 4px;
+        }
+
+        .quick-stat-label {
+            font-size: 0.7rem;
+            color: var(--bone);
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Мини-информационные блоки */
+        .mini-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .mini-info-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(26, 26, 26, 0.7);
+            border: 1px solid rgba(220, 20, 60, 0.3);
+            border-radius: 12px;
+            padding: 14px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mini-info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-gradient);
+            opacity: 0.5;
+        }
+
+        .mini-info-card:hover {
+            border-color: var(--neon-red);
+            transform: translateY(-1px);
+            box-shadow: 0 0 15px rgba(220, 20, 60, 0.2);
+        }
+
+        .mini-icon {
+            width: 32px;
+            height: 32px;
+            color: var(--neon-red);
+            flex-shrink: 0;
+        }
+
+        .mini-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .mini-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .mini-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--bone);
+            margin-bottom: 2px;
+            line-height: 1.2;
+        }
+
+        .mini-desc {
+            font-size: 0.7rem;
+            color: var(--bone);
+            opacity: 0.7;
+            line-height: 1.3;
+        }
+
+        /* Детективные методы */
+        .detective-methods {
+            background: rgba(26, 26, 26, 0.8);
+            border: 1px solid var(--blood-red);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            backdrop-filter: var(--blur-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .detective-methods::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-gradient);
+            animation: scanLine 4s linear infinite;
+        }
+
+        .methods-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            color: var(--bone);
+        }
+
+        .methods-header svg {
+            width: 24px;
+            height: 24px;
+            color: var(--neon-red);
+            filter: drop-shadow(0 0 6px var(--neon-red));
+        }
+
+        .methods-header h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+
+        .methods-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .method-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(220, 20, 60, 0.2);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .method-item:hover {
+            border-color: var(--neon-red);
+            box-shadow: 0 0 10px rgba(220, 20, 60, 0.2);
+            transform: scale(1.02);
+        }
+
+        .method-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .method-name {
+            font-size: 0.8rem;
+            color: var(--bone);
+            font-weight: 500;
+        }
     </style>
 </head>
 
@@ -1040,22 +1281,44 @@
             <p class="subtitle">Найди след убийцы</p>
         </div>
 
-        <!-- Информационные карточки -->
+        <!-- Главная кнопка (перемещена выше) -->
+        <div class="main-action">
+            <a href="/game" class="start-button">
+                🔍 Вскрыть дело
+            </a>
+        </div>
+
+        <!-- Быстрая статистика (компактная версия) -->
+        <div class="quick-stats">
+            <div class="quick-stat">
+                <span class="quick-stat-value">60</span>
+                <span class="quick-stat-label">секунд на дело</span>
+            </div>
+            <div class="quick-stat">
+                <span class="quick-stat-value">5</span>
+                <span class="quick-stat-label">дел за игру</span>
+            </div>
+            <div class="quick-stat">
+                <span class="quick-stat-value">3</span>
+                <span class="quick-stat-label">варианта ответа</span>
+            </div>
+        </div>
+
+        <!-- Информационные карточки (обновленные) -->
         <div class="info-cards">
             <div class="info-card">
                 <div class="card-label">Evidence #001</div>
                 <div class="card-header">
                     <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path
-                            d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                        <path d="M12,2L13.09,8.26L20,9L13.09,9.74L12,16L10.91,9.74L4,9L10.91,8.26L12,2Z" />
                     </svg>
-                    <h2 class="card-title">Криминалистическое расследование</h2>
+                    <h2 class="card-title">Типы преступлений</h2>
                 </div>
                 <p class="card-description">
-                    Анализируй реальные методы криминалистики.
-                    Выявляй ключевые ошибки преступников, которые
-                    привели к их поимке. 5 дел с возрастающей сложностью
-                    проверят твои детективные навыки.
+                    <strong>Ограбления</strong> - кражи со взломом, угоны<br>
+                    <strong>Мошенничество</strong> - финансовые преступления<br>
+                    <strong>Убийства</strong> - дела об отравлениях<br>
+                    <strong>Прочие</strong> - разнообразные криминальные случаи
                 </p>
             </div>
 
@@ -1064,64 +1327,103 @@
                 <div class="card-header">
                     <svg class="card-icon" viewBox="0 0 24 24" fill="currentColor">
                         <path
-                            d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                            d="M5,16H3V4H20V6H18V16H5M18,6V16H15V4H20V6H18M3,16V19H4V18H5V20H4V21H18V20H17V18H18V19H19V16H3Z" />
                     </svg>
-                    <h2 class="card-title">Система подсчёта очков</h2>
+                    <h2 class="card-title">Система очков и бонусов</h2>
                 </div>
                 <p class="card-description">
-                    Базовые очки за правильность + бонус за скорость решения.
-                    Быстрый ответ (0-15 сек) = +50% очков.
-                    Эксперт-уровень дает до 150 очков за дело!
+                    <strong>Быстрый ответ (0-15 сек)</strong> → +50% очков<br>
+                    <strong>Средний ответ (16-30 сек)</strong> → +30% очков<br>
+                    <strong>Медленный ответ (31-45 сек)</strong> → +10% очков<br>
+                    Максимум <strong>150 очков</strong> за сложное дело!
                 </p>
             </div>
         </div>
 
-        <!-- Статистики -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                        d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-                </svg>
-                <div class="stat-value">60</div>
-                <div class="stat-label">Секунд</div>
+        <!-- Мини-блоки с дополнительной информацией -->
+        <div class="mini-info-grid">
+            <div class="mini-info-card">
+                <div class="mini-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M16,17H7V16H16M16,15H7V14H16M16,13H7V12H16M16,11H7V10H16M16,9H7V8H16M5,20V7H6V6H7V5H17V6H18V7H19V20H5Z" />
+                    </svg>
+                </div>
+                <div class="mini-content">
+                    <div class="mini-title">8 детективных рангов</div>
+                    <div class="mini-desc">От Новичка до Криминалиста</div>
+                </div>
             </div>
 
-            <div class="stat-card">
-                <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                </svg>
-                <div class="stat-value">5</div>
-                <div class="stat-label">Дел</div>
+            <div class="mini-info-card">
+                <div class="mini-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M5,16L3,14V10L5,8H7L9,10V14L7,16H5M9,14L11,16H13L15,14V10L13,8H11L9,10V14M17,8L19,10V14L17,16H15L13,14V10L15,8H17Z" />
+                    </svg>
+                </div>
+                <div class="mini-content">
+                    <div class="mini-title">20+ достижений</div>
+                    <div class="mini-desc">Спидстер, Перфекционист, Ветеран</div>
+                </div>
             </div>
 
-            <div class="stat-card">
-                <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                        d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22H9M6,12V14H18V12H6M6,9V11H18V9H6M6,6V8H18V6H6Z" />
-                </svg>
-                <div class="stat-value">3</div>
-                <div class="stat-label">Варианта</div>
+            <div class="mini-info-card">
+                <div class="mini-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M3,3H21V5H19V4H5V20H19V19H21V21H3V3M9,8V6H11V8H9M9,13V11H11V13H9M9,18V16H11V18H9M15,8V6H17V8H15M15,13V11H17V13H15M15,18V16H17V18H15Z" />
+                    </svg>
+                </div>
+                <div class="mini-content">
+                    <div class="mini-title">Репутационная система</div>
+                    <div class="mini-desc">Точность, скорость, постоянство</div>
+                </div>
             </div>
 
-            <div class="stat-card">
-                <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                        d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-                </svg>
-                <div class="stat-value">8</div>
-                <div class="stat-label">Рангов</div>
+            <div class="mini-info-card">
+                <div class="mini-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
+                    </svg>
+                </div>
+                <div class="mini-content">
+                    <div class="mini-title">3 уровня сложности</div>
+                    <div class="mini-desc">Легкий, Средний, Эксперт</div>
+                </div>
             </div>
         </div>
 
-        <!-- Главная кнопка -->
-        <div class="main-action">
-            <a href="/game" class="start-button">
-                🔍 Вскрыть дело
-            </a>
+        <!-- Статистики детективных методов -->
+        <div class="detective-methods">
+            <div class="methods-header">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
+                </svg>
+                <h3>Криминалистические методы</h3>
+            </div>
+            <div class="methods-grid">
+                <div class="method-item">
+                    <div class="method-icon">🧬</div>
+                    <div class="method-name">ДНК-анализ</div>
+                </div>
+                <div class="method-item">
+                    <div class="method-icon">👁</div>
+                    <div class="method-name">Видеонаблюдение</div>
+                </div>
+                <div class="method-item">
+                    <div class="method-icon">📱</div>
+                    <div class="method-name">Цифровые следы</div>
+                </div>
+                <div class="method-item">
+                    <div class="method-icon">🔍</div>
+                    <div class="method-name">Отпечатки</div>
+                </div>
+            </div>
         </div>
 
-        <!-- Навигация -->
+        <!-- Компактная навигация -->
         <div class="navigation">
             <a href="/leaderboard" class="nav-button">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -1141,7 +1443,7 @@
 
         <!-- Подвал -->
         <div class="footer">
-            <div class="case-file">Case File #2024 • Classified</div>
+            <div class="case-file">Case File #2024 • Classified • Detective Training Protocol</div>
         </div>
     </div>
 
