@@ -872,12 +872,32 @@ class DramaticCriminalProfile {
             } else if (userData.user && typeof userData.user === 'object') {
                 actualUserData = userData.user;
                 console.log('📊 Используем userData.user');
+            } else if (userData.basic && typeof userData.basic === 'object') {
+                // ИСПРАВЛЕНИЕ: Объединяем все данные из разных частей ответа
+                actualUserData = {
+                    ...userData.basic,  // firstName, username, telegramId
+                    stats: userData.stats || {},
+                    rank: userData.rank || {},
+                    achievements: userData.achievements || [],
+                    recentGames: userData.recentGames || []
+                };
+                console.log('📊 Используем userData.basic + объединенные данные');
             } else if (userData.firstName || userData.username || userData.telegramId) {
                 actualUserData = userData;
                 console.log('📊 Используем userData напрямую');
             } else {
                 console.error('❌ Не найдены данные пользователя в ответе сервера!');
-                actualUserData = userData; // попробуем anyway
+                // Попытка собрать данные из частей
+                actualUserData = {
+                    firstName: userData.basic?.firstName,
+                    username: userData.basic?.username,
+                    telegramId: userData.basic?.telegramId,
+                    stats: userData.stats || {},
+                    rank: userData.rank || {},
+                    achievements: userData.achievements || [],
+                    recentGames: userData.recentGames || []
+                };
+                console.log('🔧 Собираем данные из частей как fallback');
             }
 
             console.log('🎯 Финальные данные для обработки:', actualUserData);
