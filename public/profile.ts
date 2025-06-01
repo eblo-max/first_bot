@@ -223,11 +223,13 @@ export class CriminalTrustProfile {
                 name: this.getUserDisplayName(user),
                 totalScore: user.totalScore || 0,
                 gamesPlayed: user.gamesPlayed || 0,
-                accuracy: user.accuracy || 0
+                accuracy: user.accuracy || 0,
+                telegramId: user.telegramId
             });
 
             // Основная информация
             this.updateElement('user-name', this.getUserDisplayName(user));
+            this.updateElement('user-id', user.telegramId?.toString() || '—');
             this.updateElement('user-total-score', (user.totalScore || 0).toLocaleString());
             this.updateElement('user-games-played', (user.gamesPlayed || 0).toString());
             this.updateElement('user-accuracy', `${Math.round(user.accuracy || 0)}%`);
@@ -291,6 +293,14 @@ export class CriminalTrustProfile {
             const element = this.createAchievementElement(achievement);
             container.appendChild(element);
         });
+
+        // Обновляем счетчик достижений
+        const achievementsCount = document.getElementById('achievements-count');
+        if (achievementsCount) {
+            const unlockedCount = achievements.filter(a => a.isUnlocked).length;
+            achievementsCount.textContent = unlockedCount.toString();
+            console.log(`🏆 Обновлен счетчик достижений: ${unlockedCount}/${achievements.length}`);
+        }
 
         // Добавляем интерактивность
         this.addAchievementInteractivity();
@@ -554,10 +564,25 @@ export class CriminalTrustProfile {
     // =========================================================================
 
     private getUserDisplayName(user: any): string {
+        console.log('👤 Обработка имени пользователя:', user);
+
+        // Если есть готовое поле name с сервера
+        if (user.name && user.name !== 'Детектив') {
+            return user.name;
+        }
+
+        // Если есть телеграм имя
+        if (user.firstName) {
+            return `${user.firstName} ${user.lastName || ''}`.trim();
+        }
+
+        // Если есть username
         if (user.username) {
             return `@${user.username}`;
         }
-        return `${user.firstName || 'Детектив'} ${user.lastName || ''}`.trim();
+
+        // Дефолтное значение
+        return 'Детектив';
     }
 
     private updateElement(id: string, value: string): void {
@@ -611,6 +636,7 @@ export class CriminalTrustProfile {
     private checkDOMElements(): boolean {
         const requiredElements = [
             'user-name',
+            'user-id',
             'user-total-score',
             'user-games-played',
             'user-accuracy',
@@ -786,11 +812,45 @@ export class CriminalTrustProfile {
 
     private async loadUserAvatar(telegramId: number): Promise<void> {
         try {
+            console.log('🖼️ Загружаем аватар для пользователя:', telegramId);
+
             const avatarUrl = await apiService.getUserAvatar(telegramId);
+            console.log('📥 Получен URL аватара:', avatarUrl);
+
             if (avatarUrl) {
-                const avatarElement = document.querySelector('.user-avatar img') as HTMLImageElement;
-                if (avatarElement) {
-                    avatarElement.src = avatarUrl;
+                // Ищем контейнер аватара
+                const avatarContainer = document.getElementById('user-avatar');
+                const placeholderElement = document.getElementById('avatar-placeholder');
+
+                if (avatarContainer && placeholderElement) {
+                    // Создаем новый img элемент
+                    const imgElement = document.createElement('img');
+                    imgElement.src = avatarUrl;
+                    imgElement.alt = 'User Avatar';
+                    imgElement.style.width = '100%';
+                    imgElement.style.height = '100%';
+                    imgElement.style.objectFit = 'cover';
+                    imgElement.style.borderRadius = '50%';
+
+                    // Обработчик успешной загрузки
+                    imgElement.onload = () => {
+                        placeholderElement.style.opacity = '0';
+                        setTimeout(() => {
+                            placeholderElement.style.display = 'none';
+                        }, 300);
+                        console.log('✅ Аватар успешно загружен');
+                    };
+
+                    // Обработчик ошибки загрузки
+                    imgElement.onerror = () => {
+                        console.log('❌ Ошибка загрузки аватара, оставляем placeholder');
+                        imgElement.remove();
+                    };
+
+                    // Добавляем изображение в контейнер
+                    avatarContainer.appendChild(imgElement);
+                } else {
+                    console.error('❌ Не найдены элементы аватара:', { avatarContainer, placeholderElement });
                 }
             }
         } catch (error) {
@@ -809,9 +869,25 @@ export class CriminalTrustProfile {
     }
 
     private updateUserPosition(data: any): void {
+        console.log('📊 Обновляем позицию пользователя в лидерборде:', data);
+
         const positionElement = document.getElementById('user-position');
+        const totalPlayersElement = document.getElementById('total-players');
+
         if (positionElement && data.userPosition) {
-            positionElement.textContent = `Ваша позиция: #${data.userPosition}`;
+            positionElement.textContent = data.userPosition.toString();
+            console.log('✅ Позиция обновлена:', data.userPosition);
+        } else {
+            positionElement && (positionElement.textContent = '—');
+            console.log('❌ Позиция пользователя не найдена в данных:', data);
+        }
+
+        if (totalPlayersElement && data.totalUsers) {
+            totalPlayersElement.textContent = data.totalUsers.toString();
+            console.log('✅ Общее количество игроков обновлено:', data.totalUsers);
+        } else {
+            totalPlayersElement && (totalPlayersElement.textContent = '—');
+            console.log('❌ Общее количество пользователей не найдено в данных:', data);
         }
     }
 
