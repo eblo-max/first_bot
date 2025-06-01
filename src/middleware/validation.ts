@@ -39,7 +39,7 @@ export const handleValidationErrors = (req: ValidatedRequest, res: Response<Vali
     if (!errors.isEmpty()) {
         console.warn('⚠️ Ошибки валидации:', errors.array().length);
 
-        const formattedErrors: ValidationError[] = errors.array().map(err => ({
+        const formattedErrors: ValidationError[] = errors.array().map((err: any) => ({
             field: err.type === 'field' ? (err as any).path : err.type,
             message: err.msg,
             value: err.type === 'field' ? (err as any).value : undefined
