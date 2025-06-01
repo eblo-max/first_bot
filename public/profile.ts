@@ -161,12 +161,27 @@ export class CriminalTrustProfile {
             this.showProfileSkeleton();
 
             // Загружаем все данные параллельно
+            console.log('🔄 Вызываем getBatchData...');
             const batchData = await apiService.getBatchData();
+            console.log('📦 Получили batchData:', batchData);
 
             // Обновляем профиль
             if (batchData.profile) {
+                console.log('✅ Найден profile в batchData, обновляем UI...');
                 this.state.user = batchData.profile;
                 this.updateProfileUI(batchData.profile);
+            } else {
+                console.error('❌ НЕТ ДАННЫХ ПРОФИЛЯ в batchData!', { batchData });
+                // Попробуем загрузить профиль напрямую
+                console.log('🔄 Пробуем загрузить профиль напрямую...');
+                const profileResult = await apiService.getUserProfile();
+                console.log('👤 Прямой запрос профиля:', profileResult);
+
+                if (profileResult.success && profileResult.data) {
+                    console.log('✅ Получили профиль напрямую, обновляем UI...');
+                    this.state.user = profileResult.data;
+                    this.updateProfileUI(profileResult.data);
+                }
             }
 
             // Обновляем достижения
