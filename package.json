@@ -15,9 +15,14 @@
         "security-check": "npm audit && node scripts/security-check.js",
         "cleanup-debug": "node scripts/cleanup-debug.js",
         "cleanup-debug-no-backup": "node scripts/cleanup-debug.js --no-backup",
+        "cleanup-debug-enhanced": "node scripts/cleanup-debug-enhanced.js",
         "cleanup-test-users": "node scripts/cleanup-test-users.js",
         "cleanup-test-users-confirm": "node scripts/cleanup-test-users.js --confirm",
-        "migrate-users": "node scripts/migrate-user-data.js"
+        "migrate-users": "node scripts/migrate-user-data.js",
+        "dead-code-analysis": "node scripts/cleanup-debug-enhanced.js",
+        "optimize": "npm run dead-code-analysis && npm run cleanup-debug-enhanced",
+        "test-migration": "node scripts/test-functions.js",
+        "generate-integrity": "node scripts/generate-integrity.js"
     },
     "dependencies": {
         "cors": "^2.8.5",

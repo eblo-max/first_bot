@@ -69,32 +69,22 @@ const authMiddleware = (req, res, next) => {
  */
 const verifyTelegramWebAppData = (req, res, next) => {
     try {
-        console.log('🔍 === НАЧАЛО ВАЛИДАЦИИ TELEGRAM WEBAPP ===');
-
+        
         // Детальная диагностика запроса
         const userAgent = req.headers['user-agent'] || '';
         const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
 
-        console.log('🔍 Анализ клиента:');
-        console.log('  - User-Agent:', userAgent);
-        console.log('  - Is Mobile:', isMobile);
-        console.log('  - Request IP:', req.ip || req.connection.remoteAddress);
-        console.log('  - Request Method:', req.method);
-        console.log('  - Request URL:', req.originalUrl);
-
-        console.log('🔍 Все заголовки запроса:');
         Object.entries(req.headers).forEach(([key, value]) => {
             console.log(`  - ${key}: ${value}`);
         });
 
-        console.log('🔍 Body analysis:');
         console.log('  - Body keys:', Object.keys(req.body));
         console.log('  - Body size:', JSON.stringify(req.body).length, 'bytes');
 
         const { initData } = req.body;
         if (!initData) {
             console.error('❌ initData не предоставлены в запросе');
-            console.log('🔍 Полученный body:', JSON.stringify(req.body, null, 2));
+            
             return res.status(401).json({
                 status: 'error',
                 message: 'initData не предоставлены',
@@ -107,9 +97,6 @@ const verifyTelegramWebAppData = (req, res, next) => {
             });
         }
 
-        console.log('🔍 initData анализ:');
-        console.log('  - Длина:', initData.length);
-        console.log('  - Тип:', typeof initData);
         console.log('  - Первые 300 символов:', initData.substring(0, 300));
         console.log('  - Последние 100 символов:', initData.slice(-100));
 
@@ -120,13 +107,8 @@ const verifyTelegramWebAppData = (req, res, next) => {
         const user = data.get('user');
         const queryId = data.get('query_id');
 
-        console.log('🔍 Разбор параметров initData:');
         console.log('  - hash найден:', !!hash, hash ? `(${hash.substring(0, 20)}...)` : '');
-        console.log('  - auth_date:', authDate);
-        console.log('  - user найден:', !!user);
-        console.log('  - query_id:', queryId);
 
-        console.log('🔍 Все параметры initData:');
         for (const [key, value] of data.entries()) {
             if (key === 'user') {
                 console.log(`  - ${key}: ${value.substring(0, 100)}...`);
@@ -157,11 +139,9 @@ const verifyTelegramWebAppData = (req, res, next) => {
             const timeDiff = now - authTime;
             const hours = Math.floor(timeDiff / (1000 * 60 * 60));
 
-            console.log('🔍 Временная диагностика:');
             console.log('  - Время авторизации:', new Date(authTime).toISOString());
             console.log('  - Текущее время:', new Date(now).toISOString());
-            console.log('  - Разница в часах:', hours);
-
+            
             if (hours > 24) {
                 console.warn('⚠️  initData старше 24 часов - может быть проблемой!');
             }
@@ -176,8 +156,6 @@ const verifyTelegramWebAppData = (req, res, next) => {
         }
         const dataCheckString = dataCheckArr.join('\n');
 
-        console.log('🔍 dataCheckString:');
-        console.log('  - Длина:', dataCheckString.length);
         console.log('  - Содержимое (первые 500 символов):', dataCheckString.substring(0, 500));
 
         // Создание секретного ключа на основе токена бота
@@ -191,8 +169,6 @@ const verifyTelegramWebAppData = (req, res, next) => {
             });
         }
 
-        console.log('🔍 Bot token диагностика:');
-        console.log('  - Длина токена:', botToken.length);
         console.log('  - Первые 15 символов:', botToken.substring(0, 15) + '...');
         console.log('  - Содержит двоеточие:', botToken.includes(':'));
 
@@ -201,20 +177,14 @@ const verifyTelegramWebAppData = (req, res, next) => {
             .update(botToken)
             .digest();
 
-        console.log('🔍 Secret key:');
-        console.log('  - Длина секретного ключа:', secret.length);
-
         // Проверка хэша
         const generatedHash = crypto
             .createHmac('sha256', secret)
             .update(dataCheckString)
             .digest('hex');
 
-        console.log('🔍 Сравнение хешей:');
-        console.log('  - Сгенерированный:', generatedHash);
         console.log('  - Полученный:     ', hash);
-        console.log('  - Совпадают:', generatedHash === hash);
-
+        
         if (generatedHash !== hash) {
             console.error('❌ Недействительный hash');
 
@@ -252,14 +222,11 @@ const verifyTelegramWebAppData = (req, res, next) => {
             });
         }
 
-        console.log('✅ Hash валиден, обрабатываем пользователя');
-
         // Получение данных пользователя
         if (data.has('user')) {
             try {
                 const userRaw = JSON.parse(data.get('user'));
-                console.log('🔍 Данные пользователя:', JSON.stringify(userRaw, null, 2));
-
+                
                 // Преобразуем данные пользователя в правильный формат
                 req.telegramUser = {
                     telegramId: userRaw.id.toString(),
@@ -299,7 +266,6 @@ const verifyTelegramWebAppData = (req, res, next) => {
             });
         }
 
-        console.log('✅ === ВАЛИДАЦИЯ TELEGRAM WEBAPP ЗАВЕРШЕНА УСПЕШНО ===');
         next();
 
     } catch (error) {

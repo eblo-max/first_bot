@@ -24,13 +24,11 @@ router.get('/', authMiddleware, async (req, res) => {
                 lastVisit: user.lastVisit
             },
 
-            // 🏆 Детективное звание
             rank: {
                 current: user.rank || 'НОВИЧОК',
                 displayName: user.rank || 'НОВИЧОК'
             },
 
-            // 📊 Статистика
             stats: {
                 // Основные показатели
                 investigations: user.stats?.investigations || user.stats?.totalGames || 0,
@@ -53,10 +51,8 @@ router.get('/', authMiddleware, async (req, res) => {
                 dailyStreakBest: user.stats?.dailyStreakBest || 0
             },
 
-            // 🏅 Достижения
             achievements: user.achievements || [],
 
-            // 📈 Недавние игры
             recentGames: user.gameHistory ? user.gameHistory.slice(-10).reverse() : []
         };
 
@@ -68,7 +64,6 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 });
 
-// 📈 Получение детальной статистики репутации
 router.get('/reputation/details', authMiddleware, async (req, res) => {
     try {
         const user = await User.findOne({ telegramId: req.user.telegramId });
@@ -101,7 +96,6 @@ router.get('/reputation/details', authMiddleware, async (req, res) => {
     }
 });
 
-// 🏅 Получение всех доступных достижений
 router.get('/achievements/available', authMiddleware, async (req, res) => {
     try {
         const user = await User.findOne({ telegramId: req.user.telegramId });
@@ -123,7 +117,6 @@ router.get('/achievements/available', authMiddleware, async (req, res) => {
     }
 });
 
-// 📊 Получение лидерборда с новыми метриками
 router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
     try {
         const period = req.params.period || 'all';
@@ -131,8 +124,7 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
         const currentUser = req.user;
 
         console.log(`\n🔍 === ОТЛАДКА ЛИДЕРБОАРДА ${period.toUpperCase()} ===`);
-        console.log(`👤 Текущий пользователь: ${currentUser.telegramId}`);
-
+        
         let dateFilter = {};
         const now = new Date();
 
@@ -182,11 +174,9 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
             .select('telegramId username firstName lastName nickname rank stats.totalScore lastVisit')
             .lean();
 
-        console.log(`✅ Найдено ${totalScoreLeaderboard.length} игроков для лидербоарда ${period}`);
-
         // Отладочная информация о найденных пользователях
         if (totalScoreLeaderboard.length > 0) {
-            console.log('📋 Первые 3 игрока:');
+            
             totalScoreLeaderboard.slice(0, 3).forEach((user, index) => {
                 const name = user.nickname || user.firstName || user.username || `Игрок${user.telegramId.slice(-4)}`;
                 console.log(`  ${index + 1}. ${name} (${user.telegramId}) - ${user.stats?.totalScore || 0} очков (lastVisit: ${user.lastVisit || 'НЕТ'})`);
@@ -194,20 +184,18 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
 
             // Проверяем есть ли текущий пользователь в результатах
             const currentUserInResults = totalScoreLeaderboard.find(u => u.telegramId === currentUser.telegramId);
-            console.log(`🔍 Текущий пользователь в результатах: ${currentUserInResults ? 'ДА' : 'НЕТ'}`);
+            
             if (currentUserInResults) {
                 const position = totalScoreLeaderboard.findIndex(u => u.telegramId === currentUser.telegramId) + 1;
-                console.log(`📍 Позиция текущего пользователя: ${position}`);
+                
             }
         } else {
-            console.log('⚠️ НЕ НАЙДЕНО ИГРОКОВ! Проверим общую статистику...');
-
+            
             // Проверяем общую статистику
             const totalUsers = await User.countDocuments();
             const usersWithScore = await User.countDocuments({ 'stats.totalScore': { $gt: 0 } });
             const usersWithLastVisit = await User.countDocuments({ lastVisit: { $exists: true } });
 
-            console.log(`📊 Статистика БД: всего ${totalUsers} пользователей, с очками ${usersWithScore}, с lastVisit ${usersWithLastVisit}`);
         }
 
         // Форматируем данные для frontend
@@ -234,9 +222,6 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
             total: formattedLeaderboard.length
         };
 
-        console.log(`📤 Отправляем лидербоард ${period} с ${result.totalScore.length} игроками`);
-        console.log(`🔚 === КОНЕЦ ОТЛАДКИ ЛИДЕРБОАРДА ===\n`);
-
         res.json(result);
     } catch (error) {
         console.error('❌ Ошибка получения лидерборда:', error);
@@ -244,7 +229,6 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
     }
 });
 
-// 🎯 Получение прогресса до следующих достижений
 router.get('/progress/next-achievements', authMiddleware, async (req, res) => {
     try {
         const user = await User.findOne({ telegramId: req.user.telegramId });
