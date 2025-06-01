@@ -1,19 +1,135 @@
-const express = require('express');
-const router = express.Router();
-const User = require('../models/User');
-const { authMiddleware } = require('../middleware/auth');
+/**
+ * Типизированные маршруты для расширенного профиля пользователя
+ * Обрабатывает детальную статистику, репутацию, достижения и лидерборды
+ */
 
-// Получение профиля пользователя с расширенной статистикой
-router.get('/', authMiddleware, async (req, res) => {
+import { Router, Request, Response } from 'express';
+import User, { type IUser, UserRank, type IAchievement } from '../models/User';
+import { authMiddleware } from '../middleware/auth';
+
+const router = Router();
+
+// Интерфейсы для запросов и ответов
+interface AuthenticatedRequest extends Request {
+    user?: {
+        telegramId: string;
+        username?: string;
+        firstName?: string;
+        lastName?: string;
+    };
+}
+
+interface LeaderboardRequest extends AuthenticatedRequest {
+    params: {
+        period?: 'day' | 'week' | 'month' | 'all';
+    };
+    query: {
+        limit?: string;
+    };
+}
+
+// Типы ответов
+interface ProfileData {
+    basic: {
+        telegramId: string;
+        username?: string;
+        firstName?: string;
+        lastName?: string;
+        nickname?: string;
+        registeredAt: Date;
+        lastVisit: Date;
+    };
+    rank: {
+        current: UserRank;
+        displayName: string;
+    };
+    stats: {
+        investigations: number;
+        solvedCases: number;
+        totalQuestions: number;
+        totalScore: number;
+        accuracy: number;
+        winStreak: number;
+        maxWinStreak: number;
+        perfectGames: number;
+        averageTime: number;
+        fastestGame: number;
+        dailyStreakCurrent: number;
+        dailyStreakBest: number;
+    };
+    achievements: IAchievement[];
+    recentGames: any[];
+}
+
+interface ReputationDetails {
+    current: any;
+    history: Array<{
+        date: Date;
+        reputationGained: number;
+        efficiency: number;
+        difficulty: string;
+    }>;
+    recommendations: ReputationRecommendation[];
+}
+
+interface ReputationRecommendation {
+    type: 'accuracy' | 'speed' | 'consistency' | 'difficulty';
+    title: string;
+    description: string;
+    priority: 'high' | 'medium' | 'low';
+}
+
+interface AvailableAchievement {
+    id: string;
+    name: string;
+    category: string;
+    progress: {
+        current: number;
+        target: number;
+    };
+    description: string;
+}
+
+interface LeaderboardEntry {
+    rank: number;
+    telegramId: string;
+    name: string;
+    username?: string;
+    userRank: UserRank;
+    stats: {
+        totalScore: number;
+    };
+}
+
+interface NextAchievement {
+    type: 'rank' | 'achievement';
+    title: string;
+    progress: {
+        current: number;
+        target: number;
+        percentage: number;
+    };
+    description: string;
+}
+
+/**
+ * @route   GET /api/profile
+ * @desc    Получение профиля пользователя с расширенной статистикой
+ * @access  Private
+ */
+router.get('/', authMiddleware as any, async (req: AuthenticatedRequest, res: Response<ProfileData>) => {
     try {
-        const user = await User.findOne({ telegramId: req.user.telegramId });
+        const user = await User.findOne({ telegramId: req.user?.telegramId });
 
         if (!user) {
-            return res.status(404).json({ error: 'Пользователь не найден' });
+            res.status(404).json({ error: 'Пользователь не найден' } as any);
+            return;
         }
 
-        // Формируем простой профиль
-        const profileData = {
+        console.log('👤 Получение расширенного профиля:', user.telegramId);
+
+        // Формируем расширенный профиль
+        const profileData: ProfileData = {
             basic: {
                 telegramId: user.telegramId,
                 username: user.username,
@@ -25,21 +141,21 @@ router.get('/', authMiddleware, async (req, res) => {
             },
 
             rank: {
-                current: user.rank || 'НОВИЧОК',
-                displayName: user.rank || 'НОВИЧОК'
+                current: user.rank || 'СТАЖЕР' as UserRank,
+                displayName: user.rank || 'СТАЖЕР'
             },
 
             stats: {
                 // Основные показатели
-                investigations: user.stats?.investigations || user.stats?.totalGames || 0,
-                solvedCases: user.stats?.solvedCases || user.stats?.correctAnswers || 0,
+                investigations: user.stats?.investigations || 0,
+                solvedCases: user.stats?.solvedCases || 0,
                 totalQuestions: user.stats?.totalQuestions || 0,
                 totalScore: user.stats?.totalScore || 0,
                 accuracy: user.stats?.accuracy || 0,
 
                 // Серии и достижения
-                winStreak: user.stats?.winStreak || user.stats?.currentStreak || 0,
-                maxWinStreak: user.stats?.maxWinStreak || user.stats?.maxStreak || 0,
+                winStreak: user.stats?.winStreak || 0,
+                maxWinStreak: user.stats?.maxWinStreak || 0,
                 perfectGames: user.stats?.perfectGames || 0,
 
                 // Скорость
@@ -56,23 +172,37 @@ router.get('/', authMiddleware, async (req, res) => {
             recentGames: user.gameHistory ? user.gameHistory.slice(-10).reverse() : []
         };
 
-        console.log('Отправляем данные профиля:', JSON.stringify(profileData, null, 2));
+        console.log('✅ Отправка данных расширенного профиля:', {
+            telegramId: user.telegramId,
+            rank: profileData.rank.current,
+            totalScore: profileData.stats.totalScore,
+            achievements: profileData.achievements.length
+        });
+
         res.json(profileData);
     } catch (error) {
-        console.error('Ошибка получения профиля:', error);
-        res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+        console.error('❌ Ошибка получения профиля:', error);
+        res.status(500).json({ error: 'Внутренняя ошибка сервера' } as any);
     }
 });
 
-router.get('/reputation/details', authMiddleware, async (req, res) => {
+/**
+ * @route   GET /api/profile/reputation/details
+ * @desc    Получение детальной информации о репутации
+ * @access  Private
+ */
+router.get('/reputation/details', authMiddleware as any, async (req: AuthenticatedRequest, res: Response<ReputationDetails>) => {
     try {
-        const user = await User.findOne({ telegramId: req.user.telegramId });
+        const user = await User.findOne({ telegramId: req.user?.telegramId });
 
         if (!user) {
-            return res.status(404).json({ error: 'Пользователь не найден' });
+            res.status(404).json({ error: 'Пользователь не найден' } as any);
+            return;
         }
 
-        const reputationDetails = {
+        console.log('📊 Получение деталей репутации:', user.telegramId);
+
+        const reputationDetails: ReputationDetails = {
             current: user.getReputationBreakdown(),
 
             // Исторические данные репутации (из последних 20 игр)
@@ -89,20 +219,29 @@ router.get('/reputation/details', authMiddleware, async (req, res) => {
             recommendations: generateReputationRecommendations(user)
         };
 
+        console.log('✅ Детали репутации получены');
         res.json(reputationDetails);
     } catch (error) {
-        console.error('Ошибка получения деталей репутации:', error);
-        res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+        console.error('❌ Ошибка получения деталей репутации:', error);
+        res.status(500).json({ error: 'Внутренняя ошибка сервера' } as any);
     }
 });
 
-router.get('/achievements/available', authMiddleware, async (req, res) => {
+/**
+ * @route   GET /api/profile/achievements/available
+ * @desc    Получение доступных достижений
+ * @access  Private
+ */
+router.get('/achievements/available', authMiddleware as any, async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const user = await User.findOne({ telegramId: req.user.telegramId });
+        const user = await User.findOne({ telegramId: req.user?.telegramId });
 
         if (!user) {
-            return res.status(404).json({ error: 'Пользователь не найден' });
+            res.status(404).json({ error: 'Пользователь не найден' });
+            return;
         }
+
+        console.log('🏆 Получение доступных достижений:', user.telegramId);
 
         const availableAchievements = generateAvailableAchievements(user);
 
@@ -112,26 +251,30 @@ router.get('/achievements/available', authMiddleware, async (req, res) => {
             progress: user.getAchievementsProgress()
         });
     } catch (error) {
-        console.error('Ошибка получения достижений:', error);
+        console.error('❌ Ошибка получения достижений:', error);
         res.status(500).json({ error: 'Внутренняя ошибка сервера' });
     }
 });
 
-router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
+/**
+ * @route   GET /api/profile/leaderboard/:period?
+ * @desc    Получение лидерборда с фильтрацией по периоду
+ * @access  Private
+ */
+router.get('/leaderboard/:period?', authMiddleware as any, async (req: LeaderboardRequest, res: Response) => {
     try {
         const period = req.params.period || 'all';
-        const limit = parseInt(req.query.limit) || 50;
+        const limit = parseInt(req.query.limit || '50');
         const currentUser = req.user;
 
-        console.log(`\n🔍 === ОТЛАДКА ЛИДЕРБОАРДА ${period.toUpperCase()} ===`);
-        
-        let dateFilter = {};
+        console.log(`🔍 Запрос лидерборда ${period.toUpperCase()}:`, { limit, user: currentUser?.telegramId });
+
+        let dateFilter: any = {};
         const now = new Date();
 
         switch (period) {
             case 'day':
-                // За последние 24 часа ИЛИ если у пользователя нет lastVisit, но есть очки
-                const last24h = new Date(now - 24 * 60 * 60 * 1000);
+                const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
                 dateFilter = {
                     $or: [
                         { lastVisit: { $gte: last24h } },
@@ -140,8 +283,7 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
                 };
                 break;
             case 'week':
-                // За последнюю неделю ИЛИ если у пользователя нет lastVisit, но есть очки
-                const lastWeek = new Date(now - 7 * 24 * 60 * 60 * 1000);
+                const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
                 dateFilter = {
                     $or: [
                         { lastVisit: { $gte: lastWeek } },
@@ -150,8 +292,7 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
                 };
                 break;
             case 'month':
-                // За последний месяц ИЛИ если у пользователя нет lastVisit, но есть очки
-                const lastMonth = new Date(now - 30 * 24 * 60 * 60 * 1000);
+                const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
                 dateFilter = {
                     $or: [
                         { lastVisit: { $gte: lastMonth } },
@@ -160,12 +301,11 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
                 };
                 break;
             default:
-                // Для 'all' берем всех пользователей с очками
                 dateFilter = { 'stats.totalScore': { $gt: 0 } };
                 break;
         }
 
-        console.log(`📊 Фильтр запроса:`, JSON.stringify(dateFilter, null, 2));
+        console.log('📊 Фильтр запроса:', dateFilter);
 
         // Получаем топ игроков по общему счету
         const totalScoreLeaderboard = await User.find(dateFilter)
@@ -174,32 +314,10 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
             .select('telegramId username firstName lastName nickname rank stats.totalScore lastVisit')
             .lean();
 
-        // Отладочная информация о найденных пользователях
-        if (totalScoreLeaderboard.length > 0) {
-            
-            totalScoreLeaderboard.slice(0, 3).forEach((user, index) => {
-                const name = user.nickname || user.firstName || user.username || `Игрок${user.telegramId.slice(-4)}`;
-                console.log(`  ${index + 1}. ${name} (${user.telegramId}) - ${user.stats?.totalScore || 0} очков (lastVisit: ${user.lastVisit || 'НЕТ'})`);
-            });
-
-            // Проверяем есть ли текущий пользователь в результатах
-            const currentUserInResults = totalScoreLeaderboard.find(u => u.telegramId === currentUser.telegramId);
-            
-            if (currentUserInResults) {
-                const position = totalScoreLeaderboard.findIndex(u => u.telegramId === currentUser.telegramId) + 1;
-                
-            }
-        } else {
-            
-            // Проверяем общую статистику
-            const totalUsers = await User.countDocuments();
-            const usersWithScore = await User.countDocuments({ 'stats.totalScore': { $gt: 0 } });
-            const usersWithLastVisit = await User.countDocuments({ lastVisit: { $exists: true } });
-
-        }
+        console.log(`✅ Найдено ${totalScoreLeaderboard.length} пользователей в лидерборде`);
 
         // Форматируем данные для frontend
-        const formattedLeaderboard = totalScoreLeaderboard.map((user, index) => {
+        const formattedLeaderboard: LeaderboardEntry[] = totalScoreLeaderboard.map((user, index) => {
             const displayName = user.nickname ||
                 (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() :
                     (user.username || `Игрок ${user.telegramId.toString().slice(-4)}`));
@@ -209,7 +327,7 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
                 telegramId: user.telegramId,
                 name: displayName,
                 username: user.username,
-                userRank: user.rank || 'НОВИЧОК',
+                userRank: user.rank || 'СТАЖЕР' as UserRank,
                 stats: {
                     totalScore: user.stats?.totalScore || 0
                 }
@@ -229,35 +347,45 @@ router.get('/leaderboard/:period?', authMiddleware, async (req, res) => {
     }
 });
 
-router.get('/progress/next-achievements', authMiddleware, async (req, res) => {
+/**
+ * @route   GET /api/profile/progress/next-achievements
+ * @desc    Получение прогресса к следующим достижениям
+ * @access  Private
+ */
+router.get('/progress/next-achievements', authMiddleware as any, async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const user = await User.findOne({ telegramId: req.user.telegramId });
+        const user = await User.findOne({ telegramId: req.user?.telegramId });
 
         if (!user) {
-            return res.status(404).json({ error: 'Пользователь не найден' });
+            res.status(404).json({ error: 'Пользователь не найден' });
+            return;
         }
+
+        console.log('📈 Получение прогресса достижений:', user.telegramId);
 
         const nextAchievements = calculateNextAchievements(user);
 
         res.json({
             nextRank: {
                 current: user.rank,
-                progress: user.rewards.nextRankProgress,
+                progress: user.rewards?.nextRankProgress || 0,
                 displayName: user.getRankDisplayName()
             },
             nextAchievements
         });
     } catch (error) {
-        console.error('Ошибка получения прогресса:', error);
+        console.error('❌ Ошибка получения прогресса:', error);
         res.status(500).json({ error: 'Внутренняя ошибка сервера' });
     }
 });
 
 // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
 
-// Генерация рекомендаций по улучшению репутации
-function generateReputationRecommendations(user) {
-    const recommendations = [];
+/**
+ * Генерация рекомендаций по улучшению репутации
+ */
+function generateReputationRecommendations(user: IUser): ReputationRecommendation[] {
+    const recommendations: ReputationRecommendation[] = [];
 
     if (user.reputation.accuracy < 70) {
         recommendations.push({
@@ -298,9 +426,11 @@ function generateReputationRecommendations(user) {
     return recommendations;
 }
 
-// Генерация списка доступных достижений
-function generateAvailableAchievements(user) {
-    const available = [];
+/**
+ * Генерация списка доступных достижений
+ */
+function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
+    const available: AvailableAchievement[] = [];
 
     // Проверяем ближайшие достижения по играм
     const investigationMilestones = [5, 25, 50, 100, 250, 500];
@@ -353,9 +483,11 @@ function generateAvailableAchievements(user) {
     return available;
 }
 
-// Расчет ближайших достижений
-function calculateNextAchievements(user) {
-    const next = [];
+/**
+ * Расчет ближайших достижений
+ */
+function calculateNextAchievements(user: IUser): NextAchievement[] {
+    const next: NextAchievement[] = [];
 
     // Следующее звание
     const rankThresholds = [0, 150, 400, 900, 2000, 4500, 10000, 20000];
@@ -380,4 +512,4 @@ function calculateNextAchievements(user) {
     return next;
 }
 
-module.exports = router; 
+export default router; 

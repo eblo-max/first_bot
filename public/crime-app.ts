@@ -2,12 +2,24 @@
  * 🎮 ОСНОВНОЕ ПРИЛОЖЕНИЕ "КРИМИНАЛЬНЫЙ БЛЕФ"
  * Модульная TypeScript версия
  */
-import { AppGameData, selectAnswer, setTelegramApp } from './game-core.js';
+
+import { AppGameData, selectAnswer, calculatePoints, setTelegramApp } from './game-core.js';
 import { authorize, verifyExistingToken, initAppWithAuth } from './auth.js';
+import {
+    GameStory,
+    TelegramWebAppData,
+    AppTheme,
+    GameFinishResult,
+    GameResult
+} from './types.js';
+
 // =============== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===============
-let telegramApp = null;
+
+let telegramApp: TelegramWebAppData | null = null;
+
 // =============== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===============
-function shuffleArray(array) {
+
+function shuffleArray<T>(array: T[]): T[] {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -15,17 +27,21 @@ function shuffleArray(array) {
     }
     return shuffled;
 }
-function updateGameInterface() {
-    const gameInterface = window.GameInterface;
+
+function updateGameInterface(): void {
+    const gameInterface = (window as any).GameInterface;
     if (gameInterface && typeof gameInterface.updateUI === 'function') {
         gameInterface.updateUI(AppGameData);
         console.log('🔄 Игровой интерфейс обновлен');
     }
 }
+
 // =============== ТЕСТОВЫЕ ДАННЫЕ ===============
-function loadTestGameData() {
+
+function loadTestGameData(): void {
     console.log('🧪 Загрузка тестовых данных игры...');
-    const testStories = [
+
+    const testStories: GameStory[] = [
         {
             id: 'test-story-1',
             title: 'ОГРАБЛЕНИЕ ЮВЕЛИРНОГО МАГАЗИНА',
@@ -162,6 +178,7 @@ function loadTestGameData() {
             ]
         }
     ];
+
     const shuffledStories = shuffleArray([...testStories]);
     AppGameData.stories = shuffledStories;
     AppGameData.currentStoryIndex = 0;
@@ -169,42 +186,53 @@ function loadTestGameData() {
     AppGameData.score = 0;
     AppGameData.gameId = 'test-game-' + Date.now();
     AppGameData.isTestMode = true;
+
     updateGameInterface();
+
     setTimeout(() => {
         startTimer();
     }, 100);
 }
+
 // =============== ОСНОВНЫЕ ФУНКЦИИ ===============
-function initApp() {
+
+function initApp(): void {
     console.log('🚀 Инициализация приложения...');
+
     try {
-        if (!window.Telegram?.WebApp) {
+        if (!(window as any).Telegram?.WebApp) {
             console.warn('⚠️ Telegram WebApp API не найдено, переходим в тестовый режим');
             handleNoTelegramApi();
             return;
         }
-        telegramApp = window.Telegram.WebApp;
+
+        telegramApp = (window as any).Telegram.WebApp;
         if (telegramApp) {
             setTelegramApp(telegramApp);
         }
+
         const theme = telegramApp?.colorScheme || 'dark';
         AppGameData.theme = theme;
         document.body.setAttribute('data-theme', theme);
+
         telegramApp?.expand();
         telegramApp?.BackButton.onClick(() => handleBackButton());
+
         loadGameData();
         console.log('✅ Приложение инициализировано успешно');
-    }
-    catch (error) {
+
+    } catch (error) {
         console.error('❌ Ошибка инициализации приложения:', error);
         handleNoTelegramApi();
     }
 }
-function handleNoTelegramApi() {
+
+function handleNoTelegramApi(): void {
     console.log('🧪 Переход в тестовый режим...');
     AppGameData.isTestMode = true;
-    if (!window.Telegram) {
-        window.Telegram = {
+
+    if (!(window as any).Telegram) {
+        (window as any).Telegram = {
             WebApp: {
                 ready: () => console.log('📱 WebApp.ready() в тестовом режиме'),
                 expand: () => console.log('📱 WebApp.expand() в тестовом режиме'),
@@ -213,36 +241,39 @@ function handleNoTelegramApi() {
                 BackButton: {
                     show: () => console.log('🔙 BackButton.show()'),
                     hide: () => console.log('🔙 BackButton.hide()'),
-                    onClick: (callback) => {
+                    onClick: (callback: () => void) => {
                         document.addEventListener('keydown', (e) => {
-                            if (e.key === 'Escape')
-                                callback();
+                            if (e.key === 'Escape') callback();
                         });
                     }
                 },
-                colorScheme: "dark",
+                colorScheme: "dark" as AppTheme,
                 HapticFeedback: {
-                    impactOccurred: (type) => console.log(`📳 HapticFeedback.impactOccurred(${type})`),
-                    notificationOccurred: (type) => console.log(`📳 HapticFeedback.notificationOccurred(${type})`)
+                    impactOccurred: (type?: string) => console.log(`📳 HapticFeedback.impactOccurred(${type})`),
+                    notificationOccurred: (type?: string) => console.log(`📳 HapticFeedback.notificationOccurred(${type})`)
                 }
             }
         };
     }
-    telegramApp = window.Telegram.WebApp;
+
+    telegramApp = (window as any).Telegram.WebApp;
     if (telegramApp) {
         setTelegramApp(telegramApp);
     }
     loadGameData(true);
 }
-function handleBackButton() {
+
+function handleBackButton(): void {
     console.log('🔙 Нажата кнопка "Назад"');
     const shouldExit = confirm('Вы уверены, что хотите прервать игру?');
     if (shouldExit) {
         window.location.href = '/';
     }
 }
-async function loadGameData(testMode = false) {
+
+async function loadGameData(testMode: boolean = false): Promise<void> {
     console.log('📊 Загрузка данных игры...', { testMode });
+
     try {
         if (testMode || AppGameData.isTestMode) {
             loadTestGameData();
@@ -250,91 +281,114 @@ async function loadGameData(testMode = false) {
         }
         // В будущем - запрос к серверу
         loadTestGameData();
-    }
-    catch (error) {
+    } catch (error) {
         console.error('❌ Ошибка загрузки данных:', error);
         loadTestGameData();
     }
 }
-function startTimer() {
+
+function startTimer(): void {
     console.log('⏱️ Запуск таймера для вопроса');
+
     if (AppGameData.timer !== null) {
         clearInterval(AppGameData.timer);
     }
+
     AppGameData.secondsLeft = AppGameData.timerDuration;
     AppGameData.startTime = new Date();
     AppGameData.isAnswering = false;
     AppGameData.answerSelected = false;
-    const gameInterface = window.GameInterface;
+
+    const gameInterface = (window as any).GameInterface;
     if (gameInterface?.resetTimer) {
         gameInterface.resetTimer(AppGameData.timerDuration);
     }
+
     AppGameData.timer = window.setInterval(() => {
         AppGameData.secondsLeft--;
+
         if (gameInterface?.updateTimer) {
             gameInterface.updateTimer(AppGameData.secondsLeft, AppGameData.timerDuration);
         }
+
         if (AppGameData.secondsLeft <= 0) {
             timeExpired();
         }
     }, 1000);
 }
-function timeExpired() {
+
+function timeExpired(): void {
     console.log('⏰ Время истекло!');
+
     if (AppGameData.timer !== null) {
         clearInterval(AppGameData.timer);
         AppGameData.timer = null;
     }
-    if (AppGameData.answerSelected)
-        return;
+
+    if (AppGameData.answerSelected) return;
+
     AppGameData.isAnswering = true;
+
     const correctMistake = AppGameData.currentStory?.mistakes.find(m => m.isCorrect);
-    const result = {
+
+    const result: GameResult = {
         correct: false,
         explanation: "Время истекло! " + (correctMistake?.explanation || "Важно принимать решения вовремя."),
         pointsEarned: 0,
         timeSpent: AppGameData.timerDuration
     };
+
     AppGameData.result = result;
+
     setTimeout(() => {
-        const gameInterface = window.GameInterface;
+        const gameInterface = (window as any).GameInterface;
         if (gameInterface?.showResult) {
             gameInterface.showResult(result);
         }
         AppGameData.isAnswering = false;
     }, 1000);
 }
-function nextQuestion() {
+
+function nextQuestion(): void {
     console.log(`➡️ Переход к следующему вопросу. Индекс: ${AppGameData.currentStoryIndex}`);
+
     if (AppGameData.currentStoryIndex >= AppGameData.stories.length - 1) {
         finishGame();
         return;
     }
+
     if (AppGameData.timer !== null) {
         clearInterval(AppGameData.timer);
         AppGameData.timer = null;
     }
+
     AppGameData.currentStoryIndex++;
     AppGameData.currentStory = AppGameData.stories[AppGameData.currentStoryIndex];
     AppGameData.isAnswering = false;
     AppGameData.answerSelected = false;
     AppGameData.result = null;
+
     updateGameInterface();
+
     setTimeout(() => {
         startTimer();
     }, 100);
 }
-async function finishGame() {
+
+async function finishGame(): Promise<void> {
     console.log('🏁 Завершение игры...');
+
     let correctAnswers = 0;
     const totalQuestions = AppGameData.stories.length;
+
     AppGameData.stories.forEach((story) => {
-        if (story.correct === true)
-            correctAnswers++;
+        if ((story as any).correct === true) correctAnswers++;
     });
+
     const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
     const totalScore = AppGameData.score || 0;
-    const gameResult = {
+
+    const gameResult: GameFinishResult = {
         gameId: AppGameData.gameId || 'unknown',
         totalScore: totalScore,
         correctAnswers: correctAnswers,
@@ -347,14 +401,18 @@ async function finishGame() {
         reputationChange: correctAnswers * 10,
         rank: accuracy >= 80 ? 'Detective' : accuracy >= 60 ? 'Inspector' : 'Rookie'
     };
+
     AppGameData.gameResult = gameResult;
     showGameFinishDialog(gameResult);
+
     // Отправляем результаты на сервер
     try {
         // Проверяем наличие токена авторизации
         const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+
         if (token) {
             console.log('🔐 Отправляем результаты на сервер с авторизацией...');
+
             // Отправляем результаты на сервер
             const response = await fetch('/api/game/finish', {
                 method: 'POST',
@@ -369,17 +427,20 @@ async function finishGame() {
                     totalQuestions: totalQuestions
                 })
             });
+
             if (response.ok) {
                 const data = await response.json();
                 console.log('✅ Результаты сохранены на сервере');
+
                 // Обновляем информацию о новых достижениях, если они есть
                 if (data.status === 'success' && data.data.newAchievements && data.data.newAchievements.length > 0) {
                     console.log('🏆 Получены новые достижения:', data.data.newAchievements);
+
                     // Используем новую систему достижений для показа уведомлений
-                    if (window.AchievementSystem) {
+                    if ((window as any).AchievementSystem) {
                         // Обновляем статистику пользователя для корректного отображения прогресса
                         if (data.data.user && data.data.user.stats) {
-                            window.AchievementSystem.updateUserStats({
+                            (window as any).AchievementSystem.updateUserStats({
                                 investigations: data.data.user.stats.totalGames || 0,
                                 accuracy: data.data.user.stats.accuracy || 0,
                                 totalScore: data.data.user.stats.totalScore || 0,
@@ -388,39 +449,36 @@ async function finishGame() {
                                 fastestGame: data.data.user.stats.fastestGame || 999
                             });
                         }
+
                         // Показываем уведомления о новых достижениях
-                        window.AchievementSystem.handleNewAchievements(data.data.newAchievements);
-                    }
-                    else {
+                        (window as any).AchievementSystem.handleNewAchievements(data.data.newAchievements);
+                    } else {
                         console.log('⚠️ AchievementSystem не найдена, используем fallback');
                         // Fallback: показываем простое уведомление
-                        data.data.newAchievements.forEach((achievement) => {
-                            if (window.Telegram?.WebApp?.showAlert) {
-                                window.Telegram.WebApp.showAlert(`🏆 Новое достижение: ${achievement.name}`);
-                            }
-                            else {
+                        data.data.newAchievements.forEach((achievement: any) => {
+                            if ((window as any).Telegram?.WebApp?.showAlert) {
+                                (window as any).Telegram.WebApp.showAlert(`🏆 Новое достижение: ${achievement.name}`);
+                            } else {
                                 console.log(`🏆 Новое достижение: ${achievement.name}`);
                             }
                         });
                     }
                 }
-            }
-            else {
+            } else {
                 console.error('❌ Ошибка при сохранении результатов на сервере:', await response.text());
             }
-        }
-        else {
+        } else {
             console.log('⚠️ Токен авторизации отсутствует, пропускаем отправку на сервер');
         }
-    }
-    catch (error) {
+    } catch (error) {
         console.error('❌ Ошибка при отправке результатов на сервер:', error);
     }
 }
-function showGameFinishDialog(gameResult) {
+
+function showGameFinishDialog(gameResult: GameFinishResult): void {
     const existingDialog = document.querySelector('.game-finish-dialog');
-    if (existingDialog)
-        existingDialog.remove();
+    if (existingDialog) existingDialog.remove();
+
     const dialog = document.createElement('div');
     dialog.className = 'game-finish-dialog';
     dialog.innerHTML = `
@@ -438,13 +496,17 @@ function showGameFinishDialog(gameResult) {
             </div>
         </div>
     `;
+
     document.body.appendChild(dialog);
+
     document.getElementById('btnGoHome')?.addEventListener('click', () => {
         window.location.href = '/';
     });
+
     document.getElementById('btnGoProfile')?.addEventListener('click', () => {
         window.location.href = '/profile.html';
     });
+
     // Добавляем CSS стили если их нет
     if (!document.getElementById('finish-dialog-styles')) {
         const style = document.createElement('style');
@@ -472,16 +534,18 @@ function showGameFinishDialog(gameResult) {
         document.head.appendChild(style);
     }
 }
-function clearAppCache() {
+
+function clearAppCache(): void {
     console.log('🧹 Очищаем кэш приложения...');
     localStorage.clear();
     sessionStorage.clear();
     location.reload();
 }
-function provideFeedback(type) {
+
+function provideFeedback(type: 'correct' | 'incorrect' | 'tap'): void {
     try {
-        if (!telegramApp?.HapticFeedback)
-            return;
+        if (!telegramApp?.HapticFeedback) return;
+
         switch (type) {
             case 'correct':
                 telegramApp.HapticFeedback.notificationOccurred('success');
@@ -493,49 +557,50 @@ function provideFeedback(type) {
                 telegramApp.HapticFeedback.impactOccurred('light');
                 break;
         }
-    }
-    catch (error) {
+    } catch (error) {
         console.log(`🎮 Feedback: ${type}`);
     }
 }
+
 // =============== ИНИЦИАЛИЗАЦИЯ И ЭКСПОРТ ===============
+
 if (typeof window !== 'undefined') {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             // Используем расширенную инициализацию если доступен Telegram WebApp
-            const tg = window.Telegram?.WebApp;
+            const tg = (window as any).Telegram?.WebApp;
             if (tg && tg.initData && !tg.initData.includes('test_mode_data')) {
                 initAppWithAuth(initApp, tg);
-            }
-            else {
+            } else {
                 initApp();
             }
         });
-    }
-    else {
+    } else {
         // Используем расширенную инициализацию если доступен Telegram WebApp
-        const tg = window.Telegram?.WebApp;
+        const tg = (window as any).Telegram?.WebApp;
         if (tg && tg.initData && !tg.initData.includes('test_mode_data')) {
             initAppWithAuth(initApp, tg);
-        }
-        else {
+        } else {
             initApp();
         }
     }
+
     // Экспорт функций в window
-    window.selectAnswer = selectAnswer;
-    window.nextQuestion = nextQuestion;
-    window.startTimer = startTimer;
-    window.finishGame = finishGame;
-    window.clearAppCache = clearAppCache;
-    window.provideFeedback = provideFeedback;
-    window.authorize = authorize;
-    window.verifyExistingToken = verifyExistingToken;
-    window.initAppWithAuth = initAppWithAuth;
+    (window as any).selectAnswer = selectAnswer;
+    (window as any).nextQuestion = nextQuestion;
+    (window as any).startTimer = startTimer;
+    (window as any).finishGame = finishGame;
+    (window as any).clearAppCache = clearAppCache;
+    (window as any).provideFeedback = provideFeedback;
+    (window as any).authorize = authorize;
+    (window as any).verifyExistingToken = verifyExistingToken;
+    (window as any).initAppWithAuth = initAppWithAuth;
+
     // Создаем глобальный объект для приложения
-    window.CriminalBluffApp = window.CriminalBluffApp || {};
-    window.CriminalBluffApp.clearCache = clearAppCache;
-    window.CriminalBluffApp.authorize = authorize;
-    window.CriminalBluffApp.provideFeedback = provideFeedback;
+    (window as any).CriminalBluffApp = (window as any).CriminalBluffApp || {};
+    (window as any).CriminalBluffApp.clearCache = clearAppCache;
+    (window as any).CriminalBluffApp.authorize = authorize;
+    (window as any).CriminalBluffApp.provideFeedback = provideFeedback;
+
     console.log('✅ Криминальный Блеф TypeScript загружен (модульная версия)!');
-}
+} 

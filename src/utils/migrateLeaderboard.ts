@@ -1,42 +1,98 @@
-const mongoose = require('mongoose');
+/**
+ * Типизированная система миграции данных лидерборда
+ */
+
+import mongoose from 'mongoose';
 require('dotenv').config();
 
 // Импорт моделей
 const User = require('../models/User');
 const Leaderboard = require('../models/Leaderboard');
 
+// Типы для миграции
+interface UserData {
+    telegramId: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    nickname?: string;
+    stats?: {
+        totalScore: number;
+        investigations: number;
+        accuracy: number;
+        winStreak: number;
+    };
+    rank?: string;
+    lastVisit?: Date;
+    createdAt: Date;
+}
+
+interface LeaderboardEntry {
+    userId: string;
+    username: string;
+    firstName?: string;
+    lastName?: string;
+    nickname?: string;
+    score: number;
+    rank: number;
+    userRank?: string;
+    period: string;
+    investigations: number;
+    accuracy: number;
+    winStreak: number;
+    lastGameDate?: Date;
+    updatedAt: Date;
+}
+
+interface Period {
+    name: string;
+    filter: Record<string, any>;
+}
+
+interface DateFilter {
+    lastVisit?: {
+        $gte: Date;
+    };
+}
+
+interface IndexInfo {
+    key: Record<string, number>;
+    name: string;
+}
+
 /**
  * Миграция данных рейтинга из коллекции users в leaderboard
  */
-async function migrateLeaderboard() {
+async function migrateLeaderboard(): Promise<void> {
     try {
-        
+        console.log('🚀 Начинаем миграцию лидерборда...');
+
         // Подключение к MongoDB
-        await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-        
+        await mongoose.connect(process.env.MONGODB_URI!);
+        console.log('✅ Подключение к MongoDB установлено');
+
         // Очищаем старые данные leaderboard, если есть
         const existingCount = await Leaderboard.countDocuments();
         if (existingCount > 0) {
-            
+            console.log(`🗑️ Удаляем ${existingCount} старых записей лидерборда...`);
             await Leaderboard.deleteMany({});
-            
+            console.log('✅ Старые данные удалены');
         }
 
         // Получаем всех пользователей
-        const users = await User.find({})
+        const users: UserData[] = await User.find({})
             .select('telegramId firstName lastName username nickname stats rank lastVisit createdAt')
             .lean();
 
         if (users.length === 0) {
-            
+            console.log('⚠️ Пользователи не найдены');
             return;
         }
 
+        console.log(`📊 Найдено пользователей: ${users.length}`);
+
         const now = new Date();
-        const periods = [
+        const periods: Period[] = [
             { name: 'all', filter: {} },
             { name: 'month', filter: getDateFilter('month') },
             { name: 'week', filter: getDateFilter('week') },
@@ -46,7 +102,8 @@ async function migrateLeaderboard() {
         let totalCreated = 0;
 
         for (const period of periods) {
-            
+            console.log(`📈 Обрабатываем период: ${period.name}`);
+
             // Фильтруем пользователей по периоду
             const periodUsers = users.filter(user => {
                 if (Object.keys(period.filter).length === 0) return true; // all time
@@ -57,13 +114,16 @@ async function migrateLeaderboard() {
                 return userDate >= period.filter.lastVisit.$gte;
             });
 
-            if (periodUsers.length === 0) continue;
+            if (periodUsers.length === 0) {
+                console.log(`⚠️ Нет пользователей для периода ${period.name}`);
+                continue;
+            }
 
             // Сортируем по очкам
             const sortedUsers = periodUsers.sort((a, b) => (b.stats?.totalScore || 0) - (a.stats?.totalScore || 0));
 
             // Создаем записи рейтинга
-            const leaderboardEntries = sortedUsers.map((user, index) => {
+            const leaderboardEntries: LeaderboardEntry[] = sortedUsers.map((user, index) => {
                 const displayName = user.nickname ||
                     (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() :
                         (user.username || `Игрок ${user.telegramId.slice(-4)}`));
@@ -90,9 +150,11 @@ async function migrateLeaderboard() {
             if (leaderboardEntries.length > 0) {
                 await Leaderboard.insertMany(leaderboardEntries);
                 totalCreated += leaderboardEntries.length;
-                
+                console.log(`✅ Создано записей для периода ${period.name}: ${leaderboardEntries.length}`);
             }
         }
+
+        console.log(`🎉 Всего создано записей: ${totalCreated}`);
 
         // Проверяем индексы
         const indexes = await Leaderboard.collection.getIndexes();
@@ -106,16 +168,16 @@ async function migrateLeaderboard() {
         throw error;
     } finally {
         await mongoose.connection.close();
-        
+        console.log('🔌 Соединение с MongoDB закрыто');
     }
 }
 
 /**
  * Получение фильтра даты для периода
  */
-function getDateFilter(period) {
+function getDateFilter(period: string): DateFilter {
     const now = new Date();
-    let filterDate;
+    let filterDate: Date;
 
     switch (period) {
         case 'day':
@@ -140,10 +202,11 @@ function getDateFilter(period) {
 /**
  * Создание индексов для коллекции leaderboard
  */
-async function createIndexes() {
+async function createIndexes(): Promise<void> {
     try {
-        
-        const indexesInfo = [
+        console.log('🔧 Создаем индексы для лидерборда...');
+
+        const indexesInfo: IndexInfo[] = [
             { key: { period: 1, score: -1, rank: 1 }, name: 'period_score_rank' },
             { key: { period: 1, userId: 1 }, name: 'period_userId' },
             { key: { updatedAt: 1 }, name: 'updatedAt' },
@@ -154,10 +217,10 @@ async function createIndexes() {
         for (const indexInfo of indexesInfo) {
             try {
                 await Leaderboard.collection.createIndex(indexInfo.key, { name: indexInfo.name });
-                
-            } catch (error) {
+                console.log(`✅ Индекс создан: ${indexInfo.name}`);
+            } catch (error: any) {
                 if (error.code === 85) {
-                    
+                    console.log(`ℹ️ Индекс уже существует: ${indexInfo.name}`);
                 } else {
                     console.error(`❌ Ошибка создания индекса ${indexInfo.name}:`, error.message);
                 }
@@ -175,7 +238,7 @@ async function createIndexes() {
 if (require.main === module) {
     migrateLeaderboard()
         .then(() => {
-            
+            console.log('🎉 Миграция лидерборда завершена успешно!');
             process.exit(0);
         })
         .catch(error => {
@@ -184,4 +247,5 @@ if (require.main === module) {
         });
 }
 
+export { migrateLeaderboard, createIndexes };
 module.exports = { migrateLeaderboard, createIndexes }; 

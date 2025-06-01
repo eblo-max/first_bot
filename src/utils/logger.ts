@@ -1,11 +1,29 @@
 /**
- * Упрощенная система логирования для сервера "Криминальный Блеф"
+ * Типизированная система логирования для сервера "Криминальный Блеф"
  */
 
+import { Request, Response, NextFunction } from 'express';
+
+type LogLevel = 'ERROR' | 'WARN' | 'INFO' | 'DEBUG';
+type Environment = 'production' | 'development' | 'test';
+
+interface LogLevels {
+    ERROR: number;
+    WARN: number;
+    INFO: number;
+    DEBUG: number;
+}
+
+type LogFunction = (...args: any[]) => void;
+
 class ServerLogger {
+    private environment: Environment;
+    private levels: LogLevels;
+    private currentLevel: number;
+
     constructor() {
         // Определяем окружение
-        this.environment = process.env.NODE_ENV || 'development';
+        this.environment = (process.env.NODE_ENV as Environment) || 'development';
 
         // Уровни логирования
         this.levels = {
@@ -17,14 +35,12 @@ class ServerLogger {
 
         // Устанавливаем уровень в зависимости от окружения
         this.currentLevel = this.setLogLevel();
-
-        // НЕ логируем при инициализации чтобы избежать цикличности
     }
 
     /**
      * Установка уровня логирования
      */
-    setLogLevel() {
+    private setLogLevel(): number {
         switch (this.environment) {
             case 'production':
                 return this.levels.INFO; // В production показываем INFO и выше
@@ -39,7 +55,7 @@ class ServerLogger {
     /**
      * Очистка чувствительных данных из логов
      */
-    sanitizeLogData(args) {
+    private sanitizeLogData(args: any[]): any[] {
         return args.map(arg => {
             if (typeof arg === 'string') {
                 // Убираем токены и чувствительные данные
@@ -64,7 +80,7 @@ class ServerLogger {
     /**
      * Очистка объектов от чувствительных данных
      */
-    sanitizeObject(obj) {
+    private sanitizeObject(obj: any): any {
         const sensitiveKeys = [
             'token', 'jwt', 'password', 'telegramId', 'initData', 'hash',
             'auth', 'authorization', 'secret', 'key', 'private'
@@ -86,7 +102,7 @@ class ServerLogger {
     /**
      * Форматирование сообщения с временной меткой
      */
-    formatMessage(level, args) {
+    private formatMessage(level: LogLevel, args: any[]): any[] {
         const timestamp = new Date().toISOString();
         const prefix = `[${timestamp}] [${level}]`;
         return [prefix, ...args];
@@ -95,7 +111,7 @@ class ServerLogger {
     /**
      * Методы для контролируемого логирования
      */
-    error(...args) {
+    error(...args: any[]): void {
         if (this.currentLevel >= this.levels.ERROR) {
             const filteredArgs = this.sanitizeLogData(args);
             const formattedArgs = this.formatMessage('ERROR', ['🔴', ...filteredArgs]);
@@ -103,7 +119,7 @@ class ServerLogger {
         }
     }
 
-    warn(...args) {
+    warn(...args: any[]): void {
         if (this.currentLevel >= this.levels.WARN) {
             const filteredArgs = this.sanitizeLogData(args);
             const formattedArgs = this.formatMessage('WARN', ['🟡', ...filteredArgs]);
@@ -111,7 +127,7 @@ class ServerLogger {
         }
     }
 
-    info(...args) {
+    info(...args: any[]): void {
         if (this.currentLevel >= this.levels.INFO) {
             const filteredArgs = this.sanitizeLogData(args);
             const formattedArgs = this.formatMessage('INFO', ['🔵', ...filteredArgs]);
@@ -119,7 +135,7 @@ class ServerLogger {
         }
     }
 
-    debug(...args) {
+    debug(...args: any[]): void {
         if (this.currentLevel >= this.levels.DEBUG) {
             const filteredArgs = this.sanitizeLogData(args);
             const formattedArgs = this.formatMessage('DEBUG', ['⚪', ...filteredArgs]);
@@ -131,7 +147,7 @@ class ServerLogger {
      * HTTP Middleware для логирования запросов
      */
     httpMiddleware() {
-        return (req, res, next) => {
+        return (req: Request, res: Response, next: NextFunction): void => {
             if (this.currentLevel >= this.levels.DEBUG) {
                 const start = Date.now();
 
@@ -140,11 +156,11 @@ class ServerLogger {
 
                 // Перехватываем окончание ответа
                 const originalSend = res.send;
-                res.send = function (data) {
+                res.send = function (data: any) {
                     const duration = Date.now() - start;
                     const emoji = res.statusCode >= 400 ? '🔴' : res.statusCode >= 300 ? '🟡' : '🟢';
                     console.log(`📥 ${emoji} ${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
-                    originalSend.call(this, data);
+                    return originalSend.call(this, data);
                 };
             }
             next();
@@ -155,11 +171,21 @@ class ServerLogger {
 // Создаем singleton экземпляр
 const logger = new ServerLogger();
 
+// Экспорт с типизацией
+export const serverLogger = logger;
+
+export const error: LogFunction = (...args) => logger.error(...args);
+export const warn: LogFunction = (...args) => logger.warn(...args);
+export const info: LogFunction = (...args) => logger.info(...args);
+export const debug: LogFunction = (...args) => logger.debug(...args);
+export const httpMiddleware = () => logger.httpMiddleware();
+
+// Для совместимости с CommonJS
 module.exports = {
     logger,
-    error: (...args) => logger.error(...args),
-    warn: (...args) => logger.warn(...args),
-    info: (...args) => logger.info(...args),
-    debug: (...args) => logger.debug(...args),
+    error: (...args: any[]) => logger.error(...args),
+    warn: (...args: any[]) => logger.warn(...args),
+    info: (...args: any[]) => logger.info(...args),
+    debug: (...args: any[]) => logger.debug(...args),
     httpMiddleware: () => logger.httpMiddleware()
 }; 

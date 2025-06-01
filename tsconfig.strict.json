@@ -1,0 +1,28 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        // Постепенное включение строгих проверок
+        // Раскомментируйте строки по мере готовности кода
+        // ЭТАП 1: Базовые проверки
+        "noImplicitAny": true,
+        "strictNullChecks": false,
+        // ЭТАП 2: Улучшенная безопасность
+        // "strictFunctionTypes": true,
+        // "strictBindCallApply": true,
+        // ЭТАП 3: Полная строгость
+        // "strict": true,
+        // "strictPropertyInitialization": true,
+        // "noImplicitReturns": true,
+        // "noImplicitThis": true,
+        // ЭТАП 4: Максимальная строгость
+        // "exactOptionalPropertyTypes": true,
+        // "noUncheckedIndexedAccess": true,
+        // "noImplicitOverride": true,
+        // Дополнительные проверки качества кода
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noFallthroughCasesInSwitch": true,
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false
+    }
+}

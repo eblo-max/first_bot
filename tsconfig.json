@@ -1,0 +1,81 @@
+{
+    "compilerOptions": {
+        // Основные настройки компиляции
+        "target": "ES2020",
+        "module": "CommonJS",
+        "lib": [
+            "ES2020",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "allowSyntheticDefaultImports": true,
+        // Настройки для поддержки JavaScript (постепенное включение)
+        "allowJs": true,
+        "checkJs": false,
+        "declaration": true,
+        "declarationMap": true,
+        // СТРОГИЙ РЕЖИМ TYPESCRIPT (АКТИВИРОВАН!)
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "strictBindCallApply": true,
+        "strictPropertyInitialization": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noImplicitOverride": true,
+        "exactOptionalPropertyTypes": false, // Пока отключено для совместимости
+        // Настройки вывода
+        "outDir": "./dist",
+        "rootDir": "./",
+        "removeComments": false,
+        "sourceMap": true,
+        "inlineSourceMap": false,
+        "inlineSources": false,
+        // Настройки разрешения модулей
+        "resolveJsonModule": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        // Дополнительные проверки качества кода
+        "noUnusedLocals": false, // Временно отключено для завершения миграции
+        "noUnusedParameters": false, // Временно отключено для завершения миграции
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": false, // Пока отключено для совместимости
+        // Настройки для безопасности
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        // Поддержка JSX (если понадобится)
+        "jsx": "preserve",
+        // Настройки типов
+        "typeRoots": [
+            "./node_modules/@types",
+            "./types"
+        ],
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src/**/*",
+        "public/**/*",
+        "scripts/**/*",
+        "tests/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "build",
+        "coverage",
+        "*.config.js",
+        "*.config.ts",
+        "test-results"
+    ],
+    "ts-node": {
+        "esm": true,
+        "experimentalSpecifierResolution": "node"
+    }
+}

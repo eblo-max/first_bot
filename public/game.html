@@ -1332,25 +1332,30 @@
         </footer>
     </div>
 
-    <!-- Скрипты игры -->
+    <!-- Системы JavaScript (не мигрированы) -->
     <script src="achievement-system.js"></script>
     <script src="game-interface.js"></script>
-    <script src="crime-app.js"></script>
+
+    <!-- TypeScript модули приложения -->
+    <script type="module" src="types.js"></script>
+    <script type="module" src="game-core.js"></script>
+    <script type="module" src="auth.js"></script>
+    <script type="module" src="crime-app.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Функция для загрузки аватарки пользователя
             function loadUserAvatar() {
-                
+
                 try {
 
                     const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
-                    
+
                     const avatarImg = document.getElementById('user-avatar');
                     const profileIcon = document.getElementById('profile-icon');
 
                     if (!avatarImg || !profileIcon) {
-                        
+
                         return;
                     }
 
@@ -1363,17 +1368,17 @@
 
                     // Функция для показа аватарки
                     function showAvatar(photoUrl) {
-                        
+
                         // Обработчик успешной загрузки
                         avatarImg.onload = function () {
-                            
+
                             avatarImg.style.display = 'block';
                             profileIcon.style.display = 'none';
                         };
 
                         // Обработчик ошибки загрузки изображения
                         avatarImg.onerror = function () {
-                            
+
                             showIcon();
                         };
 
@@ -1383,22 +1388,22 @@
                         // Тестируем загрузку через 3 секунды
                         setTimeout(() => {
                             if (avatarImg.style.display === 'none') {
-                                
+
                                 showIcon();
                             }
                         }, 3000);
                     }
 
                     if (user) {
-                        
+
                         if (user.photo_url) {
                             showAvatar(user.photo_url);
                         } else {
-                            
+
                             showIcon();
                         }
                     } else {
-                        
+
                         // Попробуем альтернативные источники для тестирования
                         const testAvatars = [
                             'https://avatars.githubusercontent.com/u/1?v=4',
@@ -1408,7 +1413,7 @@
                         showAvatar(testAvatars[0]);
                     }
                 } catch (error) {
-                    
+
                     // В случае ошибки показываем иконку
                     const avatarImg = document.getElementById('user-avatar');
                     const profileIcon = document.getElementById('profile-icon');

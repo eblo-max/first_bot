@@ -1,13 +1,60 @@
-const mongoose = require('mongoose');
+/**
+ * Типизированная система заполнения базы данных тестовыми данными
+ */
+
+import mongoose from 'mongoose';
 const Story = require('../models/Story');
-const { generateId } = require('./game');
 const User = require('../models/User');
-const seedStories = require('./seedStories');
+const { generateId } = require('./game');
+
+// Импорт типов из определений
+type Difficulty = 'easy' | 'medium' | 'hard';
+type CrimeType = 'murder' | 'robbery' | 'fraud' | 'theft' | 'cybercrime' | 'other';
+
+interface Mistake {
+    id: string;
+    text: string;
+    isCorrect: boolean;
+    explanation: string;
+}
+
+interface SampleStory {
+    id: string;
+    title: string;
+    content: string;
+    difficulty: Difficulty;
+    category: CrimeType;
+    mistakes: Mistake[];
+    timesPlayed: number;
+    createdAt: Date;
+}
+
+interface UserGame {
+    date: Date;
+    correctAnswers: number;
+    totalQuestions: number;
+    score: number;
+}
+
+interface UserWithGameHistory {
+    gameHistory: UserGame[];
+    stats: {
+        investigations: number;
+        solvedCases: number;
+        totalQuestions: number;
+        totalScore: number;
+        winStreak: number;
+        maxWinStreak: number;
+        accuracy: number;
+    };
+    updateRank: () => void;
+    save: () => Promise<void>;
+}
 
 /**
  * Тестовые данные историй для MongoDB
  */
-const sampleStories = [
+const sampleStories: SampleStory[] = [
     {
         id: generateId(),
         title: 'Ограбление банка',
@@ -129,7 +176,7 @@ const sampleStories = [
         title: 'Взлом системы безопасности',
         content: 'Хакер взломал базу данных крупной компании и похитил личную информацию тысяч клиентов. Он использовал VPN и анонимные прокси-серверы, чтобы скрыть свой IP-адрес. Тем не менее, через месяц он был арестован.',
         difficulty: 'medium',
-        category: 'other',
+        category: 'cybercrime',
         mistakes: [
             {
                 id: generateId(),
@@ -158,14 +205,16 @@ const sampleStories = [
 /**
  * Миграция для пересчета статистики всех пользователей
  */
-const migrateUserStats = async () => {
+const migrateUserStats = async (): Promise<void> => {
     try {
+        console.log('🔄 Начинаем миграцию статистики пользователей...');
 
-        const users = await User.find({});
+        const users: UserWithGameHistory[] = await User.find({});
+        console.log(`📊 Найдено пользователей для миграции: ${users.length}`);
 
         for (const user of users) {
             if (!user.gameHistory || user.gameHistory.length === 0) {
-
+                console.log(`⚠️ Пользователь без игровой истории, пропускаем`);
                 continue;
             }
 
@@ -177,7 +226,9 @@ const migrateUserStats = async () => {
             let maxStreak = 0;
 
             // Проходим по всем играм в хронологическом порядке
-            const sortedGames = user.gameHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const sortedGames = user.gameHistory.sort((a: UserGame, b: UserGame) =>
+                new Date(a.date).getTime() - new Date(b.date).getTime()
+            );
 
             for (const game of sortedGames) {
                 totalCorrectAnswers += game.correctAnswers || 0;
@@ -209,22 +260,25 @@ const migrateUserStats = async () => {
 
             // Сохраняем
             await user.save();
-
+            console.log(`✅ Обновлена статистика пользователя с ${user.gameHistory.length} играми`);
         }
 
+        console.log('✨ Миграция статистики завершена успешно!');
     } catch (error) {
-        console.error('Ошибка при миграции:', error);
+        console.error('❌ Ошибка при миграции:', error);
+        throw error;
     }
 };
 
 /**
  * Заполнение базы данных тестовыми данными
  */
-const seedDatabase = async () => {
+const seedDatabase = async (): Promise<void> => {
     try {
+        console.log('🌱 Начинаем процесс заполнения базы данных...');
 
         // ЗАПУСКАЕМ МИГРАЦИЮ ДЛЯ ПЕРЕСЧЕТА СТАТИСТИКИ
-
+        console.log('📊 Пересчитываем статистику пользователей...');
         await migrateUserStats();
 
         // ВАЖНО: ОТКЛЮЧАЕМ АВТОМАТИЧЕСКОЕ УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЕЙ ПРИ КАЖДОМ ЗАПУСКЕ СЕРВЕРА!
@@ -242,6 +296,7 @@ const seedDatabase = async () => {
         };
 
         const deletedUsers = await User.deleteMany(testUserQuery);
+        console.log(`🗑️ Удалено тестовых пользователей: ${deletedUsers.deletedCount}`);
         */
 
         // Показываем количество пользователей в базе
@@ -250,20 +305,27 @@ const seedDatabase = async () => {
 
         // Проверяем количество историй в базе
         const storyCount = await Story.countDocuments();
+        console.log(`📚 Историй в базе данных: ${storyCount}`);
 
         // Если историй мало, загружаем новые
         if (storyCount < 20) {
+            console.log('📖 Загружаем дополнительные истории...');
 
             // Загружаем истории из отдельного файла
+            const seedStories = require('./seedStories');
             await seedStories();
 
+            console.log('✅ Истории успешно загружены');
         } else {
-
+            console.log('✅ Достаточно историй в базе данных');
         }
 
+        console.log('🎉 Процесс заполнения базы данных завершен!');
     } catch (error) {
-        console.error('Ошибка при заполнении базы тестовыми данными:', error);
+        console.error('❌ Ошибка при заполнении базы тестовыми данными:', error);
+        throw error;
     }
 };
 
+export default seedDatabase;
 module.exports = seedDatabase; 

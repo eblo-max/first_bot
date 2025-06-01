@@ -1,9 +1,36 @@
+/**
+ * Типизированная система загрузки историй для базы данных
+ */
+
 const Story = require('../models/Story');
+
+// Импорт типов
+type Difficulty = 'easy' | 'medium' | 'hard';
+
+interface Mistake {
+    id: string;
+    text: string;
+    isCorrect: boolean;
+    explanation: string;
+}
+
+interface StoryData {
+    title: string;
+    content: string;
+    date: string;
+    difficulty: Difficulty;
+    mistakes: Mistake[];
+}
+
+interface ProcessedStory extends StoryData {
+    id: string;
+    createdAt: Date;
+}
 
 /**
  * Тестовые истории для заполнения базы данных
  */
-const sampleStories = [
+const sampleStories: StoryData[] = [
     {
         title: 'ОГРАБЛЕНИЕ ЮВЕЛИРНОГО МАГАЗИНА',
         content: 'Преступник взломал заднюю дверь ювелирного магазина в 3 часа ночи. Он отключил камеры видеонаблюдения, но не заметил скрытую камеру над сейфом. На записи видно, как он без перчаток открывает витрины и собирает украшения в рюкзак. Перед уходом преступник воспользовался раковиной в подсобке, чтобы смыть кровь с пореза на руке.',
@@ -139,29 +166,51 @@ const sampleStories = [
 /**
  * Заполнение базы данных тестовыми историями
  */
-const seedStories = async () => {
+const seedStories = async (): Promise<void> => {
     try {
+        console.log('📚 Начинаем загрузку историй в базу данных...');
+
         // Проверяем, есть ли уже истории в базе
         const count = await Story.countDocuments();
+        console.log(`📊 Текущее количество историй в базе: ${count}`);
 
         if (count === 0) {
-            
+            console.log('📖 База данных историй пуста, загружаем тестовые истории...');
+
             // Преобразуем истории, чтобы добавить уникальные идентификаторы
-            const storiesWithIds = sampleStories.map((story, index) => ({
+            const storiesWithIds: ProcessedStory[] = sampleStories.map((story, index) => ({
                 ...story,
                 id: `story-${index + 1}`,
                 createdAt: new Date()
             }));
 
+            console.log(`📥 Подготовлено историй для загрузки: ${storiesWithIds.length}`);
+
             // Вставляем тестовые истории
-            await Story.insertMany(storiesWithIds);
+            const insertedStories = await Story.insertMany(storiesWithIds);
+            console.log(`✅ Успешно загружено историй: ${insertedStories.length}`);
+
+            // Выводим статистику по сложности
+            const difficultyStats = storiesWithIds.reduce((acc, story) => {
+                acc[story.difficulty] = (acc[story.difficulty] || 0) + 1;
+                return acc;
+            }, {} as Record<Difficulty, number>);
+
+            console.log('📈 Статистика по сложности:');
+            Object.entries(difficultyStats).forEach(([difficulty, count]) => {
+                console.log(`   ${difficulty}: ${count} историй`);
+            });
 
         } else {
-            
+            console.log('✅ В базе данных уже есть истории, пропускаем загрузку');
         }
+
+        console.log('🎉 Процесс загрузки историй завершен!');
     } catch (error) {
-        console.error('Ошибка при заполнении базы данных историями:', error);
+        console.error('❌ Ошибка при заполнении базы данных историями:', error);
+        throw error;
     }
 };
 
+export default seedStories;
 module.exports = seedStories; 

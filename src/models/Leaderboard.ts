@@ -1,6 +1,65 @@
-const mongoose = require('mongoose');
+/**
+ * Типизированная модель лидерборда (Leaderboard) для MongoDB с Mongoose
+ */
 
-const leaderboardSchema = new mongoose.Schema({
+import mongoose, { Schema, Document, Model } from 'mongoose';
+
+// Типы для периодов лидерборда
+type LeaderboardPeriod = 'day' | 'week' | 'month' | 'all';
+
+// Типы для рангов пользователей (из оригинальной модели)
+type UserRank =
+    | 'СТАЖЕР'
+    | 'СЛЕДОВАТЕЛЬ'
+    | 'ДЕТЕКТИВ'
+    | 'СТАРШИЙ ДЕТЕКТИВ'
+    | 'ИНСПЕКТОР'
+    | 'КОМИССАР'
+    | 'ГЛАВНЫЙ ИНСПЕКТОР'
+    | 'ШЕФ ПОЛИЦИИ';
+
+// Интерфейс для результата обновления периода
+export interface UpdatePeriodResult {
+    success: boolean;
+    count?: number;
+    error?: string;
+}
+
+// Интерфейс для результата обновления всех рейтингов
+export interface UpdateAllResults {
+    [period: string]: UpdatePeriodResult;
+}
+
+// Интерфейс для документа лидерборда
+export interface ILeaderboard extends Document {
+    userId: string;
+    username: string;
+    firstName?: string;
+    lastName?: string;
+    nickname?: string;
+    score: number;
+    rank: number;
+    userRank: UserRank;
+    period: LeaderboardPeriod;
+    investigations: number;
+    accuracy: number;
+    winStreak: number;
+    lastGameDate?: Date;
+    updatedAt: Date;
+    createdAt: Date;
+}
+
+// Интерфейс для статических методов модели
+export interface ILeaderboardModel extends Model<ILeaderboard> {
+    updatePeriodLeaderboard(period: LeaderboardPeriod): Promise<number>;
+    updateAllLeaderboards(): Promise<UpdateAllResults>;
+    getLeaderboard(period?: LeaderboardPeriod, limit?: number): Promise<ILeaderboard[]>;
+    getUserPosition(userId: string, period?: LeaderboardPeriod): Promise<ILeaderboard | null>;
+    cleanupOldEntries(): Promise<number>;
+}
+
+// Схема лидерборда
+const leaderboardSchema = new Schema<ILeaderboard, ILeaderboardModel>({
     userId: {
         type: String,
         required: true,
@@ -10,17 +69,28 @@ const leaderboardSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    firstName: String,
-    lastName: String,
-    nickname: String,
+    firstName: {
+        type: String,
+        required: false
+    },
+    lastName: {
+        type: String,
+        required: false
+    },
+    nickname: {
+        type: String,
+        required: false
+    },
     score: {
         type: Number,
         required: true,
-        default: 0
+        default: 0,
+        min: 0
     },
     rank: {
         type: Number,
-        required: true
+        required: true,
+        min: 1
     },
     userRank: {
         type: String,
@@ -28,33 +98,40 @@ const leaderboardSchema = new mongoose.Schema({
             'СТАЖЕР',
             'СЛЕДОВАТЕЛЬ',
             'ДЕТЕКТИВ',
-            'СТАРШИЙ_ДЕТЕКТИВ',
+            'СТАРШИЙ ДЕТЕКТИВ',
             'ИНСПЕКТОР',
             'КОМИССАР',
-            'ГЛАВНЫЙ_ИНСПЕКТОР',
-            'ШЕФ_ПОЛИЦИИ'
-        ],
+            'ГЛАВНЫЙ ИНСПЕКТОР',
+            'ШЕФ ПОЛИЦИИ'
+        ] as const,
         default: 'СТАЖЕР'
     },
     period: {
         type: String,
-        enum: ['day', 'week', 'month', 'all'],
+        enum: ['day', 'week', 'month', 'all'] as const,
         required: true,
         index: true
     },
     investigations: {
         type: Number,
-        default: 0
+        default: 0,
+        min: 0
     },
     accuracy: {
         type: Number,
-        default: 0
+        default: 0,
+        min: 0,
+        max: 100
     },
     winStreak: {
         type: Number,
-        default: 0
+        default: 0,
+        min: 0
     },
-    lastGameDate: Date,
+    lastGameDate: {
+        type: Date,
+        required: false
+    },
     updatedAt: {
         type: Date,
         default: Date.now,
@@ -65,24 +142,22 @@ const leaderboardSchema = new mongoose.Schema({
     collection: 'leaderboard'
 });
 
-// Составной индекс для быстрой выборки рейтингов
+// Составные индексы для оптимизации запросов
 leaderboardSchema.index({ period: 1, score: -1, rank: 1 });
-
-// Индекс для поиска пользователя в рейтинге
 leaderboardSchema.index({ period: 1, userId: 1 });
-
-// Индекс для очистки старых записей
 leaderboardSchema.index({ updatedAt: 1 });
 
-// Статические методы для работы с рейтингами
+// Статические методы
 
 /**
  * Обновление рейтинга для конкретного периода
  */
-leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
-
+leaderboardSchema.statics.updatePeriodLeaderboard = async function (
+    this: ILeaderboardModel,
+    period: LeaderboardPeriod
+): Promise<number> {
     const User = mongoose.model('User');
-    let dateFilter = {};
+    let dateFilter: Record<string, any> = {};
     const now = new Date();
 
     // Настраиваем фильтр по периоду
@@ -119,7 +194,7 @@ leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
         await this.deleteMany({ period });
 
         // Создаем новые записи рейтинга
-        const leaderboardEntries = users.map((user, index) => {
+        const leaderboardEntries = users.map((user: any, index: number) => {
             const displayName = user.nickname ||
                 (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() :
                     (user.username || `Игрок ${user.telegramId.slice(-4)}`));
@@ -130,13 +205,13 @@ leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 nickname: user.nickname,
-                score: user.stats.totalScore,
+                score: user.stats?.totalScore || 0,
                 rank: index + 1,
-                userRank: user.rank,
+                userRank: user.rank || 'СТАЖЕР',
                 period,
-                investigations: user.stats.investigations,
-                accuracy: user.stats.accuracy,
-                winStreak: user.stats.winStreak,
+                investigations: user.stats?.investigations || 0,
+                accuracy: user.stats?.accuracy || 0,
+                winStreak: user.stats?.winStreak || 0,
                 lastGameDate: user.lastVisit,
                 updatedAt: now
             };
@@ -145,7 +220,6 @@ leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
         // Вставляем новые записи пакетом
         if (leaderboardEntries.length > 0) {
             await this.insertMany(leaderboardEntries);
-
         }
 
         return leaderboardEntries.length;
@@ -158,16 +232,17 @@ leaderboardSchema.statics.updatePeriodLeaderboard = async function (period) {
 /**
  * Обновление всех рейтингов
  */
-leaderboardSchema.statics.updateAllLeaderboards = async function () {
-
-    const periods = ['day', 'week', 'month', 'all'];
-    const results = {};
+leaderboardSchema.statics.updateAllLeaderboards = async function (
+    this: ILeaderboardModel
+): Promise<UpdateAllResults> {
+    const periods: LeaderboardPeriod[] = ['day', 'week', 'month', 'all'];
+    const results: UpdateAllResults = {};
 
     for (const period of periods) {
         try {
             const count = await this.updatePeriodLeaderboard(period);
             results[period] = { success: true, count };
-        } catch (error) {
+        } catch (error: any) {
             console.error(`❌ Ошибка обновления рейтинга ${period}:`, error);
             results[period] = { success: false, error: error.message };
         }
@@ -179,7 +254,11 @@ leaderboardSchema.statics.updateAllLeaderboards = async function () {
 /**
  * Получение рейтинга для периода
  */
-leaderboardSchema.statics.getLeaderboard = async function (period = 'all', limit = 20) {
+leaderboardSchema.statics.getLeaderboard = async function (
+    this: ILeaderboardModel,
+    period: LeaderboardPeriod = 'all',
+    limit: number = 20
+): Promise<ILeaderboard[]> {
     try {
         const entries = await this.find({ period })
             .sort({ rank: 1 })
@@ -196,7 +275,11 @@ leaderboardSchema.statics.getLeaderboard = async function (period = 'all', limit
 /**
  * Получение позиции пользователя в рейтинге
  */
-leaderboardSchema.statics.getUserPosition = async function (userId, period = 'all') {
+leaderboardSchema.statics.getUserPosition = async function (
+    this: ILeaderboardModel,
+    userId: string,
+    period: LeaderboardPeriod = 'all'
+): Promise<ILeaderboard | null> {
     try {
         const entry = await this.findOne({ userId, period }).lean();
         return entry;
@@ -209,7 +292,9 @@ leaderboardSchema.statics.getUserPosition = async function (userId, period = 'al
 /**
  * Очистка старых записей (старше 1 дня)
  */
-leaderboardSchema.statics.cleanupOldEntries = async function () {
+leaderboardSchema.statics.cleanupOldEntries = async function (
+    this: ILeaderboardModel
+): Promise<number> {
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
@@ -218,10 +303,6 @@ leaderboardSchema.statics.cleanupOldEntries = async function () {
             updatedAt: { $lt: oneDayAgo }
         });
 
-        if (result.deletedCount > 0) {
-
-        }
-
         return result.deletedCount;
     } catch (error) {
         console.error('❌ Ошибка очистки старых записей рейтинга:', error);
@@ -229,6 +310,8 @@ leaderboardSchema.statics.cleanupOldEntries = async function () {
     }
 };
 
-const Leaderboard = mongoose.model('Leaderboard', leaderboardSchema);
+// Создание и экспорт модели
+const Leaderboard = mongoose.model<ILeaderboard, ILeaderboardModel>('Leaderboard', leaderboardSchema);
 
+export default Leaderboard;
 module.exports = Leaderboard; 

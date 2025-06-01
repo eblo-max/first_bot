@@ -1,38 +1,71 @@
 /**
- * Input Validation Middleware
- * Валидация всех входящих данных для безопасности
+ * Типизированные middleware для валидации входящих данных
+ * Обеспечивает безопасность и валидность всех пользовательских данных
  */
 
-const { body, param, query, validationResult, checkSchema } = require('express-validator');
+import { Request, Response, NextFunction } from 'express';
+import { body, param, query, validationResult, checkSchema, ValidationChain } from 'express-validator';
+
+// Интерфейсы для типизации валидации
+interface ValidationError {
+    field: string;
+    message: string;
+    value?: any;
+}
+
+interface ValidationErrorResponse {
+    error: string;
+    message: string;
+    details: ValidationError[];
+}
+
+interface ValidatedRequest extends Request {
+    validationErrors?: ValidationError[];
+}
+
+// Типы для игровых данных
+type GameAction = 'start' | 'answer' | 'skip' | 'hint';
+type CrimeCategory = 'murder' | 'theft' | 'fraud' | 'drugs' | 'cybercrime';
+type Difficulty = 'easy' | 'medium' | 'hard';
+type LeaderboardPeriod = 'day' | 'week' | 'month' | 'all';
+type AchievementType = 'score' | 'streak' | 'speed' | 'category' | 'special';
 
 /**
  * Middleware для обработки ошибок валидации
  */
-const handleValidationErrors = (req, res, next) => {
+export const handleValidationErrors = (req: ValidatedRequest, res: Response<ValidationErrorResponse>, next: NextFunction): void => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
-        
+        console.warn('⚠️ Ошибки валидации:', errors.array().length);
+
+        const formattedErrors: ValidationError[] = errors.array().map(err => ({
+            field: err.type === 'field' ? (err as any).path : err.type,
+            message: err.msg,
+            value: err.type === 'field' ? (err as any).value : undefined
+        }));
+
+        // Логируем детали для диагностики
+        formattedErrors.forEach(error => {
+            console.warn(`  - ${error.field}: ${error.message}`);
         });
 
-        return res.status(400).json({
+        res.status(400).json({
             error: 'Ошибка валидации данных',
             message: 'Переданы некорректные данные',
-            details: errors.array().map(err => ({
-                field: err.path,
-                message: err.msg,
-                value: err.value
-            }))
+            details: formattedErrors
         });
+        return;
     }
 
+    console.log('✅ Валидация пройдена успешно');
     next();
 };
 
 /**
  * Валидация авторизации Telegram
  */
-const validateTelegramAuth = [
+export const validateTelegramAuth: ValidationChain[] = [
     body('initData')
         .notEmpty()
         .withMessage('Данные Telegram обязательны')
@@ -40,7 +73,7 @@ const validateTelegramAuth = [
         .withMessage('Некорректная длина данных Telegram'),
 
     body('initData')
-        .custom((value) => {
+        .custom((value: string) => {
             try {
                 // Базовая проверка формата
                 if (!value.includes('user=') && !value.includes('auth_date=')) {
@@ -50,17 +83,15 @@ const validateTelegramAuth = [
             } catch (error) {
                 throw new Error('Ошибка парсинга Telegram данных');
             }
-        }),
-
-    handleValidationErrors
+        })
 ];
 
 /**
  * Валидация игровых действий
  */
-const validateGameAction = [
+export const validateGameAction: ValidationChain[] = [
     body('action')
-        .isIn(['start', 'answer', 'skip', 'hint'])
+        .isIn(['start', 'answer', 'skip', 'hint'] as GameAction[])
         .withMessage('Недопустимое игровое действие'),
 
     body('questionId')
@@ -78,15 +109,13 @@ const validateGameAction = [
     body('timeSpent')
         .optional()
         .isInt({ min: 0, max: 300000 })
-        .withMessage('Время должно быть от 0 до 300 секунд'),
-
-    handleValidationErrors
+        .withMessage('Время должно быть от 0 до 300 секунд')
 ];
 
 /**
  * Валидация пользовательского профиля
  */
-const validateProfile = [
+export const validateProfile: ValidationChain[] = [
     body('username')
         .optional()
         .isLength({ min: 3, max: 30 })
@@ -107,26 +136,22 @@ const validateProfile = [
         .isLength({ min: 1, max: 50 })
         .withMessage('Фамилия от 1 до 50 символов')
         .trim()
-        .escape(),
-
-    handleValidationErrors
+        .escape()
 ];
 
 /**
  * Валидация ID параметров
  */
-const validateObjectId = [
+export const validateObjectId: ValidationChain[] = [
     param('id')
         .isMongoId()
-        .withMessage('Некорректный формат ID'),
-
-    handleValidationErrors
+        .withMessage('Некорректный формат ID')
 ];
 
 /**
  * Валидация параметров таблицы лидеров
  */
-const validateLeaderboard = [
+export const validateLeaderboard: ValidationChain[] = [
     query('limit')
         .optional()
         .isInt({ min: 1, max: 100 })
@@ -141,32 +166,28 @@ const validateLeaderboard = [
 
     query('period')
         .optional()
-        .isIn(['day', 'week', 'month', 'all'])
-        .withMessage('Период должен быть: day, week, month, all'),
-
-    handleValidationErrors
+        .isIn(['day', 'week', 'month', 'all'] as LeaderboardPeriod[])
+        .withMessage('Период должен быть: day, week, month, all')
 ];
 
 /**
  * Валидация достижений
  */
-const validateAchievement = [
+export const validateAchievement: ValidationChain[] = [
     body('type')
-        .isIn(['score', 'streak', 'speed', 'category', 'special'])
+        .isIn(['score', 'streak', 'speed', 'category', 'special'] as AchievementType[])
         .withMessage('Недопустимый тип достижения'),
 
     body('value')
         .optional()
         .isInt({ min: 1 })
-        .withMessage('Значение должно быть положительным числом'),
-
-    handleValidationErrors
+        .withMessage('Значение должно быть положительным числом')
 ];
 
 /**
  * Валидация статистики игры
  */
-const validateGameStats = [
+export const validateGameStats: ValidationChain[] = [
     body('score')
         .isInt({ min: 0, max: 999999 })
         .withMessage('Счет должен быть от 0 до 999999'),
@@ -185,16 +206,14 @@ const validateGameStats = [
 
     body('category')
         .optional()
-        .isIn(['murder', 'theft', 'fraud', 'drugs', 'cybercrime'])
-        .withMessage('Недопустимая категория'),
-
-    handleValidationErrors
+        .isIn(['murder', 'theft', 'fraud', 'drugs', 'cybercrime'] as CrimeCategory[])
+        .withMessage('Недопустимая категория')
 ];
 
 /**
  * Общая схема валидации для комплексных объектов
  */
-const gameSessionSchema = checkSchema({
+export const gameSessionSchema = checkSchema({
     sessionId: {
         in: ['body'],
         isUUID: {
@@ -238,7 +257,7 @@ const gameSessionSchema = checkSchema({
 /**
  * Валидация поиска вопросов
  */
-const validateQuestionSearch = [
+export const validateQuestionSearch: ValidationChain[] = [
     query('q')
         .optional()
         .isLength({ min: 2, max: 100 })
@@ -253,19 +272,17 @@ const validateQuestionSearch = [
 
     query('difficulty')
         .optional()
-        .isIn(['easy', 'medium', 'hard'])
-        .withMessage('Сложность: easy, medium, hard'),
-
-    handleValidationErrors
+        .isIn(['easy', 'medium', 'hard'] as Difficulty[])
+        .withMessage('Сложность: easy, medium, hard')
 ];
 
 /**
- * Кастомная валидация для специфических полей
+ * Кастомные валидаторы для специфических полей
  */
-const customValidators = {
+export const customValidators = {
     // Валидация Telegram User ID
-    isTelegramId: (value) => {
-        const telegramId = parseInt(value);
+    isTelegramId: (value: string | number): boolean => {
+        const telegramId = parseInt(value.toString());
         if (telegramId < 1 || telegramId > 999999999999) {
             throw new Error('Некорректный Telegram ID');
         }
@@ -273,8 +290,8 @@ const customValidators = {
     },
 
     // Валидация времени ответа
-    isReasonableResponseTime: (value) => {
-        const time = parseInt(value);
+    isReasonableResponseTime: (value: string | number): boolean => {
+        const time = parseInt(value.toString());
         if (time < 100 || time > 300000) { // от 0.1 сек до 5 минут
             throw new Error('Нереальное время ответа');
         }
@@ -282,7 +299,7 @@ const customValidators = {
     },
 
     // Проверка на SQL инъекции и XSS
-    isSafeText: (value) => {
+    isSafeText: (value: string): boolean => {
         const dangerousPatterns = [
             /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
             /javascript:/gi,
@@ -296,10 +313,37 @@ const customValidators = {
             }
         }
         return true;
+    },
+
+    // Валидация содержимого игрового ответа
+    isValidGameAnswer: (value: string): boolean => {
+        // Проверяем на пустоту и разумную длину
+        if (!value || value.trim().length === 0) {
+            throw new Error('Ответ не может быть пустым');
+        }
+
+        if (value.length > 500) {
+            throw new Error('Ответ слишком длинный');
+        }
+
+        // Базовая проверка на спам
+        const spamPatterns = [
+            /(.)\1{10,}/g, // повторение одного символа более 10 раз
+            /[!@#$%^&*]{5,}/g, // много специальных символов подряд
+        ];
+
+        for (const pattern of spamPatterns) {
+            if (pattern.test(value)) {
+                throw new Error('Ответ содержит подозрительные паттерны');
+            }
+        }
+
+        return true;
     }
 };
 
-module.exports = {
+// Экспорт всех валидаторов для совместимости
+const validators = {
     handleValidationErrors,
     validateTelegramAuth,
     validateGameAction,
@@ -311,4 +355,6 @@ module.exports = {
     validateQuestionSearch,
     gameSessionSchema,
     customValidators
-}; 
+};
+
+export default validators; 

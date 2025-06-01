@@ -2,12 +2,14 @@
     "name": "criminal-bluff",
     "version": "1.0.0",
     "description": "Telegram Mini App игра-викторина с криминальными историями",
-    "main": "src/index.js",
+    "main": "dist/src/index.js",
     "scripts": {
-        "start": "node src/index.js",
-        "dev": "nodemon src/index.js",
-        "seed": "node src/utils/seedData.js",
-        "migrate-leaderboard": "node src/utils/migrateLeaderboard.js",
+        "start": "npm run ts:build && node dist/src/index.js",
+        "dev": "npm run ts:build && nodemon dist/src/index.js",
+        "dev:ts": "nodemon --exec \"npm run ts:build && node dist/src/index.js\"",
+        "build": "npm run ts:build",
+        "seed": "npm run ts:build && node dist/src/utils/seedData.js",
+        "migrate-leaderboard": "npm run ts:build && node dist/src/utils/migrateLeaderboard.js",
         "test": "echo \"Error: no test specified\" && exit 1",
         "test:headed": "playwright test --headed",
         "test:ui": "playwright test --ui",
@@ -22,30 +24,67 @@
         "dead-code-analysis": "node scripts/cleanup-debug-enhanced.js",
         "optimize": "npm run dead-code-analysis && npm run cleanup-debug-enhanced",
         "test-migration": "node scripts/test-functions.js",
-        "generate-integrity": "node scripts/generate-integrity.js"
+        "generate-integrity": "node scripts/generate-integrity.js",
+        "ts:check": "tsc --noEmit",
+        "ts:check-js": "tsc --allowJs --checkJs --noEmit",
+        "ts:build": "tsc",
+        "ts:watch": "tsc --watch",
+        "ts:clean": "rimraf dist",
+        "ts:start": "npm run ts:build && node dist/src/index.js",
+        "ts:dev": "nodemon --exec \"npm run ts:build && node dist/src/index.js\"",
+        "type-check": "tsc --noEmit --skipLibCheck",
+        "type-check:watch": "tsc --noEmit --skipLibCheck --watch",
+        "migrate:js-to-ts": "node scripts/migrate-to-typescript.js",
+        "lint:types": "tsc --noEmit --pretty",
+        "precommit": "npm run type-check && npm run security-check"
     },
+    "keywords": [
+        "telegram",
+        "mini-app",
+        "game",
+        "quiz",
+        "crime",
+        "detective",
+        "typescript"
+    ],
+    "author": "Criminal Bluff Team",
+    "license": "MIT",
     "dependencies": {
-        "cors": "^2.8.5",
-        "crypto": "^1.0.1",
-        "dotenv": "^16.3.1",
         "express": "^4.18.2",
-        "express-rate-limit": "^7.4.1",
-        "express-validator": "^7.2.0",
-        "helmet": "^7.0.0",
-        "jsonwebtoken": "^9.0.1",
         "mongoose": "^7.5.0",
-        "node-fetch": "^3.3.2"
+        "jsonwebtoken": "^9.0.2",
+        "bcryptjs": "^2.4.3",
+        "cors": "^2.8.5",
+        "helmet": "^7.0.0",
+        "express-rate-limit": "^6.10.0",
+        "compression": "^1.7.4",
+        "morgan": "^1.10.0",
+        "dotenv": "^16.3.1"
     },
     "devDependencies": {
-        "@playwright/test": "^1.52.0",
-        "assert": "^2.0.0",
-        "clean-css": "^5.3.3",
-        "clean-css-cli": "^5.6.3",
-        "html-minifier-terser": "^7.2.0",
+        "@playwright/test": "^1.37.1",
+        "@types/bcryptjs": "^2.4.6",
+        "@types/compression": "^1.7.5",
+        "@types/cors": "^2.8.17",
+        "@types/express": "^4.17.21",
+        "@types/jsonwebtoken": "^9.0.6",
+        "@types/mongoose": "^5.11.97",
+        "@types/morgan": "^1.9.9",
+        "@types/node": "^20.11.17",
         "nodemon": "^3.0.1",
-        "terser": "^5.36.0"
+        "rimraf": "^5.0.5",
+        "typescript": "^5.3.3"
     },
     "engines": {
-        "node": ">=16.0.0"
-    }
+        "node": ">=18.0.0",
+        "npm": ">=9.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/your-username/criminal-bluff.git"
+    },
+    "bugs": {
+        "url": "https://github.com/your-username/criminal-bluff/issues"
+    },
+    "homepage": "https://github.com/your-username/criminal-bluff#readme"
 }

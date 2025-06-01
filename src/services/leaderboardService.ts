@@ -1,18 +1,73 @@
-const Leaderboard = require('../models/Leaderboard');
+/**
+ * Типизированный сервис управления рейтингами (LeaderboardService)
+ * Обеспечивает автоматическое обновление и кэширование рейтингов
+ */
+
+import Leaderboard, { type ILeaderboard, type UpdateAllResults } from '../models/Leaderboard';
+import User, { type IUser, type UserRank } from '../models/User';
+
+// Типы для периодов лидерборда
+type LeaderboardPeriod = 'day' | 'week' | 'month' | 'all';
+
+// Интерфейс для статуса сервиса
+export interface ServiceStatus {
+    isRunning: boolean;
+    isUpdating: boolean;
+    lastUpdateTime: Date | null;
+    updateIntervalMs: number;
+    nextUpdateIn: number | null;
+}
+
+// Интерфейс для данных пользователя в рейтинге
+export interface LeaderboardUserData {
+    rank: number;
+    isCurrentUser: boolean;
+    name: string;
+    score: number;
+    userRank: UserRank;
+}
+
+// Интерфейс для результата получения рейтинга
+export interface LeaderboardResult {
+    leaderboard: LeaderboardUserData[];
+    currentUser: LeaderboardUserData | null;
+    cached: boolean;
+    fallback?: boolean;
+    updatedAt?: Date;
+}
+
+// Интерфейс для фильтра даты MongoDB
+interface DateFilter {
+    lastVisit?: {
+        $gte: Date;
+    };
+}
+
+// Интерфейс для lean документа пользователя
+interface UserLeanDocument {
+    telegramId: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    nickname?: string;
+    stats: {
+        totalScore: number;
+    };
+    rank: UserRank;
+}
 
 class LeaderboardService {
-    constructor() {
-        this.updateInterval = null;
-        this.isUpdating = false;
-        this.lastUpdateTime = null;
-        this.updateIntervalMs = 10 * 60 * 1000; // 10 минут
-    }
+    private updateInterval: NodeJS.Timeout | null = null;
+    private isUpdating: boolean = false;
+    private lastUpdateTime: Date | null = null;
+    private readonly updateIntervalMs: number = 10 * 60 * 1000; // 10 минут
 
     /**
      * Запуск службы автоматического обновления рейтингов
      */
-    start() {
-        
+    public start(): void {
+        console.log('🚀 Запуск службы обновления рейтингов...');
+
         // Первое обновление сразу при старте
         this.updateLeaderboards();
 
@@ -21,33 +76,35 @@ class LeaderboardService {
             this.updateLeaderboards();
         }, this.updateIntervalMs);
 
+        console.log(`✅ Служба рейтингов запущена (интервал: ${this.updateIntervalMs / 1000}с)`);
     }
 
     /**
      * Остановка службы
      */
-    stop() {
+    public stop(): void {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
             this.updateInterval = null;
-            
+            console.log('🛑 Служба обновления рейтингов остановлена');
         }
     }
 
     /**
      * Обновление всех рейтингов
      */
-    async updateLeaderboards() {
+    public async updateLeaderboards(): Promise<UpdateAllResults> {
         if (this.isUpdating) {
-            
-            return;
+            console.log('⏳ Обновление рейтингов уже в процессе...');
+            return {};
         }
 
         this.isUpdating = true;
         const startTime = Date.now();
 
         try {
-            
+            console.log('🔄 Начинаем обновление рейтингов...');
+
             // Сначала очищаем старые записи
             await Leaderboard.cleanupOldEntries();
 
@@ -57,6 +114,7 @@ class LeaderboardService {
             this.lastUpdateTime = new Date();
             const duration = Date.now() - startTime;
 
+            console.log(`✅ Рейтинги обновлены за ${duration}мс`);
             return results;
         } catch (error) {
             console.error('❌ Ошибка при обновлении рейтингов:', error);
@@ -69,11 +127,11 @@ class LeaderboardService {
     /**
      * Принудительное обновление рейтинга для конкретного периода
      */
-    async forceUpdatePeriod(period) {
+    public async forceUpdatePeriod(period: LeaderboardPeriod): Promise<number> {
         try {
-            
+            console.log(`🔄 Принудительное обновление рейтинга: ${period}`);
             const count = await Leaderboard.updatePeriodLeaderboard(period);
-            
+            console.log(`✅ Обновлено записей: ${count}`);
             return count;
         } catch (error) {
             console.error(`❌ Ошибка принудительного обновления рейтинга ${period}:`, error);
@@ -84,7 +142,7 @@ class LeaderboardService {
     /**
      * Получение статуса службы
      */
-    getStatus() {
+    public getStatus(): ServiceStatus {
         return {
             isRunning: !!this.updateInterval,
             isUpdating: this.isUpdating,
@@ -99,15 +157,20 @@ class LeaderboardService {
     /**
      * Получение рейтинга с fallback на старую систему
      */
-    async getLeaderboard(period = 'all', limit = 20, currentUserId = null) {
+    public async getLeaderboard(
+        period: LeaderboardPeriod = 'all',
+        limit: number = 20,
+        currentUserId: string | null = null
+    ): Promise<LeaderboardResult> {
         try {
             // Пытаемся получить из кэша
             const cachedLeaderboard = await Leaderboard.getLeaderboard(period, limit);
 
             if (cachedLeaderboard && cachedLeaderboard.length > 0) {
-                
+                console.log(`📊 Получен кэшированный рейтинг ${period} (${cachedLeaderboard.length} записей)`);
+
                 // Ищем текущего пользователя в рейтинге
-                let currentUserData = null;
+                let currentUserData: LeaderboardUserData | null = null;
                 const currentUserInTop = cachedLeaderboard.find(entry => entry.userId === currentUserId);
 
                 if (currentUserInTop) {
@@ -133,7 +196,7 @@ class LeaderboardService {
                 }
 
                 // Форматируем данные для frontend
-                const formattedLeaderboard = cachedLeaderboard.map(entry => ({
+                const formattedLeaderboard: LeaderboardUserData[] = cachedLeaderboard.map(entry => ({
                     rank: entry.rank,
                     isCurrentUser: entry.userId === currentUserId,
                     name: entry.username,
@@ -148,7 +211,7 @@ class LeaderboardService {
                     updatedAt: cachedLeaderboard[0]?.updatedAt
                 };
             } else {
-                
+                console.log(`📊 Кэш пуст для ${period}, используем fallback`);
                 return await this.getFallbackLeaderboard(period, limit, currentUserId);
             }
         } catch (error) {
@@ -160,11 +223,14 @@ class LeaderboardService {
     /**
      * Fallback - получение рейтинга из коллекции users (старая система)
      */
-    async getFallbackLeaderboard(period = 'all', limit = 20, currentUserId = null) {
-        
-        const User = require('../models/User');
+    private async getFallbackLeaderboard(
+        period: LeaderboardPeriod = 'all',
+        limit: number = 20,
+        currentUserId: string | null = null
+    ): Promise<LeaderboardResult> {
+        console.log(`🔄 Генерация fallback рейтинга для периода: ${period}`);
 
-        let dateFilter = {};
+        let dateFilter: DateFilter = {};
         const now = new Date();
 
         // Настраиваем фильтр по периоду
@@ -187,13 +253,11 @@ class LeaderboardService {
             .sort({ 'stats.totalScore': -1 })
             .limit(limit)
             .select('telegramId firstName lastName username nickname stats.totalScore rank')
-            .lean();
+            .lean() as UserLeanDocument[];
 
         // Форматируем результаты
-        const leaderboard = topUsers.map((user, index) => {
-            const displayName = user.nickname ||
-                (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() :
-                    (user.username || `Игрок ${user.telegramId.slice(-4)}`));
+        const leaderboard: LeaderboardUserData[] = topUsers.map((user, index) => {
+            const displayName = this.formatUserDisplayName(user);
 
             return {
                 rank: index + 1,
@@ -205,20 +269,18 @@ class LeaderboardService {
         });
 
         // Ищем текущего пользователя, если он не в топе
-        let currentUserData = null;
+        let currentUserData: LeaderboardUserData | null = null;
         const currentUserInTop = leaderboard.find(entry => entry.isCurrentUser);
 
         if (!currentUserInTop && currentUserId) {
-            const user = await User.findOne({ telegramId: currentUserId });
+            const user = await User.findOne({ telegramId: currentUserId }).lean() as UserLeanDocument | null;
             if (user) {
                 const higherScoreCount = await User.countDocuments({
                     'stats.totalScore': { $gt: user.stats.totalScore },
                     ...dateFilter
                 });
 
-                const displayName = user.nickname ||
-                    (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() :
-                        (user.username || `Игрок ${user.telegramId.slice(-4)}`));
+                const displayName = this.formatUserDisplayName(user);
 
                 currentUserData = {
                     rank: higherScoreCount + 1,
@@ -237,9 +299,19 @@ class LeaderboardService {
             fallback: true
         };
     }
+
+    /**
+     * Форматирование отображаемого имени пользователя
+     */
+    private formatUserDisplayName(user: UserLeanDocument): string {
+        return user.nickname ||
+            (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() :
+                (user.username || `Игрок ${user.telegramId.slice(-4)}`));
+    }
 }
 
 // Создаем единственный экземпляр службы
 const leaderboardService = new LeaderboardService();
 
+export default leaderboardService;
 module.exports = leaderboardService; 

@@ -1,207 +1,24 @@
-const mongoose = require('mongoose');
+/**
+ * Методы для типизированной модели User
+ */
 
-const userSchema = new mongoose.Schema({
-    telegramId: {
-        type: String,
-        required: true,
-        unique: true,
-        index: true
-    },
-    username: String,
-    firstName: String,
-    lastName: String,
-    nickname: String,
-    registeredAt: {
-        type: Date,
-        default: Date.now
-    },
-    lastVisit: {
-        type: Date,
-        default: Date.now
-    },
+import { IUser, IGameResult, IExperienceData, IStats, IAchievement } from './User';
 
-    // 🏆 ДЕТЕКТИВНЫЕ ЗВАНИЯ (основная прогрессия)
-    rank: {
-        type: String,
-        enum: [
-            'СТАЖЕР',           // 0-150 очков
-            'СЛЕДОВАТЕЛЬ',      // 150-400 очков  
-            'ДЕТЕКТИВ',         // 400-900 очков
-            'СТАРШИЙ_ДЕТЕКТИВ', // 900-2000 очков
-            'ИНСПЕКТОР',        // 2000-4500 очков
-            'КОМИССАР',         // 4500-10000 очков
-            'ГЛАВНЫЙ_ИНСПЕКТОР',// 10000-20000 очков
-            'ШЕФ_ПОЛИЦИИ'      // 20000+ очков
-        ],
-        default: 'СТАЖЕР'
-    },
+// Тип для редкости достижений
+type AchievementRarity = 'ОБЫЧНОЕ' | 'РЕДКОЕ' | 'ЭПИЧЕСКОЕ' | 'ЛЕГЕНДАРНОЕ';
 
-    // ⭐ РЕПУТАЦИОННАЯ СИСТЕМА
-    reputation: {
-        // Общий уровень репутации (0-100)
-        level: {
-            type: Number,
-            default: 50,
-            min: 0,
-            max: 100
-        },
-
-        // Категория репутации
-        category: {
-            type: String,
-            enum: ['КРИТИКУЕМЫЙ', 'ОБЫЧНЫЙ', 'УВАЖАЕМЫЙ', 'ЭЛИТНЫЙ', 'ЛЕГЕНДАРНЫЙ'],
-            default: 'ОБЫЧНЫЙ'
-        },
-
-        // Компоненты репутации
-        accuracy: {
-            type: Number,
-            default: 0,
-            min: 0,
-            max: 100
-        },
-        speed: {
-            type: Number,
-            default: 0,
-            min: 0,
-            max: 100
-        },
-        consistency: {
-            type: Number,
-            default: 0,
-            min: 0,
-            max: 100
-        },
-        difficulty: {
-            type: Number,
-            default: 0,
-            min: 0,
-            max: 100
-        }
-    },
-
-    // 📊 СТАТИСТИКА ПОЛЬЗОВАТЕЛЯ
-    stats: {
-        // Базовые показатели
-        investigations: { type: Number, default: 0 },
-        solvedCases: { type: Number, default: 0 },
-        totalQuestions: { type: Number, default: 0 },
-        accuracy: { type: Number, default: 0 },
-
-        // 🆕 НОВАЯ СИСТЕМА ОПЫТА (отдельно от очков)
-        experience: { type: Number, default: 0 },        // Отдельный опыт
-        level: { type: Number, default: 1 },             // Текущий уровень
-
-        // Очки (остаются для статистики)
-        totalScore: { type: Number, default: 0 },        // Очки за игры
-
-        // Серии и достижения
-        winStreak: { type: Number, default: 0 },
-        maxWinStreak: { type: Number, default: 0 },
-        perfectGames: { type: Number, default: 0 },
-
-        // Время и скорость
-        averageTime: { type: Number, default: 0 },
-        fastestGame: { type: Number, default: 0 },
-
-        // Активность
-        dailyStreakCurrent: { type: Number, default: 0 },
-        dailyStreakBest: { type: Number, default: 0 },
-        lastActiveDate: { type: Date, default: Date.now },
-
-        // 🎯 МАСТЕРСТВО ПО ТИПАМ ПРЕСТУПЛЕНИЙ
-        crimeTypeMastery: {
-            murder: { level: { type: Number, default: 0 }, experience: { type: Number, default: 0 } },
-            robbery: { level: { type: Number, default: 0 }, experience: { type: Number, default: 0 } },
-            fraud: { level: { type: Number, default: 0 }, experience: { type: Number, default: 0 } },
-            theft: { level: { type: Number, default: 0 }, experience: { type: Number, default: 0 } },
-            cybercrime: { level: { type: Number, default: 0 }, experience: { type: Number, default: 0 } }
-        },
-
-        // 📊 ПРОДВИНУТАЯ СТАТИСТИКА
-        gamesThisHour: { type: Number, default: 0 },
-        gamesToday: { type: Number, default: 0 },
-        lastGameTime: { type: Date },
-        experienceMultiplier: { type: Number, default: 1.0 },
-
-        // Статистика по сложности
-        easyGames: { type: Number, default: 0 },
-        mediumGames: { type: Number, default: 0 },
-        hardGames: { type: Number, default: 0 },
-        expertGames: { type: Number, default: 0 }
-    },
-
-    // 🎯 СИСТЕМА ДОСТИЖЕНИЙ
-    achievements: [{
-        id: String,
-        name: String,
-        description: String,
-        category: {
-            type: String,
-            enum: ['ПРОГРЕСС', 'МАСТЕРСТВО', 'СКОРОСТЬ', 'СЕРИИ', 'ОСОБЫЕ']
-        },
-        rarity: {
-            type: String,
-            enum: ['ОБЫЧНОЕ', 'РЕДКОЕ', 'ЭПИЧЕСКОЕ', 'ЛЕГЕНДАРНОЕ']
-        },
-        unlockedAt: Date,
-        progress: {
-            current: { type: Number, default: 0 },
-            target: { type: Number, default: 1 }
-        }
-    }],
-
-    // 📈 ИСТОРИЯ ИГР С МЕТАДАННЫМИ
-    gameHistory: [{
-        gameId: String,
-        date: {
-            type: Date,
-            default: Date.now
-        },
-        score: Number,
-        experience: Number,
-        experienceBreakdown: Object,
-        correctAnswers: Number,
-        totalQuestions: Number,
-        timeSpent: Number,
-        difficulty: {
-            type: String,
-            enum: ['EASY', 'MEDIUM', 'HARD', 'EXPERT'],
-            default: 'MEDIUM'
-        },
-        crimeType: String,
-        perfectGame: {
-            type: Boolean,
-            default: false
-        },
-        reputationGained: Number
-    }],
-
-    // 🎁 НАГРАДЫ И БОНУСЫ
-    rewards: {
-        experienceBonus: {
-            type: Number,
-            default: 1.0
-        },
-        reputationBonus: {
-            type: Number,
-            default: 1.0
-        },
-        nextRankProgress: {
-            type: Number,
-            default: 0
-        }
-    }
-}, { timestamps: true });
-
-// Виртуальное свойство для расчета точности ответов
-userSchema.virtual('calculatedAccuracy').get(function () {
+/**
+ * Виртуальное свойство для расчета точности ответов
+ */
+export function calculatedAccuracy(this: IUser): number {
     if (this.stats.totalQuestions === 0) return 0;
     return Math.round((this.stats.solvedCases / this.stats.totalQuestions) * 100);
-});
+}
 
-// 🎯 УЛУЧШЕННОЕ ОБНОВЛЕНИЕ СТАТИСТИКИ ПОСЛЕ ИГРЫ
-userSchema.methods.updateStatsAfterGame = function (gameResult) {
+/**
+ * Обновление статистики после игры
+ */
+export async function updateStatsAfterGame(this: IUser, gameResult: IGameResult): Promise<IUser> {
     const prevStats = { ...this.stats };
 
     // Основная статистика
@@ -210,35 +27,33 @@ userSchema.methods.updateStatsAfterGame = function (gameResult) {
     this.stats.totalQuestions += gameResult.totalQuestions;
     this.stats.totalScore += gameResult.totalScore;
 
-    // 🔥 НОВАЯ СИСТЕМА ОПЫТА С МНОЖИТЕЛЯМИ
+    // Система опыта с множителями
     const experienceData = this.calculateAdvancedExperience(gameResult);
     this.stats.experience += experienceData.finalExperience;
 
-    // Пересчитываем уровень на основе опыта
+    // Пересчет уровня
     this.stats.level = this.calculateLevelFromExperience(this.stats.experience);
 
-    // Обновляем счетчики игр за час/день
+    // Обновление счетчиков игр
     this.updateGameCounters();
 
-    // Обновляем статистику по сложности
+    // Статистика по сложности
     const difficulty = gameResult.difficulty || 'MEDIUM';
     if (difficulty === 'EASY') this.stats.easyGames += 1;
     else if (difficulty === 'MEDIUM') this.stats.mediumGames += 1;
     else if (difficulty === 'HARD') this.stats.hardGames += 1;
     else if (difficulty === 'EXPERT') this.stats.expertGames += 1;
 
-    // 🎯 ОБНОВЛЯЕМ МАСТЕРСТВО ПО ТИПУ ПРЕСТУПЛЕНИЯ
+    // Мастерство по типу преступления
     const crimeType = gameResult.crimeType || 'murder';
     if (this.stats.crimeTypeMastery[crimeType]) {
-        const typeXP = Math.round(experienceData.finalExperience * 0.3); // 30% от общего опыта
+        const typeXP = Math.round(experienceData.finalExperience * 0.3);
         this.stats.crimeTypeMastery[crimeType].experience += typeXP;
-
-        // Пересчитываем уровень мастерства (1-10)
         const masteryLevel = Math.min(Math.floor(this.stats.crimeTypeMastery[crimeType].experience / 500) + 1, 10);
         this.stats.crimeTypeMastery[crimeType].level = masteryLevel;
     }
 
-    // Подсчет идеальных игр и серий
+    // Идеальные игры и серии
     const isPerfectGame = gameResult.correctAnswers === gameResult.totalQuestions;
     if (isPerfectGame) {
         this.stats.perfectGames += 1;
@@ -265,7 +80,7 @@ userSchema.methods.updateStatsAfterGame = function (gameResult) {
         }
     }
 
-    // Обновление ежедневной активности
+    // Ежедневная активность
     this.updateDailyStreak();
 
     // Пересчет точности
@@ -277,9 +92,10 @@ userSchema.methods.updateStatsAfterGame = function (gameResult) {
     // Обновление ранга
     this.updateRank();
 
-    // Добавление в историю с метаданными
+    // Добавление в историю
     this.gameHistory.push({
         gameId: gameResult.gameId || `game_${Date.now()}`,
+        date: new Date(),
         score: gameResult.totalScore,
         experience: experienceData.finalExperience,
         experienceBreakdown: experienceData,
@@ -298,73 +114,76 @@ userSchema.methods.updateStatsAfterGame = function (gameResult) {
     this.lastVisit = new Date();
     this.stats.lastGameTime = new Date();
 
-    return this.save();
-};
+    return await this.save();
+}
 
-// 🔥 НОВАЯ СИСТЕМА РАСЧЕТА ОПЫТА С МНОЖИТЕЛЯМИ
-userSchema.methods.calculateAdvancedExperience = function (gameResult) {
+/**
+ * Расчет опыта с множителями
+ */
+export function calculateAdvancedExperience(this: IUser, gameResult: IGameResult): IExperienceData {
     let baseExperience = gameResult.totalScore || 0;
     let multiplier = 1.0;
-    let bonusReasons = [];
+    let bonusReasons: string[] = [];
 
     const now = new Date();
     const isWeekend = now.getDay() === 0 || now.getDay() === 6;
 
-    // 🎯 БОНУС ЗА ИДЕАЛЬНУЮ ИГРУ
+    // Бонус за идеальную игру
     if (gameResult.correctAnswers === gameResult.totalQuestions) {
-        multiplier *= 1.5; // +50%
+        multiplier *= 1.5;
         bonusReasons.push('Идеальная игра: +50%');
     }
 
-    // ⚡ БОНУС ЗА СКОРОСТЬ (среднее время < 30 сек)
-    const avgTime = gameResult.averageTime || gameResult.timeSpent / gameResult.totalQuestions;
-    if (avgTime < 30000) { // менее 30 секунд
-        multiplier *= 1.3; // +30%
+    // Бонус за скорость
+    const timeSpent = gameResult.timeSpent || 0;
+    const avgTime = gameResult.averageTime || (timeSpent > 0 ? timeSpent / gameResult.totalQuestions : 0);
+    if (avgTime > 0 && avgTime < 30000) {
+        multiplier *= 1.3;
         bonusReasons.push('Быстрая реакция: +30%');
     }
 
-    // 🎖️ БОНУС ЗА СЛОЖНОСТЬ
-    if (gameResult.difficulty === 'hard') {
-        multiplier *= 1.4; // +40%
+    // Бонус за сложность
+    if (gameResult.difficulty === 'HARD') {
+        multiplier *= 1.4;
         bonusReasons.push('Мастер сложности: +40%');
-    } else if (gameResult.difficulty === 'expert') {
-        multiplier *= 1.6; // +60%
+    } else if (gameResult.difficulty === 'EXPERT') {
+        multiplier *= 1.6;
         bonusReasons.push('Эксперт уровень: +60%');
     }
 
-    // 🔥 БОНУС ЗА СЕРИЮ ПОБЕД
+    // Бонус за серию побед
     if (this.stats.winStreak >= 3) {
         const streakMultiplier = Math.min(1 + (this.stats.winStreak * 0.1), 2.0);
         multiplier *= streakMultiplier;
         bonusReasons.push(`Серия побед x${this.stats.winStreak}: +${Math.round((streakMultiplier - 1) * 100)}%`);
     }
 
-    // 📅 СЕЗОННЫЕ БОНУСЫ
+    // Сезонные бонусы
     if (isWeekend) {
-        multiplier *= 1.1; // +10%
+        multiplier *= 1.1;
         bonusReasons.push('Выходные: +10%');
     }
 
-    // 🌅 БОНУС ЗА ПЕРВУЮ ИГРУ ДНЯ
+    // Бонус за первую игру дня
     const today = now.toDateString();
     const lastPlayDate = this.stats.lastActiveDate ? new Date(this.stats.lastActiveDate).toDateString() : null;
     if (lastPlayDate !== today) {
-        multiplier *= 1.25; // +25%
+        multiplier *= 1.25;
         bonusReasons.push('Первая игра дня: +25%');
     }
 
-    // ⚠️ ШТРАФЫ ЗА ЧРЕЗМЕРНУЮ ИГРУ
+    // Штрафы за чрезмерную игру
     if (this.stats.gamesThisHour > 3) {
-        multiplier *= 0.8; // -20%
+        multiplier *= 0.8;
         bonusReasons.push('Слишком много игр в час: -20%');
     }
 
     if (this.stats.gamesToday > 10) {
-        multiplier *= 0.9; // -10%
+        multiplier *= 0.9;
         bonusReasons.push('Слишком много игр за день: -10%');
     }
 
-    // 📊 ФИНАЛЬНЫЙ РАСЧЕТ
+    // Финальный расчет
     const finalExperience = Math.round(baseExperience * multiplier);
     const bonusExperience = finalExperience - baseExperience;
 
@@ -375,10 +194,12 @@ userSchema.methods.calculateAdvancedExperience = function (gameResult) {
         finalExperience,
         bonusReasons
     };
-};
+}
 
-// 📊 РАСЧЕТ УРОВНЯ НА ОСНОВЕ ОПЫТА
-userSchema.methods.calculateLevelFromExperience = function (experience) {
+/**
+ * Расчет уровня на основе опыта
+ */
+export function calculateLevelFromExperience(this: IUser, experience: number): number {
     const levelThresholds = [
         500, 1200, 2500, 4500, 7500,           // 1-5
         12000, 18000, 26000, 36000, 50000,     // 6-10
@@ -392,15 +213,17 @@ userSchema.methods.calculateLevelFromExperience = function (experience) {
         }
     }
     return levelThresholds.length; // Максимальный уровень
-};
+}
 
-// 🕐 ОБНОВЛЕНИЕ СЧЕТЧИКОВ ИГР
-userSchema.methods.updateGameCounters = function () {
+/**
+ * Обновление счетчиков игр
+ */
+export function updateGameCounters(this: IUser): void {
     const now = new Date();
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Сбрасываем счетчики если прошло время
+    // Сброс счетчиков если прошло время
     if (!this.stats.lastGameTime || this.stats.lastGameTime < oneHourAgo) {
         this.stats.gamesThisHour = 0;
     }
@@ -409,13 +232,15 @@ userSchema.methods.updateGameCounters = function () {
         this.stats.gamesToday = 0;
     }
 
-    // Увеличиваем счетчики
+    // Увеличение счетчиков
     this.stats.gamesThisHour += 1;
     this.stats.gamesToday += 1;
-};
+}
 
-// ⭐ СИСТЕМА РАСЧЕТА РЕПУТАЦИИ
-userSchema.methods.updateReputation = function (gameResult, prevStats) {
+/**
+ * Система расчета репутации
+ */
+export function updateReputation(this: IUser, gameResult: IGameResult, prevStats: IStats): void {
     const weights = {
         accuracy: 0.35,
         speed: 0.25,
@@ -476,16 +301,18 @@ userSchema.methods.updateReputation = function (gameResult, prevStats) {
     else this.reputation.category = 'КРИТИКУЕМЫЙ';
 
     // Сохраняем полученную репутацию для истории
-    gameResult.reputationGained = Math.round(totalReputation - (prevStats.reputation?.level || 50));
-};
+    gameResult.reputationGained = Math.round(totalReputation - (this.reputation?.level || 50));
+}
 
-// 📅 ОБНОВЛЕНИЕ ЕЖЕДНЕВНОЙ АКТИВНОСТИ
-userSchema.methods.updateDailyStreak = function () {
+/**
+ * Обновление ежедневной активности
+ */
+export function updateDailyStreak(this: IUser): void {
     const today = new Date();
     const lastActive = new Date(this.stats.lastActiveDate);
 
     // Проверяем, играл ли пользователь вчера
-    const daysDiff = Math.floor((today - lastActive) / (1000 * 60 * 60 * 24));
+    const daysDiff = Math.floor((today.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24));
 
     if (daysDiff === 0) {
         // Играет сегодня - серия продолжается
@@ -502,23 +329,25 @@ userSchema.methods.updateDailyStreak = function () {
     }
 
     this.stats.lastActiveDate = today;
-};
+}
 
-// 🏆 ОБНОВЛЕНИЕ РАНГА ПОЛЬЗОВАТЕЛЯ
-userSchema.methods.updateRank = function () {
+/**
+ * Обновление ранга пользователя
+ */
+export function updateRank(this: IUser): void {
     const score = this.stats.totalScore;
     const prevRank = this.rank;
 
     if (score >= 20000) {
-        this.rank = 'ШЕФ_ПОЛИЦИИ';
+        this.rank = 'ШЕФ ПОЛИЦИИ';
     } else if (score >= 10000) {
-        this.rank = 'ГЛАВНЫЙ_ИНСПЕКТОР';
+        this.rank = 'ГЛАВНЫЙ ИНСПЕКТОР';
     } else if (score >= 4500) {
         this.rank = 'КОМИССАР';
     } else if (score >= 2000) {
         this.rank = 'ИНСПЕКТОР';
     } else if (score >= 900) {
-        this.rank = 'СТАРШИЙ_ДЕТЕКТИВ';
+        this.rank = 'СТАРШИЙ ДЕТЕКТИВ';
     } else if (score >= 400) {
         this.rank = 'ДЕТЕКТИВ';
     } else if (score >= 150) {
@@ -553,41 +382,54 @@ userSchema.methods.updateRank = function () {
             progress: { current: 1, target: 1 }
         });
     }
-};
+}
 
-// 🎖️ ПОЛУЧЕНИЕ ОТОБРАЖАЕМОГО НАЗВАНИЯ РАНГА
-userSchema.methods.getRankDisplayName = function () {
-    const rankNames = {
+/**
+ * Получение отображаемого названия ранга
+ */
+export function getRankDisplayName(this: IUser): string {
+    const rankNames: Record<string, string> = {
         'СТАЖЕР': 'Стажер',
         'СЛЕДОВАТЕЛЬ': 'Следователь',
         'ДЕТЕКТИВ': 'Детектив',
-        'СТАРШИЙ_ДЕТЕКТИВ': 'Старший детектив',
+        'СТАРШИЙ ДЕТЕКТИВ': 'Старший детектив',
         'ИНСПЕКТОР': 'Инспектор',
         'КОМИССАР': 'Комиссар',
-        'ГЛАВНЫЙ_ИНСПЕКТОР': 'Главный инспектор',
-        'ШЕФ_ПОЛИЦИИ': 'Шеф полиции'
+        'ГЛАВНЫЙ ИНСПЕКТОР': 'Главный инспектор',
+        'ШЕФ ПОЛИЦИИ': 'Шеф полиции'
     };
     return rankNames[this.rank] || this.rank;
-};
+}
 
-// 🌟 ПОЛУЧЕНИЕ РЕДКОСТИ РАНГА
-userSchema.methods.getRankRarity = function () {
-    const rankRarities = {
+/**
+ * Получение редкости ранга
+ */
+export function getRankRarity(this: IUser): AchievementRarity {
+    const rankRarities: Record<string, AchievementRarity> = {
         'СТАЖЕР': 'ОБЫЧНОЕ',
         'СЛЕДОВАТЕЛЬ': 'ОБЫЧНОЕ',
         'ДЕТЕКТИВ': 'ОБЫЧНОЕ',
-        'СТАРШИЙ_ДЕТЕКТИВ': 'РЕДКОЕ',
+        'СТАРШИЙ ДЕТЕКТИВ': 'РЕДКОЕ',
         'ИНСПЕКТОР': 'РЕДКОЕ',
         'КОМИССАР': 'ЭПИЧЕСКОЕ',
-        'ГЛАВНЫЙ_ИНСПЕКТОР': 'ЭПИЧЕСКОЕ',
-        'ШЕФ_ПОЛИЦИИ': 'ЛЕГЕНДАРНОЕ'
+        'ГЛАВНЫЙ ИНСПЕКТОР': 'ЭПИЧЕСКОЕ',
+        'ШЕФ ПОЛИЦИИ': 'ЛЕГЕНДАРНОЕ'
     };
     return rankRarities[this.rank] || 'ОБЫЧНОЕ';
-};
+}
 
-// 🏅 ПРОДВИНУТАЯ СИСТЕМА ДОСТИЖЕНИЙ
-userSchema.methods.checkAchievements = function () {
-    const newAchievements = [];
+/**
+ * Проверка наличия достижения
+ */
+export function hasAchievement(this: IUser, achievementId: string): boolean {
+    return this.achievements.some(achievement => achievement.id === achievementId);
+}
+
+/**
+ * Продвинутая система достижений
+ */
+export function checkAchievements(this: IUser): IAchievement[] {
+    const newAchievements: IAchievement[] = [];
 
     // === ДОСТИЖЕНИЯ ПРОГРЕССА ===
 
@@ -606,12 +448,12 @@ userSchema.methods.checkAchievements = function () {
 
     // Серия расследований
     const investigationMilestones = [
-        { count: 5, id: 'detective_rookie', name: 'Начинающий детектив', rarity: 'ОБЫЧНОЕ' },
-        { count: 25, id: 'detective_experienced', name: 'Опытный детектив', rarity: 'ОБЫЧНОЕ' },
-        { count: 50, id: 'detective_veteran', name: 'Ветеран розыска', rarity: 'РЕДКОЕ' },
-        { count: 100, id: 'detective_master', name: 'Мастер следствия', rarity: 'РЕДКОЕ' },
-        { count: 250, id: 'detective_legend', name: 'Легенда криминалистики', rarity: 'ЭПИЧЕСКОЕ' },
-        { count: 500, id: 'detective_immortal', name: 'Бессмертный сыщик', rarity: 'ЛЕГЕНДАРНОЕ' }
+        { count: 5, id: 'detective_rookie', name: 'Начинающий детектив', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
+        { count: 25, id: 'detective_experienced', name: 'Опытный детектив', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
+        { count: 50, id: 'detective_veteran', name: 'Ветеран розыска', rarity: 'РЕДКОЕ' as AchievementRarity },
+        { count: 100, id: 'detective_master', name: 'Мастер следствия', rarity: 'РЕДКОЕ' as AchievementRarity },
+        { count: 250, id: 'detective_legend', name: 'Легенда криминалистики', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
+        { count: 500, id: 'detective_immortal', name: 'Бессмертный сыщик', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
     ];
 
     investigationMilestones.forEach(milestone => {
@@ -657,10 +499,10 @@ userSchema.methods.checkAchievements = function () {
 
     // Идеальные игры
     const perfectGameMilestones = [
-        { count: 5, id: 'perfect_5', name: 'Снайпер', rarity: 'ОБЫЧНОЕ' },
-        { count: 15, id: 'perfect_15', name: 'Безошибочный', rarity: 'РЕДКОЕ' },
-        { count: 50, id: 'perfect_50', name: 'Гений дедукции', rarity: 'ЭПИЧЕСКОЕ' },
-        { count: 100, id: 'perfect_100', name: 'Шерлок Холмс', rarity: 'ЛЕГЕНДАРНОЕ' }
+        { count: 5, id: 'perfect_5', name: 'Снайпер', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
+        { count: 15, id: 'perfect_15', name: 'Безошибочный', rarity: 'РЕДКОЕ' as AchievementRarity },
+        { count: 50, id: 'perfect_50', name: 'Гений дедукции', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
+        { count: 100, id: 'perfect_100', name: 'Шерлок Холмс', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
     ];
 
     perfectGameMilestones.forEach(milestone => {
@@ -679,8 +521,8 @@ userSchema.methods.checkAchievements = function () {
 
     // === ДОСТИЖЕНИЯ СКОРОСТИ ===
 
-    // Быстрое решение (если время игры меньше 30 секунд)
-    if (this.stats.fastestGame > 0 && this.stats.fastestGame <= 30 && !this.hasAchievement('speed_demon')) {
+    // Быстрое решение
+    if (this.stats.fastestGame > 0 && this.stats.fastestGame <= 30000 && !this.hasAchievement('speed_demon')) {
         newAchievements.push({
             id: 'speed_demon',
             name: 'Демон скорости',
@@ -692,8 +534,8 @@ userSchema.methods.checkAchievements = function () {
         });
     }
 
-    // Молниеносное решение (если время игры меньше 15 секунд)
-    if (this.stats.fastestGame > 0 && this.stats.fastestGame <= 15 && !this.hasAchievement('lightning_fast')) {
+    // Молниеносное решение
+    if (this.stats.fastestGame > 0 && this.stats.fastestGame <= 15000 && !this.hasAchievement('lightning_fast')) {
         newAchievements.push({
             id: 'lightning_fast',
             name: 'Молниеносный',
@@ -709,10 +551,10 @@ userSchema.methods.checkAchievements = function () {
 
     // Серии идеальных игр
     const streakMilestones = [
-        { count: 3, id: 'streak_3', name: 'Удачная серия', rarity: 'ОБЫЧНОЕ' },
-        { count: 5, id: 'streak_5', name: 'Горячая рука', rarity: 'РЕДКОЕ' },
-        { count: 10, id: 'streak_10', name: 'Неостановимый', rarity: 'ЭПИЧЕСКОЕ' },
-        { count: 20, id: 'streak_20', name: 'Машина правосудия', rarity: 'ЛЕГЕНДАРНОЕ' }
+        { count: 3, id: 'streak_3', name: 'Удачная серия', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
+        { count: 5, id: 'streak_5', name: 'Горячая рука', rarity: 'РЕДКОЕ' as AchievementRarity },
+        { count: 10, id: 'streak_10', name: 'Неостановимый', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
+        { count: 20, id: 'streak_20', name: 'Машина правосудия', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
     ];
 
     streakMilestones.forEach(milestone => {
@@ -731,10 +573,10 @@ userSchema.methods.checkAchievements = function () {
 
     // Ежедневные серии
     const dailyStreakMilestones = [
-        { count: 3, id: 'daily_3', name: 'Постоянство', rarity: 'ОБЫЧНОЕ' },
-        { count: 7, id: 'daily_7', name: 'Еженедельник', rarity: 'РЕДКОЕ' },
-        { count: 30, id: 'daily_30', name: 'Месячная преданность', rarity: 'ЭПИЧЕСКОЕ' },
-        { count: 100, id: 'daily_100', name: 'Одержимый работой', rarity: 'ЛЕГЕНДАРНОЕ' }
+        { count: 3, id: 'daily_3', name: 'Постоянство', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
+        { count: 7, id: 'daily_7', name: 'Еженедельник', rarity: 'РЕДКОЕ' as AchievementRarity },
+        { count: 30, id: 'daily_30', name: 'Месячная преданность', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
+        { count: 100, id: 'daily_100', name: 'Одержимый работой', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
     ];
 
     dailyStreakMilestones.forEach(milestone => {
@@ -779,7 +621,7 @@ userSchema.methods.checkAchievements = function () {
         });
     }
 
-    // Разносторонний детектив (играл во все уровни сложности)
+    // Разносторонний детектив
     if (this.stats.easyGames > 0 && this.stats.mediumGames > 0 &&
         this.stats.hardGames > 0 && this.stats.expertGames > 0 &&
         !this.hasAchievement('versatile_detective')) {
@@ -796,10 +638,10 @@ userSchema.methods.checkAchievements = function () {
 
     // Мильные достижения по очкам
     const scoreMilestones = [
-        { score: 1000, id: 'score_1k', name: 'Первая тысяча', rarity: 'ОБЫЧНОЕ' },
-        { score: 5000, id: 'score_5k', name: 'Пять тысяч очков', rarity: 'РЕДКОЕ' },
-        { score: 10000, id: 'score_10k', name: 'Десять тысяч очков', rarity: 'ЭПИЧЕСКОЕ' },
-        { score: 25000, id: 'score_25k', name: 'Четверть сотни тысяч', rarity: 'ЛЕГЕНДАРНОЕ' }
+        { score: 1000, id: 'score_1k', name: 'Первая тысяча', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
+        { score: 5000, id: 'score_5k', name: 'Пять тысяч очков', rarity: 'РЕДКОЕ' as AchievementRarity },
+        { score: 10000, id: 'score_10k', name: 'Десять тысяч очков', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
+        { score: 25000, id: 'score_25k', name: 'Четверть сотни тысяч', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
     ];
 
     scoreMilestones.forEach(milestone => {
@@ -819,19 +661,15 @@ userSchema.methods.checkAchievements = function () {
     // Добавляем новые достижения
     if (newAchievements.length > 0) {
         this.achievements.push(...newAchievements);
-        this.save();
     }
 
     return newAchievements;
-};
+}
 
-// Проверка наличия достижения
-userSchema.methods.hasAchievement = function (achievementId) {
-    return this.achievements.some(achievement => achievement.id === achievementId);
-};
-
-// 📊 ПОЛУЧЕНИЕ СТАТИСТИКИ РЕПУТАЦИИ
-userSchema.methods.getReputationBreakdown = function () {
+/**
+ * Получение статистики репутации
+ */
+export function getReputationBreakdown(this: IUser): any {
     return {
         level: this.reputation.level,
         category: this.reputation.category,
@@ -858,20 +696,22 @@ userSchema.methods.getReputationBreakdown = function () {
             }
         }
     };
-};
+}
 
-// 🎯 ПОЛУЧЕНИЕ ПРОГРЕССА ДОСТИЖЕНИЙ
-userSchema.methods.getAchievementsProgress = function () {
+/**
+ * Получение прогресса достижений
+ */
+export function getAchievementsProgress(this: IUser): any {
     const categories = ['ПРОГРЕСС', 'МАСТЕРСТВО', 'СКОРОСТЬ', 'СЕРИИ', 'ОСОБЫЕ'];
     const rarities = ['ОБЫЧНОЕ', 'РЕДКОЕ', 'ЭПИЧЕСКОЕ', 'ЛЕГЕНДАРНОЕ'];
 
-    const progress = {
+    const progress: any = {
         total: this.achievements.length,
         byCategory: {},
         byRarity: {},
         recent: this.achievements
             .filter(a => a.unlockedAt)
-            .sort((a, b) => new Date(b.unlockedAt) - new Date(a.unlockedAt))
+            .sort((a, b) => new Date(b.unlockedAt!).getTime() - new Date(a.unlockedAt!).getTime())
             .slice(0, 5)
     };
 
@@ -884,8 +724,4 @@ userSchema.methods.getAchievementsProgress = function () {
     });
 
     return progress;
-};
-
-const User = mongoose.model('User', userSchema);
-
-module.exports = User; 
+} 
