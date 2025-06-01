@@ -220,8 +220,24 @@ app.use('/*.css', staticLimiter, express.static(
         : path.join(__dirname, '../public')
 ));
 
-// JavaScript файлы
-app.use('/*.js', staticLimiter, express.static(
+// JavaScript файлы с правильным MIME типом для ES6 модулей
+app.use('/*.js', staticLimiter, (req: Request, res: Response, next: NextFunction): void => {
+    // Устанавливаем правильный MIME тип для JavaScript модулей
+    res.type('text/javascript');
+    next();
+}, express.static(
+    serverConfig.isProduction
+        ? path.join(__dirname, '../../public')
+        : path.join(__dirname, '../public')
+));
+
+// Специальная обработка для модулей в папке /modules/
+app.use('/modules/*.js', staticLimiter, (req: Request, res: Response, next: NextFunction): void => {
+    // Устанавливаем правильный MIME тип для модулей
+    res.type('text/javascript');
+    res.set('Cache-Control', 'no-cache'); // Отключаем кэш для отладки
+    next();
+}, express.static(
     serverConfig.isProduction
         ? path.join(__dirname, '../../public')
         : path.join(__dirname, '../public')
