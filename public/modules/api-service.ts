@@ -431,7 +431,7 @@ export class ApiService {
     public async healthCheck(): Promise<boolean> {
         try {
             const response = await this.makeRequest('/health');
-            return response.success;
+            return !!(response.success || response.status === 'success');
         } catch {
             return false;
         }
