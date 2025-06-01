@@ -309,6 +309,7 @@ export class ApiService {
         console.log('📦 Загружаем пакетные данные...');
 
         try {
+            console.log('🔄 Запускаем параллельные запросы к API...');
             const [profileResult, achievementsResult, leaderboardResult, statsResult] = await Promise.allSettled([
                 this.getUserProfile(),
                 this.getUserAchievements(),
@@ -316,23 +317,50 @@ export class ApiService {
                 this.getUserStats()
             ]);
 
+            console.log('📊 Результаты параллельных запросов:', {
+                profile: { status: profileResult.status, success: profileResult.status === 'fulfilled' ? profileResult.value.success : false },
+                achievements: { status: achievementsResult.status, success: achievementsResult.status === 'fulfilled' ? achievementsResult.value.success : false },
+                leaderboard: { status: leaderboardResult.status, success: leaderboardResult.status === 'fulfilled' ? leaderboardResult.value.success : false },
+                stats: { status: statsResult.status, success: statsResult.status === 'fulfilled' ? statsResult.value.success : false }
+            });
+
             const result: any = {};
 
             if (profileResult.status === 'fulfilled' && profileResult.value.success) {
                 result.profile = profileResult.value.data;
+                console.log('✅ Profile добавлен в result:', !!result.profile);
+            } else {
+                console.error('❌ Profile запрос неудачен:', profileResult);
             }
 
             if (achievementsResult.status === 'fulfilled' && achievementsResult.value.success) {
                 result.achievements = achievementsResult.value.data;
+                console.log('✅ Achievements добавлены в result:', Array.isArray(result.achievements) ? result.achievements.length : 'не массив');
+            } else {
+                console.error('❌ Achievements запрос неудачен:', achievementsResult);
             }
 
             if (leaderboardResult.status === 'fulfilled' && leaderboardResult.value.success) {
                 result.leaderboard = leaderboardResult.value.data;
+                console.log('✅ Leaderboard добавлен в result:', !!result.leaderboard);
+            } else {
+                console.error('❌ Leaderboard запрос неудачен:', leaderboardResult);
             }
 
             if (statsResult.status === 'fulfilled' && statsResult.value.success) {
                 result.stats = statsResult.value.data;
+                console.log('✅ Stats добавлены в result:', !!result.stats);
+            } else {
+                console.error('❌ Stats запрос неудачен:', statsResult);
             }
+
+            console.log('📦 Финальный result getBatchData:', {
+                hasProfile: !!result.profile,
+                hasAchievements: !!result.achievements,
+                hasLeaderboard: !!result.leaderboard,
+                hasStats: !!result.stats,
+                keys: Object.keys(result)
+            });
 
             console.log('✅ Пакетные данные загружены');
             return result;
