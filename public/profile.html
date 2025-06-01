@@ -2032,6 +2032,8 @@
         // Инициализируем профиль после загрузки DOM
         document.addEventListener('DOMContentLoaded', async () => {
             try {
+                console.log('🚀 Начинаем инициализацию профиля...');
+
                 // Импортируем и инициализируем модуль профиля
                 const { CriminalTrustProfile } = await import('./profile.js');
 
@@ -2041,8 +2043,12 @@
                 console.log('✅ Профиль инициализирован');
             } catch (error) {
                 console.error('❌ Ошибка инициализации профиля:', error);
+                console.error('❌ Стек ошибки:', error.stack);
 
-                // Показываем ошибку пользователю
+                // Показываем детальную ошибку для отладки
+                const errorDetails = error.message + (error.stack ? '\n\n' + error.stack : '');
+
+                // Показываем ошибку пользователю с возможностью отладки
                 document.body.innerHTML = `
                     <div style="
                         display: flex;
@@ -2055,26 +2061,101 @@
                         font-family: 'JetBrains Mono', monospace;
                         text-align: center;
                         padding: 20px;
+                        overflow-y: auto;
                     ">
                         <div style="font-size: 64px; margin-bottom: 20px; color: #DC143C;">⚠️</div>
-                        <h1 style="margin: 0 0 16px 0; font-size: 24px; color: #DC143C;">Ошибка загрузки</h1>
-                        <p style="margin: 0 0 24px 0; font-size: 16px; opacity: 0.8; max-width: 400px;">
-                            Не удалось загрузить данные профиля. Проверьте подключение к интернету.
+                        <h1 style="margin: 0 0 16px 0; font-size: 24px; color: #DC143C;">Ошибка загрузки профиля</h1>
+                        <p style="margin: 0 0 24px 0; font-size: 16px; opacity: 0.8; max-width: 600px;">
+                            Не удалось загрузить данные профиля. Проверьте подключение к интернету и работу сервера.
                         </p>
-                        <button onclick="window.location.reload()" style="
-                            background: linear-gradient(135deg, #8B0000, #DC143C);
-                            color: white;
-                            padding: 12px 24px;
-                            border: none;
-                            border-radius: 8px;
-                            font-weight: bold;
-                            cursor: pointer;
-                            box-shadow: 0 8px 32px rgba(139, 0, 0, 0.5);
-                        ">
-                            🔄 Перезагрузить
-                        </button>
+                        <details style="margin-bottom: 24px; max-width: 600px; text-align: left;">
+                            <summary style="color: #FFD700; cursor: pointer; font-weight: bold;">🔍 Детали ошибки (для разработчика)</summary>
+                            <pre style="
+                                background: rgba(0,0,0,0.5);
+                                padding: 12px;
+                                border-radius: 8px;
+                                margin-top: 12px;
+                                font-size: 12px;
+                                white-space: pre-wrap;
+                                word-wrap: break-word;
+                                color: #FF6B6B;
+                                border-left: 3px solid #DC143C;
+                            ">${errorDetails}</pre>
+                        </details>
+                        <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
+                            <button onclick="window.location.reload()" style="
+                                background: linear-gradient(135deg, #8B0000, #DC143C);
+                                color: white;
+                                padding: 12px 24px;
+                                border: none;
+                                border-radius: 8px;
+                                font-weight: bold;
+                                cursor: pointer;
+                                box-shadow: 0 8px 32px rgba(139, 0, 0, 0.5);
+                            ">
+                                🔄 Перезагрузить
+                            </button>
+                            <button onclick="loadTestData()" style="
+                                background: linear-gradient(135deg, #FFD700, #FFA500);
+                                color: #000;
+                                padding: 12px 24px;
+                                border: none;
+                                border-radius: 8px;
+                                font-weight: bold;
+                                cursor: pointer;
+                                box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
+                            ">
+                                🛠️ Загрузить тестовые данные
+                            </button>
+                            <button onclick="window.location.href='/'" style="
+                                background: linear-gradient(135deg, #666, #999);
+                                color: white;
+                                padding: 12px 24px;
+                                border: none;
+                                border-radius: 8px;
+                                font-weight: bold;
+                                cursor: pointer;
+                                box-shadow: 0 8px 32px rgba(102, 102, 102, 0.3);
+                            ">
+                                🏠 На главную
+                            </button>
+                        </div>
                     </div>
                 `;
+
+                // Функция для загрузки тестовых данных
+                window.loadTestData = function () {
+                    console.log('🛠️ Загружаем тестовые данные...');
+
+                    // Заполняем элементы тестовыми данными
+                    document.body.innerHTML = `
+                        ${document.querySelector('.profile-container').outerHTML}
+                    `;
+
+                    // Заполняем тестовые данные
+                    setTimeout(() => {
+                        document.getElementById('detective-name').textContent = 'DEVELOPER';
+                        document.getElementById('detective-name').setAttribute('data-text', 'DEVELOPER');
+                        document.getElementById('user-id').textContent = '5731136459';
+                        document.getElementById('user-level').textContent = '15';
+                        document.getElementById('detective-rank').textContent = 'ДЕТЕКТИВ';
+
+                        document.getElementById('current-xp').textContent = '2850';
+                        document.getElementById('max-xp').textContent = '3000';
+                        document.getElementById('xp-bar').style.width = '95%';
+
+                        document.getElementById('stat-investigations').textContent = '42';
+                        document.getElementById('stat-solved').textContent = '38';
+                        document.getElementById('stat-streak').textContent = '7';
+                        document.getElementById('stat-accuracy').innerHTML = '90<span style="color: var(--neon-red);">%</span>';
+
+                        document.getElementById('achievements-count').textContent = '12';
+                        document.getElementById('user-position').textContent = '5';
+                        document.getElementById('total-players').textContent = '1,234';
+
+                        console.log('✅ Тестовые данные загружены');
+                    }, 100);
+                };
             }
         });
     </script>
