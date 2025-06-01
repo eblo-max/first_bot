@@ -213,6 +213,18 @@ app.use('/assets', staticLimiter, express.static(
         : path.join(__dirname, '../public/assets')
 ));
 
+// Общая обработка всех статических файлов (ПЕРВЫМ!)
+app.use(staticLimiter, express.static(
+    serverConfig.isProduction
+        ? path.join(__dirname, '../../public')
+        : path.join(__dirname, '../public'),
+    {
+        maxAge: serverConfig.isProduction ? '1d' : 0,
+        etag: true,
+        lastModified: true
+    }
+));
+
 // CSS файлы
 app.use('/*.css', staticLimiter, express.static(
     serverConfig.isProduction
@@ -248,18 +260,6 @@ if (serverConfig.isDevelopment) {
     app.use('/*.ts', staticLimiter, express.static(path.join(__dirname, '../public')));
 }
 
-// Общая обработка всех остальных статических файлов
-app.use(staticLimiter, express.static(
-    serverConfig.isProduction
-        ? path.join(__dirname, '../../public')
-        : path.join(__dirname, '../public'),
-    {
-        maxAge: serverConfig.isProduction ? '1d' : 0,
-        etag: true,
-        lastModified: true
-    }
-));
-
 // =============== API МАРШРУТЫ С ТИПИЗАЦИЕЙ ===============
 
 app.use('/api/auth', authLimiter, authRoutes);
@@ -291,6 +291,13 @@ app.use((req: Request, res: Response): void => {
         userAgent: req.get('User-Agent')
     });
 
+    // Для JS файлов возвращаем настоящую 404, не HTML
+    if (req.path.endsWith('.js') || req.path.endsWith('.css') || req.path.endsWith('.ts')) {
+        res.status(404).send(`File not found: ${req.path}`);
+        return;
+    }
+
+    // Для остальных запросов отправляем главную страницу
     const publicPath = serverConfig.isProduction
         ? path.join(__dirname, '../../public')
         : path.join(__dirname, '../public');
