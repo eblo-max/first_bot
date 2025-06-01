@@ -125,28 +125,28 @@ export class ApiService {
     // API МЕТОДЫ ДЛЯ ПРОФИЛЯ
     // =========================================================================
     async getUserProfile() {
-        return this.makeRequest('/profile', {}, true);
+        return this.makeRequest('/user/profile', {}, true);
     }
     async updateUserProfile(profileData) {
-        const result = await this.makeRequest('/profile', {
+        const result = await this.makeRequest('/user/profile', {
             method: 'PUT',
             body: JSON.stringify(profileData)
         });
         // Очищаем кэш профиля при обновлении
         if (result.success) {
-            this.clearCache('/profile');
+            this.clearCache('/user/profile');
         }
         return result;
     }
     async getUserStats(userId) {
-        const endpoint = userId ? `/profile/stats/${userId}` : '/profile/stats';
+        const endpoint = userId ? `/user/stats/${userId}` : '/user/stats';
         return this.makeRequest(endpoint, {}, true, API_CONFIG.CACHE_TTL / 2); // Более короткий кэш для статистики
     }
     // =========================================================================
     // API МЕТОДЫ ДЛЯ ДОСТИЖЕНИЙ
     // =========================================================================
     async getUserAchievements() {
-        return this.makeRequest('/achievements', {}, true);
+        return this.makeRequest('/profile/achievements/available', {}, true);
     }
     async unlockAchievement(achievementId) {
         const result = await this.makeRequest('/achievements/unlock', {
@@ -155,13 +155,13 @@ export class ApiService {
         });
         // Очищаем кэш достижений
         if (result.success) {
-            this.clearCache('/achievements');
+            this.clearCache('/profile/achievements');
             this.clearCache('/profile'); // Профиль может содержать список достижений
         }
         return result;
     }
     async getAchievementProgress() {
-        return this.makeRequest('/achievements/progress', {}, true, API_CONFIG.CACHE_TTL / 4);
+        return this.makeRequest('/profile/progress/next-achievements', {}, true, API_CONFIG.CACHE_TTL / 4);
     }
     // =========================================================================
     // API МЕТОДЫ ДЛЯ ЛИДЕРБОРДА

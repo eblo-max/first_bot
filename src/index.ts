@@ -39,6 +39,7 @@ import authRoutes from './routes/auth';
 import gameRoutes from './routes/game';
 import userRoutes from './routes/user';
 import profileRoutes from './routes/profile';
+import leaderboardRoutes from './routes/leaderboard';
 
 import seedDatabase from './utils/seedData';
 import * as leaderboardService from './services/leaderboardService';
@@ -266,6 +267,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/game', gameLimiter, gameRoutes);
 app.use('/api/user', apiLimiter, userRoutes);
 app.use('/api/profile', apiLimiter, profileRoutes);
+app.use('/api/leaderboard', apiLimiter, leaderboardRoutes);
 
 // Маршрут для проверки здоровья приложения
 app.get('/api/health', (_req: Request, res: Response<HealthCheckResponse>): void => {
