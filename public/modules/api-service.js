@@ -49,6 +49,12 @@ export class ApiService {
         }
     }
     async executeRequest(url, options, cacheKey, useCache, cacheTTL) {
+        console.log(`🔍 Проверка authService:`, {
+            authService_exists: !!authService,
+            authService_initialized: authService?.isInitializedApp?.(),
+            authService_type: typeof authService
+        });
+
         const token = authService.getCurrentToken();
         console.log(`🔑 Получен токен для запроса:`, token ? `${token.substring(0, 20)}...` : 'ТОКЕН ОТСУТСТВУЕТ');
 

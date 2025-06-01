@@ -48,6 +48,14 @@ export class AuthService {
     // =========================================================================
     getStoredToken() {
         try {
+            console.log(`🔍 localStorage содержимое:`, {
+                auth_token: localStorage.getItem('auth_token'),
+                token: localStorage.getItem('token'),
+                criminal_trust_token: localStorage.getItem(AUTH_CONFIG.TOKEN_KEY),
+                all_keys: Object.keys(localStorage),
+                localStorage_length: localStorage.length
+            });
+
             // Проверяем оба возможных ключа для совместимости
             const token = localStorage.getItem('auth_token') ||
                 localStorage.getItem('token') ||
@@ -67,6 +75,14 @@ export class AuthService {
             localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, token);
             localStorage.setItem('auth_token', token);
             localStorage.setItem('token', token);
+
+            // Проверяем что токен действительно сохранился
+            console.log(`✅ Проверка сохранения:`, {
+                saved_auth_token: localStorage.getItem('auth_token'),
+                saved_token: localStorage.getItem('token'),
+                saved_main: localStorage.getItem(AUTH_CONFIG.TOKEN_KEY),
+                in_memory: this.token ? `${this.token.substring(0, 20)}...` : 'НЕТ'
+            });
         } else {
             localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
             localStorage.removeItem('auth_token');
