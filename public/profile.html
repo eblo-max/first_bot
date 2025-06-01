@@ -2019,7 +2019,7 @@
                 console.log('🚀 Начинаем инициализацию профиля...');
 
                 // Импортируем и инициализируем модуль профиля
-                const { CriminalTrustProfile } = await import('./profile.js');
+                const { CriminalTrustProfile } = await import('./profile.js?v=' + Date.now());
 
                 // Создаем экземпляр профиля
                 window.criminalProfile = new CriminalTrustProfile();

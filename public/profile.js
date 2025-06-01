@@ -116,11 +116,26 @@ export class CriminalTrustProfile {
             // Показываем скелетон
             this.showProfileSkeleton();
             // Загружаем все данные параллельно
+            console.log('🔄 Вызываем getBatchData...');
             const batchData = await apiService.getBatchData();
+            console.log('📦 Получили batchData:', batchData);
             // Обновляем профиль
             if (batchData.profile) {
+                console.log('✅ Найден profile в batchData, обновляем UI...');
                 this.state.user = batchData.profile;
                 this.updateProfileUI(batchData.profile);
+            }
+            else {
+                console.error('❌ НЕТ ДАННЫХ ПРОФИЛЯ в batchData!', { batchData });
+                // Попробуем загрузить профиль напрямую
+                console.log('🔄 Пробуем загрузить профиль напрямую...');
+                const profileResult = await apiService.getUserProfile();
+                console.log('👤 Прямой запрос профиля:', profileResult);
+                if (profileResult.success && profileResult.data) {
+                    console.log('✅ Получили профиль напрямую, обновляем UI...');
+                    this.state.user = profileResult.data;
+                    this.updateProfileUI(profileResult.data);
+                }
             }
             // Обновляем достижения
             if (batchData.achievements) {
@@ -153,35 +168,39 @@ export class CriminalTrustProfile {
     updateProfileUI(user) {
         try {
             console.log('🎯 Обновляем UI профиля с данными:', user);
-
+            console.log('📊 Извлеченные данные:', {
+                name: this.getUserDisplayName(user),
+                totalScore: user.totalScore || 0,
+                gamesPlayed: user.gamesPlayed || 0,
+                accuracy: user.accuracy || 0
+            });
             // Основная информация
             this.updateElement('user-name', this.getUserDisplayName(user));
-            this.updateElement('user-total-score', (user.stats?.totalScore || 0).toLocaleString());
-            this.updateElement('user-games-played', (user.stats?.investigations || 0).toString());
-            this.updateElement('user-accuracy', `${Math.round(user.stats?.accuracy || 0)}%`);
-
+            this.updateElement('user-total-score', (user.totalScore || 0).toLocaleString());
+            this.updateElement('user-games-played', (user.gamesPlayed || 0).toString());
+            this.updateElement('user-accuracy', `${Math.round(user.accuracy || 0)}%`);
             // Уровень и опыт
-            const totalScore = user.stats?.totalScore || 0;
+            const totalScore = user.totalScore || 0;
             const level = calculateLevel(totalScore);
             const xpProgress = getXPProgress(totalScore, level);
             const rank = getRankByLevel(level);
-
+            console.log('📈 Рассчитанные значения:', { totalScore, level, xpProgress, rank });
             this.updateElement('user-level', level.toString());
             this.updateElement('user-rank', rank.name);
             this.updateElement('user-rank-icon', rank.icon);
-
             // Обновляем цвет ранга
             const rankElement = document.getElementById('user-rank');
             if (rankElement) {
                 rankElement.style.color = rank.color;
+                console.log('🎨 Цвет ранга установлен:', rank.color);
             }
-
+            else {
+                console.error('❌ Элемент user-rank не найден для установки цвета');
+            }
             // Анимируем XP бар
             this.animateXPBar(xpProgress);
-
             // Обновляем ранговый дисплей
             this.updateRankDisplay(level, rank);
-
             console.log('🎯 UI профиля обновлен');
         }
         catch (error) {
@@ -282,43 +301,39 @@ export class CriminalTrustProfile {
     }
     renderLeaderboard(data) {
         const container = document.getElementById('leaderboard-content');
-        if (!container) return;
-
-        console.log('🏆 Рендеринг лидерборда с данными:', data);
-
-        if (!data.leaderboard || data.leaderboard.length === 0) {
+        if (!container)
+            return;
+        if (!data.users || data.users.length === 0) {
             this.renderEmptyLeaderboard();
             return;
         }
-
-        const html = data.leaderboard.map((entry, index) => {
-            const rank = getRankByLevel(1); // Используем базовый ранг пока нет уровня в API
-            const isCurrentUser = entry.isCurrentUser;
-
+        const html = data.users.map((entry, index) => {
+            const rank = getRankByLevel(entry.level || 1);
+            const isCurrentUser = this.state.user && entry.user.telegramId === this.state.user.telegramId;
             return `
                 <div class="leaderboard-entry ${isCurrentUser ? 'current-user' : ''}">
-                    <div class="position">#${entry.rank || index + 1}</div>
+                    <div class="position">#${entry.position || index + 1}</div>
                     <div class="user-info">
                         <div class="user-avatar">
-                            <div class="avatar-placeholder">👤</div>
+                            <img src="/api/user/avatar/${entry.user.telegramId}" 
+                                 alt="Avatar" 
+                                 onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\"><circle cx=\\"50\\" cy=\\"50\\" r=\\"40\\" fill=\\"%23333\\"/></svg>'">
                         </div>
                         <div class="user-details">
-                            <div class="user-name">${entry.name || 'Детектив'}</div>
+                            <div class="user-name">${this.getUserDisplayName(entry.user)}</div>
                             <div class="user-rank" style="color: ${rank.color}">
-                                ${rank.icon} ${entry.userRank || 'СТАЖЕР'}
+                                ${rank.icon} ${rank.name}
                             </div>
                         </div>
                     </div>
                     <div class="user-stats">
-                        <div class="score">${(entry.score || 0).toLocaleString()}</div>
-                        <div class="accuracy">-</div>
+                        <div class="score">${entry.score.toLocaleString()}</div>
+                        <div class="accuracy">${Math.round(entry.accuracy || 0)}%</div>
                     </div>
                 </div>
             `;
         }).join('');
-
         container.innerHTML = html;
-
         // Обновляем позицию текущего пользователя
         this.updateUserPosition(data);
     }
@@ -440,8 +455,10 @@ export class CriminalTrustProfile {
     // УТИЛИТАРНЫЕ МЕТОДЫ
     // =========================================================================
     getUserDisplayName(user) {
-        console.log('👤 Получаем имя пользователя:', user);
-        return user.name || `${user.firstName || 'Детектив'} ${user.lastName || ''}`.trim();
+        if (user.username) {
+            return `@${user.username}`;
+        }
+        return `${user.firstName || 'Детектив'} ${user.lastName || ''}`.trim();
     }
     updateElement(id, value) {
         console.log(`🔧 Попытка обновить элемент:`, { id, value });
@@ -449,7 +466,8 @@ export class CriminalTrustProfile {
         if (element) {
             console.log(`✅ Элемент найден, обновляем:`, id, `старое значение: "${element.textContent}" → новое: "${value}"`);
             element.textContent = value;
-        } else {
+        }
+        else {
             console.error(`❌ Элемент не найден:`, id);
             console.log(`🔍 Доступные элементы на странице:`, Array.from(document.querySelectorAll('[id]')).map(el => el.id));
         }
@@ -593,8 +611,8 @@ export class CriminalTrustProfile {
                         <p class="achievement-description">${achievement.description}</p>
                         <div class="achievement-rarity rarity-${achievement.rarity}">${achievement.rarity}</div>
                         ${achievement.isUnlocked ?
-                `<div class="unlock-status unlocked">Получено!</div>` :
-                `<div class="unlock-status locked">
+            `<div class="unlock-status unlocked">Получено!</div>` :
+            `<div class="unlock-status locked">
                                 <div class="progress-info">Прогресс: ${Math.round(achievement.progress || 0)}%</div>
                                 <div class="progress-bar">
                                     <div class="progress-fill" style="width: ${achievement.progress || 0}%"></div>
@@ -663,11 +681,8 @@ export class CriminalTrustProfile {
     }
     updateUserPosition(data) {
         const positionElement = document.getElementById('user-position');
-        if (positionElement && data.currentUser && data.currentUser.rank) {
-            positionElement.textContent = `Ваша позиция: #${data.currentUser.rank}`;
-            console.log('📈 Позиция пользователя обновлена:', data.currentUser.rank);
-        } else {
-            console.log('📈 Позиция пользователя не найдена');
+        if (positionElement && data.userPosition) {
+            positionElement.textContent = `Ваша позиция: #${data.userPosition}`;
         }
     }
     updateRankDisplay(level, rank) {

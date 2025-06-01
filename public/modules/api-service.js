@@ -54,10 +54,8 @@ export class ApiService {
             authService_initialized: authService?.isInitializedApp?.(),
             authService_type: typeof authService
         });
-
         const token = authService.getCurrentToken();
         console.log(`🔑 Получен токен для запроса:`, token ? `${token.substring(0, 20)}...` : 'ТОКЕН ОТСУТСТВУЕТ');
-
         const defaultHeaders = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -65,7 +63,8 @@ export class ApiService {
         if (token) {
             defaultHeaders['Authorization'] = `Bearer ${token}`;
             console.log(`✅ Добавлен Authorization заголовок`);
-        } else {
+        }
+        else {
             console.log(`❌ Токен отсутствует - запрос без авторизации`);
         }
         const requestOptions = {
@@ -75,8 +74,7 @@ export class ApiService {
                 ...options.headers
             }
         };
-        console.log(`🌐 ${requestOptions.method || 'GET'} ${url}`,
-            `Headers:`, Object.keys(requestOptions.headers));
+        console.log(`🌐 ${requestOptions.method || 'GET'} ${url}`, `Headers:`, Object.keys(requestOptions.headers || {}));
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
@@ -161,14 +159,14 @@ export class ApiService {
         return this.makeRequest('/profile/achievements/available', {}, true);
     }
     async unlockAchievement(achievementId) {
-        const result = await this.makeRequest('/achievements/unlock', {
+        const result = await this.makeRequest('/profile/achievements/unlock', {
             method: 'POST',
             body: JSON.stringify({ achievementId })
         });
         // Очищаем кэш достижений
         if (result.success) {
             this.clearCache('/profile/achievements');
-            this.clearCache('/profile'); // Профиль может содержать список достижений
+            this.clearCache('/user/profile'); // Профиль может содержать список достижений
         }
         return result;
     }
@@ -194,8 +192,8 @@ export class ApiService {
         });
         // Очищаем релевантные кэши после игры
         if (result.success) {
-            this.clearCache('/profile');
-            this.clearCache('/achievements');
+            this.clearCache('/user/profile');
+            this.clearCache('/profile/achievements');
             this.clearCache('/leaderboard');
         }
         return result;
@@ -213,10 +211,8 @@ export class ApiService {
             if (this.isCacheValid(cacheKey)) {
                 return this.cache.get(cacheKey).data;
             }
-
             // Используем прямую ссылку на изображение вместо JSON API
             const avatarUrl = `/api/user/avatar/${telegramId}`;
-
             // Кэшируем URL на 1 час
             this.setCache(cacheKey, avatarUrl, 3600000);
             return avatarUrl;
