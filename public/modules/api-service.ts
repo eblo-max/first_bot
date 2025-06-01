@@ -125,10 +125,18 @@ export class ApiService {
 
             clearTimeout(timeoutId);
 
+            console.log(`📡 Ответ сервера ${url}:`, {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok
+            });
+
             const data = await response.json();
+            console.log(`📄 Содержимое ответа ${url}:`, data);
 
             if (!response.ok) {
-                throw new Error(data.error || data.message || `HTTP ${response.status}`);
+                console.error(`❌ HTTP ошибка ${response.status}:`, data);
+                throw new Error(data.error || data.message || `HTTP ${response.status}: ${response.statusText}`);
             }
 
             // Сохраняем в кэш при успехе
@@ -139,7 +147,11 @@ export class ApiService {
             return data;
 
         } catch (error) {
-            console.error(`❌ Ошибка запроса к ${url}:`, error);
+            console.error(`❌ Ошибка запроса к ${url}:`, {
+                error: error instanceof Error ? error.message : error,
+                stack: error instanceof Error ? error.stack : undefined,
+                name: error instanceof Error ? error.name : undefined
+            });
 
             return {
                 success: false,
@@ -330,28 +342,44 @@ export class ApiService {
                 result.profile = profileResult.value.data;
                 console.log('✅ Profile добавлен в result:', !!result.profile);
             } else {
-                console.error('❌ Profile запрос неудачен:', profileResult);
+                console.error('❌ Profile запрос неудачен:', {
+                    status: profileResult.status,
+                    value: profileResult.status === 'fulfilled' ? profileResult.value : null,
+                    reason: profileResult.status === 'rejected' ? profileResult.reason : null
+                });
             }
 
             if (achievementsResult.status === 'fulfilled' && achievementsResult.value.success) {
                 result.achievements = achievementsResult.value.data;
                 console.log('✅ Achievements добавлены в result:', Array.isArray(result.achievements) ? result.achievements.length : 'не массив');
             } else {
-                console.error('❌ Achievements запрос неудачен:', achievementsResult);
+                console.error('❌ Achievements запрос неудачен:', {
+                    status: achievementsResult.status,
+                    value: achievementsResult.status === 'fulfilled' ? achievementsResult.value : null,
+                    reason: achievementsResult.status === 'rejected' ? achievementsResult.reason : null
+                });
             }
 
             if (leaderboardResult.status === 'fulfilled' && leaderboardResult.value.success) {
                 result.leaderboard = leaderboardResult.value.data;
                 console.log('✅ Leaderboard добавлен в result:', !!result.leaderboard);
             } else {
-                console.error('❌ Leaderboard запрос неудачен:', leaderboardResult);
+                console.error('❌ Leaderboard запрос неудачен:', {
+                    status: leaderboardResult.status,
+                    value: leaderboardResult.status === 'fulfilled' ? leaderboardResult.value : null,
+                    reason: leaderboardResult.status === 'rejected' ? leaderboardResult.reason : null
+                });
             }
 
             if (statsResult.status === 'fulfilled' && statsResult.value.success) {
                 result.stats = statsResult.value.data;
                 console.log('✅ Stats добавлены в result:', !!result.stats);
             } else {
-                console.error('❌ Stats запрос неудачен:', statsResult);
+                console.error('❌ Stats запрос неудачен:', {
+                    status: statsResult.status,
+                    value: statsResult.status === 'fulfilled' ? statsResult.value : null,
+                    reason: statsResult.status === 'rejected' ? statsResult.reason : null
+                });
             }
 
             console.log('📦 Финальный result getBatchData:', {
