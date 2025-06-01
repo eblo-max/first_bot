@@ -247,13 +247,13 @@ export class ApiService {
                 this.getUserStats()
             ]);
             console.log('📊 Результаты параллельных запросов:', {
-                profile: { status: profileResult.status, success: profileResult.status === 'fulfilled' ? profileResult.value.success : false },
-                achievements: { status: achievementsResult.status, success: achievementsResult.status === 'fulfilled' ? achievementsResult.value.success : false },
-                leaderboard: { status: leaderboardResult.status, success: leaderboardResult.status === 'fulfilled' ? leaderboardResult.value.success : false },
-                stats: { status: statsResult.status, success: statsResult.status === 'fulfilled' ? statsResult.value.success : false }
+                profile: { status: profileResult.status, success: profileResult.status === 'fulfilled' ? (profileResult.value.success || profileResult.value.status === 'success') : false },
+                achievements: { status: achievementsResult.status, success: achievementsResult.status === 'fulfilled' ? (achievementsResult.value.success || achievementsResult.value.status === 'success') : false },
+                leaderboard: { status: leaderboardResult.status, success: leaderboardResult.status === 'fulfilled' ? (leaderboardResult.value.success || leaderboardResult.value.status === 'success') : false },
+                stats: { status: statsResult.status, success: statsResult.status === 'fulfilled' ? (statsResult.value.success || statsResult.value.status === 'success') : false }
             });
             const result = {};
-            if (profileResult.status === 'fulfilled' && profileResult.value.success) {
+            if (profileResult.status === 'fulfilled' && (profileResult.value.success || profileResult.value.status === 'success')) {
                 result.profile = profileResult.value.data;
                 console.log('✅ Profile добавлен в result:', !!result.profile);
             }
@@ -264,7 +264,7 @@ export class ApiService {
                     reason: profileResult.status === 'rejected' ? profileResult.reason : null
                 });
             }
-            if (achievementsResult.status === 'fulfilled' && achievementsResult.value.success) {
+            if (achievementsResult.status === 'fulfilled' && (achievementsResult.value.success || achievementsResult.value.status === 'success')) {
                 result.achievements = achievementsResult.value.data;
                 console.log('✅ Achievements добавлены в result:', Array.isArray(result.achievements) ? result.achievements.length : 'не массив');
             }
@@ -275,7 +275,7 @@ export class ApiService {
                     reason: achievementsResult.status === 'rejected' ? achievementsResult.reason : null
                 });
             }
-            if (leaderboardResult.status === 'fulfilled' && leaderboardResult.value.success) {
+            if (leaderboardResult.status === 'fulfilled' && (leaderboardResult.value.success || leaderboardResult.value.status === 'success')) {
                 result.leaderboard = leaderboardResult.value.data;
                 console.log('✅ Leaderboard добавлен в result:', !!result.leaderboard);
             }
@@ -286,7 +286,7 @@ export class ApiService {
                     reason: leaderboardResult.status === 'rejected' ? leaderboardResult.reason : null
                 });
             }
-            if (statsResult.status === 'fulfilled' && statsResult.value.success) {
+            if (statsResult.status === 'fulfilled' && (statsResult.value.success || statsResult.value.status === 'success')) {
                 result.stats = statsResult.value.data;
                 console.log('✅ Stats добавлены в result:', !!result.stats);
             }
