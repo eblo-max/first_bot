@@ -213,18 +213,18 @@ export class ApiService {
     // =========================================================================
 
     public async getUserAchievements(): Promise<ApiResponse<Achievement[]>> {
-        return this.makeRequest<Achievement[]>('/achievements', {}, true);
+        return this.makeRequest<Achievement[]>('/profile/achievements/available', {}, true);
     }
 
     public async unlockAchievement(achievementId: string): Promise<ApiResponse<Achievement>> {
-        const result = await this.makeRequest<Achievement>('/achievements/unlock', {
+        const result = await this.makeRequest<Achievement>('/profile/achievements/unlock', {
             method: 'POST',
             body: JSON.stringify({ achievementId })
         });
 
         // Очищаем кэш достижений
         if (result.success) {
-            this.clearCache('/achievements');
+            this.clearCache('/profile/achievements');
             this.clearCache('/user/profile'); // Профиль может содержать список достижений
         }
 
@@ -232,7 +232,7 @@ export class ApiService {
     }
 
     public async getAchievementProgress(): Promise<ApiResponse<Record<string, number>>> {
-        return this.makeRequest('/achievements/progress', {}, true, API_CONFIG.CACHE_TTL / 4);
+        return this.makeRequest('/profile/progress/next-achievements', {}, true, API_CONFIG.CACHE_TTL / 4);
     }
 
     // =========================================================================
@@ -260,7 +260,7 @@ export class ApiService {
         // Очищаем релевантные кэши после игры
         if (result.success) {
             this.clearCache('/user/profile');
-            this.clearCache('/achievements');
+            this.clearCache('/profile/achievements');
             this.clearCache('/leaderboard');
         }
 
