@@ -82,7 +82,14 @@ export class ApiService {
         useCache: boolean,
         cacheTTL: number
     ): Promise<ApiResponse<T>> {
+        console.log(`🔍 Проверка authService:`, {
+            authService_exists: !!authService,
+            authService_initialized: authService?.isInitializedApp?.(),
+            authService_type: typeof authService
+        });
+
         const token = authService.getCurrentToken();
+        console.log(`🔑 Получен токен для запроса:`, token ? `${token.substring(0, 20)}...` : 'ТОКЕН ОТСУТСТВУЕТ');
 
         const defaultHeaders: Record<string, string> = {
             'Content-Type': 'application/json',
@@ -91,6 +98,9 @@ export class ApiService {
 
         if (token) {
             defaultHeaders['Authorization'] = `Bearer ${token}`;
+            console.log(`✅ Добавлен Authorization заголовок`);
+        } else {
+            console.log(`❌ Токен отсутствует - запрос без авторизации`);
         }
 
         const requestOptions: RequestInit = {
@@ -101,7 +111,8 @@ export class ApiService {
             }
         };
 
-        console.log(`🌐 ${requestOptions.method || 'GET'} ${url}`);
+        console.log(`🌐 ${requestOptions.method || 'GET'} ${url}`,
+            `Headers:`, Object.keys(requestOptions.headers || {}));
 
         try {
             const controller = new AbortController();

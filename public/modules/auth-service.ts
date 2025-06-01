@@ -56,37 +56,62 @@ export class AuthService {
     // МЕТОДЫ ПОЛУЧЕНИЯ ТОКЕНА
     // =========================================================================
 
-    public getStoredToken(): string | null {
+    private getStoredToken(): string | null {
         try {
-            return localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
+            console.log(`🔍 localStorage содержимое:`, {
+                auth_token: localStorage.getItem('auth_token'),
+                token: localStorage.getItem('token'),
+                criminal_trust_token: localStorage.getItem(AUTH_CONFIG.TOKEN_KEY),
+                all_keys: Object.keys(localStorage),
+                localStorage_length: localStorage.length
+            });
+
+            // Проверяем оба возможных ключа для совместимости
+            const token = localStorage.getItem('auth_token') ||
+                localStorage.getItem('token') ||
+                localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
+            console.log(`📱 Ищем сохраненный токен:`, token ? `${token.substring(0, 20)}...` : 'НЕ НАЙДЕН');
+            return token;
         } catch (error) {
             console.error('❌ Ошибка получения токена из localStorage:', error);
             return null;
         }
     }
 
-    public setToken(token: string): void {
+    private setToken(token: string | null): void {
+        console.log(`💾 Сохраняем токен:`, token ? `${token.substring(0, 20)}...` : 'ПУСТОЙ ТОКЕН');
         this.token = token;
-        try {
-            localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, token);
-            console.log('🔑 Токен сохранен');
-        } catch (error) {
-            console.error('❌ Ошибка сохранения токена в localStorage:', error);
+        if (token) {
+            localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, token); // Основной ключ
+            localStorage.setItem('auth_token', token); // Совместимость
+            localStorage.setItem('token', token); // Совместимость
+
+            // Проверяем что токен действительно сохранился
+            console.log(`✅ Проверка сохранения:`, {
+                saved_auth_token: localStorage.getItem('auth_token'),
+                saved_token: localStorage.getItem('token'),
+                saved_main: localStorage.getItem(AUTH_CONFIG.TOKEN_KEY),
+                in_memory: this.token ? `${this.token.substring(0, 20)}...` : 'НЕТ'
+            });
+        } else {
+            localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('token');
         }
     }
 
-    public clearToken(): void {
+    private clearToken(): void {
+        console.log(`🗑️ Очищаем токен`);
         this.token = null;
-        try {
-            localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
-            console.log('🔑 Токен удален');
-        } catch (error) {
-            console.error('❌ Ошибка удаления токена:', error);
-        }
+        localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('token');
     }
 
     public getCurrentToken(): string | null {
-        return this.token || this.getStoredToken();
+        const currentToken = this.token || this.getStoredToken();
+        console.log(`🔍 Получаем текущий токен:`, currentToken ? `${currentToken.substring(0, 20)}...` : 'ТОКЕН НЕ НАЙДЕН');
+        return currentToken;
     }
 
     // =========================================================================
