@@ -186,25 +186,25 @@ export class ApiService {
     // =========================================================================
 
     public async getUserProfile(): Promise<ApiResponse<User>> {
-        return this.makeRequest<User>('/profile', {}, true);
+        return this.makeRequest<User>('/user/profile', {}, true);
     }
 
     public async updateUserProfile(profileData: Partial<User>): Promise<ApiResponse<User>> {
-        const result = await this.makeRequest<User>('/profile', {
+        const result = await this.makeRequest<User>('/user/profile', {
             method: 'PUT',
             body: JSON.stringify(profileData)
         });
 
         // Очищаем кэш профиля при обновлении
         if (result.success) {
-            this.clearCache('/profile');
+            this.clearCache('/user/profile');
         }
 
         return result;
     }
 
     public async getUserStats(userId?: number): Promise<ApiResponse<any>> {
-        const endpoint = userId ? `/profile/stats/${userId}` : '/profile/stats';
+        const endpoint = userId ? `/user/stats/${userId}` : '/user/stats';
         return this.makeRequest(endpoint, {}, true, API_CONFIG.CACHE_TTL / 2); // Более короткий кэш для статистики
     }
 
@@ -225,7 +225,7 @@ export class ApiService {
         // Очищаем кэш достижений
         if (result.success) {
             this.clearCache('/achievements');
-            this.clearCache('/profile'); // Профиль может содержать список достижений
+            this.clearCache('/user/profile'); // Профиль может содержать список достижений
         }
 
         return result;
@@ -259,7 +259,7 @@ export class ApiService {
 
         // Очищаем релевантные кэши после игры
         if (result.success) {
-            this.clearCache('/profile');
+            this.clearCache('/user/profile');
             this.clearCache('/achievements');
             this.clearCache('/leaderboard');
         }

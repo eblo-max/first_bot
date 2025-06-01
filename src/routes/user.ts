@@ -86,7 +86,7 @@ interface AvatarData {
  * @desc    Получение профиля пользователя
  * @access  Private
  */
-router.get('/profile', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/profile', authMiddleware as any, async (req: AuthenticatedRequest, res: Response) => {
     try {
         console.log('👤 Запрос профиля пользователя');
 
