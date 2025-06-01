@@ -2,50 +2,90 @@
  * Система управления достижениями "Криминальный Блеф" на TypeScript
  * Включает анимации, прогресс-бары, уведомления и звуковые эффекты
  */
+
+import type {
+    Achievement,
+    AchievementRequirement,
+    AchievementSound,
+    User,
+    UserStats
+} from './types/profile-types.js';
+
+// =============================================================================
+// ТИПЫ ДЛЯ СИСТЕМЫ ДОСТИЖЕНИЙ
+// =============================================================================
+
+interface AchievementNotification {
+    achievement: Achievement;
+    timestamp: number;
+    isShown: boolean;
+}
+
+interface SoundEffect {
+    name: string;
+    volume: number;
+    duration: number;
+}
+
+interface AchievementIcon {
+    svg: string;
+    animation?: string;
+}
+
 // =============================================================================
 // ГЛАВНЫЙ КЛАСС СИСТЕМЫ ДОСТИЖЕНИЙ
 // =============================================================================
+
 export class AchievementSystem {
+    private achievements: Map<string, Achievement> = new Map();
+    private userStats: UserStats | null = null;
+    private isInitialized = false;
+    private notificationQueue: AchievementNotification[] = [];
+    private isShowingNotification = false;
+    private soundEffects: Map<string, SoundEffect> = new Map();
+    private animationConfig = {
+        duration: 2000,
+        easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+    };
+
     // =========================================================================
     // ИНИЦИАЛИЗАЦИЯ
     // =========================================================================
+
     constructor() {
-        this.achievements = new Map();
-        this.userStats = null;
-        this.isInitialized = false;
-        this.notificationQueue = [];
-        this.isShowingNotification = false;
-        this.soundEffects = new Map();
-        this.animationConfig = {
-            duration: 2000,
-            easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
-        };
         this.initAchievementConfig();
     }
-    async init() {
-        if (this.isInitialized)
-            return;
+
+    public async init(): Promise<void> {
+        if (this.isInitialized) return;
+
         try {
             console.log('🏆 Инициализация системы достижений...');
+
             // Создаем стили для анимаций и уведомлений
             this.injectStyles();
+
             // Создаем контейнер для уведомлений
             this.createNotificationContainer();
+
             // Инициализируем звуковые эффекты
             this.initSoundEffects();
+
             this.isInitialized = true;
             console.log('✅ Система достижений инициализирована');
-        }
-        catch (error) {
+
+        } catch (error) {
             console.error('❌ Ошибка инициализации системы достижений:', error);
             throw error;
         }
     }
+
     // =========================================================================
     // КОНФИГУРАЦИЯ ДОСТИЖЕНИЙ
     // =========================================================================
-    initAchievementConfig() {
-        const achievementConfigs = [
+
+    private initAchievementConfig(): void {
+        const achievementConfigs: Achievement[] = [
             // Базовые достижения
             {
                 id: 'first_case',
@@ -147,20 +187,25 @@ export class AchievementSystem {
                 isUnlocked: false
             }
         ];
+
         // Заполняем Map достижений
         achievementConfigs.forEach(achievement => {
             this.achievements.set(achievement.id, achievement);
         });
+
         console.log(`🏆 Загружено ${this.achievements.size} достижений`);
     }
+
     // =========================================================================
     // УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЬСКИМИ ДАННЫМИ
     // =========================================================================
-    updateUserStats(stats) {
+
+    public updateUserStats(stats: UserStats): void {
         this.userStats = stats;
         this.updateAchievementProgress();
     }
-    updateUserAchievements(userAchievements) {
+
+    public updateUserAchievements(userAchievements: string[]): void {
         // Обновляем статус разблокированных достижений
         this.achievements.forEach((achievement, id) => {
             achievement.isUnlocked = userAchievements.includes(id);
@@ -169,20 +214,25 @@ export class AchievementSystem {
             }
         });
     }
+
     // =========================================================================
     // РАСЧЕТ ПРОГРЕССА ДОСТИЖЕНИЙ
     // =========================================================================
-    getAchievementProgress(achievementId) {
+
+    public getAchievementProgress(achievementId: string): number {
         const achievement = this.achievements.get(achievementId);
         if (!achievement || !this.userStats || achievement.isUnlocked) {
             return achievement?.isUnlocked ? 100 : 0;
         }
+
         const { requirement } = achievement;
         let currentValue = 0;
+
         switch (requirement.type) {
             case 'investigations':
                 currentValue = this.userStats.totalGames || 0;
                 break;
+
             case 'accuracy':
                 if ((this.userStats.totalGames || 0) >= (requirement.minGames || 0)) {
                     currentValue = (this.userStats.totalGames > 0)
@@ -190,18 +240,22 @@ export class AchievementSystem {
                         : 0;
                 }
                 break;
+
             case 'winStreak':
                 currentValue = this.userStats.streakHistory?.length
                     ? Math.max(...this.userStats.streakHistory)
                     : 0;
                 break;
+
             case 'totalScore':
                 // Нужно получить общий счет из пользователя
                 currentValue = 0; // Здесь нужны данные пользователя
                 break;
+
             case 'perfectGames':
                 currentValue = this.userStats.perfectGames || 0;
                 break;
+
             case 'fastGame':
                 currentValue = this.userStats.fastestGame || 0;
                 // Инвертируем для быстрых игр (меньше = лучше)
@@ -209,41 +263,51 @@ export class AchievementSystem {
                     return 100;
                 }
                 return 0;
+
             default:
                 currentValue = 0;
         }
+
         const progress = Math.min((currentValue / requirement.value) * 100, 100);
         achievement.progress = progress;
         return progress;
     }
-    updateAchievementProgress() {
-        if (!this.userStats)
-            return;
+
+    private updateAchievementProgress(): void {
+        if (!this.userStats) return;
+
         this.achievements.forEach((achievement, id) => {
             if (!achievement.isUnlocked) {
                 this.getAchievementProgress(id);
             }
         });
     }
+
     // =========================================================================
     // УВЕДОМЛЕНИЯ О ДОСТИЖЕНИЯХ
     // =========================================================================
-    async showAchievementNotification(achievement) {
-        const notification = {
+
+    public async showAchievementNotification(achievement: Achievement): Promise<void> {
+        const notification: AchievementNotification = {
             achievement,
             timestamp: Date.now(),
             isShown: false
         };
+
         this.notificationQueue.push(notification);
+
         if (!this.isShowingNotification) {
             await this.processNotificationQueue();
         }
     }
-    async processNotificationQueue() {
+
+    private async processNotificationQueue(): Promise<void> {
         if (this.notificationQueue.length === 0 || this.isShowingNotification) {
             return;
         }
+
         this.isShowingNotification = true;
+
         while (this.notificationQueue.length > 0) {
             const notification = this.notificationQueue.shift();
             if (notification && !notification.isShown) {
@@ -251,15 +315,18 @@ export class AchievementSystem {
                 notification.isShown = true;
             }
         }
+
         this.isShowingNotification = false;
     }
-    async displayAchievementNotification(achievement) {
+
+    private async displayAchievementNotification(achievement: Achievement): Promise<void> {
         return new Promise((resolve) => {
             const container = document.getElementById('achievement-notifications');
             if (!container) {
                 resolve();
                 return;
             }
+
             // Создаем элемент уведомления
             const notificationElement = document.createElement('div');
             notificationElement.className = `achievement-notification rarity-${achievement.rarity}`;
@@ -275,19 +342,25 @@ export class AchievementSystem {
                 </div>
                 <div class="notification-glow"></div>
             `;
+
             // Добавляем в контейнер
             container.appendChild(notificationElement);
+
             // Воспроизводим звук
             this.playSound(achievement.sound);
+
             // Запускаем анимацию появления
             requestAnimationFrame(() => {
                 notificationElement.classList.add('show');
             });
+
             // Создаем эффект взрыва
             this.createCelebrationEffect(notificationElement);
+
             // Убираем уведомление через 4 секунды
             setTimeout(() => {
                 notificationElement.classList.add('hide');
+
                 setTimeout(() => {
                     if (notificationElement.parentNode) {
                         notificationElement.parentNode.removeChild(notificationElement);
@@ -297,52 +370,63 @@ export class AchievementSystem {
             }, 4000);
         });
     }
+
     // =========================================================================
     // ОБРАБОТКА НОВЫХ ДОСТИЖЕНИЙ
     // =========================================================================
-    async handleNewAchievements(newAchievements) {
+
+    public async handleNewAchievements(newAchievements: string[]): Promise<void> {
         for (const achievementId of newAchievements) {
             const achievement = this.achievements.get(achievementId);
             if (achievement && !achievement.isUnlocked) {
                 achievement.isUnlocked = true;
                 achievement.unlockedAt = new Date();
+
                 // Показываем уведомление
                 await this.showAchievementNotification(achievement);
             }
         }
     }
+
     // =========================================================================
     // РЕНДЕРИНГ ДОСТИЖЕНИЙ
     // =========================================================================
-    renderEnhancedAchievements(userAchievements = []) {
+
+    public renderEnhancedAchievements(userAchievements: string[] = []): void {
         const container = document.getElementById('achievements-grid');
-        if (!container)
-            return;
+        if (!container) return;
+
         // Обновляем статус достижений
         this.updateUserAchievements(userAchievements);
+
         // Очищаем контейнер
         container.innerHTML = '';
+
         // Сортируем достижения: разблокированные сначала, потом по редкости
         const sortedAchievements = Array.from(this.achievements.values()).sort((a, b) => {
-            if (a.isUnlocked && !b.isUnlocked)
-                return -1;
-            if (!a.isUnlocked && b.isUnlocked)
-                return 1;
+            if (a.isUnlocked && !b.isUnlocked) return -1;
+            if (!a.isUnlocked && b.isUnlocked) return 1;
+
             const rarityOrder = { common: 1, rare: 2, epic: 3, legendary: 4, mythic: 5 };
             return rarityOrder[b.rarity] - rarityOrder[a.rarity];
         });
+
         // Создаем элементы достижений
         sortedAchievements.forEach(achievement => {
             const element = this.createEnhancedAchievementElement(achievement);
             container.appendChild(element);
         });
+
         console.log(`🏆 Отрендерено ${sortedAchievements.length} достижений`);
     }
-    createEnhancedAchievementElement(achievement) {
+
+    private createEnhancedAchievementElement(achievement: Achievement): HTMLElement {
         const progress = this.getAchievementProgress(achievement.id);
+
         const card = document.createElement('div');
         card.className = `achievement-card ${achievement.isUnlocked ? 'unlocked' : 'locked'} rarity-${achievement.rarity}`;
         card.dataset.achievementId = achievement.id;
+
         card.innerHTML = `
             <div class="achievement-card-inner">
                 <div class="achievement-icon-container">
@@ -377,23 +461,29 @@ export class AchievementSystem {
             
             <div class="card-glow"></div>
         `;
+
         // Добавляем обработчик клика
         card.addEventListener('click', () => {
             this.showAchievementModal(achievement.id, achievement.isUnlocked, []);
         });
+
         return card;
     }
+
     // =========================================================================
     // МОДАЛЬНОЕ ОКНО ДОСТИЖЕНИЯ
     // =========================================================================
-    showAchievementModal(achievementId, isUnlocked, userAchievements = []) {
+
+    public showAchievementModal(achievementId: string, isUnlocked: boolean, userAchievements: string[] = []): void {
         const achievement = this.achievements.get(achievementId);
-        if (!achievement)
-            return;
+        if (!achievement) return;
+
         // Удаляем существующее модальное окно
         this.hideAchievementModal();
+
         const modal = this.createAchievementModal();
         const progress = this.getAchievementProgress(achievementId);
+
         modal.innerHTML = `
             <div class="modal-overlay">
                 <div class="modal-content achievement-modal-content rarity-${achievement.rarity}">
@@ -443,7 +533,9 @@ export class AchievementSystem {
                 </div>
             </div>
         `;
+
         document.body.appendChild(modal);
+
         // Обработчики закрытия
         modal.addEventListener('click', (e) => {
             if (e.target === modal.querySelector('.modal-overlay') ||
@@ -451,18 +543,21 @@ export class AchievementSystem {
                 this.hideAchievementModal();
             }
         });
+
         // Анимация появления
         requestAnimationFrame(() => {
             modal.classList.add('show');
         });
     }
-    createAchievementModal() {
+
+    private createAchievementModal(): HTMLElement {
         const modal = document.createElement('div');
         modal.id = 'achievement-modal';
         modal.className = 'achievement-modal';
         return modal;
     }
-    hideAchievementModal() {
+
+    public hideAchievementModal(): void {
         const modal = document.getElementById('achievement-modal');
         if (modal) {
             modal.classList.add('hide');
@@ -473,10 +568,12 @@ export class AchievementSystem {
             }, 300);
         }
     }
+
     // =========================================================================
     // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
     // =========================================================================
-    getRequirementText(requirement) {
+
+    private getRequirementText(requirement: AchievementRequirement): string {
         switch (requirement.type) {
             case 'investigations':
                 return `Проведите ${requirement.value} расследований`;
@@ -494,8 +591,9 @@ export class AchievementSystem {
                 return 'Выполните требование';
         }
     }
-    getTipsText(achievementId) {
-        const tips = {
+
+    private getTipsText(achievementId: string): string {
+        const tips: Record<string, string> = {
             first_case: 'Просто начните играть!',
             rookie: 'Продолжайте расследования для получения опыта',
             expert: 'Регулярная практика поможет стать экспертом',
@@ -506,31 +604,39 @@ export class AchievementSystem {
             speedster: 'Быстро читайте и принимайте решения',
             veteran: 'Постоянная практика - ключ к мастерству'
         };
+
         return tips[achievementId] || 'Продолжайте играть для достижения цели!';
     }
+
     // =========================================================================
     // ЗВУКОВЫЕ ЭФФЕКТЫ
     // =========================================================================
-    initSoundEffects() {
+
+    private initSoundEffects(): void {
         this.soundEffects.set('success-light', { name: 'light', volume: 0.3, duration: 500 });
         this.soundEffects.set('success-medium', { name: 'medium', volume: 0.5, duration: 800 });
         this.soundEffects.set('success-heavy', { name: 'heavy', volume: 0.7, duration: 1200 });
         this.soundEffects.set('success-epic', { name: 'epic', volume: 0.8, duration: 1500 });
         this.soundEffects.set('success-legendary', { name: 'legendary', volume: 1.0, duration: 2000 });
+
         console.log('🔊 Звуковые эффекты инициализированы');
     }
-    playSound(type) {
+
+    private playSound(type: AchievementSound): void {
         try {
             // Создаем звуковой эффект через Web Audio API
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
             const soundEffect = this.soundEffects.get(type);
-            if (!soundEffect)
-                return;
+
+            if (!soundEffect) return;
+
             // Простой синтезированный звук
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
+
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
+
             // Настройка звука в зависимости от типа
             switch (type) {
                 case 'success-light':
@@ -549,34 +655,42 @@ export class AchievementSystem {
                     oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
                     break;
             }
+
             oscillator.type = 'sine';
             gainNode.gain.setValueAtTime(0, audioContext.currentTime);
             gainNode.gain.linearRampToValueAtTime(soundEffect.volume, audioContext.currentTime + 0.1);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + soundEffect.duration / 1000);
+
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + soundEffect.duration / 1000);
-        }
-        catch (error) {
+
+        } catch (error) {
             console.warn('⚠️ Не удалось воспроизвести звук:', error);
         }
     }
+
     // =========================================================================
     // ВИЗУАЛЬНЫЕ ЭФФЕКТЫ
     // =========================================================================
-    createCelebrationEffect(element) {
+
+    private createCelebrationEffect(element: HTMLElement): void {
         const rect = element.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
+
         // Создаем частицы конфетти
         for (let i = 0; i < 20; i++) {
             this.createConfettiParticle(centerX, centerY);
         }
     }
-    createConfettiParticle(x, y) {
+
+    private createConfettiParticle(x: number, y: number): void {
         const particle = document.createElement('div');
         particle.className = 'confetti-particle';
+
         const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
         const color = colors[Math.floor(Math.random() * colors.length)];
+
         particle.style.cssText = `
             position: fixed;
             top: ${y}px;
@@ -588,39 +702,48 @@ export class AchievementSystem {
             z-index: 10000;
             border-radius: 2px;
         `;
+
         document.body.appendChild(particle);
+
         // Анимация конфетти
         const angle = Math.random() * 2 * Math.PI;
         const velocity = Math.random() * 200 + 100;
         const gravity = 500;
+
         let currentX = x;
         let currentY = y;
         let velocityX = Math.cos(angle) * velocity;
         let velocityY = Math.sin(angle) * velocity;
+
         const startTime = Date.now();
         const animate = () => {
             const elapsed = (Date.now() - startTime) / 1000;
+
             currentX += velocityX * 0.016;
             currentY += velocityY * 0.016;
             velocityY += gravity * 0.016;
+
             particle.style.left = `${currentX}px`;
             particle.style.top = `${currentY}px`;
             particle.style.opacity = `${Math.max(0, 1 - elapsed / 2)}`;
+
             if (elapsed < 2 && currentY < window.innerHeight + 50) {
                 requestAnimationFrame(animate);
-            }
-            else {
+            } else {
                 if (particle.parentNode) {
                     particle.parentNode.removeChild(particle);
                 }
             }
         };
+
         requestAnimationFrame(animate);
     }
+
     // =========================================================================
     // СОЗДАНИЕ КОНТЕЙНЕРОВ И СТИЛЕЙ
     // =========================================================================
-    createNotificationContainer() {
+
+    private createNotificationContainer(): void {
         let container = document.getElementById('achievement-notifications');
         if (!container) {
             container = document.createElement('div');
@@ -635,10 +758,11 @@ export class AchievementSystem {
             document.body.appendChild(container);
         }
     }
-    injectStyles() {
+
+    private injectStyles(): void {
         const styleId = 'achievement-system-styles';
-        if (document.getElementById(styleId))
-            return;
+        if (document.getElementById(styleId)) return;
+
         const style = document.createElement('style');
         style.id = styleId;
         style.textContent = `
@@ -780,54 +904,71 @@ export class AchievementSystem {
                 }
             }
         `;
+
         document.head.appendChild(style);
     }
+
     // =========================================================================
     // ГЕТТЕРЫ И ПУБЛИЧНЫЕ МЕТОДЫ
     // =========================================================================
-    getAllAchievements() {
+
+    public getAllAchievements(): Achievement[] {
         return Array.from(this.achievements.values());
     }
-    getAchievement(id) {
+
+    public getAchievement(id: string): Achievement | undefined {
         return this.achievements.get(id);
     }
-    getUnlockedAchievements() {
+
+    public getUnlockedAchievements(): Achievement[] {
         return this.getAllAchievements().filter(a => a.isUnlocked);
     }
-    getLockedAchievements() {
+
+    public getLockedAchievements(): Achievement[] {
         return this.getAllAchievements().filter(a => !a.isUnlocked);
     }
-    getAchievementsByCategory(category) {
+
+    public getAchievementsByCategory(category: string): Achievement[] {
         return this.getAllAchievements().filter(a => a.category === category);
     }
-    getAchievementsByRarity(rarity) {
+
+    public getAchievementsByRarity(rarity: string): Achievement[] {
         return this.getAllAchievements().filter(a => a.rarity === rarity);
     }
-    isReady() {
+
+    public isReady(): boolean {
         return this.isInitialized;
     }
+
     // =========================================================================
     // ДЕСТРУКТОР
     // =========================================================================
-    destroy() {
+
+    public destroy(): void {
         // Очищаем очередь уведомлений
         this.notificationQueue = [];
         this.isShowingNotification = false;
+
         // Удаляем контейнеры
         const notificationContainer = document.getElementById('achievement-notifications');
         if (notificationContainer) {
             notificationContainer.remove();
         }
+
         this.hideAchievementModal();
+
         // Удаляем стили
         const styles = document.getElementById('achievement-system-styles');
         if (styles) {
             styles.remove();
         }
+
         console.log('🧹 Система достижений уничтожена');
     }
 }
+
 // =============================================================================
 // ЭКСПОРТ SINGLETON ЭКЗЕМПЛЯРА
 // =============================================================================
-export const achievementSystem = new AchievementSystem();
+
+export const achievementSystem = new AchievementSystem(); 
