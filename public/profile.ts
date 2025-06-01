@@ -203,16 +203,27 @@ export class CriminalTrustProfile {
 
     private updateProfileUI(user: User): void {
         try {
+            console.log('🎯 Обновляем UI профиля с данными:', user);
+            console.log('📊 Извлеченные данные:', {
+                name: this.getUserDisplayName(user),
+                totalScore: user.totalScore || 0,
+                gamesPlayed: user.gamesPlayed || 0,
+                accuracy: user.accuracy || 0
+            });
+
             // Основная информация
             this.updateElement('user-name', this.getUserDisplayName(user));
-            this.updateElement('user-total-score', user.totalScore.toLocaleString());
-            this.updateElement('user-games-played', user.gamesPlayed.toString());
-            this.updateElement('user-accuracy', `${Math.round(user.accuracy)}%`);
+            this.updateElement('user-total-score', (user.totalScore || 0).toLocaleString());
+            this.updateElement('user-games-played', (user.gamesPlayed || 0).toString());
+            this.updateElement('user-accuracy', `${Math.round(user.accuracy || 0)}%`);
 
             // Уровень и опыт
-            const level = calculateLevel(user.totalScore);
-            const xpProgress = getXPProgress(user.totalScore, level);
+            const totalScore = user.totalScore || 0;
+            const level = calculateLevel(totalScore);
+            const xpProgress = getXPProgress(totalScore, level);
             const rank = getRankByLevel(level);
+
+            console.log('📈 Рассчитанные значения:', { totalScore, level, xpProgress, rank });
 
             this.updateElement('user-level', level.toString());
             this.updateElement('user-rank', rank.name);
@@ -222,6 +233,9 @@ export class CriminalTrustProfile {
             const rankElement = document.getElementById('user-rank');
             if (rankElement) {
                 rankElement.style.color = rank.color;
+                console.log('🎨 Цвет ранга установлен:', rank.color);
+            } else {
+                console.error('❌ Элемент user-rank не найден для установки цвета');
             }
 
             // Анимируем XP бар
@@ -231,7 +245,6 @@ export class CriminalTrustProfile {
             this.updateRankDisplay(level, rank);
 
             console.log('🎯 UI профиля обновлен');
-
         } catch (error) {
             console.error('❌ Ошибка обновления UI:', error);
         }
@@ -533,9 +546,14 @@ export class CriminalTrustProfile {
     }
 
     private updateElement(id: string, value: string): void {
+        console.log(`🔧 Попытка обновить элемент:`, { id, value });
         const element = document.getElementById(id);
         if (element) {
+            console.log(`✅ Элемент найден, обновляем:`, id, `старое значение: "${element.textContent}" → новое: "${value}"`);
             element.textContent = value;
+        } else {
+            console.error(`❌ Элемент не найден:`, id);
+            console.log(`🔍 Доступные элементы на странице:`, Array.from(document.querySelectorAll('[id]')).map(el => el.id));
         }
     }
 

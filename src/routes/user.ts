@@ -44,6 +44,16 @@ interface ProfileData {
     lastName?: string;
     username?: string;
     rank: UserRank;
+    totalScore: number;
+    gamesPlayed: number;
+    accuracy: number;
+    level: number;
+    experience: number;
+    winStreak: number;
+    maxWinStreak: number;
+    correctAnswers: number;
+    lastSeen: Date;
+    createdAt: Date;
     stats: {
         investigations: number;
         solvedCases: number;
@@ -184,6 +194,16 @@ router.get('/profile', authMiddleware as any, async (req: AuthenticatedRequest, 
             lastName: user.lastName,
             username: user.username,
             rank: user.rank || 'СТАЖЕР' as UserRank,
+            totalScore: user.stats?.totalScore || 0,
+            gamesPlayed: user.stats?.investigations || 0,
+            accuracy: user.stats?.accuracy || 0,
+            level: user.stats?.level || 1,
+            experience: user.stats?.experience || 0,
+            winStreak: user.stats?.winStreak || 0,
+            maxWinStreak: user.stats?.maxWinStreak || 0,
+            correctAnswers: user.stats?.solvedCases || 0,
+            lastSeen: user.lastVisit || new Date(),
+            createdAt: user.registeredAt || new Date(),
             stats: {
                 investigations: user.stats?.investigations || 0,
                 solvedCases: user.stats?.solvedCases || 0,
@@ -202,7 +222,7 @@ router.get('/profile', authMiddleware as any, async (req: AuthenticatedRequest, 
             telegramId,
             name: displayName,
             rank: profileData.rank,
-            totalScore: profileData.stats.totalScore
+            totalScore: profileData.totalScore
         });
 
         // Возвращаем данные профиля

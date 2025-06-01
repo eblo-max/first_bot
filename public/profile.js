@@ -444,9 +444,14 @@ export class CriminalTrustProfile {
         return user.name || `${user.firstName || 'Детектив'} ${user.lastName || ''}`.trim();
     }
     updateElement(id, value) {
+        console.log(`🔧 Попытка обновить элемент:`, { id, value });
         const element = document.getElementById(id);
         if (element) {
+            console.log(`✅ Элемент найден, обновляем:`, id, `старое значение: "${element.textContent}" → новое: "${value}"`);
             element.textContent = value;
+        } else {
+            console.error(`❌ Элемент не найден:`, id);
+            console.log(`🔍 Доступные элементы на странице:`, Array.from(document.querySelectorAll('[id]')).map(el => el.id));
         }
     }
     setLoading(loading) {
