@@ -1567,6 +1567,57 @@
             }
         });
     </script>
+
+    <!-- TELEGRAM ONLY - Блокируем доступ из браузера -->
+    <script>
+        // Проверяем, что мы внутри Telegram WebApp
+        function checkTelegramAccess() {
+            if (!window.Telegram || !window.Telegram.WebApp) {
+                document.body.innerHTML = `
+                    <div style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        background: linear-gradient(45deg, #000000, #1a0000, #330000);
+                        color: #F5F5DC;
+                        font-family: 'JetBrains Mono', monospace;
+                        text-align: center;
+                        padding: 20px;
+                    ">
+                        <div style="font-size: 64px; margin-bottom: 20px; color: #8B0000;">🚫</div>
+                        <h1 style="margin: 0 0 16px 0; font-size: 24px; color: #DC143C;">Доступ ограничен</h1>
+                        <p style="margin: 0 0 24px 0; font-size: 16px; opacity: 0.8; max-width: 400px;">
+                            Criminal Trust доступен только через официального Telegram бота.
+                        </p>
+                        <div style="
+                            background: linear-gradient(135deg, #8B0000, #DC143C);
+                            color: white;
+                            padding: 12px 24px;
+                            border-radius: 8px;
+                            text-decoration: none;
+                            display: inline-block;
+                            font-weight: bold;
+                            box-shadow: 0 8px 32px rgba(139, 0, 0, 0.5);
+                        ">
+                            🤖 Открыть в Telegram
+                        </div>
+                    </div>
+                `;
+                throw new Error('Доступ только через Telegram WebApp');
+            }
+        }
+
+        // Выполняем проверку сразу
+        checkTelegramAccess();
+
+        // Инициализируем Telegram WebApp
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
+        }
+    </script>
 </body>
 
 </html>
