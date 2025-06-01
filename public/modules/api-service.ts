@@ -225,7 +225,54 @@ export class ApiService {
     // =========================================================================
 
     public async getUserAchievements(): Promise<ApiResponse<Achievement[]>> {
-        return this.makeRequest<Achievement[]>('/profile/achievements/available', {}, true);
+        const result = await this.makeRequest<any>('/profile/achievements/available', {}, true);
+
+        console.log('🏆 Получен ответ достижений:', result);
+
+        if (result.success && result.data) {
+            // Сервер возвращает { unlocked: [], available: [], progress: {} }
+            // Нам нужно объединить unlocked и available
+            const unlocked = result.data.unlocked || [];
+            const available = result.data.available || [];
+
+            // Преобразуем available в нужный формат
+            const formattedAvailable = available.map((ach: any) => ({
+                id: ach.id,
+                name: ach.name,
+                description: ach.description,
+                category: ach.category,
+                icon: '🏆', // дефолтная иконка
+                requirement: ach.progress ? { type: 'custom', value: ach.progress.target } : { type: 'custom', value: 1 },
+                rarity: 'common',
+                sound: 'success-light',
+                isUnlocked: false,
+                progress: ach.progress ? (ach.progress.current / ach.progress.target) * 100 : 0
+            }));
+
+            // Преобразуем unlocked в нужный формат
+            const formattedUnlocked = unlocked.map((ach: any) => ({
+                id: ach.id || 'unlocked_' + Math.random(),
+                name: ach.name || 'Достижение',
+                description: ach.description || 'Разблокированное достижение',
+                category: ach.category || 'Достижения',
+                icon: ach.icon || '✅',
+                requirement: { type: 'custom', value: 1 },
+                rarity: ach.rarity || 'common',
+                sound: 'success-light',
+                isUnlocked: true,
+                progress: 100
+            }));
+
+            const allAchievements = [...formattedUnlocked, ...formattedAvailable];
+            console.log('🏆 Преобразованные достижения:', allAchievements);
+
+            return {
+                success: true,
+                data: allAchievements
+            };
+        }
+
+        return result;
     }
 
     public async unlockAchievement(achievementId: string): Promise<ApiResponse<Achievement>> {
@@ -252,7 +299,7 @@ export class ApiService {
     // =========================================================================
 
     public async getLeaderboard(period: LeaderboardPeriod = 'day'): Promise<ApiResponse<LeaderboardData>> {
-        return this.makeRequest<LeaderboardData>(`/leaderboard/${period}`, {}, true, API_CONFIG.CACHE_TTL / 2);
+        return this.makeRequest<LeaderboardData>(`/profile/leaderboard/${period}`, {}, true, API_CONFIG.CACHE_TTL / 2);
     }
 
     public async getUserPosition(period: LeaderboardPeriod = 'day'): Promise<ApiResponse<{ position: number; total: number }>> {

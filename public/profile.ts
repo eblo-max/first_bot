@@ -19,7 +19,8 @@ import {
     getRankByLevel,
     calculateLevel,
     calculateXP,
-    getXPProgress
+    getXPProgress,
+    getMaxXPForLevel
 } from './modules/profile-config.js';
 
 import { authService } from './modules/auth-service.js';
@@ -224,7 +225,8 @@ export class CriminalTrustProfile {
                 totalScore: user.totalScore || 0,
                 gamesPlayed: user.gamesPlayed || 0,
                 accuracy: user.accuracy || 0,
-                telegramId: user.telegramId
+                telegramId: user.telegramId,
+                winStreak: user.winStreak || 0
             });
 
             // Основная информация
@@ -233,6 +235,9 @@ export class CriminalTrustProfile {
             this.updateElement('user-total-score', (user.totalScore || 0).toLocaleString());
             this.updateElement('user-games-played', (user.gamesPlayed || 0).toString());
             this.updateElement('user-accuracy', `${Math.round(user.accuracy || 0)}%`);
+
+            // Серия успехов
+            this.updateElement('stat-streak', (user.winStreak || 0).toString());
 
             // Уровень и опыт
             const totalScore = user.totalScore || 0;
@@ -243,23 +248,18 @@ export class CriminalTrustProfile {
             console.log('📈 Рассчитанные значения:', { totalScore, level, xpProgress, rank });
 
             this.updateElement('user-level', level.toString());
-            this.updateElement('user-rank', rank.name);
-            this.updateElement('user-rank-icon', rank.icon);
 
-            // Обновляем цвет ранга
-            const rankElement = document.getElementById('user-rank');
-            if (rankElement) {
-                rankElement.style.color = rank.color;
-                console.log('🎨 Цвет ранга установлен:', rank.color);
-            } else {
-                console.error('❌ Элемент user-rank не найден для установки цвета');
-            }
-
-            // Анимируем XP бар
-            this.animateXPBar(xpProgress);
+            // Обновляем XP информацию
+            this.updateElement('current-xp', calculateXP(totalScore, level).toString());
+            this.updateElement('max-xp', getMaxXPForLevel(level).toString());
 
             // Обновляем ранговый дисплей
             this.updateRankDisplay(level, rank);
+
+            // Загружаем аватар пользователя
+            if (user.telegramId) {
+                this.loadUserAvatar(user.telegramId);
+            }
 
             console.log('🎯 UI профиля обновлен');
         } catch (error) {
@@ -389,34 +389,58 @@ export class CriminalTrustProfile {
         const container = document.getElementById('leaderboard-content');
         if (!container) return;
 
-        if (!data.users || data.users.length === 0) {
+        console.log('🏆 Рендеринг лидерборда с данными:', data);
+
+        // Обрабатываем данные в зависимости от структуры ответа
+        let users = [];
+        if (data.totalScore && Array.isArray(data.totalScore)) {
+            users = data.totalScore;
+        } else if (data.users && Array.isArray(data.users)) {
+            users = data.users;
+        } else if (Array.isArray(data)) {
+            users = data;
+        }
+
+        console.log('🏆 Найдено пользователей в лидерборде:', users.length);
+
+        if (!users || users.length === 0) {
             this.renderEmptyLeaderboard();
             return;
         }
 
-        const html = data.users.map((entry: any, index: number) => {
-            const rank = getRankByLevel(entry.level || 1);
-            const isCurrentUser = this.state.user && entry.user.telegramId === this.state.user.telegramId;
+        const html = users.map((entry: any, index: number) => {
+            // Определяем уровень и ранг
+            const userScore = entry.stats?.totalScore || entry.score || 0;
+            const level = calculateLevel(userScore);
+            const rank = getRankByLevel(level);
+            const isCurrentUser = this.state.user &&
+                (entry.telegramId === this.state.user.telegramId ||
+                    entry.user?.telegramId === this.state.user.telegramId);
+
+            // Определяем имя пользователя
+            const userName = entry.name ||
+                this.getUserDisplayName(entry.user || entry) ||
+                'Детектив';
 
             return `
                 <div class="leaderboard-entry ${isCurrentUser ? 'current-user' : ''}">
-                    <div class="position">#${entry.position || index + 1}</div>
+                    <div class="position">#${entry.rank || index + 1}</div>
                     <div class="user-info">
                         <div class="user-avatar">
-                            <img src="/api/user/avatar/${entry.user.telegramId}" 
+                            <img src="/api/user/avatar/${entry.telegramId || entry.user?.telegramId}" 
                                  alt="Avatar" 
                                  onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\"><circle cx=\\"50\\" cy=\\"50\\" r=\\"40\\" fill=\\"%23333\\"/></svg>'">
                         </div>
                         <div class="user-details">
-                            <div class="user-name">${this.getUserDisplayName(entry.user)}</div>
+                            <div class="user-name">${userName}</div>
                             <div class="user-rank" style="color: ${rank.color}">
                                 ${rank.icon} ${rank.name}
                             </div>
                         </div>
                     </div>
                     <div class="user-stats">
-                        <div class="score">${entry.score.toLocaleString()}</div>
-                        <div class="accuracy">${Math.round(entry.accuracy || 0)}%</div>
+                        <div class="score">${userScore.toLocaleString()}</div>
+                        <div class="accuracy">Ур. ${level}</div>
                     </div>
                 </div>
             `;
@@ -425,7 +449,21 @@ export class CriminalTrustProfile {
         container.innerHTML = html;
 
         // Обновляем позицию текущего пользователя
-        this.updateUserPosition(data);
+        this.updateUserPosition({
+            userPosition: this.findUserPosition(users),
+            totalUsers: data.total || users.length
+        });
+    }
+
+    private findUserPosition(users: any[]): number | null {
+        if (!this.state.user) return null;
+
+        const userPosition = users.findIndex(entry =>
+            entry.telegramId === this.state.user?.telegramId ||
+            entry.user?.telegramId === this.state.user?.telegramId
+        );
+
+        return userPosition >= 0 ? userPosition + 1 : null;
     }
 
     // =========================================================================
