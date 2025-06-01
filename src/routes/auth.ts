@@ -121,6 +121,97 @@ router.post('/init', verifyTelegramWebAppData as any, async (req: TelegramUserRe
 });
 
 /**
+ * @route   POST /api/auth/login
+ * @desc    Алиас для /init - для совместимости с frontend кодом
+ * @access  Public
+ */
+router.post('/login', verifyTelegramWebAppData as any, async (req: TelegramUserRequest, res: Response) => {
+    try {
+        const telegramUser = req.telegramUser;
+
+        if (!telegramUser || !telegramUser.telegramId) {
+            console.error('❌ Не удалось получить telegramId из middleware');
+            res.status(400).json({
+                success: false,
+                error: 'Не удалось получить данные пользователя'
+            });
+            return;
+        }
+
+        const telegramId = telegramUser.telegramId;
+        console.log(`🔐 Авторизация для пользователя ${telegramId}`);
+
+        // Ищем пользователя в базе или создаем нового
+        let user = await User.findOne({ telegramId });
+        let isNewUser = false;
+
+        if (!user) {
+            console.log(`🆕 Создание нового пользователя ${telegramId}`);
+            isNewUser = true;
+            user = new User({
+                telegramId,
+                username: telegramUser.username || undefined,
+                firstName: telegramUser.firstName || undefined,
+                lastName: telegramUser.lastName || undefined,
+                registeredAt: new Date(),
+                lastVisit: new Date()
+            });
+            await user.save();
+        } else {
+            console.log(`✅ Обновление данных пользователя ${telegramId}`);
+            // Обновляем дату последнего визита
+            user.lastVisit = new Date();
+            await user.save();
+        }
+
+        // Создаем JWT токен
+        const token = jwt.sign(
+            {
+                telegramId: user.telegramId,
+                username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName
+            },
+            process.env.JWT_SECRET || 'default_secret_key',
+            { expiresIn: '7d' }
+        );
+
+        // Формируем имя пользователя для отображения
+        const displayName = user.firstName
+            ? `${user.firstName} ${user.lastName || ''}`.trim()
+            : (user.username || 'Аноним');
+
+        // Отправляем ответ в формате ожидаемом frontend
+        res.json({
+            success: true,
+            data: {
+                token,
+                user: {
+                    telegramId: user.telegramId,
+                    name: displayName,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    username: user.username,
+                    rank: user.rank,
+                    stats: user.stats,
+                    totalScore: user.stats.totalScore,
+                    gamesPlayed: user.stats.investigations,
+                    accuracy: user.stats.accuracy,
+                    isNew: isNewUser
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Ошибка авторизации в /api/auth/login:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Ошибка сервера при авторизации'
+        });
+    }
+});
+
+/**
  * @route   POST /api/auth/telegram
  * @desc    Альтернативная точка входа через Telegram WebApp (использует authController)
  * @access  Public
