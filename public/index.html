@@ -563,21 +563,13 @@
             font-size: 2.8rem;
             font-weight: 700;
             letter-spacing: 3px;
-            background: var(--blood-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: var(--shadow-text);
+            color: var(--bone);
             margin-bottom: 12px;
-            animation: glitchText 6s ease-in-out infinite;
             line-height: 1.1;
-            position: relative;
-        }
-
-        /* Специальные стили для слова "КРИМИНАЛЬНЫЙ" */
-        .title-criminal {
-            -webkit-text-stroke: 0.5px #000000;
-            /* Тонкая черная обводка по контуру */
+            text-shadow:
+                2px 2px 4px rgba(0, 0, 0, 0.8),
+                0 0 10px rgba(139, 0, 0, 0.3);
+            /* Элегантная тень с легким красным свечением */
         }
 
         .subtitle {
@@ -1402,7 +1394,7 @@
 
         <!-- Главный заголовок -->
         <div class="main-title">
-            <h1 class="title"><span class="title-criminal">КРИМИНАЛЬНЫЙ</span><br>БЛЕФ</h1>
+            <h1 class="title">КРИМИНАЛЬНЫЙ<br>БЛЕФ</h1>
             <p class="subtitle">Найди след убийцы</p>
         </div>
 
