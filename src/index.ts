@@ -182,27 +182,67 @@ app.use((_req: Request, res: Response, next: NextFunction): void => {
 // Корневой маршрут показывает главное меню
 app.get('/', staticLimiter, (req: Request, res: Response): void => {
     info('🏠 Запрос на корневой маршрут - отправляем index.html (главное меню)', { ip: req.ip });
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+    const publicPath = serverConfig.isProduction
+        ? path.join(__dirname, '../../public')
+        : path.join(__dirname, '../public');
+    res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 // Игровой экран
 app.get('/game', staticLimiter, (req: Request, res: Response): void => {
     info('🎮 Запрос на игровой экран - отправляем game.html', { ip: req.ip });
-    res.sendFile(path.join(__dirname, '../public/game.html'));
+    const publicPath = serverConfig.isProduction
+        ? path.join(__dirname, '../../public')
+        : path.join(__dirname, '../public');
+    res.sendFile(path.join(publicPath, 'game.html'));
 });
 
 // Профиль пользователя
 app.get('/profile', staticLimiter, (req: Request, res: Response): void => {
     info('👤 Запрос на страницу профиля - отправляем profile.html', { ip: req.ip });
-    res.sendFile(path.join(__dirname, '../public/profile.html'));
+    const publicPath = serverConfig.isProduction
+        ? path.join(__dirname, '../../public')
+        : path.join(__dirname, '../public');
+    res.sendFile(path.join(publicPath, 'profile.html'));
 });
 
 // Статические файлы с лимитером
-app.use(staticLimiter, express.static(path.join(__dirname, '../public'), {
-    maxAge: serverConfig.isProduction ? '1d' : 0,
-    etag: true,
-    lastModified: true
-}));
+app.use('/assets', staticLimiter, express.static(
+    serverConfig.isProduction
+        ? path.join(__dirname, '../../public/assets')
+        : path.join(__dirname, '../public/assets')
+));
+
+// CSS файлы
+app.use('/*.css', staticLimiter, express.static(
+    serverConfig.isProduction
+        ? path.join(__dirname, '../../public')
+        : path.join(__dirname, '../public')
+));
+
+// JavaScript файлы
+app.use('/*.js', staticLimiter, express.static(
+    serverConfig.isProduction
+        ? path.join(__dirname, '../../public')
+        : path.join(__dirname, '../public')
+));
+
+// TypeScript файлы (только в development)
+if (serverConfig.isDevelopment) {
+    app.use('/*.ts', staticLimiter, express.static(path.join(__dirname, '../public')));
+}
+
+// Общая обработка всех остальных статических файлов
+app.use(staticLimiter, express.static(
+    serverConfig.isProduction
+        ? path.join(__dirname, '../../public')
+        : path.join(__dirname, '../public'),
+    {
+        maxAge: serverConfig.isProduction ? '1d' : 0,
+        etag: true,
+        lastModified: true
+    }
+));
 
 // =============== API МАРШРУТЫ С ТИПИЗАЦИЕЙ ===============
 
@@ -234,7 +274,11 @@ app.use((req: Request, res: Response): void => {
         path: req.path,
         userAgent: req.get('User-Agent')
     });
-    res.status(404).sendFile(path.join(__dirname, '../public/index.html'));
+
+    const publicPath = serverConfig.isProduction
+        ? path.join(__dirname, '../../public')
+        : path.join(__dirname, '../public');
+    res.status(404).sendFile(path.join(publicPath, 'index.html'));
 });
 
 // Глобальная обработка ошибок
