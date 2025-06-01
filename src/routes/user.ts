@@ -78,8 +78,8 @@ interface AvatarData {
     message?: string;
 }
 
-// Все маршруты требуют аутентификации
-router.use(authMiddleware as any);
+// Все маршруты требуют аутентификации кроме публичного аватара
+// router.use(authMiddleware as any);
 
 /**
  * @route   GET /api/user/profile
@@ -225,7 +225,7 @@ router.get('/profile', async (req: AuthenticatedRequest, res: Response) => {
  * @desc    Обновление профиля пользователя
  * @access  Private
  */
-router.put('/profile', async (req: UpdateProfileRequest, res: Response) => {
+router.put('/profile', authMiddleware as any, async (req: UpdateProfileRequest, res: Response) => {
     try {
         const telegramId = req.user?.telegramId;
         const { nickname } = req.body;
@@ -279,28 +279,28 @@ router.put('/profile', async (req: UpdateProfileRequest, res: Response) => {
  * @desc    Получение статистики и достижений пользователя (использует UserController)
  * @access  Private
  */
-router.get('/stats', UserController.getStats as any);
+router.get('/stats', authMiddleware as any, UserController.getStats as any);
 
 /**
  * @route   GET /api/user/history
  * @desc    Получение истории игр пользователя (использует UserController)
  * @access  Private
  */
-router.get('/history', UserController.getGameHistory as any);
+router.get('/history', authMiddleware as any, UserController.getGameHistory as any);
 
 /**
  * @route   GET /api/user/leaderboard
  * @desc    Получение таблицы лидеров (использует UserController)
  * @access  Private
  */
-router.get('/leaderboard', UserController.getLeaderboard as any);
+router.get('/leaderboard', authMiddleware as any, UserController.getLeaderboard as any);
 
 /**
  * @route   GET /api/user/leaderboard-legacy
  * @desc    Legacy получение таблицы лидеров
  * @access  Private
  */
-router.get('/leaderboard-legacy', async (req: LeaderboardRequest, res: Response) => {
+router.get('/leaderboard-legacy', authMiddleware as any, async (req: LeaderboardRequest, res: Response) => {
     try {
         const { period = 'all', limit = '20' } = req.query;
         const currentUserTelegramId = req.user?.telegramId;
@@ -357,7 +357,7 @@ router.get('/leaderboard-legacy', async (req: LeaderboardRequest, res: Response)
  * @desc    Получение аватара пользователя из Telegram
  * @access  Private
  */
-router.get('/avatar', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/avatar', authMiddleware as any, async (req: AuthenticatedRequest, res: Response) => {
     try {
         const telegramId = req.user?.telegramId;
 
@@ -429,7 +429,7 @@ router.get('/avatar', async (req: AuthenticatedRequest, res: Response) => {
 
         // Получаем file_id самой большой версии последней фотографии
         const lastPhoto = data.result.photos[0]; // Последняя загруженная фотография
-        const largestPhoto = lastPhoto[lastPhoto.length - 1]; // Самый большой размер
+        const largestPhoto = lastPhoto[lastPhoto.length - 1];
 
         if (!largestPhoto || !largestPhoto.file_id) {
             console.warn('⚠️ Не удалось получить file_id фотографии', { telegramId });
@@ -500,6 +500,109 @@ router.get('/avatar', async (req: AuthenticatedRequest, res: Response) => {
             message: (error as Error).message,
             stack: (error as Error).stack
         });
+    }
+});
+
+/**
+ * @route   GET /api/user/avatar/:telegramId
+ * @desc    Получение аватара пользователя по telegramId (для совместимости с frontend)
+ * @access  Public
+ */
+router.get('/avatar/:telegramId', async (req: Request, res: Response) => {
+    try {
+        const { telegramId } = req.params;
+
+        if (!telegramId) {
+            res.status(400).json({
+                status: 'error',
+                message: 'Не указан телеграм ID'
+            });
+            return;
+        }
+
+        console.log(`🖼️ Запрос аватара для пользователя: ${telegramId}`);
+
+        // Проверяем что у нас есть токен бота
+        const botToken = process.env.TELEGRAM_BOT_TOKEN;
+        if (!botToken) {
+            console.error('❌ TELEGRAM_BOT_TOKEN не задан');
+            res.status(500).json({
+                status: 'error',
+                message: 'Ошибка конфигурации сервера'
+            });
+            return;
+        }
+
+        // Делаем запрос к Telegram API для получения фотографий профиля
+        const telegramApiUrl = `https://api.telegram.org/bot${botToken}/getUserProfilePhotos`;
+        const params = new URLSearchParams({
+            user_id: telegramId,
+            limit: '1'
+        });
+
+        const response = await fetch(`${telegramApiUrl}?${params}`);
+        const data = await response.json();
+
+        if (!data.ok) {
+            console.warn('⚠️ Telegram API вернул ошибку', {
+                telegramId,
+                error: data.description
+            });
+            // Возвращаем заглушку SVG
+            res.setHeader('Content-Type', 'image/svg+xml');
+            res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#333"/></svg>`);
+            return;
+        }
+
+        // Проверяем есть ли фотографии
+        if (!data.result || !data.result.photos || data.result.photos.length === 0) {
+            console.info('ℹ️ У пользователя нет фотографий профиля', { telegramId });
+            // Возвращаем заглушку SVG
+            res.setHeader('Content-Type', 'image/svg+xml');
+            res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#666"/></svg>`);
+            return;
+        }
+
+        // Получаем file_id самой большой версии последней фотографии
+        const lastPhoto = data.result.photos[0];
+        const largestPhoto = lastPhoto[lastPhoto.length - 1];
+
+        if (!largestPhoto || !largestPhoto.file_id) {
+            console.warn('⚠️ Не удалось получить file_id фотографии', { telegramId });
+            res.setHeader('Content-Type', 'image/svg+xml');
+            res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#999"/></svg>`);
+            return;
+        }
+
+        // Получаем информацию о файле для получения прямой ссылки
+        const fileApiUrl = `https://api.telegram.org/bot${botToken}/getFile`;
+        const fileParams = new URLSearchParams({
+            file_id: largestPhoto.file_id
+        });
+
+        const fileResponse = await fetch(`${fileApiUrl}?${fileParams}`);
+        const fileData = await fileResponse.json();
+
+        if (!fileData.ok || !fileData.result || !fileData.result.file_path) {
+            console.warn('⚠️ Не удалось получить путь к файлу фотографии', {
+                telegramId,
+                fileId: largestPhoto.file_id
+            });
+            res.setHeader('Content-Type', 'image/svg+xml');
+            res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#aaa"/></svg>`);
+            return;
+        }
+
+        // Перенаправляем на прямую ссылку Telegram
+        const avatarUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+        console.log('✅ Перенаправление на аватар', { telegramId, avatarUrl: avatarUrl.substring(0, 50) + '...' });
+
+        res.redirect(302, avatarUrl);
+
+    } catch (error: unknown) {
+        console.error('❌ Ошибка загрузки аватара:', error);
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#f00"/></svg>`);
     }
 });
 

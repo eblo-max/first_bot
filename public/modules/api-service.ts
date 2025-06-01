@@ -273,15 +273,12 @@ export class ApiService {
                 return this.cache.get(cacheKey)!.data;
             }
 
-            const response = await this.makeRequest<{ photoUrl: string }>(`/user/avatar/${telegramId}`);
+            // Используем прямую ссылку на изображение вместо JSON API
+            const avatarUrl = `/api/user/avatar/${telegramId}`;
 
-            if (response.success && response.data?.photoUrl) {
-                // Кэшируем аватар на 1 час
-                this.setCache(cacheKey, response.data.photoUrl, 3600000);
-                return response.data.photoUrl;
-            }
-
-            return null;
+            // Кэшируем URL на 1 час
+            this.setCache(cacheKey, avatarUrl, 3600000);
+            return avatarUrl;
         } catch (error) {
             console.error('❌ Ошибка загрузки аватара:', error);
             return null;

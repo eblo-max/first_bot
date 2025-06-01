@@ -293,6 +293,17 @@ app.use((req: Request, res: Response): void => {
         userAgent: req.get('User-Agent')
     });
 
+    // Для API запросов возвращаем JSON ошибку
+    if (req.path.startsWith('/api/')) {
+        res.status(404).json({
+            status: 'error',
+            message: `API endpoint not found: ${req.path}`,
+            error: 'Not Found',
+            code: 'ENDPOINT_NOT_FOUND'
+        });
+        return;
+    }
+
     // Для JS файлов возвращаем настоящую 404, не HTML
     if (req.path.endsWith('.js') || req.path.endsWith('.css') || req.path.endsWith('.ts')) {
         res.status(404).send(`File not found: ${req.path}`);

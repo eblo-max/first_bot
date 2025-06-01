@@ -240,6 +240,13 @@ router.post('/guest', AuthController.directAccess as any);
 router.get('/verify', AuthController.verifyToken as any);
 
 /**
+ * @route   POST /api/auth/verify
+ * @desc    Проверка действительности JWT токена (POST версия для совместимости с frontend)
+ * @access  Private
+ */
+router.post('/verify', AuthController.verifyToken as any);
+
+/**
  * @route   GET /api/auth/verify-middleware
  * @desc    Проверка токена через middleware (legacy метод)
  * @access  Private
