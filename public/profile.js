@@ -683,6 +683,12 @@ class DramaticCriminalProfile {
                 localStorage.getItem('token') ||
                 localStorage.getItem('auth_token');
 
+            // ИСПРАВЛЕНИЕ: Присваиваем токен сразу если он есть
+            if (token) {
+                this.token = token;
+                console.log('🔑 Токен найден и установлен:', token.substring(0, 20) + '...');
+            }
+
             // Если нет токена и есть Telegram WebApp, пытаемся авторизоваться
             if (!token && tg?.initData) {
 
