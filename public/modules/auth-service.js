@@ -56,27 +56,26 @@ export class AuthService {
         }
     }
     setToken(token) {
+        console.log(`💾 Сохраняем токен:`, token ? `${token.substring(0, 20)}...` : 'ПУСТОЙ ТОКЕН');
         this.token = token;
-        try {
-            localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, token);
-            console.log('🔑 Токен сохранен');
-        }
-        catch (error) {
-            console.error('❌ Ошибка сохранения токена в localStorage:', error);
+        if (token) {
+            localStorage.setItem('auth_token', token);
+            localStorage.setItem('token', token); // Дублируем для совместимости
+        } else {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('token');
         }
     }
     clearToken() {
+        console.log(`🗑️ Очищаем токен`);
         this.token = null;
-        try {
-            localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
-            console.log('🔑 Токен удален');
-        }
-        catch (error) {
-            console.error('❌ Ошибка удаления токена:', error);
-        }
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('token');
     }
     getCurrentToken() {
-        return this.token || this.getStoredToken();
+        const currentToken = this.token || this.getStoredToken();
+        console.log(`🔍 Получаем текущий токен:`, currentToken ? `${currentToken.substring(0, 20)}...` : 'ТОКЕН НЕ НАЙДЕН');
+        return currentToken;
     }
     // =========================================================================
     // АВТОРИЗАЦИЯ ЧЕРЕЗ TELEGRAM

@@ -50,12 +50,17 @@ export class ApiService {
     }
     async executeRequest(url, options, cacheKey, useCache, cacheTTL) {
         const token = authService.getCurrentToken();
+        console.log(`🔑 Получен токен для запроса:`, token ? `${token.substring(0, 20)}...` : 'ТОКЕН ОТСУТСТВУЕТ');
+
         const defaultHeaders = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         };
         if (token) {
             defaultHeaders['Authorization'] = `Bearer ${token}`;
+            console.log(`✅ Добавлен Authorization заголовок`);
+        } else {
+            console.log(`❌ Токен отсутствует - запрос без авторизации`);
         }
         const requestOptions = {
             ...options,
@@ -64,7 +69,8 @@ export class ApiService {
                 ...options.headers
             }
         };
-        console.log(`🌐 ${requestOptions.method || 'GET'} ${url}`);
+        console.log(`🌐 ${requestOptions.method || 'GET'} ${url}`,
+            `Headers:`, Object.keys(requestOptions.headers));
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
