@@ -48,7 +48,12 @@ export class AuthService {
     // =========================================================================
     getStoredToken() {
         try {
-            return localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
+            // Проверяем оба возможных ключа для совместимости
+            const token = localStorage.getItem('auth_token') ||
+                localStorage.getItem('token') ||
+                localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
+            console.log(`📱 Ищем сохраненный токен:`, token ? `${token.substring(0, 20)}...` : 'НЕ НАЙДЕН');
+            return token;
         }
         catch (error) {
             console.error('❌ Ошибка получения токена из localStorage:', error);
@@ -59,9 +64,11 @@ export class AuthService {
         console.log(`💾 Сохраняем токен:`, token ? `${token.substring(0, 20)}...` : 'ПУСТОЙ ТОКЕН');
         this.token = token;
         if (token) {
+            localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, token);
             localStorage.setItem('auth_token', token);
-            localStorage.setItem('token', token); // Дублируем для совместимости
+            localStorage.setItem('token', token);
         } else {
+            localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
             localStorage.removeItem('auth_token');
             localStorage.removeItem('token');
         }
@@ -69,6 +76,7 @@ export class AuthService {
     clearToken() {
         console.log(`🗑️ Очищаем токен`);
         this.token = null;
+        localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
         localStorage.removeItem('auth_token');
         localStorage.removeItem('token');
     }
