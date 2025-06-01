@@ -9,7 +9,7 @@ let tg = window.Telegram?.WebApp;
 // Конфигурация мрачного профиля
 const ProfileConfig = {
     levels: {
-        
+
         maxXP: [
             // Первые уровни (новички) - медленная прогрессия
             500,     // 1: ~10 игр
@@ -104,7 +104,7 @@ const ProfileConfig = {
         }
     },
     achievements: [
-        
+
         { id: 'first_blood', name: 'Первая улика', icon: '🔍', description: 'Решили первое криминальное дело' },
         { id: 'rookie_investigator', name: 'Начинающий следователь', icon: '🕵️', description: 'Решили 10 дел' },
         { id: 'case_closer', name: 'Закрыватель дел', icon: '📝', description: 'Решили 50 дел' },
@@ -215,10 +215,10 @@ class DramaticCriminalProfile {
 
     async initProfile() {
         try {
-            
+
             // Детектируем мобильное устройство
             const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
+
             // ВАЖНО: Показываем loading БЕЗ отображения любых данных
             this.showProfileSkeleton();
 
@@ -227,10 +227,10 @@ class DramaticCriminalProfile {
 
             // СПЕЦИАЛЬНЫЙ FALLBACK ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ
             if (!isAuth && isMobile) {
-                
+
                 // Попытка 1: Переинициализация Telegram WebApp
                 if (tg) {
-                    
+
                     try {
                         tg.ready();
                         tg.expand();
@@ -240,7 +240,7 @@ class DramaticCriminalProfile {
 
                         isAuth = await this.authenticate();
                         if (isAuth) {
-                            
+
                         }
                     } catch (e) {
                         console.error('❌ Ошибка переинициализации Telegram WebApp:', e);
@@ -249,12 +249,12 @@ class DramaticCriminalProfile {
 
                 // Попытка 2: Использование данных из URL параметров
                 if (!isAuth) {
-                    
+
                     const urlParams = new URLSearchParams(window.location.search);
                     const urlToken = urlParams.get('token') || urlParams.get('auth_token');
 
                     if (urlToken) {
-                        
+
                         localStorage.setItem('token', urlToken);
                         this.token = urlToken;
                         isAuth = true;
@@ -263,11 +263,11 @@ class DramaticCriminalProfile {
 
                 // Попытка 3: Проверка initData в localStorage 
                 if (!isAuth) {
-                    
+
                     const savedInitData = localStorage.getItem('initData');
 
                     if (savedInitData && savedInitData !== tg?.initData) {
-                        
+
                         try {
                             const response = await fetch('/api/auth/init', {
                                 method: 'POST',
@@ -284,7 +284,7 @@ class DramaticCriminalProfile {
                                     localStorage.setItem('token', data.data.token);
                                     this.token = data.data.token;
                                     isAuth = true;
-                                    
+
                                 }
                             }
                         } catch (e) {
@@ -295,13 +295,13 @@ class DramaticCriminalProfile {
 
                 // Попытка 4: Режим разработчика для мобильных
                 if (!isAuth) {
-                    
+
                     const isDeveloperMode = window.location.search.includes('dev=true') ||
                         window.location.search.includes('debug=true') ||
                         window.location.hostname === 'localhost';
 
                     if (isDeveloperMode) {
-                        
+
                         await this.tryDeveloperAuth();
                         isAuth = true;
                     }
@@ -335,7 +335,7 @@ class DramaticCriminalProfile {
     async tryDeveloperAuth() {
         try {
             // В режиме разработки НЕ показываем никаких данных
-            
+
             // Показываем сообщение о тестовом режиме
             this.showDeveloperMessage();
 
@@ -512,7 +512,7 @@ class DramaticCriminalProfile {
     }
 
     hideProfileSkeleton() {
-        
+
         const skeleton = document.getElementById('profile-skeleton');
         if (skeleton) {
             skeleton.style.display = 'none';
@@ -548,7 +548,7 @@ class DramaticCriminalProfile {
         requiredElements.forEach(id => {
             const element = document.getElementById(id);
             if (element) {
-                
+
             } else {
                 console.error(`❌ ${id}: НЕ НАЙДЕН!`);
             }
@@ -565,7 +565,7 @@ class DramaticCriminalProfile {
         containers.forEach(selector => {
             const element = document.querySelector(selector);
             if (element) {
-                
+
             } else {
                 console.error(`❌ ${selector}: НЕ НАЙДЕН!`);
             }
@@ -649,7 +649,7 @@ class DramaticCriminalProfile {
 
                 // Получаем период из data-period
                 const period = tab.dataset.period;
-                
+
                 // Загружаем данные для выбранного периода
                 await this.loadLeaderboardData(period);
 
@@ -689,7 +689,7 @@ class DramaticCriminalProfile {
                 console.log('  - initData начало:', tg.initData.substring(0, 200));
 
                 const authPayload = { initData: tg.initData };
-                
+
                 const response = await fetch('/api/auth/init', {
                     method: 'POST',
                     headers: {
@@ -708,7 +708,7 @@ class DramaticCriminalProfile {
                     if (data.status === 'success' && data.data?.token) {
                         token = data.data.token;
                         localStorage.setItem('token', token);
-                        
+
                     } else {
                         console.error('❌ Сервер не вернул токен:', data);
                     }
@@ -733,7 +733,7 @@ class DramaticCriminalProfile {
 
             // Проверяем валидность токена
             if (token) {
-                
+
                 const response = await fetch('/api/auth/verify', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -743,11 +743,11 @@ class DramaticCriminalProfile {
 
                 if (response.ok) {
                     this.token = token;
-                    
+
                     return true;
                 } else {
                     const errorText = await response.text();
-                    
+
                     localStorage.removeItem('token');
                     localStorage.removeItem('auth_token');
                 }
@@ -764,7 +764,7 @@ class DramaticCriminalProfile {
 
     async loadUserProfile() {
         try {
-            
+
             console.log('🔑 Используемый токен:', this.token ? `${this.token.substring(0, 20)}...` : 'ОТСУТСТВУЕТ');
 
             ProfileState.isLoading = true;
@@ -794,7 +794,7 @@ class DramaticCriminalProfile {
             }
 
             const userData = await response.json();
-            
+
             console.log('📋 Структура userData:', JSON.stringify(userData, null, 2));
 
             // Детальный анализ структуры данных
@@ -802,12 +802,12 @@ class DramaticCriminalProfile {
             console.log('  - Ключи userData:', Object.keys(userData));
 
             if (userData.data) {
-                
+
                 console.log('  - Ключи userData.data:', Object.keys(userData.data));
             }
 
             if (userData.user) {
-                
+
                 console.log('  - Ключи userData.user:', Object.keys(userData.user));
             }
 
@@ -816,10 +816,10 @@ class DramaticCriminalProfile {
 
             if (userData.data && typeof userData.data === 'object') {
                 actualUserData = userData.data;
-                
+
             } else if (userData.user && typeof userData.user === 'object') {
                 actualUserData = userData.user;
-                
+
             } else if (userData.basic && typeof userData.basic === 'object') {
                 // ИСПРАВЛЕНИЕ: Объединяем все данные из разных частей ответа
                 actualUserData = {
@@ -829,10 +829,10 @@ class DramaticCriminalProfile {
                     achievements: userData.achievements || [],
                     recentGames: userData.recentGames || []
                 };
-                
+
             } else if (userData.firstName || userData.username || userData.telegramId) {
                 actualUserData = userData;
-                
+
             } else {
                 console.error('❌ Не найдены данные пользователя в ответе сервера!');
                 // Попытка собрать данные из частей
@@ -845,7 +845,7 @@ class DramaticCriminalProfile {
                     achievements: userData.achievements || [],
                     recentGames: userData.recentGames || []
                 };
-                
+
             }
 
             ProfileState.user = actualUserData;
@@ -861,7 +861,7 @@ class DramaticCriminalProfile {
     }
 
     updateProfileUI(userData) {
-        
+
         const stats = userData.stats || {};
 
         // Обновляем уровень и XP
@@ -913,10 +913,10 @@ class DramaticCriminalProfile {
         }
 
         if (stats && (stats.investigations > 0 || stats.totalScore > 0)) {
-            
+
             const generatedAchievements = this.generateBasicAchievements(stats);
             if (generatedAchievements.length > 0) {
-                
+
                 ProfileState.achievements = generatedAchievements;
                 this.renderAchievements(generatedAchievements);
             }
@@ -964,10 +964,10 @@ class DramaticCriminalProfile {
         if (!telegramId || !avatarContainer) return;
 
         try {
-            
+
             const response = await fetch('/api/user/avatar', {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${this.token}`
                 }
             });
 
@@ -1000,7 +1000,7 @@ class DramaticCriminalProfile {
 
                     // Обработчики загрузки изображения
                     img.onload = () => {
-                        
+
                         if (avatarPlaceholder) {
                             avatarPlaceholder.style.opacity = '0';
                         }
@@ -1012,7 +1012,7 @@ class DramaticCriminalProfile {
                     };
 
                     img.onerror = () => {
-                        
+
                         img.remove();
                         if (avatarPlaceholder) {
                             avatarPlaceholder.style.opacity = '1';
@@ -1032,7 +1032,7 @@ class DramaticCriminalProfile {
                     }
                 }
             } else {
-                
+
                 if (avatarPlaceholder) {
                     avatarPlaceholder.style.opacity = '1';
                 }
@@ -1047,7 +1047,7 @@ class DramaticCriminalProfile {
 
     async loadUserAchievements() {
         try {
-            
+
             let userAchievements = [];
 
             // Сначала пробуем загрузить конкретные достижения пользователя
@@ -1058,7 +1058,7 @@ class DramaticCriminalProfile {
 
                 if (response.ok) {
                     const data = await response.json();
-                    
+
                     // Проверяем различные форматы ответа API
                     if (data.unlocked && Array.isArray(data.unlocked)) {
                         userAchievements = data.unlocked;
@@ -1076,22 +1076,22 @@ class DramaticCriminalProfile {
                     console.log(`⚠️ API недоступен (${response.status}), переходим к генерации`);
                 }
             } catch (apiError) {
-                
+
             }
 
             // Если API не вернул достижения, пытаемся сгенерировать на основе статистики
             if (userAchievements.length === 0) {
-                
+
                 // Альтернативный метод - из профиля пользователя
                 if (ProfileState.user?.achievements && Array.isArray(ProfileState.user.achievements)) {
                     userAchievements = ProfileState.user.achievements;
-                    
+
                 }
 
                 // Генерируем основные достижения на основе статистики
                 if (userAchievements.length === 0 && ProfileState.user?.stats) {
                     userAchievements = this.generateBasicAchievements(ProfileState.user.stats);
-                    
+
                 }
             }
 
@@ -1106,11 +1106,11 @@ class DramaticCriminalProfile {
             // Последняя попытка - генерируем базовые достижения
             if (ProfileState.user?.stats) {
                 const basicAchievements = this.generateBasicAchievements(ProfileState.user.stats);
-                
+
                 this.renderAchievements(basicAchievements);
                 return basicAchievements;
             } else {
-                
+
                 this.renderAchievements([]);
                 return [];
             }
@@ -1794,7 +1794,7 @@ class DramaticCriminalProfile {
 
     async loadLeaderboardData(period) {
         try {
-            
+
             this.showLeaderboardSkeleton();
 
             const response = await fetch(`/api/profile/leaderboard/${period}`, {
@@ -1806,7 +1806,7 @@ class DramaticCriminalProfile {
             }
 
             const result = await response.json();
-            
+
             // Преобразуем данные в нужный формат
             const data = this.transformLeaderboardData(result, period);
 
@@ -2255,14 +2255,14 @@ class DramaticCriminalProfile {
     // Утилиты
     updateElement(id, value) {
         const element = document.getElementById(id);
-        
+
         if (element) {
             element.textContent = value;
-            
+
             // Для имени пользователя также обновляем data-text атрибут для голографического эффекта
             if (id === 'detective-name') {
                 element.setAttribute('data-text', value);
-                
+
             }
         } else {
             console.error(`❌ Элемент с ID "${id}" не найден в DOM!`);
@@ -2300,7 +2300,7 @@ class DramaticCriminalProfile {
     }
 
     showError(message) {
-        
+
         this.hideLoadingState();
 
         // Создаем элемент ошибки
@@ -2335,7 +2335,7 @@ class DramaticCriminalProfile {
     }
 
     showAuthError() {
-        
+
         const authModal = document.createElement('div');
         authModal.className = 'auth-error-modal';
         authModal.innerHTML = `
@@ -2522,7 +2522,7 @@ class DramaticCriminalProfile {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    
+
     // Запускаем мрачный профиль
     new DramaticCriminalProfile();
 });

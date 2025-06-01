@@ -1749,8 +1749,8 @@
 
             try {
                 // Проверяем существующий токен и его свежесть
-                const existingToken = localStorage.getItem('detective_token');
-                const tokenTimestamp = localStorage.getItem('detective_token_timestamp');
+                const existingToken = localStorage.getItem('token') || localStorage.getItem('auth_token');
+                const tokenTimestamp = localStorage.getItem('token_timestamp');
                 const tokenAge = tokenTimestamp ? Date.now() - parseInt(tokenTimestamp) : Infinity;
                 const tokenExpired = tokenAge > 24 * 60 * 60 * 1000; // 24 часа
 
@@ -1803,8 +1803,9 @@
                     console.log('[Profile] Авторизация успешна');
 
                     if (data.token) {
-                        localStorage.setItem('detective_token', data.token);
-                        localStorage.setItem('detective_token_timestamp', Date.now().toString());
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('auth_token', data.token);
+                        localStorage.setItem('token_timestamp', Date.now().toString());
                         console.log('[Profile] Токен сохранён с временной меткой');
                     }
                 } else {
