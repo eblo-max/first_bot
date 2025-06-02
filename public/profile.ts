@@ -187,8 +187,35 @@ export class CriminalTrustProfile {
 
             // Обновляем достижения
             if (batchData.achievements) {
-                this.state.achievements = batchData.achievements;
-                this.renderAchievements(batchData.achievements);
+                console.log('📊 Получены данные достижений:', batchData.achievements);
+
+                // API возвращает объект {unlocked: [], available: [], progress: {}}
+                // Нужно объединить unlocked и available в один массив
+                let allAchievements: Achievement[] = [];
+                const achievementsData = batchData.achievements as any;
+
+                if (achievementsData.unlocked && Array.isArray(achievementsData.unlocked)) {
+                    // Добавляем разблокированные достижения
+                    allAchievements = [...allAchievements, ...achievementsData.unlocked.map((ach: any) => ({
+                        ...ach,
+                        isUnlocked: true
+                    }))];
+                }
+
+                if (achievementsData.available && Array.isArray(achievementsData.available)) {
+                    // Добавляем доступные достижения  
+                    allAchievements = [...allAchievements, ...achievementsData.available.map((ach: any) => ({
+                        ...ach,
+                        isUnlocked: false,
+                        progress: ach.progress ? Math.round((ach.progress.current / ach.progress.target) * 100) : 0
+                    }))];
+                }
+
+                console.log('🏆 Сформирован массив достижений:', allAchievements.length);
+                this.state.achievements = allAchievements;
+                this.renderAchievements(allAchievements);
+            } else {
+                console.log('❌ Нет данных достижений или неправильный формат');
             }
 
             // Обновляем лидерборд
