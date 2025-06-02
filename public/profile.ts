@@ -1428,14 +1428,58 @@ export class CriminalTrustProfile {
         if (modalProgress && !achievement.isUnlocked && achievement.progress !== undefined) {
             modalProgress.style.display = 'block';
 
-            const progress = achievement.progress;
-            const current = Math.round(progress);
-            const target = 100;
+            // Получаем правильные значения из конфигурации достижения
+            const configAchievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievement.id);
+            if (configAchievement && configAchievement.requirement && this.state.user) {
+                const req = configAchievement.requirement;
+                let currentValue = 0;
+                let targetValue = req.value;
 
-            if (progressCurrent) progressCurrent.textContent = current.toString();
-            if (progressTarget) progressTarget.textContent = target.toString();
-            if (progressBar) progressBar.style.width = `${progress}%`;
-            if (progressPercentage) progressPercentage.textContent = `${current}%`;
+                // Рассчитываем текущее значение в зависимости от типа достижения
+                switch (req.type) {
+                    case 'investigations':
+                        currentValue = this.state.user.gamesPlayed || 0;
+                        break;
+                    case 'accuracy':
+                        currentValue = this.state.user.accuracy || 0;
+                        break;
+                    case 'winStreak':
+                        currentValue = this.state.user.maxWinStreak || this.state.user.winStreak || 0;
+                        break;
+                    case 'totalScore':
+                        currentValue = this.state.user.totalScore || 0;
+                        break;
+                    case 'perfectGames':
+                        currentValue = this.state.user.stats?.perfectGames || 0;
+                        break;
+                    case 'dailyStreak':
+                        // Для daily streak пока возвращаем 0, так как нет такого поля в User
+                        currentValue = 0;
+                        break;
+                    case 'fastGame':
+                        const fastestTime = this.state.user.stats?.fastestGame || 0;
+                        currentValue = fastestTime > 0 ? Math.round(fastestTime / 1000) : 0;
+                        targetValue = req.value; // секунды
+                        break;
+                }
+
+                const progress = achievement.progress;
+
+                if (progressCurrent) progressCurrent.textContent = currentValue.toLocaleString();
+                if (progressTarget) progressTarget.textContent = targetValue.toLocaleString();
+                if (progressBar) progressBar.style.width = `${progress}%`;
+                if (progressPercentage) progressPercentage.textContent = `${Math.round(progress)}%`;
+            } else {
+                // Fallback к старому методу
+                const progress = achievement.progress;
+                const current = Math.round(progress);
+                const target = 100;
+
+                if (progressCurrent) progressCurrent.textContent = current.toString();
+                if (progressTarget) progressTarget.textContent = target.toString();
+                if (progressBar) progressBar.style.width = `${progress}%`;
+                if (progressPercentage) progressPercentage.textContent = `${current}%`;
+            }
         } else if (modalProgress) {
             modalProgress.style.display = 'none';
         }
@@ -1461,17 +1505,49 @@ export class CriminalTrustProfile {
     }
 
     private getAchievementRequirement(achievement: any): string {
-        // Базовые требования по категориям
+        // Ищем правильное достижение в конфигурации
+        const configAchievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievement.id);
+
+        if (configAchievement && configAchievement.requirement) {
+            const req = configAchievement.requirement;
+
+            switch (req.type) {
+                case 'investigations':
+                    return `Провести ${req.value} расследований`;
+
+                case 'accuracy':
+                    const minGames = req.minGames || 0;
+                    return `Достичь точности ${req.value}% в ${minGames}+ играх`;
+
+                case 'winStreak':
+                    return `Достичь серии из ${req.value} правильных ответов подряд`;
+
+                case 'totalScore':
+                    return `Набрать ${req.value.toLocaleString()} очков`;
+
+                case 'perfectGames':
+                    return `Сыграть ${req.value} идеальных игр (5/5 правильных ответов)`;
+
+                case 'fastGame':
+                    return `Решить дело за ${req.value} секунд или быстрее`;
+
+                case 'dailyStreak':
+                    return `Играть ${req.value} дней подряд`;
+
+                default:
+                    return configAchievement.description || 'Выполнить специальные условия';
+            }
+        }
+
+        // Fallback к общим требованиям
         const requirements: Record<string, string> = {
-            'score': 'Набрать определенное количество очков в играх',
-            'games': 'Сыграть определенное количество игр',
-            'investigation': 'Успешно завершить расследования',
-            'deduction': 'Продемонстрировать навыки дедукции',
-            'social': 'Взаимодействовать с другими игроками',
-            'speed': 'Быстро принимать решения в играх',
-            'accuracy': 'Поддерживать высокую точность ответов',
-            'streak': 'Поддерживать серию успешных игр',
-            'special': 'Выполнить особые условия'
+            'Начинающий': 'Начальные достижения для новых детективов',
+            'Профессионал': 'Достижения для опытных следователей',
+            'Мастерство': 'Продемонстрировать высокие навыки дедукции',
+            'Скорость': 'Быстро принимать решения в играх',
+            'Серии': 'Поддерживать серию успешных игр',
+            'Очки': 'Набрать определенное количество очков',
+            'Особые': 'Выполнить особые условия'
         };
 
         return requirements[achievement.category || 'default'] || 'Выполнить специальные условия для получения этого достижения';
@@ -1573,9 +1649,8 @@ export class CriminalTrustProfile {
     private calculateRealProgress(achievementId: string, user: any): number {
         if (!user) return 0;
 
-        const achievementInfo = this.getAchievementInfo(achievementId);
+        // Ищем достижение в правильной конфигурации
         const achievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievementId);
-
         if (!achievement || !achievement.requirement) return 0;
 
         const { requirement } = achievement;
@@ -1583,32 +1658,51 @@ export class CriminalTrustProfile {
 
         switch (requirement.type) {
             case 'investigations':
+                // Используем поле gamesPlayed которое есть в User
                 currentValue = user.gamesPlayed || 0;
                 break;
+
             case 'accuracy':
-                if ((user.gamesPlayed || 0) >= (requirement.minGames || 0)) {
+                const minGames = requirement.minGames || 0;
+                const userGames = user.gamesPlayed || 0;
+
+                if (userGames >= minGames) {
                     currentValue = user.accuracy || 0;
-                    return Math.min(currentValue, 100);
+                    // Для точности возвращаем прогресс к цели
+                    return Math.min((currentValue / requirement.value) * 100, 100);
                 }
                 return 0;
+
             case 'winStreak':
-                currentValue = user.winStreak || user.maxWinStreak || 0;
+                currentValue = user.maxWinStreak || user.winStreak || 0;
                 break;
+
             case 'totalScore':
                 currentValue = user.totalScore || 0;
                 break;
+
             case 'perfectGames':
-                currentValue = user.perfectGames || 0;
+                currentValue = user.stats?.perfectGames || 0;
                 break;
+
             case 'fastGame':
-                // Для быстрых игр пока возвращаем 0, так как нужны дополнительные данные
+                // Для достижений скорости проверяем быстрейшую игру
+                const fastestTime = user.stats?.fastestGame || 0;
+                if (fastestTime > 0 && fastestTime <= requirement.value * 1000) {
+                    return 100; // Уже выполнено
+                }
                 return 0;
+
+            case 'dailyStreak':
+                // Для daily streak пока возвращаем 0, так как нет такого поля
+                currentValue = 0;
+                break;
+
             default:
                 return 0;
         }
 
-        // Для процентных достижений (точность) уже обработаны выше
-        // Для остальных - процент от цели
+        // Для остальных типов - процент от цели
         const progress = (currentValue / requirement.value) * 100;
         return Math.min(Math.round(progress), 99); // Максимум 99% для не разблокированных
     }
