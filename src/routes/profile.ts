@@ -7,6 +7,94 @@ import { Router, Request, Response } from 'express';
 import User, { type IUser, UserRank, type IAchievement } from '../models/User';
 import { authMiddleware } from '../middleware/auth';
 
+// ВЫБОРКА НОВЫХ ДОСТИЖЕНИЙ ДЛЯ СЕРВЕРНОЙ ЧАСТИ
+const SERVER_ACHIEVEMENTS_CONFIG = [
+    // Следователь
+    {
+        id: 'first_investigation',
+        name: 'Первое расследование',
+        description: 'Завершите ваше первое криминальное расследование',
+        category: 'investigation',
+        requirement: { type: 'investigations', value: 1 }
+    },
+    {
+        id: 'rookie_detective',
+        name: 'Детектив-новичок',
+        description: 'Проведите 5 расследований',
+        category: 'investigation',
+        requirement: { type: 'investigations', value: 5 }
+    },
+    {
+        id: 'experienced_investigator',
+        name: 'Опытный следователь',
+        description: 'Проведите 25 расследований',
+        category: 'investigation',
+        requirement: { type: 'investigations', value: 25 }
+    },
+    {
+        id: 'senior_detective',
+        name: 'Старший детектив',
+        description: 'Проведите 50 расследований',
+        category: 'investigation',
+        requirement: { type: 'investigations', value: 50 }
+    },
+    {
+        id: 'veteran_investigator',
+        name: 'Ветеран следствия',
+        description: 'Проведите 100 расследований',
+        category: 'investigation',
+        requirement: { type: 'investigations', value: 100 }
+    },
+
+    // Точность
+    {
+        id: 'sharp_eye',
+        name: 'Острый глаз',
+        description: 'Достигните точности 60% в 10+ расследованиях',
+        category: 'accuracy',
+        requirement: { type: 'accuracy', value: 60, minGames: 10 }
+    },
+    {
+        id: 'keen_observer',
+        name: 'Внимательный наблюдатель',
+        description: 'Достигните точности 75% в 20+ расследованиях',
+        category: 'accuracy',
+        requirement: { type: 'accuracy', value: 75, minGames: 20 }
+    },
+
+    // Очки
+    {
+        id: 'first_thousand',
+        name: 'Первая тысяча',
+        description: 'Наберите 1,000 очков',
+        category: 'score',
+        requirement: { type: 'totalScore', value: 1000 }
+    },
+    {
+        id: 'five_thousand_points',
+        name: 'Пять тысяч очков',
+        description: 'Наберите 5,000 очков',
+        category: 'score',
+        requirement: { type: 'totalScore', value: 5000 }
+    },
+
+    // Серии
+    {
+        id: 'perfect_start',
+        name: 'Идеальное начало',
+        description: 'Сыграйте одну идеальную игру (5/5 правильных ответов)',
+        category: 'streak',
+        requirement: { type: 'perfectGames', value: 1 }
+    },
+    {
+        id: 'winning_streak_3',
+        name: 'Тройная серия',
+        description: 'Выиграйте 3 идеальные игры подряд',
+        category: 'streak',
+        requirement: { type: 'winStreak', value: 3 }
+    }
+];
+
 const router = Router();
 
 // Интерфейсы для запросов и ответов
@@ -461,7 +549,7 @@ function generateReputationRecommendations(user: IUser): ReputationRecommendatio
 }
 
 /**
- * Генерация списка доступных достижений
+ * Генерация списка доступных достижений - НОВАЯ СИСТЕМА!
  */
 function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
     const available: AvailableAchievement[] = [];
@@ -473,130 +561,88 @@ function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
         investigations: userStats.investigations,
         winStreak: userStats.winStreak,
         accuracy: userStats.accuracy,
-        perfectGames: userStats.perfectGames
+        perfectGames: userStats.perfectGames,
+        gamesPlayed: userStats.totalQuestions / 5 // Примерно дел из вопросов
     });
-    console.log('🏆 Разблокированные достижения:', user.achievements?.length || 0);
 
-    // Достижения по счету
-    if (userStats.totalScore < 100 && !user.achievements.some(a => a.id === 'detective_novice')) {
-        available.push({
-            id: 'detective_novice',
-            name: 'Детектив-новичок',
-            category: 'score',
-            progress: { current: userStats.totalScore, target: 100 },
-            description: 'Наберите 100 очков'
-        });
-    }
+    // Получаем разблокированные достижения
+    const unlockedAchievementIds = (user.achievements || []).map(a => a.id);
+    console.log('🏆 Разблокированные достижения:', unlockedAchievementIds);
 
-    if (userStats.totalScore < 1000 && !user.achievements.some(a => a.id === 'detective_expert')) {
-        available.push({
-            id: 'detective_expert',
-            name: 'Опытный детектив',
-            category: 'score',
-            progress: { current: userStats.totalScore, target: 1000 },
-            description: 'Наберите 1000 очков'
-        });
-    }
+    // Конвертируем пользовательские данные в формат для новой системы
+    const convertedUserStats = {
+        investigations: userStats.investigations || userStats.totalQuestions / 5 || 0, // Основное поле
+        gamesPlayed: userStats.investigations || userStats.totalQuestions / 5 || 0,
+        solvedCases: userStats.solvedCases || 0,
+        totalScore: userStats.totalScore || 0,
+        accuracy: userStats.accuracy || 0,
+        maxWinStreak: userStats.maxWinStreak || 0,
+        perfectGames: userStats.perfectGames || 0,
+        fastestGame: userStats.fastestGame || 0,
+        averageTime: userStats.averageTime || 0,
+        dailyStreakCurrent: userStats.dailyStreakCurrent || 0,
+        easyGames: 0, // Пока не трекается
+        mediumGames: 0,
+        hardGames: 0,
+        expertGames: 0,
+        reputation: {
+            level: (user.reputation?.accuracy || 0) + (user.reputation?.speed || 0) +
+                (user.reputation?.consistency || 0) + (user.reputation?.difficulty || 0) / 4,
+            accuracy: user.reputation?.accuracy || 0,
+            speed: user.reputation?.speed || 0,
+            consistency: user.reputation?.consistency || 0,
+            difficulty: user.reputation?.difficulty || 0
+        },
+        crimeTypeMastery: {} // Пока пустое
+    };
 
-    if (userStats.totalScore < 10000 && !user.achievements.some(a => a.id === 'detective_master')) {
-        available.push({
-            id: 'detective_master',
-            name: 'Мастер-детектив',
-            category: 'score',
-            progress: { current: userStats.totalScore, target: 10000 },
-            description: 'Наберите 10000 очков'
-        });
-    }
-
-    // Достижения по количеству дел - ГЛАВНОЕ ИСПРАВЛЕНИЕ!
-    if (userStats.investigations < 10 && !user.achievements.some(a => a.id === 'case_solver')) {
-        available.push({
-            id: 'case_solver',
-            name: 'Решатель дел',
-            category: 'investigations',
-            progress: { current: userStats.investigations, target: 10 },
-            description: 'Решите 10 дел'
-        });
-    }
-
-    if (userStats.investigations < 25 && !user.achievements.some(a => a.id === 'detective_experienced')) {
-        available.push({
-            id: 'detective_experienced',
-            name: 'Опытный детектив',
-            category: 'investigations',
-            progress: { current: userStats.investigations, target: 25 },
-            description: 'Проведите 25 расследований'
-        });
-    }
-
-    if (userStats.investigations < 50 && !user.achievements.some(a => a.id === 'veteran_detective')) {
-        available.push({
-            id: 'veteran_detective',
-            name: 'Ветеран сыска',
-            category: 'investigations',
-            progress: { current: userStats.investigations, target: 50 },
-            description: 'Решите 50 дел'
-        });
-    }
-
-    if (userStats.investigations < 100 && !user.achievements.some(a => a.id === 'detective_master')) {
-        available.push({
-            id: 'detective_master',
-            name: 'Мастер следствия',
-            category: 'investigations',
-            progress: { current: userStats.investigations, target: 100 },
-            description: 'Проведите 100 расследований'
-        });
-    }
-
-    // Достижения по точности
-    if (userStats.investigations >= 10) {
-        if (userStats.accuracy < 90 && !user.achievements.some(a => a.id === 'master_detective')) {
-            available.push({
-                id: 'master_detective',
-                name: 'Мастер-детектив точности',
-                category: 'accuracy',
-                progress: { current: Math.round(userStats.accuracy), target: 90 },
-                description: 'Достичь точности 90%+ в 10+ играх'
-            });
+    // Проходим по всем достижениям и показываем только близкие к получению
+    for (const achievement of SERVER_ACHIEVEMENTS_CONFIG) {
+        // Пропускаем уже разблокированные
+        if (unlockedAchievementIds.includes(achievement.id)) {
+            continue;
         }
 
-        if (userStats.accuracy < 95 && userStats.investigations >= 20 && !user.achievements.some(a => a.id === 'perfectionist')) {
+        // Рассчитываем прогресс
+        const progress = calculateServerAchievementProgress(achievement, convertedUserStats);
+
+        // Показываем достижения с прогрессом > 0% или базовые для новичков
+        const shouldShow = progress.percentage > 0 ||
+            ['first_investigation', 'truth_seeker', 'rookie_detective', 'sharp_eye', 'perfect_start', 'first_thousand'].includes(achievement.id);
+
+        if (shouldShow) {
             available.push({
-                id: 'perfectionist',
-                name: 'Перфекционист',
-                category: 'accuracy',
-                progress: { current: Math.round(userStats.accuracy), target: 95 },
-                description: 'Достичь точности 95%+ в 20+ играх'
+                id: achievement.id,
+                name: achievement.name,
+                category: achievement.category,
+                progress: {
+                    current: progress.current,
+                    target: progress.target
+                },
+                description: achievement.description
             });
         }
     }
 
-    // Достижения серий
-    if (userStats.maxWinStreak < 5 && !user.achievements.some(a => a.id === 'streak_5')) {
-        available.push({
-            id: 'streak_5',
-            name: 'Горячая рука',
-            category: 'streak',
-            progress: { current: userStats.maxWinStreak, target: 5 },
-            description: 'Серия из 5 идеальных игр'
-        });
-    }
+    // Сортируем по близости к завершению (по проценту прогресса)
+    available.sort((a, b) => {
+        const progressA = (a.progress.current / a.progress.target) * 100;
+        const progressB = (b.progress.current / b.progress.target) * 100;
+        return progressB - progressA; // От большего к меньшему
+    });
 
-    if (userStats.maxWinStreak < 10 && !user.achievements.some(a => a.id === 'streak_10')) {
-        available.push({
-            id: 'streak_10',
-            name: 'Неостановимый',
-            category: 'streak',
-            progress: { current: userStats.maxWinStreak, target: 10 },
-            description: 'Серия из 10 идеальных игр'
-        });
-    }
+    // Ограничиваем количество достижений для оптимизации
+    const limitedAvailable = available.slice(0, 15);
 
-    console.log('✅ Сгенерировано доступных достижений:', available.length);
-    console.log('📋 Доступные достижения:', available.map(a => ({ id: a.id, name: a.name, progress: a.progress })));
+    console.log('✅ Сгенерировано доступных достижений:', limitedAvailable.length);
+    console.log('📋 Доступные достижения:', limitedAvailable.map(a => ({
+        id: a.id,
+        name: a.name,
+        progress: `${a.progress.current}/${a.progress.target}`,
+        percentage: Math.round((a.progress.current / a.progress.target) * 100) + '%'
+    })));
 
-    return available;
+    return limitedAvailable;
 }
 
 /**
@@ -626,6 +672,37 @@ function calculateNextAchievements(user: IUser): NextAchievement[] {
     }
 
     return next;
+}
+
+// Функция расчета прогресса для серверной части
+function calculateServerAchievementProgress(achievement: any, userStats: any) {
+    const req = achievement.requirement;
+    let current = 0;
+    let target = req.value || 1;
+
+    switch (req.type) {
+        case 'investigations':
+            current = userStats.investigations || 0;
+            break;
+        case 'accuracy':
+            if ((userStats.investigations || 0) >= (req.minGames || 0)) {
+                current = Math.round(userStats.accuracy || 0);
+            }
+            break;
+        case 'totalScore':
+            current = userStats.totalScore || 0;
+            break;
+        case 'perfectGames':
+            current = userStats.perfectGames || 0;
+            break;
+        case 'winStreak':
+            current = userStats.maxWinStreak || 0;
+            break;
+        default:
+            current = 0;
+    }
+
+    return { current, target, percentage: Math.min((current / target) * 100, 100) };
 }
 
 export default router; 
