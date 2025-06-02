@@ -87,15 +87,39 @@
     }
 }
 
-/* Стили для достижений - ПРИНУДИТЕЛЬНАЯ ГОРИЗОНТАЛЬНАЯ СТРУКТУРА */
+/* Стили для достижений - ГОРИЗОНТАЛЬНАЯ ПРОКРУТКА */
 #achievements-grid {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    display: flex !important;
+    flex-direction: row !important;
     gap: 16px !important;
     margin-top: 16px !important;
     padding: 8px !important;
-    max-height: none !important;
-    overflow: visible !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #DC143C #2A2A2A !important;
+}
+
+/* Стилизация скроллбара */
+#achievements-grid::-webkit-scrollbar {
+    height: 8px !important;
+}
+
+#achievements-grid::-webkit-scrollbar-track {
+    background: rgba(42, 42, 42, 0.5) !important;
+    border-radius: 4px !important;
+}
+
+#achievements-grid::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #8B0000, #DC143C) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+#achievements-grid::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #DC143C, #FF073A) !important;
 }
 
 .achievement-card {
@@ -118,10 +142,12 @@
     box-shadow: 
         0 4px 16px rgba(0, 0, 0, 0.3),
         0 2px 8px rgba(139, 0, 0, 0.1) !important;
-    min-height: 100px !important;
+    min-height: 120px !important;
     max-height: 150px !important;
-    width: 100% !important;
-    height: auto !important;
+    min-width: 280px !important;
+    max-width: 320px !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
 }
 
 /* ЗАПРЕЩАЕМ любую вертикальную структуру */

@@ -16,6 +16,7 @@ import type {
 
 import {
     PROFILE_CONFIG,
+    ACHIEVEMENTS_CONFIG,
     getRankByLevel,
     calculateLevel,
     calculateXP,
@@ -220,7 +221,7 @@ export class CriminalTrustProfile {
 
                     allAchievements = [...allAchievements, ...achievementsData.available.map((ach: any) => {
                         const achievementInfo = this.getAchievementInfo(ach.id);
-                        const progress = ach.progress ? Math.min(Math.round((ach.progress.current / ach.progress.target) * 100), 99) : 0;
+                        const progress = this.calculateRealProgress(ach.id, this.state.user);
 
                         return {
                             id: ach.id,
@@ -1567,6 +1568,49 @@ export class CriminalTrustProfile {
         if (card) {
             card.style.transform = '';
         }
+    }
+
+    private calculateRealProgress(achievementId: string, user: any): number {
+        if (!user) return 0;
+
+        const achievementInfo = this.getAchievementInfo(achievementId);
+        const achievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievementId);
+
+        if (!achievement || !achievement.requirement) return 0;
+
+        const { requirement } = achievement;
+        let currentValue = 0;
+
+        switch (requirement.type) {
+            case 'investigations':
+                currentValue = user.gamesPlayed || 0;
+                break;
+            case 'accuracy':
+                if ((user.gamesPlayed || 0) >= (requirement.minGames || 0)) {
+                    currentValue = user.accuracy || 0;
+                    return Math.min(currentValue, 100);
+                }
+                return 0;
+            case 'winStreak':
+                currentValue = user.winStreak || user.maxWinStreak || 0;
+                break;
+            case 'totalScore':
+                currentValue = user.totalScore || 0;
+                break;
+            case 'perfectGames':
+                currentValue = user.perfectGames || 0;
+                break;
+            case 'fastGame':
+                // Для быстрых игр пока возвращаем 0, так как нужны дополнительные данные
+                return 0;
+            default:
+                return 0;
+        }
+
+        // Для процентных достижений (точность) уже обработаны выше
+        // Для остальных - процент от цели
+        const progress = (currentValue / requirement.value) * 100;
+        return Math.min(Math.round(progress), 99); // Максимум 99% для не разблокированных
     }
 }
 
