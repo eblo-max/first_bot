@@ -40,7 +40,7 @@ export class CriminalTrustProfile {
         // Инициализируем состояние
         this.state = {
             user: null,
-            achievements: [],
+            achievements: [] as any[],
             leaderboard: {
                 current: 'day',
                 data: {} as Record<LeaderboardPeriod, LeaderboardData>
@@ -190,43 +190,101 @@ export class CriminalTrustProfile {
                 console.log('📊 Получены данные достижений:', batchData.achievements);
 
                 // API возвращает объект {unlocked: [], available: [], progress: {}}
-                // Нужно объединить unlocked и available в один массив
-                let allAchievements: Achievement[] = [];
+                let allAchievements: any[] = [];
                 const achievementsData = batchData.achievements as any;
 
+                // Обрабатываем разблокированные достижения (из user.achievements в базе)
                 if (achievementsData.unlocked && Array.isArray(achievementsData.unlocked)) {
-                    // Добавляем разблокированные достижения
-                    allAchievements = [...allAchievements, ...achievementsData.unlocked.map((ach: any) => ({
-                        id: ach.id || 'unknown',
-                        name: ach.name || 'Достижение',
-                        description: ach.description || 'Описание недоступно',
-                        category: ach.category || 'Общее',
-                        icon: '🏆',
-                        rarity: 'common',
-                        isUnlocked: true,
-                        progress: 100
-                    }))];
+                    console.log('🔓 Обрабатываем разблокированные достижения:', achievementsData.unlocked.length);
+
+                    allAchievements = [...allAchievements, ...achievementsData.unlocked.map((ach: any) => {
+                        const achievementInfo = this.getAchievementInfo(ach.id);
+
+                        return {
+                            id: ach.id,
+                            name: ach.name || achievementInfo.name,
+                            description: ach.description || achievementInfo.description,
+                            category: this.mapBackendCategoryToFrontend(ach.category) || achievementInfo.category,
+                            icon: achievementInfo.icon,
+                            rarity: this.mapBackendRarityToFrontend(ach.rarity) || achievementInfo.rarity,
+                            isUnlocked: true,
+                            progress: 100,
+                            unlockedAt: ach.unlockedAt ? new Date(ach.unlockedAt) : undefined
+                        };
+                    })];
                 }
 
+                // Обрабатываем доступные достижения (генерируемые в generateAvailableAchievements)
                 if (achievementsData.available && Array.isArray(achievementsData.available)) {
-                    // Добавляем доступные достижения  
-                    allAchievements = [...allAchievements, ...achievementsData.available.map((ach: any) => ({
-                        id: ach.id || 'unknown',
-                        name: ach.name || 'Достижение',
-                        description: ach.description || 'Описание недоступно',
-                        category: ach.category || 'Общее',
-                        icon: this.getAchievementIcon(ach.category || 'score'),
-                        rarity: 'common',
-                        isUnlocked: false,
-                        progress: ach.progress ? Math.round((ach.progress.current / ach.progress.target) * 100) : 0
-                    }))];
+                    console.log('🔒 Обрабатываем доступные достижения:', achievementsData.available.length);
+
+                    allAchievements = [...allAchievements, ...achievementsData.available.map((ach: any) => {
+                        const achievementInfo = this.getAchievementInfo(ach.id);
+                        const progress = ach.progress ? Math.min(Math.round((ach.progress.current / ach.progress.target) * 100), 99) : 0;
+
+                        return {
+                            id: ach.id,
+                            name: ach.name || achievementInfo.name,
+                            description: ach.description || achievementInfo.description,
+                            category: this.mapBackendCategoryToFrontend(ach.category) || achievementInfo.category,
+                            icon: achievementInfo.icon,
+                            rarity: achievementInfo.rarity,
+                            isUnlocked: false,
+                            progress: progress,
+                            progressData: ach.progress
+                        };
+                    })];
                 }
 
-                console.log('🏆 Сформирован массив достижений:', allAchievements.length);
+                // Добавляем прочие достижения из системы как заблокированные
+                const unlockedIds = allAchievements.map(a => a.id);
+                const allPossibleAchievements = this.getAllPossibleAchievements();
+
+                allPossibleAchievements.forEach(achievementInfo => {
+                    if (!unlockedIds.includes(achievementInfo.id)) {
+                        allAchievements.push({
+                            id: achievementInfo.id,
+                            name: achievementInfo.name,
+                            description: achievementInfo.description,
+                            category: achievementInfo.category,
+                            icon: achievementInfo.icon,
+                            rarity: achievementInfo.rarity,
+                            isUnlocked: false,
+                            progress: 0
+                        });
+                    }
+                });
+
+                // Сортируем достижения: разблокированные сначала, затем по прогрессу
+                allAchievements.sort((a, b) => {
+                    if (a.isUnlocked && !b.isUnlocked) return -1;
+                    if (!a.isUnlocked && b.isUnlocked) return 1;
+                    if (!a.isUnlocked && !b.isUnlocked) {
+                        return (b.progress || 0) - (a.progress || 0);
+                    }
+                    return 0;
+                });
+
+                console.log('🏆 Сформирован финальный массив достижений:', allAchievements.length);
+                console.log('📊 Статистика достижений:', {
+                    unlocked: allAchievements.filter(a => a.isUnlocked).length,
+                    locked: allAchievements.filter(a => !a.isUnlocked).length,
+                    total: allAchievements.length
+                });
+
                 this.state.achievements = allAchievements;
                 this.renderAchievements(allAchievements);
             } else {
                 console.log('❌ Нет данных достижений или неправильный формат');
+                // Показываем базовые достижения как заблокированные
+                const baseAchievements = this.getAllPossibleAchievements().map(info => ({
+                    ...info,
+                    isUnlocked: false,
+                    progress: 0
+                }));
+
+                this.state.achievements = baseAchievements;
+                this.renderAchievements(baseAchievements);
             }
 
             // Обновляем лидерборд
@@ -321,7 +379,7 @@ export class CriminalTrustProfile {
     // ДОСТИЖЕНИЯ
     // =========================================================================
 
-    private renderAchievements(achievements: Achievement[]): void {
+    private renderAchievements(achievements: any[]): void {
         const container = document.getElementById('achievements-grid');
         if (!container) return;
 
@@ -346,7 +404,7 @@ export class CriminalTrustProfile {
         console.log(`🏆 Отрендерено ${achievements.length} достижений`);
     }
 
-    private createAchievementElement(achievement: Achievement): HTMLElement {
+    private createAchievementElement(achievement: any): HTMLElement {
         const div = document.createElement('div');
         div.className = `achievement-card ${achievement.isUnlocked ? 'unlocked' : 'locked'}`;
         div.dataset.achievementId = achievement.id;
@@ -668,14 +726,330 @@ export class CriminalTrustProfile {
 
     private getAchievementIcon(category: string): string {
         const iconMap: { [key: string]: string } = {
-            'score': '⭐',
-            'investigations': '🔍',
-            'streak': '🔥',
-            'accuracy': '🎯',
+            'progress': '📈',
+            'mastery': '🎯',
             'speed': '⚡',
-            'general': '🏆'
+            'streak': '🔥',
+            'special': '⭐',
+            'score': '💰',
+            'investigations': '🔍',
+            'accuracy': '🎯',
+            'default': '🏆'
         };
         return iconMap[category] || '🏆';
+    }
+
+    private getAchievementInfo(achievementId: string): {
+        id: string;
+        name: string;
+        description: string;
+        category: string;
+        icon: string;
+        rarity: string
+    } {
+        const achievementDatabase: Record<string, any> = {
+            // === ПРОГРЕСС ===
+            'first_case': {
+                name: 'Первое дело',
+                description: 'Провели первое расследование',
+                category: 'progress',
+                rarity: 'common'
+            },
+            'detective_rookie': {
+                name: 'Начинающий детектив',
+                description: 'Проведено 5 расследований',
+                category: 'progress',
+                rarity: 'common'
+            },
+            'detective_experienced': {
+                name: 'Опытный детектив',
+                description: 'Проведено 25 расследований',
+                category: 'progress',
+                rarity: 'common'
+            },
+            'detective_veteran': {
+                name: 'Ветеран розыска',
+                description: 'Проведено 50 расследований',
+                category: 'progress',
+                rarity: 'rare'
+            },
+            'detective_master': {
+                name: 'Мастер следствия',
+                description: 'Проведено 100 расследований',
+                category: 'progress',
+                rarity: 'rare'
+            },
+            'detective_legend': {
+                name: 'Легенда криминалистики',
+                description: 'Проведено 250 расследований',
+                category: 'progress',
+                rarity: 'epic'
+            },
+            'detective_immortal': {
+                name: 'Бессмертный сыщик',
+                description: 'Проведено 500 расследований',
+                category: 'progress',
+                rarity: 'legendary'
+            },
+
+            // === МАСТЕРСТВО ===
+            'perfectionist': {
+                name: 'Перфекционист',
+                description: 'Точность 95%+ в 20+ играх',
+                category: 'mastery',
+                rarity: 'epic'
+            },
+            'master_detective': {
+                name: 'Мастер-детектив',
+                description: 'Точность 90%+ в 50+ играх',
+                category: 'mastery',
+                rarity: 'rare'
+            },
+            'perfect_5': {
+                name: 'Снайпер',
+                description: '5 идеальных игр',
+                category: 'mastery',
+                rarity: 'common'
+            },
+            'perfect_15': {
+                name: 'Безошибочный',
+                description: '15 идеальных игр',
+                category: 'mastery',
+                rarity: 'rare'
+            },
+            'perfect_50': {
+                name: 'Гений дедукции',
+                description: '50 идеальных игр',
+                category: 'mastery',
+                rarity: 'epic'
+            },
+            'perfect_100': {
+                name: 'Шерлок Холмс',
+                description: '100 идеальных игр',
+                category: 'mastery',
+                rarity: 'legendary'
+            },
+
+            // === СКОРОСТЬ ===
+            'speed_demon': {
+                name: 'Демон скорости',
+                description: 'Решили дело за 30 секунд',
+                category: 'speed',
+                rarity: 'rare'
+            },
+            'lightning_fast': {
+                name: 'Молниеносный',
+                description: 'Решили дело за 15 секунд',
+                category: 'speed',
+                rarity: 'epic'
+            },
+
+            // === СЕРИИ ===
+            'streak_3': {
+                name: 'Удачная серия',
+                description: 'Серия из 3 идеальных игр',
+                category: 'streak',
+                rarity: 'common'
+            },
+            'streak_5': {
+                name: 'Горячая рука',
+                description: 'Серия из 5 идеальных игр',
+                category: 'streak',
+                rarity: 'rare'
+            },
+            'streak_10': {
+                name: 'Неостановимый',
+                description: 'Серия из 10 идеальных игр',
+                category: 'streak',
+                rarity: 'epic'
+            },
+            'streak_20': {
+                name: 'Машина правосудия',
+                description: 'Серия из 20 идеальных игр',
+                category: 'streak',
+                rarity: 'legendary'
+            },
+            'daily_3': {
+                name: 'Постоянство',
+                description: '3 дня подряд',
+                category: 'streak',
+                rarity: 'common'
+            },
+            'daily_7': {
+                name: 'Еженедельник',
+                description: '7 дней подряд',
+                category: 'streak',
+                rarity: 'rare'
+            },
+            'daily_30': {
+                name: 'Месячная преданность',
+                description: '30 дней подряд',
+                category: 'streak',
+                rarity: 'epic'
+            },
+            'daily_100': {
+                name: 'Одержимый работой',
+                description: '100 дней подряд',
+                category: 'streak',
+                rarity: 'legendary'
+            },
+
+            // === ОЧКИ ===
+            'score_1k': {
+                name: 'Первая тысяча',
+                description: 'Набрано 1000 очков',
+                category: 'score',
+                rarity: 'common'
+            },
+            'score_5k': {
+                name: 'Пять тысяч очков',
+                description: 'Набрано 5000 очков',
+                category: 'score',
+                rarity: 'rare'
+            },
+            'score_10k': {
+                name: 'Десять тысяч очков',
+                description: 'Набрано 10000 очков',
+                category: 'score',
+                rarity: 'epic'
+            },
+            'score_25k': {
+                name: 'Четверть сотни тысяч',
+                description: 'Набрано 25000 очков',
+                category: 'score',
+                rarity: 'legendary'
+            },
+
+            // === ОСОБЫЕ ===
+            'expert_specialist': {
+                name: 'Специалист экспертного уровня',
+                description: 'Решили 10 дел экспертного уровня',
+                category: 'special',
+                rarity: 'epic'
+            },
+            'legendary_reputation': {
+                name: 'Легендарная репутация',
+                description: 'Достигли 90+ репутации',
+                category: 'special',
+                rarity: 'legendary'
+            },
+            'versatile_detective': {
+                name: 'Разносторонний детектив',
+                description: 'Играли во всех уровнях сложности',
+                category: 'special',
+                rarity: 'rare'
+            },
+
+            // === BACKEND ДОСТИЖЕНИЯ ===
+            'detective_novice': {
+                name: 'Детектив-новичок',
+                description: 'Наберите 100 очков',
+                category: 'score',
+                rarity: 'common'
+            },
+            'detective_expert': {
+                name: 'Опытный детектив',
+                description: 'Наберите 1000 очков',
+                category: 'score',
+                rarity: 'rare'
+            },
+            'case_solver': {
+                name: 'Решатель дел',
+                description: 'Решите 10 дел',
+                category: 'investigations',
+                rarity: 'common'
+            },
+            'veteran_detective': {
+                name: 'Ветеран сыска',
+                description: 'Решите 50 дел',
+                category: 'investigations',
+                rarity: 'rare'
+            }
+        };
+
+        const info = achievementDatabase[achievementId];
+        if (info) {
+            return {
+                id: achievementId,
+                name: info.name,
+                description: info.description,
+                category: info.category,
+                icon: this.getAchievementIcon(info.category),
+                rarity: info.rarity
+            };
+        }
+
+        // Fallback для неизвестных достижений
+        return {
+            id: achievementId,
+            name: 'Неизвестное достижение',
+            description: 'Описание отсутствует',
+            category: 'special',
+            icon: this.getAchievementIcon('default'),
+            rarity: 'common'
+        };
+    }
+
+    private mapBackendCategoryToFrontend(backendCategory: string): string {
+        const categoryMap: Record<string, string> = {
+            'ПРОГРЕСС': 'progress',
+            'МАСТЕРСТВО': 'mastery',
+            'СКОРОСТЬ': 'speed',
+            'СЕРИИ': 'streak',
+            'ОСОБЫЕ': 'special',
+            'score': 'score',
+            'investigations': 'investigations',
+            'accuracy': 'accuracy'
+        };
+
+        return categoryMap[backendCategory] || 'special';
+    }
+
+    private mapBackendRarityToFrontend(backendRarity: string): string {
+        const rarityMap: Record<string, string> = {
+            'ОБЫЧНОЕ': 'common',
+            'РЕДКОЕ': 'rare',
+            'ЭПИЧЕСКОЕ': 'epic',
+            'ЛЕГЕНДАРНОЕ': 'legendary'
+        };
+
+        return rarityMap[backendRarity] || 'common';
+    }
+
+    private getAllPossibleAchievements(): Array<{
+        id: string;
+        name: string;
+        description: string;
+        category: string;
+        icon: string;
+        rarity: string;
+    }> {
+        const allIds = [
+            // Прогресс
+            'first_case', 'detective_rookie', 'detective_experienced', 'detective_veteran',
+            'detective_master', 'detective_legend', 'detective_immortal',
+
+            // Мастерство
+            'perfectionist', 'master_detective', 'perfect_5', 'perfect_15', 'perfect_50', 'perfect_100',
+
+            // Скорость
+            'speed_demon', 'lightning_fast',
+
+            // Серии
+            'streak_3', 'streak_5', 'streak_10', 'streak_20',
+            'daily_3', 'daily_7', 'daily_30', 'daily_100',
+
+            // Очки
+            'score_1k', 'score_5k', 'score_10k', 'score_25k',
+
+            // Особые
+            'expert_specialist', 'legendary_reputation', 'versatile_detective',
+
+            // Backend достижения
+            'detective_novice', 'detective_expert', 'case_solver', 'veteran_detective'
+        ];
+
+        return allIds.map(id => this.getAchievementInfo(id));
     }
 
     private getUserDisplayName(user: any): string {
@@ -883,7 +1257,7 @@ export class CriminalTrustProfile {
         authService.hapticFeedback('medium');
     }
 
-    private updateModalContent(achievement: Achievement): void {
+    private updateModalContent(achievement: any): void {
         // Обновляем иконку
         const modalIcon = document.getElementById('modal-icon');
         if (modalIcon) {
@@ -956,7 +1330,7 @@ export class CriminalTrustProfile {
         }
     }
 
-    private getAchievementRequirement(achievement: Achievement): string {
+    private getAchievementRequirement(achievement: any): string {
         // Базовые требования по категориям
         const requirements: Record<string, string> = {
             'score': 'Набрать определенное количество очков в играх',
@@ -973,7 +1347,7 @@ export class CriminalTrustProfile {
         return requirements[achievement.category || 'default'] || 'Выполнить специальные условия для получения этого достижения';
     }
 
-    private getAchievementReward(achievement: Achievement): string {
+    private getAchievementReward(achievement: any): string {
         // Базовые награды по редкости
         const rewards: Record<string, string> = {
             'common': '+50 очков опыта',

@@ -119,12 +119,13 @@ export interface Achievement {
     description: string;
     category: AchievementCategory;
     icon: string;
-    requirement: AchievementRequirement;
+    requirement?: AchievementRequirement;
     rarity: AchievementRarity;
-    sound: AchievementSound;
+    sound?: AchievementSound;
     isUnlocked: boolean;
     unlockedAt?: Date;
     progress?: number;
+    progressData?: { current: number; target: number };
     tips?: string;
 }
 
@@ -195,7 +196,7 @@ export type LeaderboardPeriod = 'day' | 'week' | 'month' | 'all';
 
 export interface ProfileState {
     user: User | null;
-    achievements: Achievement[];
+    achievements: any[];
     leaderboard: {
         current: LeaderboardPeriod;
         data: Record<LeaderboardPeriod, LeaderboardData>;
