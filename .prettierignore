@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+public/dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Package files
+package-lock.json
+yarn.lock
+
+# Git
+.git/
+
+# IDE
+.vscode/
+.idea/
+
+# Test results
+test-results/
+coverage/ 

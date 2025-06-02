@@ -1,24 +1,67 @@
-# Зависимости
-/node_modules
-/.pnp
-.pnp.js
+# Dependencies
+node_modules/
 
-# Тестирование
-/coverage
+# Build outputs
+dist/
+public/dist/
+build/
 
-# Продакшн
-/build
-/dist
+# Logs
+*.log
+npm-debug.log*
 
-# Переменные окружения
+# Environment variables
 .env
 .env.local
+.env.production
+
+# Database
+*.db
+*.sqlite
+
+# Testing
+test-results/
+coverage/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Runtime files
+*.pid
+*.lock
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Compiled JavaScript files (preventing duplicates)
+public/*.js
+public/**/*.js
+!public/assets/
+
+# Keep only these essential JS files
+!scripts/*.js
+!tests/**/*.js
+
+# Package files
+package-lock.json
+yarn.lock
+
+# Git
+.git/
+
+# Переменные окружения
 .env.development.local
 .env.test.local
 .env.production.local
 
 # Логи
-npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 logs
