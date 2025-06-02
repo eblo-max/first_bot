@@ -134,20 +134,62 @@ export interface AchievementRequirement {
     value: number;
     minGames?: number;
     condition?: string;
+    crimeType?: string;
+    accuracy?: number;
+    level?: number;
+    averageTime?: number;
+    startHour?: number;
+    endHour?: number;
+    days?: number;
+    perfectGame?: boolean;
+    speed?: number;
+    consistency?: number;
+    difficulty?: number;
 }
 
 export type RequirementType =
     | 'investigations'
+    | 'correctAnswers'
+    | 'solvedCases'
     | 'accuracy'
     | 'winStreak'
     | 'totalScore'
     | 'perfectGames'
-    | 'fastGame'
+    | 'fastestGame'
+    | 'averageTime'
+    | 'easyGames'
+    | 'mediumGames'
+    | 'hardGames'
+    | 'expertGames'
+    | 'reputation'
     | 'dailyStreak'
+    | 'crimeTypeMastery'
+    | 'multipleMastery'
+    | 'allMastery'
+    | 'perfectReputation'
+    | 'speedAccuracy'
+    | 'firstDayGames'
+    | 'comeback'
+    | 'midnightGame'
+    | 'weekendGames'
+    | 'perfectWeek'
+    | 'encyclopedic'
+    | 'fastGame'
     | 'timeRange'
     | 'consistency';
 
 export type AchievementCategory =
+    | 'investigation'
+    | 'accuracy'
+    | 'speed'
+    | 'streak'
+    | 'score'
+    | 'specialization'
+    | 'difficulty'
+    | 'reputation'
+    | 'consistency'
+    | 'elite'
+    | 'unique'
     | 'Начинающий'
     | 'Профессионал'
     | 'Мастерство'
