@@ -147,13 +147,16 @@ export class AuthService {
         // Выполняем авторизацию через API
         try {
             const authResult = await this.performAuth(telegramData);
-            if (authResult.success && authResult.data) {
+            console.log('📡 Результат авторизации:', authResult);
+
+            // Сервер возвращает { status: 'success', data: { token, user } }
+            if ((authResult.success || authResult.status === 'success') && authResult.data) {
                 this.setToken(authResult.data.token);
                 console.log('✅ Успешная авторизация');
                 return { success: true, user: authResult.data.user };
             } else {
-                console.error('❌ Ошибка авторизации:', authResult.error);
-                return { success: false, error: authResult.error || 'Ошибка авторизации' };
+                console.error('❌ Ошибка авторизации:', authResult.error || authResult.message);
+                return { success: false, error: authResult.error || authResult.message || 'Ошибка авторизации' };
             }
         } catch (error) {
             console.error('❌ Исключение при авторизации:', error);
@@ -215,9 +218,14 @@ export class AuthService {
     // =========================================================================
 
     private async performAuth(telegramData: any): Promise<ApiResponse<AuthResponse>> {
-        const response = await this.makeAuthRequest('/auth/login', {
+        // Формируем правильный формат данных для API /auth/init
+        const requestData = telegramData.initData
+            ? { initData: telegramData.initData }
+            : telegramData; // Fallback для developer mode
+
+        const response = await this.makeAuthRequest('/auth/init', {
             method: 'POST',
-            body: JSON.stringify(telegramData)
+            body: JSON.stringify(requestData)
         });
 
         return response;
@@ -315,64 +323,24 @@ export class AuthService {
         return this.isInitialized;
     }
 
-    // =========================================================================
-    // УПРАВЛЕНИЕ ТЕМОЙ
-    // =========================================================================
-
     public applyTelegramTheme(): void {
-        if (!this.telegramApp?.themeParams) return;
-
-        try {
-            const root = document.documentElement;
-            const themeParams = this.telegramApp.themeParams;
-
-            // Применяем основные цвета темы
-            if (themeParams.bg_color) {
-                root.style.setProperty('--tg-bg-color', themeParams.bg_color);
-            }
-
-            if (themeParams.text_color) {
-                root.style.setProperty('--tg-text-color', themeParams.text_color);
-            }
-
-            if (themeParams.hint_color) {
-                root.style.setProperty('--tg-hint-color', themeParams.hint_color);
-            }
-
-            if (themeParams.button_color) {
-                root.style.setProperty('--tg-button-color', themeParams.button_color);
-            }
-
-            console.log('🎨 Telegram тема применена');
-        } catch (error) {
-            console.error('❌ Ошибка применения темы:', error);
+        if (this.telegramApp && this.telegramApp.colorScheme) {
+            document.documentElement.setAttribute('data-theme', this.telegramApp.colorScheme);
+            console.log(`🎨 Применена тема Telegram: ${this.telegramApp.colorScheme}`);
         }
     }
 
-    // =========================================================================
-    // УПРАВЛЕНИЕ КНОПКОЙ "НАЗАД"
-    // =========================================================================
-
     public setupBackButton(callback: () => void): void {
-        if (!this.telegramApp?.BackButton) return;
-
-        try {
+        if (this.telegramApp && this.telegramApp.BackButton) {
             this.telegramApp.BackButton.show();
             this.telegramApp.BackButton.onClick(callback);
             console.log('🔙 Кнопка "Назад" настроена');
-        } catch (error) {
-            console.error('❌ Ошибка настройки кнопки "Назад":', error);
         }
     }
 
-    public hideBackButton(): void {
-        if (!this.telegramApp?.BackButton) return;
-
-        try {
-            this.telegramApp.BackButton.hide();
-        } catch (error) {
-            console.error('❌ Ошибка скрытия кнопки "Назад":', error);
-        }
+    public logout(): void {
+        console.log('🚪 Выход из аккаунта...');
+        this.clearToken();
     }
 
     // =========================================================================
