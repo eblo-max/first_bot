@@ -352,6 +352,16 @@ router.get('/leaderboard/:period?', authMiddleware as any, async (req: Leaderboa
             total: formattedLeaderboard.length
         };
 
+        console.log('📤 Отправка данных лидерборда:', {
+            period,
+            total: result.total,
+            leaderboard: result.totalScore.map(user => ({
+                rank: user.rank,
+                name: user.name,
+                score: user.stats.totalScore
+            }))
+        });
+
         res.json({
             status: 'success',
             data: result
@@ -455,54 +465,72 @@ function generateReputationRecommendations(user: IUser): ReputationRecommendatio
  */
 function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
     const available: AvailableAchievement[] = [];
+    const userStats = user.stats;
 
-    // Проверяем ближайшие достижения по играм
-    const investigationMilestones = [5, 25, 50, 100, 250, 500];
-    const nextInvestigationMilestone = investigationMilestones.find(m => m > user.stats.investigations);
+    console.log('🔍 Генерация доступных достижений для пользователя:', user.telegramId);
+    console.log('📊 Статистика пользователя:', {
+        totalScore: userStats.totalScore,
+        investigations: userStats.investigations,
+        winStreak: userStats.winStreak,
+        accuracy: userStats.accuracy,
+        perfectGames: userStats.perfectGames
+    });
+    console.log('🏆 Разблокированные достижения:', user.achievements?.length || 0);
 
-    if (nextInvestigationMilestone) {
+    // Достижения по счету
+    if (userStats.totalScore >= 100 && !user.achievements.some(a => a.id === 'detective_novice')) {
         available.push({
-            id: `detective_milestone_${nextInvestigationMilestone}`,
-            name: `${nextInvestigationMilestone} расследований`,
-            category: 'ПРОГРЕСС',
-            progress: {
-                current: user.stats.investigations,
-                target: nextInvestigationMilestone
-            },
-            description: `Проведите ${nextInvestigationMilestone} расследований`
+            id: 'detective_novice',
+            name: 'Детектив-новичок',
+            category: 'score',
+            progress: { current: userStats.totalScore, target: 100 },
+            description: 'Наберите 100 очков'
         });
     }
 
-    // Проверяем достижения по точности
-    if (user.stats.accuracy < 90 && user.stats.investigations >= 10) {
+    if (userStats.totalScore >= 1000 && !user.achievements.some(a => a.id === 'detective_expert')) {
         available.push({
-            id: 'accuracy_90',
+            id: 'detective_expert',
+            name: 'Опытный детектив',
+            category: 'score',
+            progress: { current: userStats.totalScore, target: 1000 },
+            description: 'Наберите 1000 очков'
+        });
+    }
+
+    if (userStats.totalScore >= 10000 && !user.achievements.some(a => a.id === 'detective_master')) {
+        available.push({
+            id: 'detective_master',
             name: 'Мастер-детектив',
-            category: 'МАСТЕРСТВО',
-            progress: {
-                current: user.stats.accuracy,
-                target: 90
-            },
-            description: 'Достигните 90% точности'
+            category: 'score',
+            progress: { current: userStats.totalScore, target: 10000 },
+            description: 'Наберите 10000 очков'
         });
     }
 
-    // Проверяем достижения по сериям
-    const streakMilestones = [3, 5, 10, 20];
-    const nextStreakMilestone = streakMilestones.find(m => m > user.stats.maxWinStreak);
-
-    if (nextStreakMilestone) {
+    // Достижения по количеству дел
+    if (userStats.investigations >= 10 && !user.achievements.some(a => a.id === 'case_solver')) {
         available.push({
-            id: `streak_${nextStreakMilestone}`,
-            name: `Серия из ${nextStreakMilestone}`,
-            category: 'СЕРИИ',
-            progress: {
-                current: user.stats.maxWinStreak,
-                target: nextStreakMilestone
-            },
-            description: `Соберите серию из ${nextStreakMilestone} идеальных игр`
+            id: 'case_solver',
+            name: 'Решатель дел',
+            category: 'investigations',
+            progress: { current: userStats.investigations, target: 10 },
+            description: 'Решите 10 дел'
         });
     }
+
+    if (userStats.investigations >= 50 && !user.achievements.some(a => a.id === 'veteran_detective')) {
+        available.push({
+            id: 'veteran_detective',
+            name: 'Ветеран сыска',
+            category: 'investigations',
+            progress: { current: userStats.investigations, target: 50 },
+            description: 'Решите 50 дел'
+        });
+    }
+
+    console.log('✅ Сгенерировано доступных достижений:', available.length);
+    console.log('📋 Доступные достижения:', available.map(a => ({ id: a.id, name: a.name, progress: a.progress })));
 
     return available;
 }
