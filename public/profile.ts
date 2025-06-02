@@ -351,28 +351,54 @@ export class CriminalTrustProfile {
         div.className = `achievement-card ${achievement.isUnlocked ? 'unlocked' : 'locked'}`;
         div.dataset.achievementId = achievement.id;
 
-        const rarityClass = `rarity-${achievement.rarity}`;
-        div.classList.add(rarityClass);
+        // Добавляем класс редкости если есть
+        if (achievement.rarity) {
+            div.classList.add(`rarity-${achievement.rarity}`);
+        }
 
+        // Создаем красивый контент
         div.innerHTML = `
-            <div class="achievement-icon">${achievement.icon}</div>
+            <div class="achievement-icon">${this.getAchievementIcon(achievement.category || 'default')}</div>
             <div class="achievement-content">
-                <h3 class="achievement-name">${achievement.name}</h3>
-                <p class="achievement-description">${achievement.description}</p>
-                <div class="achievement-category">${achievement.category}</div>
-                ${!achievement.isUnlocked ? `
+                <h3 class="achievement-name">${achievement.name || 'Неизвестное достижение'}</h3>
+                <p class="achievement-description">${achievement.description || 'Описание отсутствует'}</p>
+                <div class="achievement-category">${this.getCategoryDisplayName(achievement.category || 'default')}</div>
+                ${!achievement.isUnlocked && achievement.progress !== undefined ? `
                     <div class="achievement-progress">
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${achievement.progress || 0}%"></div>
+                            <div class="progress-fill" style="width: ${achievement.progress}%"></div>
                         </div>
-                        <span class="progress-text">${Math.round(achievement.progress || 0)}%</span>
+                        <span class="progress-text">${Math.round(achievement.progress)}%</span>
                     </div>
                 ` : ''}
             </div>
             ${achievement.isUnlocked ? '<div class="achievement-unlock-badge">✓</div>' : ''}
         `;
 
+        // Добавляем обработчик клика для модального окна
+        div.addEventListener('click', () => {
+            this.showAchievementModal(achievement.id);
+            authService.hapticFeedback('medium');
+        });
+
         return div;
+    }
+
+    private getCategoryDisplayName(category: string): string {
+        const categoryNames: Record<string, string> = {
+            'score': 'НАБРАННЫЕ ОЧКИ',
+            'games': 'КОЛИЧЕСТВО ИГР',
+            'investigation': 'РАССЛЕДОВАНИЯ',
+            'deduction': 'ДЕДУКЦИЯ',
+            'social': 'СОЦИАЛЬНОЕ',
+            'speed': 'СКОРОСТЬ',
+            'accuracy': 'ТОЧНОСТЬ',
+            'streak': 'СЕРИИ',
+            'special': 'ОСОБЫЕ',
+            'default': 'ОБЩИЕ'
+        };
+
+        return categoryNames[category] || category.toUpperCase();
     }
 
     // =========================================================================
@@ -829,55 +855,186 @@ export class CriminalTrustProfile {
 
     private showAchievementModal(achievementId: string): void {
         const achievement = this.state.achievements.find(a => a.id === achievementId);
-        if (!achievement) return;
+        if (!achievement) {
+            console.error('❌ Достижение не найдено:', achievementId);
+            return;
+        }
 
-        // Создаем модальное окно
-        const modal = document.createElement('div');
-        modal.className = 'achievement-modal';
-        modal.innerHTML = `
-            <div class="modal-overlay">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>${achievement.name}</h2>
-                        <button class="modal-close">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="achievement-large-icon">${achievement.icon}</div>
-                        <p class="achievement-description">${achievement.description}</p>
-                        <div class="achievement-rarity rarity-${achievement.rarity}">${achievement.rarity}</div>
-                        ${achievement.isUnlocked ?
-                `<div class="unlock-status unlocked">Получено!</div>` :
-                `<div class="unlock-status locked">
-                                <div class="progress-info">Прогресс: ${Math.round(achievement.progress || 0)}%</div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: ${achievement.progress || 0}%"></div>
-                                </div>
-                            </div>`
+        console.log('🏆 Показываем модальное окно для достижения:', achievement);
+
+        // Находим существующий модальный элемент
+        const modal = document.getElementById('achievement-modal');
+        if (!modal) {
+            console.error('❌ Модальное окно не найдено в DOM');
+            return;
+        }
+
+        // Обновляем содержимое модального окна
+        this.updateModalContent(achievement);
+
+        // Показываем модальное окно
+        modal.classList.add('show');
+        modal.style.display = 'flex';
+
+        // Добавляем обработчики закрытия если еще не добавлены
+        this.setupModalCloseHandlers(modal);
+
+        // Haptic feedback
+        authService.hapticFeedback('medium');
+    }
+
+    private updateModalContent(achievement: Achievement): void {
+        // Обновляем иконку
+        const modalIcon = document.getElementById('modal-icon');
+        if (modalIcon) {
+            modalIcon.textContent = this.getAchievementIcon(achievement.category || 'default');
+        }
+
+        // Обновляем заголовок
+        const modalTitle = document.getElementById('modal-title');
+        if (modalTitle) {
+            modalTitle.textContent = achievement.name || 'Неизвестное достижение';
+        }
+
+        // Обновляем описание
+        const modalDescription = document.getElementById('modal-description');
+        if (modalDescription) {
+            modalDescription.textContent = achievement.description || 'Описание отсутствует';
+        }
+
+        // Обновляем статус
+        const modalStatus = document.getElementById('modal-status');
+        if (modalStatus) {
+            if (achievement.isUnlocked) {
+                modalStatus.textContent = 'ПОЛУЧЕНО';
+                modalStatus.className = 'achievement-modal-status unlocked';
+            } else {
+                modalStatus.textContent = 'НЕ ПОЛУЧЕНО';
+                modalStatus.className = 'achievement-modal-status locked';
             }
-                    </div>
-                </div>
-            </div>
-        `;
+        }
 
-        document.body.appendChild(modal);
+        // Обновляем прогресс (показываем только для заблокированных достижений)
+        const modalProgress = document.getElementById('modal-progress');
+        const progressCurrent = document.getElementById('progress-current');
+        const progressTarget = document.getElementById('progress-target');
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercentage = document.getElementById('progress-percentage');
 
-        // Обработчик закрытия
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal.querySelector('.modal-overlay') ||
-                e.target === modal.querySelector('.modal-close')) {
-                this.hideAchievementModal();
+        if (modalProgress && !achievement.isUnlocked && achievement.progress !== undefined) {
+            modalProgress.style.display = 'block';
+
+            const progress = achievement.progress;
+            const current = Math.round(progress);
+            const target = 100;
+
+            if (progressCurrent) progressCurrent.textContent = current.toString();
+            if (progressTarget) progressTarget.textContent = target.toString();
+            if (progressBar) progressBar.style.width = `${progress}%`;
+            if (progressPercentage) progressPercentage.textContent = `${current}%`;
+        } else if (modalProgress) {
+            modalProgress.style.display = 'none';
+        }
+
+        // Обновляем требования
+        const modalRequirement = document.getElementById('modal-requirement');
+        const requirementText = document.getElementById('requirement-text');
+        if (modalRequirement && requirementText) {
+            const requirement = this.getAchievementRequirement(achievement);
+            requirementText.textContent = requirement;
+        }
+
+        // Обновляем награду (показываем только для разблокированных достижений)
+        const modalReward = document.getElementById('modal-reward');
+        const rewardText = document.getElementById('reward-text');
+        if (modalReward && rewardText && achievement.isUnlocked) {
+            const reward = this.getAchievementReward(achievement);
+            rewardText.textContent = reward;
+            modalReward.style.display = 'block';
+        } else if (modalReward) {
+            modalReward.style.display = 'none';
+        }
+    }
+
+    private getAchievementRequirement(achievement: Achievement): string {
+        // Базовые требования по категориям
+        const requirements: Record<string, string> = {
+            'score': 'Набрать определенное количество очков в играх',
+            'games': 'Сыграть определенное количество игр',
+            'investigation': 'Успешно завершить расследования',
+            'deduction': 'Продемонстрировать навыки дедукции',
+            'social': 'Взаимодействовать с другими игроками',
+            'speed': 'Быстро принимать решения в играх',
+            'accuracy': 'Поддерживать высокую точность ответов',
+            'streak': 'Поддерживать серию успешных игр',
+            'special': 'Выполнить особые условия'
+        };
+
+        return requirements[achievement.category || 'default'] || 'Выполнить специальные условия для получения этого достижения';
+    }
+
+    private getAchievementReward(achievement: Achievement): string {
+        // Базовые награды по редкости
+        const rewards: Record<string, string> = {
+            'common': '+50 очков опыта',
+            'rare': '+100 очков опыта + уникальный титул',
+            'epic': '+200 очков опыта + особая эмблема',
+            'legendary': '+500 очков опыта + эксклюзивный ранг'
+        };
+
+        return rewards[achievement.rarity || 'common'] || '+100 очков опыта';
+    }
+
+    private setupModalCloseHandlers(modal: HTMLElement): void {
+        // Удаляем старые обработчики если есть
+        modal.removeEventListener('click', this.handleModalClick);
+
+        // Добавляем новый обработчик
+        modal.addEventListener('click', this.handleModalClick);
+
+        // Обработчик для кнопки закрытия
+        const closeButton = document.getElementById('modal-close');
+        if (closeButton) {
+            closeButton.removeEventListener('click', this.hideAchievementModal);
+            closeButton.addEventListener('click', this.hideAchievementModal);
+        }
+
+        // Обработчик ESC
+        document.removeEventListener('keydown', this.handleModalEscape);
+        document.addEventListener('keydown', this.handleModalEscape);
+    }
+
+    private handleModalClick = (e: Event): void => {
+        const modal = document.getElementById('achievement-modal');
+        if (modal && e.target === modal) {
+            this.hideAchievementModal();
+        }
+    }
+
+    private handleModalEscape = (e: KeyboardEvent): void => {
+        if (e.key === 'Escape') {
+            this.hideAchievementModal();
+        }
+    }
+
+    private hideAchievementModal = (): void => {
+        const modal = document.getElementById('achievement-modal');
+        if (modal) {
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+
+            // Удаляем обработчики
+            modal.removeEventListener('click', this.handleModalClick);
+            document.removeEventListener('keydown', this.handleModalEscape);
+
+            const closeButton = document.getElementById('modal-close');
+            if (closeButton) {
+                closeButton.removeEventListener('click', this.hideAchievementModal);
             }
-        });
+        }
 
         // Haptic feedback
         authService.hapticFeedback('light');
-    }
-
-    private hideAchievementModal(): void {
-        const modal = document.querySelector('.achievement-modal');
-        if (modal) {
-            modal.remove();
-        }
     }
 
     // =========================================================================
@@ -948,13 +1105,32 @@ export class CriminalTrustProfile {
     }
 
     private addAchievementInteractivity(): void {
-        // Добавляем эффекты при наведении
+        // Добавляем эффекты при наведении (клики уже обрабатываются в createAchievementElement)
         const cards = document.querySelectorAll('.achievement-card');
         cards.forEach(card => {
-            card.addEventListener('mouseenter', () => {
-                authService.hapticFeedback('light');
-            });
+            // Убираем старые обработчики наведения
+            card.removeEventListener('mouseenter', this.handleAchievementHover);
+            card.removeEventListener('mouseleave', this.handleAchievementLeave);
+
+            // Добавляем новые
+            card.addEventListener('mouseenter', this.handleAchievementHover);
+            card.addEventListener('mouseleave', this.handleAchievementLeave);
         });
+    }
+
+    private handleAchievementHover = (e: Event): void => {
+        authService.hapticFeedback('light');
+        const card = e.target as HTMLElement;
+        if (card) {
+            card.style.transform = 'translateY(-2px) scale(1.02)';
+        }
+    }
+
+    private handleAchievementLeave = (e: Event): void => {
+        const card = e.target as HTMLElement;
+        if (card) {
+            card.style.transform = '';
+        }
     }
 
     private updateUserPosition(data: any): void {
