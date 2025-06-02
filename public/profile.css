@@ -88,14 +88,14 @@
 }
 
 /* Стили для достижений */
-.achievements-grid {
+.achievements-scroll {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 12px;
     margin-top: 16px;
 }
 
-.achievement-card {
+.achievements-scroll .achievement-card {
     background: linear-gradient(135deg, 
         rgba(26, 26, 26, 0.95) 0%, 
         rgba(42, 42, 42, 0.8) 50%, 
@@ -112,7 +112,7 @@
     overflow: hidden;
 }
 
-.achievement-card::before {
+.achievements-scroll .achievement-card::before {
     content: '';
     position: absolute;
     top: 0;
@@ -130,7 +130,7 @@
     opacity: 0.6;
 }
 
-.achievement-card::after {
+.achievements-scroll .achievement-card::after {
     content: '';
     position: absolute;
     top: 2px;
@@ -145,7 +145,7 @@
     z-index: -1;
 }
 
-.achievement-card:hover {
+.achievements-scroll .achievement-card:hover {
     transform: translateY(-4px) scale(1.02);
     box-shadow: 
         0 12px 24px rgba(139, 0, 0, 0.4),
@@ -153,7 +153,7 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.achievement-card:hover::before {
+.achievements-scroll .achievement-card:hover::before {
     opacity: 0.8;
     animation: borderGlow 2s ease-in-out infinite;
 }
@@ -163,14 +163,14 @@
     50% { opacity: 1; }
 }
 
-.achievement-card.unlocked {
+.achievements-scroll .achievement-card.unlocked {
     background: linear-gradient(135deg, 
         rgba(255, 215, 0, 0.1) 0%, 
         rgba(26, 26, 26, 0.95) 30%, 
         rgba(255, 215, 0, 0.1) 100%);
 }
 
-.achievement-card.unlocked::before {
+.achievements-scroll .achievement-card.unlocked::before {
     background: linear-gradient(135deg, 
         #FFD700 0%, 
         #FFA500 25%, 
@@ -180,16 +180,16 @@
     opacity: 0.7;
 }
 
-.achievement-card.unlocked .achievement-icon {
+.achievements-scroll .achievement-card.unlocked .achievement-icon {
     color: #FFD700;
     text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
-.achievement-card.locked {
+.achievements-scroll .achievement-card.locked {
     opacity: 0.8;
 }
 
-.achievement-icon {
+.achievements-scroll .achievement-icon {
     font-size: 28px;
     min-width: 36px;
     text-align: center;
@@ -197,13 +197,13 @@
     margin-right: 12px;
 }
 
-.achievement-content {
+.achievements-scroll .achievement-content {
     flex: 1;
     position: relative;
     z-index: 1;
 }
 
-.achievement-name {
+.achievements-scroll .achievement-name {
     font-size: 15px;
     font-weight: 700;
     margin: 0 0 6px 0;
@@ -212,14 +212,14 @@
     letter-spacing: 0.5px;
 }
 
-.achievement-description {
+.achievements-scroll .achievement-description {
     font-size: 13px;
     color: rgba(192, 192, 192, 0.9);
     margin: 0 0 8px 0;
     line-height: 1.4;
 }
 
-.achievement-category {
+.achievements-scroll .achievement-category {
     font-size: 11px;
     color: #DC143C;
     text-transform: uppercase;
@@ -228,14 +228,14 @@
     text-shadow: 0 0 4px rgba(220, 20, 60, 0.5);
 }
 
-.achievement-progress {
+.achievements-scroll .achievement-progress {
     margin-top: 10px;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.progress-bar {
+.achievements-scroll .progress-bar {
     background: rgba(0, 0, 0, 0.6);
     border-radius: 8px;
     height: 8px;
@@ -244,7 +244,7 @@
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-.progress-fill {
+.achievements-scroll .progress-fill {
     background: linear-gradient(90deg, 
         #8B0000 0%, 
         #DC143C 50%, 
@@ -256,7 +256,7 @@
     position: relative;
 }
 
-.progress-fill::after {
+.achievements-scroll .progress-fill::after {
     content: '';
     position: absolute;
     top: 0;
@@ -275,7 +275,7 @@
     100% { transform: translateX(100%); }
 }
 
-.progress-text {
+.achievements-scroll .progress-text {
     font-size: 11px;
     color: #DC143C;
     font-weight: 600;
@@ -283,7 +283,7 @@
     text-align: right;
 }
 
-.achievement-unlock-badge {
+.achievements-scroll .achievement-unlock-badge {
     color: #FFD700;
     font-size: 18px;
     margin-left: 8px;
@@ -297,7 +297,7 @@
 }
 
 /* Стили для лидерборда */
-.leaderboard-entry {
+.leaderboard-list .leaderboard-entry {
     display: flex;
     align-items: center;
     padding: 14px 18px;
@@ -313,7 +313,7 @@
     overflow: hidden;
 }
 
-.leaderboard-entry::before {
+.leaderboard-list .leaderboard-entry::before {
     content: '';
     position: absolute;
     left: 0;
@@ -328,7 +328,7 @@
     transition: opacity 0.3s ease;
 }
 
-.leaderboard-entry:hover {
+.leaderboard-list .leaderboard-entry:hover {
     background: linear-gradient(135deg, 
         rgba(139, 0, 0, 0.1) 0%, 
         rgba(26, 26, 26, 0.95) 50%, 
@@ -340,11 +340,11 @@
         0 0 8px rgba(220, 20, 60, 0.2);
 }
 
-.leaderboard-entry:hover::before {
+.leaderboard-list .leaderboard-entry:hover::before {
     opacity: 1;
 }
 
-.leaderboard-entry.current-user {
+.leaderboard-list .leaderboard-entry.current-user {
     background: linear-gradient(135deg, 
         rgba(220, 20, 60, 0.15) 0%, 
         rgba(26, 26, 26, 0.95) 50%, 
@@ -355,7 +355,7 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.leaderboard-entry.current-user::before {
+.leaderboard-list .leaderboard-entry.current-user::before {
     opacity: 1;
     width: 6px;
     background: linear-gradient(180deg, 
@@ -364,7 +364,7 @@
         #FFD700 100%);
 }
 
-.leaderboard-entry .position {
+.leaderboard-list .position {
     font-size: 18px;
     font-weight: 700;
     color: #FFD700;
@@ -374,20 +374,20 @@
     margin-right: 12px;
 }
 
-.leaderboard-entry .user-info {
+.leaderboard-list .user-info {
     display: flex;
     align-items: center;
     gap: 14px;
     flex: 1;
 }
 
-.leaderboard-entry .user-avatar {
+.leaderboard-list .user-avatar {
     width: 42px;
     height: 42px;
     position: relative;
 }
 
-.leaderboard-entry .user-avatar::before {
+.leaderboard-list .user-avatar::before {
     content: '';
     position: absolute;
     inset: -2px;
@@ -396,7 +396,7 @@
     z-index: -1;
 }
 
-.leaderboard-entry .user-avatar img {
+.leaderboard-list .user-avatar img {
     width: 100%;
     height: 100%;
     border-radius: 50%;
@@ -405,15 +405,15 @@
     transition: transform 0.3s ease;
 }
 
-.leaderboard-entry:hover .user-avatar img {
+.leaderboard-list .leaderboard-entry:hover .user-avatar img {
     transform: scale(1.05);
 }
 
-.leaderboard-entry .user-details {
+.leaderboard-list .user-details {
     flex: 1;
 }
 
-.leaderboard-entry .user-name {
+.leaderboard-list .user-name {
     font-size: 15px;
     font-weight: 600;
     color: #FFFFFF;
@@ -421,17 +421,17 @@
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
-.leaderboard-entry .user-rank {
+.leaderboard-list .user-rank {
     font-size: 12px;
     opacity: 0.85;
     font-weight: 500;
 }
 
-.leaderboard-entry .user-stats {
+.leaderboard-list .user-stats {
     text-align: right;
 }
 
-.leaderboard-entry .score {
+.leaderboard-list .score {
     font-size: 17px;
     font-weight: 700;
     color: #DC143C;
@@ -439,24 +439,24 @@
     margin-bottom: 2px;
 }
 
-.leaderboard-entry .accuracy {
+.leaderboard-list .accuracy {
     font-size: 12px;
     color: rgba(192, 192, 192, 0.8);
     font-weight: 500;
 }
 
 /* Анимация появления */
-.achievement-card, .leaderboard-entry {
+.achievements-scroll .achievement-card, .leaderboard-list .leaderboard-entry {
     animation: fadeInUp 0.6s ease-out forwards;
 }
 
-.achievement-card:nth-child(2) { animation-delay: 0.1s; }
-.achievement-card:nth-child(3) { animation-delay: 0.2s; }
-.achievement-card:nth-child(4) { animation-delay: 0.3s; }
+.achievements-scroll .achievement-card:nth-child(2) { animation-delay: 0.1s; }
+.achievements-scroll .achievement-card:nth-child(3) { animation-delay: 0.2s; }
+.achievements-scroll .achievement-card:nth-child(4) { animation-delay: 0.3s; }
 
-.leaderboard-entry:nth-child(2) { animation-delay: 0.1s; }
-.leaderboard-entry:nth-child(3) { animation-delay: 0.2s; }
-.leaderboard-entry:nth-child(4) { animation-delay: 0.3s; }
+.leaderboard-list .leaderboard-entry:nth-child(2) { animation-delay: 0.1s; }
+.leaderboard-list .leaderboard-entry:nth-child(3) { animation-delay: 0.2s; }
+.leaderboard-list .leaderboard-entry:nth-child(4) { animation-delay: 0.3s; }
 
 @keyframes fadeInUp {
     from {
