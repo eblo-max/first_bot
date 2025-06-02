@@ -478,7 +478,7 @@ function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
     console.log('🏆 Разблокированные достижения:', user.achievements?.length || 0);
 
     // Достижения по счету
-    if (userStats.totalScore >= 100 && !user.achievements.some(a => a.id === 'detective_novice')) {
+    if (userStats.totalScore < 100 && !user.achievements.some(a => a.id === 'detective_novice')) {
         available.push({
             id: 'detective_novice',
             name: 'Детектив-новичок',
@@ -488,7 +488,7 @@ function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
         });
     }
 
-    if (userStats.totalScore >= 1000 && !user.achievements.some(a => a.id === 'detective_expert')) {
+    if (userStats.totalScore < 1000 && !user.achievements.some(a => a.id === 'detective_expert')) {
         available.push({
             id: 'detective_expert',
             name: 'Опытный детектив',
@@ -498,7 +498,7 @@ function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
         });
     }
 
-    if (userStats.totalScore >= 10000 && !user.achievements.some(a => a.id === 'detective_master')) {
+    if (userStats.totalScore < 10000 && !user.achievements.some(a => a.id === 'detective_master')) {
         available.push({
             id: 'detective_master',
             name: 'Мастер-детектив',
@@ -508,8 +508,8 @@ function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
         });
     }
 
-    // Достижения по количеству дел
-    if (userStats.investigations >= 10 && !user.achievements.some(a => a.id === 'case_solver')) {
+    // Достижения по количеству дел - ГЛАВНОЕ ИСПРАВЛЕНИЕ!
+    if (userStats.investigations < 10 && !user.achievements.some(a => a.id === 'case_solver')) {
         available.push({
             id: 'case_solver',
             name: 'Решатель дел',
@@ -519,13 +519,77 @@ function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
         });
     }
 
-    if (userStats.investigations >= 50 && !user.achievements.some(a => a.id === 'veteran_detective')) {
+    if (userStats.investigations < 25 && !user.achievements.some(a => a.id === 'detective_experienced')) {
+        available.push({
+            id: 'detective_experienced',
+            name: 'Опытный детектив',
+            category: 'investigations',
+            progress: { current: userStats.investigations, target: 25 },
+            description: 'Проведите 25 расследований'
+        });
+    }
+
+    if (userStats.investigations < 50 && !user.achievements.some(a => a.id === 'veteran_detective')) {
         available.push({
             id: 'veteran_detective',
             name: 'Ветеран сыска',
             category: 'investigations',
             progress: { current: userStats.investigations, target: 50 },
             description: 'Решите 50 дел'
+        });
+    }
+
+    if (userStats.investigations < 100 && !user.achievements.some(a => a.id === 'detective_master')) {
+        available.push({
+            id: 'detective_master',
+            name: 'Мастер следствия',
+            category: 'investigations',
+            progress: { current: userStats.investigations, target: 100 },
+            description: 'Проведите 100 расследований'
+        });
+    }
+
+    // Достижения по точности
+    if (userStats.investigations >= 10) {
+        if (userStats.accuracy < 90 && !user.achievements.some(a => a.id === 'master_detective')) {
+            available.push({
+                id: 'master_detective',
+                name: 'Мастер-детектив точности',
+                category: 'accuracy',
+                progress: { current: Math.round(userStats.accuracy), target: 90 },
+                description: 'Достичь точности 90%+ в 10+ играх'
+            });
+        }
+
+        if (userStats.accuracy < 95 && userStats.investigations >= 20 && !user.achievements.some(a => a.id === 'perfectionist')) {
+            available.push({
+                id: 'perfectionist',
+                name: 'Перфекционист',
+                category: 'accuracy',
+                progress: { current: Math.round(userStats.accuracy), target: 95 },
+                description: 'Достичь точности 95%+ в 20+ играх'
+            });
+        }
+    }
+
+    // Достижения серий
+    if (userStats.maxWinStreak < 5 && !user.achievements.some(a => a.id === 'streak_5')) {
+        available.push({
+            id: 'streak_5',
+            name: 'Горячая рука',
+            category: 'streak',
+            progress: { current: userStats.maxWinStreak, target: 5 },
+            description: 'Серия из 5 идеальных игр'
+        });
+    }
+
+    if (userStats.maxWinStreak < 10 && !user.achievements.some(a => a.id === 'streak_10')) {
+        available.push({
+            id: 'streak_10',
+            name: 'Неостановимый',
+            category: 'streak',
+            progress: { current: userStats.maxWinStreak, target: 10 },
+            description: 'Серия из 10 идеальных игр'
         });
     }
 

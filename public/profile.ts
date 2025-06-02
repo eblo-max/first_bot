@@ -221,7 +221,16 @@ export class CriminalTrustProfile {
 
                     allAchievements = [...allAchievements, ...achievementsData.available.map((ach: any) => {
                         const achievementInfo = this.getAchievementInfo(ach.id);
-                        const progress = this.calculateRealProgress(ach.id, this.state.user);
+
+                        // Используем прогресс напрямую с сервера если есть
+                        let progress = 0;
+                        if (ach.progress && ach.progress.current !== undefined && ach.progress.target !== undefined) {
+                            progress = Math.min((ach.progress.current / ach.progress.target) * 100, 100);
+                            console.log(`📊 Прогресс для ${ach.id}: ${ach.progress.current}/${ach.progress.target} = ${progress}%`);
+                        } else {
+                            // Fallback к расчету на клиенте
+                            progress = this.calculateRealProgress(ach.id, this.state.user);
+                        }
 
                         return {
                             id: ach.id,
@@ -1428,57 +1437,76 @@ export class CriminalTrustProfile {
         if (modalProgress && !achievement.isUnlocked && achievement.progress !== undefined) {
             modalProgress.style.display = 'block';
 
-            // Получаем правильные значения из конфигурации достижения
-            const configAchievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievement.id);
-            if (configAchievement && configAchievement.requirement && this.state.user) {
-                const req = configAchievement.requirement;
-                let currentValue = 0;
-                let targetValue = req.value;
+            // Сначала пробуем использовать progressData с сервера
+            if (achievement.progressData && achievement.progressData.current !== undefined && achievement.progressData.target !== undefined) {
+                const { current, target } = achievement.progressData;
+                const progress = Math.min((current / target) * 100, 100);
 
-                // Рассчитываем текущее значение в зависимости от типа достижения
-                switch (req.type) {
-                    case 'investigations':
-                        currentValue = this.state.user.gamesPlayed || 0;
-                        break;
-                    case 'accuracy':
-                        currentValue = this.state.user.accuracy || 0;
-                        break;
-                    case 'winStreak':
-                        currentValue = this.state.user.maxWinStreak || this.state.user.winStreak || 0;
-                        break;
-                    case 'totalScore':
-                        currentValue = this.state.user.totalScore || 0;
-                        break;
-                    case 'perfectGames':
-                        currentValue = this.state.user.stats?.perfectGames || 0;
-                        break;
-                    case 'dailyStreak':
-                        // Для daily streak пока возвращаем 0, так как нет такого поля в User
-                        currentValue = 0;
-                        break;
-                    case 'fastGame':
-                        const fastestTime = this.state.user.stats?.fastestGame || 0;
-                        currentValue = fastestTime > 0 ? Math.round(fastestTime / 1000) : 0;
-                        targetValue = req.value; // секунды
-                        break;
-                }
-
-                const progress = achievement.progress;
-
-                if (progressCurrent) progressCurrent.textContent = currentValue.toLocaleString();
-                if (progressTarget) progressTarget.textContent = targetValue.toLocaleString();
+                if (progressCurrent) progressCurrent.textContent = current.toLocaleString();
+                if (progressTarget) progressTarget.textContent = target.toLocaleString();
                 if (progressBar) progressBar.style.width = `${progress}%`;
                 if (progressPercentage) progressPercentage.textContent = `${Math.round(progress)}%`;
-            } else {
-                // Fallback к старому методу
-                const progress = achievement.progress;
-                const current = Math.round(progress);
-                const target = 100;
 
-                if (progressCurrent) progressCurrent.textContent = current.toString();
-                if (progressTarget) progressTarget.textContent = target.toString();
-                if (progressBar) progressBar.style.width = `${progress}%`;
-                if (progressPercentage) progressPercentage.textContent = `${current}%`;
+                console.log(`📊 Показываем прогресс из сервера: ${current}/${target} = ${progress}%`);
+            } else {
+                // Fallback к расчету через конфигурацию
+                const configAchievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievement.id);
+                if (configAchievement && configAchievement.requirement && this.state.user) {
+                    const req = configAchievement.requirement;
+                    let currentValue = 0;
+                    let targetValue = req.value;
+
+                    // Рассчитываем текущее значение в зависимости от типа достижения
+                    switch (req.type) {
+                        case 'investigations':
+                            // Используем gamesPlayed из User типа, но проверяем разные поля
+                            currentValue = this.state.user.gamesPlayed ||
+                                this.state.user.stats?.totalGames ||
+                                (this.state.user as any).investigations || 0;
+                            break;
+                        case 'accuracy':
+                            currentValue = this.state.user.accuracy || 0;
+                            break;
+                        case 'winStreak':
+                            currentValue = this.state.user.maxWinStreak || this.state.user.winStreak || 0;
+                            break;
+                        case 'totalScore':
+                            currentValue = this.state.user.totalScore || 0;
+                            break;
+                        case 'perfectGames':
+                            currentValue = this.state.user.stats?.perfectGames || 0;
+                            break;
+                        case 'dailyStreak':
+                            // Проверяем разные возможные поля
+                            currentValue = (this.state.user as any).dailyStreakCurrent ||
+                                (this.state.user as any).stats?.dailyStreakCurrent || 0;
+                            break;
+                        case 'fastGame':
+                            const fastestTime = this.state.user.stats?.fastestGame || 0;
+                            currentValue = fastestTime > 0 ? Math.round(fastestTime / 1000) : 0;
+                            targetValue = req.value; // секунды
+                            break;
+                    }
+
+                    const progress = achievement.progress;
+
+                    if (progressCurrent) progressCurrent.textContent = currentValue.toLocaleString();
+                    if (progressTarget) progressTarget.textContent = targetValue.toLocaleString();
+                    if (progressBar) progressBar.style.width = `${progress}%`;
+                    if (progressPercentage) progressPercentage.textContent = `${Math.round(progress)}%`;
+
+                    console.log(`📊 Показываем прогресс из конфигурации: ${currentValue}/${targetValue} = ${progress}%`);
+                } else {
+                    // Последний fallback
+                    const progress = achievement.progress;
+                    const current = Math.round(progress);
+                    const target = 100;
+
+                    if (progressCurrent) progressCurrent.textContent = current.toString();
+                    if (progressTarget) progressTarget.textContent = target.toString();
+                    if (progressBar) progressBar.style.width = `${progress}%`;
+                    if (progressPercentage) progressPercentage.textContent = `${current}%`;
+                }
             }
         } else if (modalProgress) {
             modalProgress.style.display = 'none';
@@ -1647,7 +1675,7 @@ export class CriminalTrustProfile {
     }
 
     private calculateRealProgress(achievementId: string, user: any): number {
-        if (!user) return 0;
+        if (!user || !this.state.user) return 0;
 
         // Ищем достижение в правильной конфигурации
         const achievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievementId);
@@ -1658,46 +1686,35 @@ export class CriminalTrustProfile {
 
         switch (requirement.type) {
             case 'investigations':
-                // Используем поле gamesPlayed которое есть в User
-                currentValue = user.gamesPlayed || 0;
+                // Используем gamesPlayed из User типа, но проверяем разные поля
+                currentValue = this.state.user.gamesPlayed ||
+                    this.state.user.stats?.totalGames ||
+                    (this.state.user as any).investigations || 0;
                 break;
-
             case 'accuracy':
-                const minGames = requirement.minGames || 0;
-                const userGames = user.gamesPlayed || 0;
-
-                if (userGames >= minGames) {
-                    currentValue = user.accuracy || 0;
-                    // Для точности возвращаем прогресс к цели
-                    return Math.min((currentValue / requirement.value) * 100, 100);
-                }
-                return 0;
-
+                currentValue = this.state.user.accuracy || 0;
+                break;
             case 'winStreak':
-                currentValue = user.maxWinStreak || user.winStreak || 0;
+                currentValue = this.state.user.maxWinStreak || this.state.user.winStreak || 0;
                 break;
-
             case 'totalScore':
-                currentValue = user.totalScore || 0;
+                currentValue = this.state.user.totalScore || 0;
                 break;
-
             case 'perfectGames':
-                currentValue = user.stats?.perfectGames || 0;
+                currentValue = this.state.user.stats?.perfectGames || 0;
                 break;
-
             case 'fastGame':
                 // Для достижений скорости проверяем быстрейшую игру
-                const fastestTime = user.stats?.fastestGame || 0;
+                const fastestTime = this.state.user.stats?.fastestGame || 0;
                 if (fastestTime > 0 && fastestTime <= requirement.value * 1000) {
                     return 100; // Уже выполнено
                 }
                 return 0;
-
             case 'dailyStreak':
-                // Для daily streak пока возвращаем 0, так как нет такого поля
-                currentValue = 0;
+                // Проверяем разные возможные поля
+                currentValue = (this.state.user as any).dailyStreakCurrent ||
+                    (this.state.user as any).stats?.dailyStreakCurrent || 0;
                 break;
-
             default:
                 return 0;
         }
