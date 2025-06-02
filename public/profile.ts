@@ -197,15 +197,26 @@ export class CriminalTrustProfile {
                 if (achievementsData.unlocked && Array.isArray(achievementsData.unlocked)) {
                     // Добавляем разблокированные достижения
                     allAchievements = [...allAchievements, ...achievementsData.unlocked.map((ach: any) => ({
-                        ...ach,
-                        isUnlocked: true
+                        id: ach.id || 'unknown',
+                        name: ach.name || 'Достижение',
+                        description: ach.description || 'Описание недоступно',
+                        category: ach.category || 'Общее',
+                        icon: '🏆',
+                        rarity: 'common',
+                        isUnlocked: true,
+                        progress: 100
                     }))];
                 }
 
                 if (achievementsData.available && Array.isArray(achievementsData.available)) {
                     // Добавляем доступные достижения  
                     allAchievements = [...allAchievements, ...achievementsData.available.map((ach: any) => ({
-                        ...ach,
+                        id: ach.id || 'unknown',
+                        name: ach.name || 'Достижение',
+                        description: ach.description || 'Описание недоступно',
+                        category: ach.category || 'Общее',
+                        icon: this.getAchievementIcon(ach.category || 'score'),
+                        rarity: 'common',
                         isUnlocked: false,
                         progress: ach.progress ? Math.round((ach.progress.current / ach.progress.target) * 100) : 0
                     }))];
@@ -456,18 +467,19 @@ export class CriminalTrustProfile {
                         <div class="user-avatar">
                             <img src="/api/user/avatar/${entry.telegramId || entry.user?.telegramId}" 
                                  alt="Avatar" 
+                                 style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"
                                  onerror="this.src='data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" viewBox=\\"0 0 100 100\\"><circle cx=\\"50\\" cy=\\"50\\" r=\\"40\\" fill=\\"%23333\\"/></svg>'">
                         </div>
                         <div class="user-details">
                             <div class="user-name">${userName}</div>
-                            <div class="user-rank" style="color: ${rank.color}">
+                            <div class="user-rank" style="color: ${rank.color}; font-size: 12px;">
                                 ${rank.icon} ${rank.name}
                             </div>
                         </div>
                     </div>
                     <div class="user-stats">
-                        <div class="score">${userScore.toLocaleString()}</div>
-                        <div class="accuracy">Ур. ${level}</div>
+                        <div class="score" style="font-weight: bold;">${userScore.toLocaleString()}</div>
+                        <div class="accuracy" style="font-size: 12px; color: #888;">Ур. ${level}</div>
                     </div>
                 </div>
             `;
@@ -627,6 +639,18 @@ export class CriminalTrustProfile {
     // =========================================================================
     // УТИЛИТАРНЫЕ МЕТОДЫ
     // =========================================================================
+
+    private getAchievementIcon(category: string): string {
+        const iconMap: { [key: string]: string } = {
+            'score': '⭐',
+            'investigations': '🔍',
+            'streak': '🔥',
+            'accuracy': '🎯',
+            'speed': '⚡',
+            'general': '🏆'
+        };
+        return iconMap[category] || '🏆';
+    }
 
     private getUserDisplayName(user: any): string {
         console.log('👤 Обработка имени пользователя:', user);
