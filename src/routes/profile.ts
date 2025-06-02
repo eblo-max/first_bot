@@ -117,7 +117,7 @@ interface NextAchievement {
  * @desc    Получение профиля пользователя с расширенной статистикой
  * @access  Private
  */
-router.get('/', authMiddleware as any, async (req: AuthenticatedRequest, res: Response<ProfileData>) => {
+router.get('/', authMiddleware as any, async (req: AuthenticatedRequest, res: Response) => {
     try {
         const user = await User.findOne({ telegramId: req.user?.telegramId });
 
@@ -179,10 +179,16 @@ router.get('/', authMiddleware as any, async (req: AuthenticatedRequest, res: Re
             achievements: profileData.achievements.length
         });
 
-        res.json(profileData);
+        res.json({
+            status: 'success',
+            data: profileData
+        });
     } catch (error) {
         console.error('❌ Ошибка получения профиля:', error);
-        res.status(500).json({ error: 'Внутренняя ошибка сервера' } as any);
+        res.status(500).json({
+            status: 'error',
+            message: 'Внутренняя ошибка сервера'
+        } as any);
     }
 });
 
@@ -246,13 +252,19 @@ router.get('/achievements/available', authMiddleware as any, async (req: Authent
         const availableAchievements = generateAvailableAchievements(user);
 
         res.json({
-            unlocked: user.achievements,
-            available: availableAchievements,
-            progress: user.getAchievementsProgress()
+            status: 'success',
+            data: {
+                unlocked: user.achievements,
+                available: availableAchievements,
+                progress: user.getAchievementsProgress()
+            }
         });
     } catch (error) {
         console.error('❌ Ошибка получения достижений:', error);
-        res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+        res.status(500).json({
+            status: 'error',
+            message: 'Внутренняя ошибка сервера'
+        });
     }
 });
 
@@ -340,10 +352,16 @@ router.get('/leaderboard/:period?', authMiddleware as any, async (req: Leaderboa
             total: formattedLeaderboard.length
         };
 
-        res.json(result);
+        res.json({
+            status: 'success',
+            data: result
+        });
     } catch (error) {
         console.error('❌ Ошибка получения лидерборда:', error);
-        res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+        res.status(500).json({
+            status: 'error',
+            message: 'Внутренняя ошибка сервера'
+        });
     }
 });
 
@@ -366,16 +384,22 @@ router.get('/progress/next-achievements', authMiddleware as any, async (req: Aut
         const nextAchievements = calculateNextAchievements(user);
 
         res.json({
-            nextRank: {
-                current: user.rank,
-                progress: user.rewards?.nextRankProgress || 0,
-                displayName: user.getRankDisplayName()
-            },
-            nextAchievements
+            status: 'success',
+            data: {
+                nextRank: {
+                    current: user.rank,
+                    progress: user.rewards?.nextRankProgress || 0,
+                    displayName: user.getRankDisplayName()
+                },
+                nextAchievements
+            }
         });
     } catch (error) {
         console.error('❌ Ошибка получения прогресса:', error);
-        res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+        res.status(500).json({
+            status: 'error',
+            message: 'Внутренняя ошибка сервера'
+        });
     }
 });
 
