@@ -757,235 +757,237 @@ export class CriminalTrustProfile {
         icon: string;
         rarity: string
     } {
-        const achievementDatabase: Record<string, any> = {
-            // === ПРОГРЕСС ===
-            'first_case': {
-                name: 'Первое дело',
-                description: 'Провели первое расследование',
-                category: 'progress',
-                rarity: 'common'
-            },
-            'detective_rookie': {
-                name: 'Начинающий детектив',
-                description: 'Проведено 5 расследований',
-                category: 'progress',
-                rarity: 'common'
-            },
-            'detective_experienced': {
-                name: 'Опытный детектив',
-                description: 'Проведено 25 расследований',
-                category: 'progress',
-                rarity: 'common'
-            },
-            'detective_veteran': {
-                name: 'Ветеран розыска',
-                description: 'Проведено 50 расследований',
-                category: 'progress',
-                rarity: 'rare'
-            },
-            'detective_master': {
-                name: 'Мастер следствия',
-                description: 'Проведено 100 расследований',
-                category: 'progress',
-                rarity: 'rare'
-            },
-            'detective_legend': {
-                name: 'Легенда криминалистики',
-                description: 'Проведено 250 расследований',
-                category: 'progress',
-                rarity: 'epic'
-            },
-            'detective_immortal': {
-                name: 'Бессмертный сыщик',
-                description: 'Проведено 500 расследований',
-                category: 'progress',
-                rarity: 'legendary'
-            },
+        // Импорт новой системы достижений
+        const { ACHIEVEMENTS_CONFIG } = window as any;
 
-            // === МАСТЕРСТВО ===
-            'perfectionist': {
-                name: 'Перфекционист',
-                description: 'Точность 95%+ в 20+ играх',
-                category: 'mastery',
+        // Ищем в новой системе достижений
+        if (ACHIEVEMENTS_CONFIG) {
+            const newAchievement = ACHIEVEMENTS_CONFIG.find((ach: any) => ach.id === achievementId);
+            if (newAchievement) {
+                return {
+                    id: newAchievement.id,
+                    name: newAchievement.name,
+                    description: newAchievement.description,
+                    category: newAchievement.category,
+                    icon: newAchievement.icon,
+                    rarity: newAchievement.rarity
+                };
+            }
+        }
+
+        // НОВАЯ БАЗА ДОСТИЖЕНИЙ "КРИМИНАЛЬНЫЙ БЛЕФ"
+        const achievementDatabase: Record<string, any> = {
+            // === СЛЕДОВАТЕЛЬ ===
+            'first_investigation': {
+                name: 'Первое расследование',
+                description: 'Завершите ваше первое криминальное расследование',
+                category: 'investigation',
+                icon: '🔍',
+                rarity: 'common'
+            },
+            'truth_seeker': {
+                name: 'Искатель истины',
+                description: 'Правильно определите ошибку преступника в первый раз',
+                category: 'investigation',
+                icon: '🎯',
+                rarity: 'common'
+            },
+            'rookie_detective': {
+                name: 'Детектив-новичок',
+                description: 'Проведите 5 расследований',
+                category: 'investigation',
+                icon: '🕵️',
+                rarity: 'common'
+            },
+            'crime_solver': {
+                name: 'Раскрыватель преступлений',
+                description: 'Раскройте 10 криминальных дел',
+                category: 'investigation',
+                icon: '⚖️',
+                rarity: 'common'
+            },
+            'experienced_investigator': {
+                name: 'Опытный следователь',
+                description: 'Проведите 25 расследований',
+                category: 'investigation',
+                icon: '🎖️',
+                rarity: 'rare'
+            },
+            'senior_detective': {
+                name: 'Старший детектив',
+                description: 'Проведите 50 расследований',
+                category: 'investigation',
+                icon: '👨‍💼',
+                rarity: 'rare'
+            },
+            'veteran_investigator': {
+                name: 'Ветеран следствия',
+                description: 'Проведите 100 расследований',
+                category: 'investigation',
+                icon: '🏅',
                 rarity: 'epic'
             },
             'master_detective': {
                 name: 'Мастер-детектив',
-                description: 'Точность 90%+ в 50+ играх',
-                category: 'mastery',
-                rarity: 'rare'
+                description: 'Проведите 250 расследований',
+                category: 'investigation',
+                icon: '🏆',
+                rarity: 'legendary'
             },
-            'perfect_5': {
-                name: 'Снайпер',
-                description: '5 идеальных игр',
-                category: 'mastery',
+
+            // === ТОЧНОСТЬ ===
+            'sharp_eye': {
+                name: 'Острый глаз',
+                description: 'Достигните точности 60% в 10+ расследованиях',
+                category: 'accuracy',
+                icon: '👁️',
                 rarity: 'common'
             },
-            'perfect_15': {
-                name: 'Безошибочный',
-                description: '15 идеальных игр',
-                category: 'mastery',
+            'keen_observer': {
+                name: 'Внимательный наблюдатель',
+                description: 'Достигните точности 75% в 20+ расследованиях',
+                category: 'accuracy',
+                icon: '🔍',
                 rarity: 'rare'
             },
-            'perfect_50': {
-                name: 'Гений дедукции',
-                description: '50 идеальных игр',
-                category: 'mastery',
+            'master_analyst': {
+                name: 'Мастер анализа',
+                description: 'Достигните точности 85% в 50+ расследованиях',
+                category: 'accuracy',
+                icon: '📊',
                 rarity: 'epic'
             },
-            'perfect_100': {
+            'sherlock_holmes': {
                 name: 'Шерлок Холмс',
-                description: '100 идеальных игр',
-                category: 'mastery',
+                description: 'Достигните точности 95% в 100+ расследованиях',
+                category: 'accuracy',
+                icon: '🎩',
                 rarity: 'legendary'
             },
 
             // === СКОРОСТЬ ===
-            'speed_demon': {
-                name: 'Демон скорости',
-                description: 'Решили дело за 30 секунд',
+            'quick_thinker': {
+                name: 'Быстрый ум',
+                description: 'Решите дело за 10 секунд или быстрее',
                 category: 'speed',
+                icon: '⚡',
+                rarity: 'common'
+            },
+            'lightning_detective': {
+                name: 'Молниеносный детектив',
+                description: 'Решите дело за 5 секунд или быстрее',
+                category: 'speed',
+                icon: '⚡',
                 rarity: 'rare'
             },
-            'lightning_fast': {
-                name: 'Молниеносный',
-                description: 'Решили дело за 15 секунд',
+            'instant_deduction': {
+                name: 'Мгновенная дедукция',
+                description: 'Решите дело за 2 секунды или быстрее',
                 category: 'speed',
+                icon: '💨',
+                rarity: 'epic'
+            },
+            'speed_demon': {
+                name: 'Демон скорости',
+                description: 'Поддерживайте среднее время решения менее 15 секунд в 50+ играх',
+                category: 'speed',
+                icon: '🏃‍♂️',
                 rarity: 'epic'
             },
 
             // === СЕРИИ ===
-            'streak_3': {
-                name: 'Удачная серия',
-                description: 'Серия из 3 идеальных игр',
+            'perfect_start': {
+                name: 'Идеальное начало',
+                description: 'Сыграйте одну идеальную игру (5/5 правильных ответов)',
                 category: 'streak',
+                icon: '🌟',
                 rarity: 'common'
             },
-            'streak_5': {
-                name: 'Горячая рука',
-                description: 'Серия из 5 идеальных игр',
+            'winning_streak_3': {
+                name: 'Тройная серия',
+                description: 'Выиграйте 3 идеальные игры подряд',
                 category: 'streak',
+                icon: '🔥',
                 rarity: 'rare'
             },
-            'streak_10': {
-                name: 'Неостановимый',
-                description: 'Серия из 10 идеальных игр',
+            'winning_streak_5': {
+                name: 'Горячая серия',
+                description: 'Выиграйте 5 идеальных игр подряд',
                 category: 'streak',
+                icon: '🔥',
                 rarity: 'epic'
             },
-            'streak_20': {
-                name: 'Машина правосудия',
-                description: 'Серия из 20 идеальных игр',
+            'winning_streak_10': {
+                name: 'Неостановимый',
+                description: 'Выиграйте 10 идеальных игр подряд',
                 category: 'streak',
+                icon: '💪',
                 rarity: 'legendary'
             },
-            'daily_3': {
-                name: 'Постоянство',
-                description: '3 дня подряд',
+            'perfectionist': {
+                name: 'Перфекционист',
+                description: 'Сыграйте 10 идеальных игр',
                 category: 'streak',
-                rarity: 'common'
-            },
-            'daily_7': {
-                name: 'Еженедельник',
-                description: '7 дней подряд',
-                category: 'streak',
+                icon: '💎',
                 rarity: 'rare'
             },
-            'daily_30': {
-                name: 'Месячная преданность',
-                description: '30 дней подряд',
+            'flawless_master': {
+                name: 'Безупречный мастер',
+                description: 'Сыграйте 50 идеальных игр',
                 category: 'streak',
-                rarity: 'epic'
-            },
-            'daily_100': {
-                name: 'Одержимый работой',
-                description: '100 дней подряд',
-                category: 'streak',
+                icon: '👑',
                 rarity: 'legendary'
             },
 
             // === ОЧКИ ===
-            'score_1k': {
+            'first_thousand': {
                 name: 'Первая тысяча',
-                description: 'Набрано 1000 очков',
+                description: 'Наберите 1,000 очков',
                 category: 'score',
+                icon: '💰',
                 rarity: 'common'
             },
-            'score_5k': {
+            'five_thousand_points': {
                 name: 'Пять тысяч очков',
-                description: 'Набрано 5000 очков',
+                description: 'Наберите 5,000 очков',
                 category: 'score',
+                icon: '💰',
                 rarity: 'rare'
             },
-            'score_10k': {
-                name: 'Десять тысяч очков',
-                description: 'Набрано 10000 очков',
+            'ten_thousand_elite': {
+                name: 'Элита десяти тысяч',
+                description: 'Наберите 10,000 очков',
                 category: 'score',
+                icon: '💰',
                 rarity: 'epic'
             },
-            'score_25k': {
-                name: 'Четверть сотни тысяч',
-                description: 'Набрано 25000 очков',
+            'legendary_scorer': {
+                name: 'Легендарный счетчик',
+                description: 'Наберите 25,000 очков',
                 category: 'score',
+                icon: '🏆',
                 rarity: 'legendary'
             },
 
-            // === ОСОБЫЕ ===
-            'expert_specialist': {
-                name: 'Специалист экспертного уровня',
-                description: 'Решили 10 дел экспертного уровня',
-                category: 'special',
-                rarity: 'epic'
-            },
-            'legendary_reputation': {
-                name: 'Легендарная репутация',
-                description: 'Достигли 90+ репутации',
-                category: 'special',
-                rarity: 'legendary'
-            },
-            'versatile_detective': {
-                name: 'Разносторонний детектив',
-                description: 'Играли во всех уровнях сложности',
-                category: 'special',
-                rarity: 'rare'
-            },
-
-            // === BACKEND ДОСТИЖЕНИЯ ===
-            'detective_novice': {
-                name: 'Детектив-новичок',
-                description: 'Наберите 100 очков',
-                category: 'score',
-                rarity: 'common'
-            },
-            'detective_expert': {
+            // Fallback для старых достижений
+            'detective_experienced': {
                 name: 'Опытный детектив',
-                description: 'Наберите 1000 очков',
-                category: 'score',
-                rarity: 'rare'
-            },
-            'case_solver': {
-                name: 'Решатель дел',
-                description: 'Решите 10 дел',
-                category: 'investigations',
+                description: 'Проведено 25 расследований',
+                category: 'investigation',
+                icon: '🔍',
                 rarity: 'common'
-            },
-            'veteran_detective': {
-                name: 'Ветеран сыска',
-                description: 'Решите 50 дел',
-                category: 'investigations',
-                rarity: 'rare'
             }
         };
 
-        const info = achievementDatabase[achievementId];
-        if (info) {
+        const achievement = achievementDatabase[achievementId];
+        if (achievement) {
             return {
                 id: achievementId,
-                name: info.name,
-                description: info.description,
-                category: info.category,
-                icon: this.getAchievementIcon(info.category),
-                rarity: info.rarity
+                name: achievement.name,
+                description: achievement.description,
+                category: achievement.category,
+                icon: achievement.icon,
+                rarity: achievement.rarity
             };
         }
 
@@ -993,9 +995,9 @@ export class CriminalTrustProfile {
         return {
             id: achievementId,
             name: 'Неизвестное достижение',
-            description: 'Описание отсутствует',
-            category: 'special',
-            icon: this.getAchievementIcon('default'),
+            description: 'Описание недоступно',
+            category: 'investigation',
+            icon: '🔍',
             rarity: 'common'
         };
     }
