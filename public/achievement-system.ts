@@ -226,6 +226,10 @@ export class AchievementSystem {
         }
 
         const { requirement } = achievement;
+        if (!requirement) {
+            return 0;
+        }
+
         let currentValue = 0;
 
         switch (requirement.type) {
@@ -347,7 +351,9 @@ export class AchievementSystem {
             container.appendChild(notificationElement);
 
             // Воспроизводим звук
-            this.playSound(achievement.sound);
+            if (achievement.sound) {
+                this.playSound(achievement.sound);
+            }
 
             // Запускаем анимацию появления
             requestAnimationFrame(() => {
@@ -521,7 +527,7 @@ export class AchievementSystem {
                                         </div>
                                     </div>
                                     <div class="requirement-text">
-                                        ${this.getRequirementText(achievement.requirement)}
+                                        ${achievement.requirement ? this.getRequirementText(achievement.requirement) : 'Требования не указаны'}
                                     </div>
                                     <div class="tips-text">
                                         ${this.getTipsText(achievementId)}

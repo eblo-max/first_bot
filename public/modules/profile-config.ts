@@ -409,7 +409,7 @@ export const calculateAchievementProgress = (
     userStats: any
 ): number => {
     const achievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievementId);
-    if (!achievement || achievement.isUnlocked) return 100;
+    if (!achievement || achievement.isUnlocked || !achievement.requirement) return 100;
 
     const { requirement } = achievement;
     let currentValue = 0;
