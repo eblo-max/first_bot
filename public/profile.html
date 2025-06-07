@@ -1345,50 +1345,73 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             z-index: 1000;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .achievement-modal.show {
             display: flex;
             align-items: center;
             justify-content: center;
-            animation: modalFadeIn 0.3s ease-out;
+            animation: modalFadeIn 0.4s ease-out;
         }
 
         @keyframes modalFadeIn {
             0% {
                 opacity: 0;
+                backdrop-filter: blur(0px);
             }
 
             100% {
                 opacity: 1;
+                backdrop-filter: blur(15px);
             }
         }
 
         .achievement-modal-content {
-            background: rgba(26, 26, 26, 0.95);
+            background: linear-gradient(145deg, rgba(20, 20, 20, 0.98), rgba(40, 10, 10, 0.95));
             border: 2px solid var(--blood-red);
-            border-radius: 20px;
-            padding: 32px;
-            max-width: 400px;
-            width: 90%;
+            border-radius: 24px;
+            padding: 40px 32px;
+            max-width: 450px;
+            width: 100%;
             text-align: center;
             position: relative;
-            animation: modalSlideIn 0.3s ease-out;
-            box-shadow: var(--shadow-deep);
+            animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.8),
+                0 0 0 1px rgba(220, 20, 60, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .achievement-modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(220, 20, 60, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 0, 0, 0.1) 0%, transparent 50%);
+            pointer-events: none;
         }
 
         @keyframes modalSlideIn {
             0% {
-                transform: translateY(-50px) scale(0.9);
+                transform: translateY(-60px) scale(0.8) rotateX(10deg);
                 opacity: 0;
+                filter: blur(5px);
             }
 
             100% {
-                transform: translateY(0) scale(1);
+                transform: translateY(0) scale(1) rotateX(0deg);
                 opacity: 1;
+                filter: blur(0);
             }
         }
 
@@ -1410,55 +1433,105 @@
         }
 
         .achievement-modal-icon {
-            font-size: 4rem;
-            margin-bottom: 16px;
+            font-size: 4.5rem;
+            margin-bottom: 20px;
             display: block;
             animation: iconBounce 2s ease-in-out infinite;
+            text-shadow:
+                0 0 20px rgba(255, 215, 0, 0.5),
+                0 0 40px rgba(255, 215, 0, 0.3);
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            position: relative;
+            z-index: 2;
         }
 
         @keyframes iconBounce {
 
             0%,
             100% {
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
+                text-shadow:
+                    0 0 20px rgba(255, 215, 0, 0.5),
+                    0 0 40px rgba(255, 215, 0, 0.3);
             }
 
             50% {
-                transform: translateY(-10px);
+                transform: translateY(-10px) scale(1.05);
+                text-shadow:
+                    0 0 25px rgba(255, 215, 0, 0.7),
+                    0 0 50px rgba(255, 215, 0, 0.5);
             }
         }
 
         .achievement-modal-title {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.6rem;
+            font-weight: 800;
             color: var(--crimson);
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(220, 20, 60, 0.5);
+            position: relative;
+            z-index: 2;
         }
 
         .achievement-modal-description {
             color: var(--silver);
-            line-height: 1.5;
-            margin-bottom: 20px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            font-size: 1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 2;
         }
 
         .achievement-modal-status {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 700;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.9rem;
+            letter-spacing: 2px;
+            font-size: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 24px;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
         }
 
         .achievement-modal-status.unlocked {
-            background: var(--blood-gradient);
+            background: linear-gradient(135deg, var(--blood-red), var(--crimson), #FF4444);
             color: var(--bone);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            box-shadow:
+                0 4px 20px rgba(220, 20, 60, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: statusGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes statusGlow {
+
+            0%,
+            100% {
+                box-shadow:
+                    0 4px 20px rgba(220, 20, 60, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            }
+
+            50% {
+                box-shadow:
+                    0 4px 25px rgba(220, 20, 60, 0.6),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            }
         }
 
         .achievement-modal-status.locked {
-            background: var(--ash);
+            background: linear-gradient(135deg, var(--ash), rgba(60, 60, 60, 1));
             color: var(--fog);
+            border: 2px solid rgba(100, 100, 100, 0.3);
         }
 
         .rank-badge {
@@ -1492,38 +1565,73 @@
 
         /* Стили для прогресса достижений */
         .achievement-progress {
-            margin: 20px 0;
-            padding: 16px;
-            background: rgba(26, 26, 26, 0.6);
-            border-radius: 12px;
-            border: 1px solid var(--blood-red);
+            margin: 24px 0;
+            padding: 20px;
+            background:
+                linear-gradient(145deg, rgba(26, 26, 26, 0.8), rgba(20, 20, 20, 0.9)),
+                radial-gradient(circle at center, rgba(220, 20, 60, 0.05) 0%, transparent 70%);
+            border-radius: 16px;
+            border: 2px solid rgba(139, 0, 0, 0.4);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
         }
 
         .progress-label {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
             color: var(--silver);
-            font-weight: 600;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-label span:first-child {
+            color: var(--crimson);
+            font-size: 0.85rem;
+        }
+
+        .progress-label span:last-child {
+            color: var(--bone);
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(139, 0, 0, 0.2);
+            padding: 4px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(139, 0, 0, 0.3);
         }
 
         .progress-bar-container {
-            height: 12px;
-            background: var(--ash);
-            border-radius: 6px;
+            height: 16px;
+            background:
+                linear-gradient(90deg, rgba(40, 40, 40, 1), rgba(30, 30, 30, 1));
+            border-radius: 10px;
             overflow: hidden;
-            margin-bottom: 8px;
-            border: 1px solid rgba(139, 0, 0, 0.3);
+            margin-bottom: 12px;
+            border: 2px solid rgba(139, 0, 0, 0.4);
+            box-shadow:
+                inset 0 2px 4px rgba(0, 0, 0, 0.5),
+                0 0 10px rgba(139, 0, 0, 0.2);
+            position: relative;
         }
 
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--blood-red), var(--crimson));
-            border-radius: 6px;
-            transition: width 0.8s ease;
+            background: linear-gradient(90deg,
+                    #8B0000 0%,
+                    #DC143C 30%,
+                    #FF4444 60%,
+                    #DC143C 100%);
+            border-radius: 8px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            box-shadow: 0 0 10px rgba(220, 20, 60, 0.4);
+            box-shadow:
+                0 0 15px rgba(220, 20, 60, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .progress-bar::before {
@@ -1533,8 +1641,25 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: progressShine 2s linear infinite;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.4),
+                    transparent);
+            animation: progressShine 2.5s linear infinite;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.2) 0%,
+                    rgba(255, 255, 255, 0.1) 50%,
+                    rgba(255, 255, 255, 0.05) 100%);
+            border-radius: 8px;
         }
 
         @keyframes progressShine {
@@ -1549,57 +1674,81 @@
 
         .progress-percentage {
             text-align: center;
-            font-size: 0.8rem;
+            font-size: 1.1rem;
             color: var(--crimson);
-            font-weight: 700;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            text-shadow: 0 0 8px rgba(220, 20, 60, 0.6);
+            background: rgba(139, 0, 0, 0.15);
+            padding: 6px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(139, 0, 0, 0.3);
+            display: inline-block;
         }
 
         /* Стили для требований достижений */
         .achievement-requirement {
-            margin: 16px 0;
-            padding: 12px;
-            background: rgba(139, 0, 0, 0.1);
-            border-radius: 8px;
-            border-left: 3px solid var(--blood-red);
+            margin: 20px 0;
+            padding: 16px;
+            background:
+                linear-gradient(145deg, rgba(139, 0, 0, 0.15), rgba(100, 0, 0, 0.1)),
+                radial-gradient(circle at center, rgba(220, 20, 60, 0.05) 0%, transparent 70%);
+            border-radius: 12px;
+            border: 2px solid rgba(139, 0, 0, 0.3);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 2;
         }
 
         .requirement-title {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: var(--crimson);
-            font-weight: 700;
-            margin-bottom: 4px;
+            font-weight: 800;
+            margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(220, 20, 60, 0.5);
         }
 
         .requirement-text {
             color: var(--silver);
-            font-size: 0.9rem;
-            line-height: 1.4;
+            font-size: 1rem;
+            line-height: 1.5;
+            font-weight: 500;
         }
 
         /* Стили для наград достижений */
         .achievement-reward {
-            margin: 16px 0;
-            padding: 12px;
-            background: rgba(255, 215, 0, 0.1);
-            border-radius: 8px;
-            border-left: 3px solid #FFD700;
+            margin: 20px 0;
+            padding: 16px;
+            background:
+                linear-gradient(145deg, rgba(255, 215, 0, 0.15), rgba(200, 170, 0, 0.1)),
+                radial-gradient(circle at center, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+            border-radius: 12px;
+            border: 2px solid rgba(255, 215, 0, 0.4);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 4px 15px rgba(255, 215, 0, 0.1);
+            position: relative;
+            z-index: 2;
         }
 
         .reward-title {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: #FFD700;
-            font-weight: 700;
-            margin-bottom: 4px;
+            font-weight: 800;
+            margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
         }
 
         .reward-text {
             color: var(--bone);
-            font-size: 0.9rem;
-            line-height: 1.4;
+            font-size: 1rem;
+            line-height: 1.5;
             font-weight: 600;
         }
 

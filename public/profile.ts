@@ -1429,89 +1429,113 @@ export class CriminalTrustProfile {
             }
         }
 
-        // Обновляем прогресс (показываем только для заблокированных достижений)
+        // Обновляем прогресс (показываем всегда - и для полученных, и для неполученных)
         const modalProgress = document.getElementById('modal-progress');
         const progressCurrent = document.getElementById('progress-current');
         const progressTarget = document.getElementById('progress-target');
         const progressBar = document.getElementById('progress-bar');
         const progressPercentage = document.getElementById('progress-percentage');
 
-        if (modalProgress && !achievement.isUnlocked && achievement.progress !== undefined) {
-            modalProgress.style.display = 'block';
+        if (modalProgress) {
+            // Ищем достижение в конфигурации для получения подробной информации
+            const configAchievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievement.id);
 
-            // Сначала пробуем использовать progressData с сервера
-            if (achievement.progressData && achievement.progressData.current !== undefined && achievement.progressData.target !== undefined) {
-                const { current, target } = achievement.progressData;
-                const progress = Math.min((current / target) * 100, 100);
+            if (configAchievement && configAchievement.requirement && this.state.user) {
+                modalProgress.style.display = 'block';
+                const req = configAchievement.requirement;
+                let currentValue = 0;
+                let targetValue = req.value;
+                let progressPercentageValue = 0;
 
-                if (progressCurrent) progressCurrent.textContent = current.toLocaleString();
-                if (progressTarget) progressTarget.textContent = target.toLocaleString();
-                if (progressBar) progressBar.style.width = `${progress}%`;
-                if (progressPercentage) progressPercentage.textContent = `${Math.round(progress)}%`;
-
-                console.log(`📊 Показываем прогресс из сервера: ${current}/${target} = ${progress}%`);
-            } else {
-                // Fallback к расчету через конфигурацию
-                const configAchievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievement.id);
-                if (configAchievement && configAchievement.requirement && this.state.user) {
-                    const req = configAchievement.requirement;
-                    let currentValue = 0;
-                    let targetValue = req.value;
-
-                    // Рассчитываем текущее значение в зависимости от типа достижения
-                    switch (req.type) {
-                        case 'investigations':
-                            // Используем gamesPlayed из User типа, но проверяем разные поля
-                            currentValue = this.state.user.gamesPlayed ||
-                                this.state.user.stats?.totalGames ||
-                                (this.state.user as any).investigations || 0;
-                            break;
-                        case 'accuracy':
-                            currentValue = this.state.user.accuracy || 0;
-                            break;
-                        case 'winStreak':
-                            currentValue = this.state.user.maxWinStreak || this.state.user.winStreak || 0;
-                            break;
-                        case 'totalScore':
-                            currentValue = this.state.user.totalScore || 0;
-                            break;
-                        case 'perfectGames':
-                            currentValue = this.state.user.stats?.perfectGames || 0;
-                            break;
-                        case 'dailyStreak':
-                            // Проверяем разные возможные поля
-                            currentValue = (this.state.user as any).dailyStreakCurrent ||
-                                (this.state.user as any).stats?.dailyStreakCurrent || 0;
-                            break;
-                        case 'fastGame':
-                            const fastestTime = this.state.user.stats?.fastestGame || 0;
-                            currentValue = fastestTime > 0 ? Math.round(fastestTime / 1000) : 0;
-                            targetValue = req.value; // секунды
-                            break;
-                    }
-
-                    const progress = achievement.progress;
-
-                    if (progressCurrent) progressCurrent.textContent = currentValue.toLocaleString();
-                    if (progressTarget) progressTarget.textContent = targetValue.toLocaleString();
-                    if (progressBar) progressBar.style.width = `${progress}%`;
-                    if (progressPercentage) progressPercentage.textContent = `${Math.round(progress)}%`;
-
-                    console.log(`📊 Показываем прогресс из конфигурации: ${currentValue}/${targetValue} = ${progress}%`);
-                } else {
-                    // Последний fallback
-                    const progress = achievement.progress;
-                    const current = Math.round(progress);
-                    const target = 100;
-
-                    if (progressCurrent) progressCurrent.textContent = current.toString();
-                    if (progressTarget) progressTarget.textContent = target.toString();
-                    if (progressBar) progressBar.style.width = `${progress}%`;
-                    if (progressPercentage) progressPercentage.textContent = `${current}%`;
+                // Рассчитываем реальные значения на основе типа достижения
+                switch (req.type) {
+                    case 'investigations':
+                        currentValue = (this.state.user as any).investigations ||
+                            Math.floor(((this.state.user as any).totalQuestions || 0) / 5) ||
+                            this.state.user.gamesPlayed || 0;
+                        break;
+                    case 'correctAnswers':
+                        const totalQuestions = (this.state.user as any).totalQuestions || 0;
+                        const accuracy = this.state.user.accuracy || 0;
+                        currentValue = Math.round(totalQuestions * accuracy / 100);
+                        break;
+                    case 'solvedCases':
+                        currentValue = (this.state.user as any).solvedCases ||
+                            (this.state.user as any).investigations ||
+                            Math.floor(((this.state.user as any).totalQuestions || 0) / 5) || 0;
+                        break;
+                    case 'accuracy':
+                        currentValue = Math.round(this.state.user.accuracy || 0);
+                        break;
+                    case 'winStreak':
+                        currentValue = (this.state.user as any).maxWinStreak ||
+                            this.state.user.maxWinStreak || this.state.user.winStreak || 0;
+                        break;
+                    case 'totalScore':
+                        currentValue = this.state.user.totalScore || 0;
+                        break;
+                    case 'perfectGames':
+                        currentValue = (this.state.user as any).perfectGames ||
+                            this.state.user.stats?.perfectGames || 0;
+                        break;
+                    case 'fastestGame':
+                        const fastestTime = (this.state.user as any).fastestGame ||
+                            this.state.user.stats?.fastestGame || 0;
+                        if (fastestTime > 0) {
+                            currentValue = Math.round(fastestTime / 1000);
+                            targetValue = req.value;
+                        }
+                        break;
+                    case 'dailyStreak':
+                        currentValue = (this.state.user as any).dailyStreakCurrent ||
+                            this.state.user.stats?.dailyStreakCurrent || 0;
+                        break;
+                    case 'reputation':
+                        const rep = (this.state.user as any).reputation;
+                        if (rep) {
+                            currentValue = rep.level || Math.round((rep.accuracy + rep.speed + rep.consistency + rep.difficulty) / 4);
+                        }
+                        break;
+                    default:
+                        // Для неизвестных типов пробуем использовать данные с сервера
+                        if (achievement.progressData) {
+                            currentValue = achievement.progressData.current || 0;
+                            targetValue = achievement.progressData.target || 1;
+                        }
+                        break;
                 }
+
+                // Для полученных достижений показываем 100% или текущий максимум
+                if (achievement.isUnlocked) {
+                    if (req.type === 'fastestGame') {
+                        // Для скорости показываем реальное время, если оно есть
+                        progressPercentageValue = 100;
+                    } else {
+                        // Для остальных - обеспечиваем что текущее >= целевого
+                        currentValue = Math.max(currentValue, targetValue);
+                        progressPercentageValue = 100;
+                    }
+                } else {
+                    // Для неполученных - рассчитываем процент
+                    if (req.type === 'fastestGame') {
+                        progressPercentageValue = currentValue > 0 && currentValue <= targetValue ? 100 :
+                            Math.min(Math.round((targetValue / Math.max(currentValue, 1)) * 100), 99);
+                    } else {
+                        progressPercentageValue = Math.min(Math.round((currentValue / targetValue) * 100), 99);
+                    }
+                }
+
+                // Обновляем элементы интерфейса
+                if (progressCurrent) progressCurrent.textContent = currentValue.toLocaleString();
+                if (progressTarget) progressTarget.textContent = targetValue.toLocaleString();
+                if (progressBar) progressBar.style.width = `${progressPercentageValue}%`;
+                if (progressPercentage) progressPercentage.textContent = `${progressPercentageValue}%`;
+
+                console.log(`📊 Показываем прогресс для ${achievement.id}: ${currentValue}/${targetValue} = ${progressPercentageValue}%`);
+            } else {
+                // Если нет конфигурации, скрываем прогресс
+                modalProgress.style.display = 'none';
             }
-        } else if (modalProgress) {
-            modalProgress.style.display = 'none';
         }
 
         // Обновляем требования
@@ -1543,56 +1567,155 @@ export class CriminalTrustProfile {
 
             switch (req.type) {
                 case 'investigations':
-                    return `Провести ${req.value} расследований`;
+                    return `Провести ${req.value} криминальных расследований`;
+
+                case 'correctAnswers':
+                    return `Дать ${req.value} правильных ответов`;
+
+                case 'solvedCases':
+                    return `Раскрыть ${req.value} криминальных дел`;
 
                 case 'accuracy':
                     const minGames = req.minGames || 0;
-                    return `Достичь точности ${req.value}% в ${minGames}+ играх`;
+                    if (minGames > 0) {
+                        return `Достичь точности ${req.value}% при минимуме ${minGames} игр`;
+                    }
+                    return `Достичь точности ${req.value}%`;
 
                 case 'winStreak':
                     return `Достичь серии из ${req.value} правильных ответов подряд`;
 
                 case 'totalScore':
-                    return `Набрать ${req.value.toLocaleString()} очков`;
+                    return `Набрать ${req.value.toLocaleString()} очков общего счета`;
 
                 case 'perfectGames':
                     return `Сыграть ${req.value} идеальных игр (5/5 правильных ответов)`;
 
+                case 'fastestGame':
                 case 'fastGame':
                     return `Решить дело за ${req.value} секунд или быстрее`;
 
+                case 'averageTime':
+                    const minGames2 = req.minGames || 0;
+                    return `Достичь среднего времени ${req.value} секунд за вопрос в ${minGames2}+ играх`;
+
                 case 'dailyStreak':
-                    return `Играть ${req.value} дней подряд`;
+                    return `Играть ${req.value} дней подряд без перерывов`;
+
+                case 'reputation':
+                    return `Достичь уровня репутации ${req.value}`;
+
+                case 'crimeType':
+                    const crimeTypes: Record<string, string> = {
+                        'murder': 'убийствам',
+                        'robbery': 'ограблениям',
+                        'fraud': 'мошенничеству',
+                        'theft': 'кражам',
+                        'cybercrime': 'киберпреступлениям'
+                    };
+                    const crimeTypeName = crimeTypes[req.crimeType || ''] || 'преступлениям';
+                    return `Решить ${req.value} дел по ${crimeTypeName}`;
+
+                case 'difficultyType':
+                    const difficulties: Record<string, string> = {
+                        'easy': 'легкой',
+                        'medium': 'средней',
+                        'hard': 'высокой',
+                        'expert': 'экспертной'
+                    };
+                    const difficultyName = difficulties[req.difficulty || ''] || 'указанной';
+                    return `Решить ${req.value} дел ${difficultyName} сложности`;
+
+                case 'combo':
+                    if (req.requirements && req.requirements.length > 0) {
+                        const comboReqs = req.requirements.map(subReq => {
+                            // Упрощенное описание для комбо
+                            switch (subReq.type) {
+                                case 'accuracy': return `${subReq.value}% точности`;
+                                case 'winStreak': return `серия ${subReq.value}`;
+                                case 'totalScore': return `${subReq.value} очков`;
+                                case 'fastestGame': return `время ≤${subReq.value}с`;
+                                case 'perfectGames': return `${subReq.value} идеальных игр`;
+                                case 'dailyStreak': return `${subReq.value} дней подряд`;
+                                default: return `${subReq.value} ${subReq.type}`;
+                            }
+                        }).join(', ');
+                        return `Достичь одновременно: ${comboReqs}`;
+                    }
+                    return 'Выполнить комбинированные условия';
+
+                case 'speedAccuracy':
+                    const acc = req.accuracy || 90;
+                    const time = req.averageTime ? Math.round(req.averageTime / 1000) : 10;
+                    const games = req.minGames || 50;
+                    return `Достичь ${acc}% точности и среднего времени ≤${time}с в ${games}+ играх`;
+
+                case 'perfectReputation':
+                    return `Достичь высоких показателей во всех компонентах репутации`;
+
+                // Уникальные достижения
+                case 'firstDayGames':
+                    return `Решить ${req.value} дел в первый день игры`;
+
+                case 'comeback':
+                    const days = req.days || 30;
+                    return `Вернуться после перерыва ${days}+ дней и сыграть идеально`;
+
+                case 'midnightGame':
+                    const start = req.startHour || 0;
+                    const end = req.endHour || 2;
+                    return `Решить дело в период с ${start}:00 до ${end}:00`;
+
+                case 'weekendGames':
+                    return `Решить ${req.value} дел в выходные дни`;
+
+                case 'perfectWeek':
+                    return `Играть идеально (5/5) каждый день в течение недели`;
+
+                case 'encyclopedic':
+                    return `Решить по ${req.value} дел каждого типа преступления`;
 
                 default:
+                    // Если тип неизвестен, пробуем использовать описание из конфигурации
                     return configAchievement.description || 'Выполнить специальные условия';
             }
         }
 
-        // Fallback к общим требованиям
-        const requirements: Record<string, string> = {
-            'Начинающий': 'Начальные достижения для новых детективов',
-            'Профессионал': 'Достижения для опытных следователей',
-            'Мастерство': 'Продемонстрировать высокие навыки дедукции',
-            'Скорость': 'Быстро принимать решения в играх',
-            'Серии': 'Поддерживать серию успешных игр',
-            'Очки': 'Набрать определенное количество очков',
-            'Особые': 'Выполнить особые условия'
-        };
-
-        return requirements[achievement.category || 'default'] || 'Выполнить специальные условия для получения этого достижения';
+        // Fallback для достижений без конфигурации
+        return achievement.description || 'Выполнить специальные условия для получения этого достижения';
     }
 
     private getAchievementReward(achievement: any): string {
-        // Базовые награды по редкости
-        const rewards: Record<string, string> = {
-            'common': '+50 очков опыта',
-            'rare': '+100 очков опыта + уникальный титул',
-            'epic': '+200 очков опыта + особая эмблема',
-            'legendary': '+500 очков опыта + эксклюзивный ранг'
+        const rarity = achievement.rarity || 'common';
+
+        // Базовые награды по редкости с более детальным описанием
+        const baseRewards: Record<string, { xp: number; bonus: string }> = {
+            'common': { xp: 50, bonus: 'значок достижения' },
+            'rare': { xp: 100, bonus: 'уникальный титул + значок' },
+            'epic': { xp: 250, bonus: 'особая эмблема + бонус репутации' },
+            'legendary': { xp: 500, bonus: 'эксклюзивный ранг + особые привилегии' },
+            'mythic': { xp: 1000, bonus: 'легендарный статус + все бонусы' }
         };
 
-        return rewards[achievement.rarity || 'common'] || '+100 очков опыта';
+        const reward = baseRewards[rarity] || baseRewards['common'];
+
+        // Дополнительные бонусы в зависимости от категории достижения
+        const categoryBonuses: Record<string, string> = {
+            'investigation': '+ бонус к расследованиям',
+            'accuracy': '+ бонус к точности',
+            'speed': '+ бонус к скорости',
+            'streak': '+ бонус к сериям',
+            'score': '+ бонус к очкам',
+            'specialization': '+ бонус специализации',
+            'difficulty': '+ бонус сложности',
+            'reputation': '+ бонус репутации',
+            'elite': '+ элитный статус',
+            'unique': '+ уникальная награда'
+        };
+
+        const categoryBonus = categoryBonuses[achievement.category] || '';
+
+        return `+${reward.xp} очков опыта + ${reward.bonus}${categoryBonus}`;
     }
 
     private setupModalCloseHandlers(modal: HTMLElement): void {
