@@ -33,6 +33,7 @@ export interface UserStats {
     fastestGame: number;
     slowestGame: number;
     totalTimeSpent: number;
+    dailyStreakCurrent: number;
     gamesPerDay: Record<string, number>;
     accuracyByDifficulty: Record<string, number>;
     streakHistory: number[];
@@ -144,7 +145,9 @@ export interface AchievementRequirement {
     perfectGame?: boolean;
     speed?: number;
     consistency?: number;
-    difficulty?: number;
+    difficulty?: string;
+    requirements?: AchievementRequirement[];
+    hours?: number[];
 }
 
 export type RequirementType =
@@ -163,6 +166,14 @@ export type RequirementType =
     | 'expertGames'
     | 'reputation'
     | 'dailyStreak'
+    | 'crimeType'
+    | 'difficultyType'
+    | 'combo'
+    | 'achievementsInDay'
+    | 'comebackAfterDays'
+    | 'timeOfDay'
+    | 'weekendGames'
+    | 'achievementsCount'
     | 'crimeTypeMastery'
     | 'multipleMastery'
     | 'allMastery'
@@ -171,7 +182,6 @@ export type RequirementType =
     | 'firstDayGames'
     | 'comeback'
     | 'midnightGame'
-    | 'weekendGames'
     | 'perfectWeek'
     | 'encyclopedic'
     | 'fastGame'

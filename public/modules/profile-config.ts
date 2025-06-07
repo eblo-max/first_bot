@@ -809,7 +809,7 @@ export const ACHIEVEMENTS_CONFIG: Achievement[] = [
             accuracy: 90,
             speed: 90,
             consistency: 90,
-            difficulty: 90
+            difficulty: 'hard'
         }
     },
     {

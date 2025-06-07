@@ -1686,44 +1686,106 @@ export class CriminalTrustProfile {
         const { requirement } = achievement;
         let currentValue = 0;
 
+        console.log(`🔍 Расчет прогресса для ${achievementId}:`, {
+            requirement,
+            userData: {
+                investigations: (this.state.user as any).investigations,
+                gamesPlayed: this.state.user.gamesPlayed,
+                accuracy: this.state.user.accuracy,
+                totalScore: this.state.user.totalScore,
+                stats: this.state.user.stats
+            }
+        });
+
         switch (requirement.type) {
             case 'investigations':
-                // Используем gamesPlayed из User типа, но проверяем разные поля
-                currentValue = this.state.user.gamesPlayed ||
-                    this.state.user.stats?.totalGames ||
-                    (this.state.user as any).investigations || 0;
+                // Приоритет: поле investigations из сервера > расчет из totalQuestions > gamesPlayed
+                currentValue = (this.state.user as any).investigations ||
+                    Math.floor(((this.state.user as any).totalQuestions || 0) / 5) ||
+                    this.state.user.gamesPlayed ||
+                    this.state.user.stats?.totalGames || 0;
+                break;
+            case 'correctAnswers':
+                // Рассчитываем количество правильных ответов
+                const totalQuestions = (this.state.user as any).totalQuestions || 0;
+                const accuracy = this.state.user.accuracy || 0;
+                currentValue = Math.round(totalQuestions * accuracy / 100);
+                break;
+            case 'solvedCases':
+                currentValue = (this.state.user as any).solvedCases ||
+                    (this.state.user as any).investigations ||
+                    Math.floor(((this.state.user as any).totalQuestions || 0) / 5) || 0;
                 break;
             case 'accuracy':
-                currentValue = this.state.user.accuracy || 0;
+                // Проверяем минимальное количество игр
+                const gamesPlayed = (this.state.user as any).investigations ||
+                    Math.floor(((this.state.user as any).totalQuestions || 0) / 5) ||
+                    this.state.user.gamesPlayed || 0;
+                if (gamesPlayed >= (requirement.minGames || 0)) {
+                    currentValue = Math.round(this.state.user.accuracy || 0);
+                } else {
+                    return 0; // Недостаточно игр
+                }
                 break;
             case 'winStreak':
-                currentValue = this.state.user.maxWinStreak || this.state.user.winStreak || 0;
+                currentValue = (this.state.user as any).maxWinStreak ||
+                    this.state.user.maxWinStreak ||
+                    this.state.user.winStreak || 0;
                 break;
             case 'totalScore':
                 currentValue = this.state.user.totalScore || 0;
                 break;
             case 'perfectGames':
-                currentValue = this.state.user.stats?.perfectGames || 0;
+                currentValue = (this.state.user as any).perfectGames ||
+                    this.state.user.stats?.perfectGames || 0;
                 break;
-            case 'fastGame':
+            case 'fastestGame':
                 // Для достижений скорости проверяем быстрейшую игру
-                const fastestTime = this.state.user.stats?.fastestGame || 0;
+                const fastestTime = (this.state.user as any).fastestGame ||
+                    this.state.user.stats?.fastestGame || 0;
                 if (fastestTime > 0 && fastestTime <= requirement.value * 1000) {
                     return 100; // Уже выполнено
                 }
-                return 0;
+                return Math.min(Math.round((fastestTime > 0 ? requirement.value * 1000 / fastestTime : 0) * 100), 99);
             case 'dailyStreak':
-                // Проверяем разные возможные поля
                 currentValue = (this.state.user as any).dailyStreakCurrent ||
-                    (this.state.user as any).stats?.dailyStreakCurrent || 0;
+                    this.state.user.stats?.dailyStreakCurrent || 0;
+                break;
+            case 'reputation':
+                // Используем общий уровень репутации или рассчитываем
+                const rep = (this.state.user as any).reputation;
+                if (rep) {
+                    currentValue = rep.level || Math.round((rep.accuracy + rep.speed + rep.consistency + rep.difficulty) / 4);
+                }
+                break;
+            case 'crimeType':
+                // Для типов преступлений проверяем мастерство
+                const crimeType = requirement.crimeType;
+                if (crimeType && (this.state.user as any).crimeTypeMastery) {
+                    const mastery = (this.state.user as any).crimeTypeMastery[crimeType];
+                    if (mastery) {
+                        currentValue = mastery.level || 0;
+                    }
+                }
+                break;
+            case 'difficultyType':
+                // Для уровней сложности
+                const difficulty = requirement.difficulty;
+                const difficultyStats = (this.state.user as any)[`${difficulty}Games`] || 0;
+                currentValue = difficultyStats;
                 break;
             default:
+                console.warn(`⚠️ Неизвестный тип требования: ${requirement.type}`);
                 return 0;
         }
 
         // Для остальных типов - процент от цели
         const progress = (currentValue / requirement.value) * 100;
-        return Math.min(Math.round(progress), 99); // Максимум 99% для не разблокированных
+        const result = Math.min(Math.round(progress), 99); // Максимум 99% для не разблокированных
+
+        console.log(`📊 Результат расчета: ${currentValue}/${requirement.value} = ${result}%`);
+
+        return result;
     }
 }
 
