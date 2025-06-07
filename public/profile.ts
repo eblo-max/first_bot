@@ -6,6 +6,7 @@
 import type {
     User,
     Achievement,
+    AchievementConfig,
     ProfileState,
     LeaderboardPeriod,
     LeaderboardData,
@@ -390,28 +391,38 @@ export class CriminalTrustProfile {
     // =========================================================================
 
     private renderAchievements(achievements: any[]): void {
+        console.log('🏆 Рендерим достижения в новом стиле:', achievements.length);
+
         const container = document.getElementById('achievements-grid');
-        if (!container) return;
-
-        container.innerHTML = '';
-
-        achievements.forEach(achievement => {
-            const element = this.createAchievementElement(achievement);
-            container.appendChild(element);
-        });
-
-        // Обновляем счетчик достижений
-        const achievementsCount = document.getElementById('achievements-count');
-        if (achievementsCount) {
-            const unlockedCount = achievements.filter(a => a.isUnlocked).length;
-            achievementsCount.textContent = unlockedCount.toString();
-            console.log(`🏆 Обновлен счетчик достижений: ${unlockedCount}/${achievements.length}`);
+        if (!container) {
+            console.error('❌ Контейнер достижений не найден');
+            return;
         }
 
-        // Добавляем интерактивность
-        this.addAchievementInteractivity();
+        // Очищаем контейнер
+        container.innerHTML = '';
 
-        console.log(`🏆 Отрендерено ${achievements.length} достижений`);
+        // Получаем все возможные достижения из конфигурации
+        const allAchievements = ACHIEVEMENTS_CONFIG || [];
+        console.log('📋 Всего достижений в конфигурации:', allAchievements.length);
+
+        // Создаем карточки для всех достижений
+        allAchievements.forEach(achievementConfig => {
+            // Ищем данные о прогрессе этого достижения
+            const achievementData = achievements.find(a => a.id === achievementConfig.id);
+            const isUnlocked = achievementData?.isUnlocked || false;
+            const progress = achievementData?.progressData || null;
+
+            // Создаем карточку в новом стиле
+            const card = this.createAchievementCard(achievementConfig, progress, isUnlocked);
+            container.appendChild(card);
+        });
+
+        // Обновляем счетчик
+        const unlockedCount = achievements.filter(a => a.isUnlocked).length;
+        this.updateElement('achievements-count', unlockedCount.toString());
+
+        console.log(`✅ Отрендерено ${allAchievements.length} достижений (${unlockedCount} разблокировано)`);
     }
 
     private createAchievementElement(achievement: any): HTMLElement {
@@ -1098,6 +1109,13 @@ export class CriminalTrustProfile {
         }
     }
 
+    private setElementText(id: string, text: string): void {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = text;
+        }
+    }
+
     private setLoading(loading: boolean): void {
         this.state.isLoading = loading;
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -1685,38 +1703,7 @@ export class CriminalTrustProfile {
         return achievement.description || 'Выполнить специальные условия для получения этого достижения';
     }
 
-    private getAchievementReward(achievement: any): string {
-        const rarity = achievement.rarity || 'common';
 
-        // Базовые награды по редкости с более детальным описанием
-        const baseRewards: Record<string, { xp: number; bonus: string }> = {
-            'common': { xp: 50, bonus: 'значок достижения' },
-            'rare': { xp: 100, bonus: 'уникальный титул + значок' },
-            'epic': { xp: 250, bonus: 'особая эмблема + бонус репутации' },
-            'legendary': { xp: 500, bonus: 'эксклюзивный ранг + особые привилегии' },
-            'mythic': { xp: 1000, bonus: 'легендарный статус + все бонусы' }
-        };
-
-        const reward = baseRewards[rarity] || baseRewards['common'];
-
-        // Дополнительные бонусы в зависимости от категории достижения
-        const categoryBonuses: Record<string, string> = {
-            'investigation': '+ бонус к расследованиям',
-            'accuracy': '+ бонус к точности',
-            'speed': '+ бонус к скорости',
-            'streak': '+ бонус к сериям',
-            'score': '+ бонус к очкам',
-            'specialization': '+ бонус специализации',
-            'difficulty': '+ бонус сложности',
-            'reputation': '+ бонус репутации',
-            'elite': '+ элитный статус',
-            'unique': '+ уникальная награда'
-        };
-
-        const categoryBonus = categoryBonuses[achievement.category] || '';
-
-        return `+${reward.xp} очков опыта + ${reward.bonus}${categoryBonus}`;
-    }
 
     private setupModalCloseHandlers(modal: HTMLElement): void {
         // Удаляем старые обработчики если есть
@@ -1909,6 +1896,196 @@ export class CriminalTrustProfile {
         console.log(`📊 Результат расчета: ${currentValue}/${requirement.value} = ${result}%`);
 
         return result;
+    }
+
+    /**
+     * 🎯 СОЗДАНИЕ КАРТОЧКИ ДОСТИЖЕНИЯ В СТИЛЕ ДЕТЕКТИВНОГО ДОСЬЕ
+     */
+    private createAchievementCard(achievement: Achievement, progress: any, isUnlocked: boolean): HTMLElement {
+        const card = document.createElement('div');
+        card.className = `achievement-item ${isUnlocked ? '' : 'locked'}`;
+        card.setAttribute('data-achievement-id', achievement.id);
+
+        // Рассчитываем прогресс в процентах
+        const progressPercent = progress ? Math.min((progress.current / progress.target) * 100, 100) : 0;
+
+        card.innerHTML = `
+            <!-- Статус печать -->
+            <div class="achievement-status-stamp ${isUnlocked ? 'unlocked' : 'locked'}">
+                ${isUnlocked ? '✓' : '🔒'}
+            </div>
+
+            <!-- Иконка достижения -->
+            <div class="achievement-icon">${achievement.icon}</div>
+
+            <!-- Название -->
+            <div class="achievement-name">${achievement.name}</div>
+
+            <!-- Краткое описание -->
+            <div class="achievement-summary">
+                ${this.getAchievementSummary(achievement)}
+            </div>
+
+            <!-- Мини прогресс-бар внизу -->
+            <div class="achievement-progress-mini">
+                <div class="achievement-progress-fill" style="width: ${progressPercent}%"></div>
+            </div>
+        `;
+
+        // Обработчик клика для открытия модального окна
+        card.addEventListener('click', () => {
+            this.openAchievementModal(achievement, progress, isUnlocked);
+        });
+
+        return card;
+    }
+
+    /**
+     * 📝 ПОЛУЧЕНИЕ КРАТКОГО ОПИСАНИЯ ДОСТИЖЕНИЯ
+     */
+    private getAchievementSummary(achievement: Achievement): string {
+        const req = achievement.requirement;
+        if (!req) return 'Секретное задание';
+
+        switch (req.type) {
+            case 'investigations':
+                return `Завершить ${req.value} расследований`;
+            case 'accuracy':
+                return `Достичь ${req.value}% точности`;
+            case 'totalScore':
+                return `Набрать ${req.value} очков`;
+            case 'perfectGames':
+                return `${req.value} безошибочных игр`;
+            case 'winStreak':
+                return `Серия из ${req.value} побед`;
+            case 'dailyStreak':
+                return `${req.value} дней подряд`;
+            case 'crimeType':
+                return `Специализация: ${req.crimeType}`;
+            case 'difficultyType':
+                return `Сложность: ${req.difficulty}`;
+            case 'reputation':
+                return `Репутация: ${req.value}`;
+            case 'combo':
+                return `Комбо x${req.value}`;
+            default:
+                return 'Секретное задание';
+        }
+    }
+
+    /**
+     * 📁 ОТКРЫТИЕ МОДАЛЬНОГО ОКНА ФАЙЛА ДЕЛА
+     */
+    private openAchievementModal(achievement: Achievement, progress: any, isUnlocked: boolean): void {
+        console.log('🔍 Открываем дело:', achievement.name);
+
+        const modal = document.getElementById('achievement-modal');
+        const modalContent = modal?.querySelector('.achievement-modal-content');
+
+        if (!modal || !modalContent) {
+            console.error('❌ Модальное окно не найдено');
+            return;
+        }
+
+        // Устанавливаем класс статуса для стилизации
+        modalContent.className = `achievement-modal-content ${isUnlocked ? 'unlocked' : 'locked'}`;
+
+        // Заполняем данные
+        this.setElementText('modal-case-number', `ДЕЛО №${achievement.id.toUpperCase()}`);
+        this.setElementText('modal-icon', achievement.icon);
+        this.setElementText('modal-title', achievement.name.toUpperCase());
+        this.setElementText('modal-description', achievement.description);
+
+        // Настраиваем секцию улик
+        const evidenceSection = document.getElementById('modal-evidence');
+        if (evidenceSection && progress) {
+            evidenceSection.style.display = 'block';
+            this.setElementText('evidence-current', progress.current.toString());
+            this.setElementText('evidence-target', progress.target.toString());
+
+            const evidenceBar = document.getElementById('evidence-bar') as HTMLElement;
+            if (evidenceBar) {
+                const progressPercent = Math.min((progress.current / progress.target) * 100, 100);
+                evidenceBar.style.width = `${progressPercent}%`;
+            }
+        } else if (evidenceSection) {
+            evidenceSection.style.display = 'none';
+        }
+
+        // Детали дела
+        this.setElementText('detail-type', this.getAchievementCategory(achievement));
+        this.setElementText('detail-reward', this.getAchievementReward(achievement));
+
+        // Статус дела
+        const statusBadge = document.getElementById('modal-status');
+        if (statusBadge) {
+            statusBadge.className = `achievement-status-badge ${isUnlocked ? 'unlocked' : 'locked'}`;
+            statusBadge.innerHTML = isUnlocked
+                ? '<span>✓</span> ДЕЛО ЗАКРЫТО'
+                : '<span>🔍</span> РАССЛЕДОВАНИЕ';
+        }
+
+        // Показываем модальное окно
+        modal.classList.add('show');
+
+        // Haptic feedback для Telegram
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        }
+    }
+
+    /**
+     * 📂 ПОЛУЧЕНИЕ КАТЕГОРИИ ДОСТИЖЕНИЯ
+     */
+    private getAchievementCategory(achievement: Achievement): string {
+        const req = achievement.requirement;
+        if (!req) return 'Секретное';
+
+        switch (req.type) {
+            case 'investigations':
+            case 'perfectGames':
+                return 'Расследования';
+            case 'accuracy':
+                return 'Точность';
+            case 'totalScore':
+                return 'Очки';
+            case 'winStreak':
+            case 'dailyStreak':
+                return 'Серии';
+            case 'crimeType':
+            case 'difficultyType':
+                return 'Специализация';
+            case 'reputation':
+                return 'Репутация';
+            case 'combo':
+                return 'Комбо';
+            default:
+                return 'Секретное';
+        }
+    }
+
+    /**
+     * 🏆 ПОЛУЧЕНИЕ НАГРАДЫ ЗА ДОСТИЖЕНИЕ
+     */
+    private getAchievementReward(achievement: Achievement): string {
+        // Базовые награды по редкости
+        const rarityRewards: Record<string, number> = {
+            'common': 50,
+            'rare': 100,
+            'epic': 250,
+            'legendary': 500,
+            'mythic': 1000
+        };
+
+        const exp = rarityRewards[achievement.rarity] || 50;
+        let reward = `${exp} EXP`;
+
+        // Добавляем бонус за редкость
+        if (achievement.rarity === 'legendary' || achievement.rarity === 'mythic') {
+            reward += ' + Особый титул';
+        }
+
+        return reward;
     }
 }
 

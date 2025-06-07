@@ -130,6 +130,22 @@ export interface Achievement {
     tips?: string;
 }
 
+export interface AchievementConfig {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    category: string;
+    rarity: string;
+    experienceReward: number;
+    titleReward?: string;
+    requirements: Array<{
+        type: RequirementType;
+        target?: number;
+        value?: string;
+    }>;
+}
+
 export interface AchievementRequirement {
     type: RequirementType;
     value: number;
