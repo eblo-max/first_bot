@@ -2020,7 +2020,7 @@
                 console.log('🚀 Начинаем инициализацию профиля...');
 
                 // Импортируем конфигурацию достижений
-                const { ACHIEVEMENTS_CONFIG } = await import('./dist/profile-config.js?v=' + Date.now());
+                const { ACHIEVEMENTS_CONFIG } = await import('./dist/modules/profile-config.js?v=' + Date.now());
                 window.ACHIEVEMENTS_CONFIG = ACHIEVEMENTS_CONFIG;
                 console.log('📋 Загружена конфигурация достижений:', ACHIEVEMENTS_CONFIG.length, 'достижений');
 
