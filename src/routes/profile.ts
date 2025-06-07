@@ -7,9 +7,11 @@ import { Router, Request, Response } from 'express';
 import User, { type IUser, UserRank, type IAchievement } from '../models/User';
 import { authMiddleware } from '../middleware/auth';
 
-// ВЫБОРКА НОВЫХ ДОСТИЖЕНИЙ ДЛЯ СЕРВЕРНОЙ ЧАСТИ
+// НОВАЯ СИСТЕМА ДОСТИЖЕНИЙ (50 достижений) - СИНХРОНИЗИРОВАНА С КЛИЕНТОМ
 const SERVER_ACHIEVEMENTS_CONFIG = [
-    // Следователь
+    // =========================================================================
+    // 🔍 КАТЕГОРИЯ: СЛЕДОВАТЕЛЬ (Базовые достижения для начинающих)
+    // =========================================================================
     {
         id: 'first_investigation',
         name: 'Первое расследование',
@@ -18,11 +20,25 @@ const SERVER_ACHIEVEMENTS_CONFIG = [
         requirement: { type: 'investigations', value: 1 }
     },
     {
+        id: 'truth_seeker',
+        name: 'Искатель истины',
+        description: 'Правильно определите ошибку преступника в первый раз',
+        category: 'investigation',
+        requirement: { type: 'correctAnswers', value: 1 }
+    },
+    {
         id: 'rookie_detective',
         name: 'Детектив-новичок',
         description: 'Проведите 5 расследований',
         category: 'investigation',
         requirement: { type: 'investigations', value: 5 }
+    },
+    {
+        id: 'crime_solver',
+        name: 'Раскрыватель преступлений',
+        description: 'Раскройте 10 криминальных дел',
+        category: 'investigation',
+        requirement: { type: 'solvedCases', value: 10 }
     },
     {
         id: 'experienced_investigator',
@@ -45,8 +61,17 @@ const SERVER_ACHIEVEMENTS_CONFIG = [
         category: 'investigation',
         requirement: { type: 'investigations', value: 100 }
     },
+    {
+        id: 'master_detective',
+        name: 'Мастер-детектив',
+        description: 'Проведите 250 расследований',
+        category: 'investigation',
+        requirement: { type: 'investigations', value: 250 }
+    },
 
-    // Точность
+    // =========================================================================
+    // 🎯 КАТЕГОРИЯ: ТОЧНОСТЬ (Достижения за правильные ответы)
+    // =========================================================================
     {
         id: 'sharp_eye',
         name: 'Острый глаз',
@@ -61,8 +86,102 @@ const SERVER_ACHIEVEMENTS_CONFIG = [
         category: 'accuracy',
         requirement: { type: 'accuracy', value: 75, minGames: 20 }
     },
+    {
+        id: 'master_analyst',
+        name: 'Мастер анализа',
+        description: 'Достигните точности 85% в 50+ расследованиях',
+        category: 'accuracy',
+        requirement: { type: 'accuracy', value: 85, minGames: 50 }
+    },
+    {
+        id: 'sherlock_holmes',
+        name: 'Шерлок Холмс',
+        description: 'Достигните точности 95% в 100+ расследованиях',
+        category: 'accuracy',
+        requirement: { type: 'accuracy', value: 95, minGames: 100 }
+    },
 
-    // Очки
+    // =========================================================================
+    // ⚡ КАТЕГОРИЯ: СКОРОСТЬ (Достижения за быстрое решение)
+    // =========================================================================
+    {
+        id: 'quick_thinker',
+        name: 'Быстрый ум',
+        description: 'Решите дело за 30 секунд',
+        category: 'speed',
+        requirement: { type: 'fastestGame', value: 30 }
+    },
+    {
+        id: 'lightning_detective',
+        name: 'Молниеносный детектив',
+        description: 'Решите дело за 20 секунд',
+        category: 'speed',
+        requirement: { type: 'fastestGame', value: 20 }
+    },
+    {
+        id: 'instant_deduction',
+        name: 'Мгновенная дедукция',
+        description: 'Решите дело за 15 секунд',
+        category: 'speed',
+        requirement: { type: 'fastestGame', value: 15 }
+    },
+    {
+        id: 'speed_demon',
+        name: 'Демон скорости',
+        description: 'Решите дело за 10 секунд',
+        category: 'speed',
+        requirement: { type: 'fastestGame', value: 10 }
+    },
+
+    // =========================================================================
+    // 🔥 КАТЕГОРИЯ: СЕРИИ (Достижения за череды побед)
+    // =========================================================================
+    {
+        id: 'perfect_start',
+        name: 'Идеальное начало',
+        description: 'Сыграйте одну идеальную игру (5/5 правильных ответов)',
+        category: 'streak',
+        requirement: { type: 'perfectGames', value: 1 }
+    },
+    {
+        id: 'winning_streak_3',
+        name: 'Тройная серия',
+        description: 'Выиграйте 3 идеальные игры подряд',
+        category: 'streak',
+        requirement: { type: 'winStreak', value: 3 }
+    },
+    {
+        id: 'winning_streak_5',
+        name: 'Пятикратная серия',
+        description: 'Выиграйте 5 идеальных игр подряд',
+        category: 'streak',
+        requirement: { type: 'winStreak', value: 5 }
+    },
+    {
+        id: 'winning_streak_10',
+        name: 'Десятикратная серия',
+        description: 'Выиграйте 10 идеальных игр подряд',
+        category: 'streak',
+        requirement: { type: 'winStreak', value: 10 }
+    },
+    {
+        id: 'perfectionist',
+        name: 'Перфекционист',
+        description: 'Сыграйте 10 идеальных игр',
+        category: 'streak',
+        requirement: { type: 'perfectGames', value: 10 }
+    },
+    {
+        id: 'flawless_master',
+        name: 'Безупречный мастер',
+        description: 'Сыграйте 25 идеальных игр',
+        category: 'streak',
+        requirement: { type: 'perfectGames', value: 25 }
+    },
+
+    // =========================================================================
+    // 💰 КАТЕГОРИЯ: ОЧКИ (Достижения за набранные очки)
+    // =========================================================================
     {
         id: 'first_thousand',
         name: 'Первая тысяча',
@@ -77,21 +196,267 @@ const SERVER_ACHIEVEMENTS_CONFIG = [
         category: 'score',
         requirement: { type: 'totalScore', value: 5000 }
     },
-
-    // Серии
     {
-        id: 'perfect_start',
-        name: 'Идеальное начало',
-        description: 'Сыграйте одну идеальную игру (5/5 правильных ответов)',
-        category: 'streak',
-        requirement: { type: 'perfectGames', value: 1 }
+        id: 'ten_thousand_elite',
+        name: 'Элита десяти тысяч',
+        description: 'Наберите 10,000 очков',
+        category: 'score',
+        requirement: { type: 'totalScore', value: 10000 }
     },
     {
-        id: 'winning_streak_3',
-        name: 'Тройная серия',
-        description: 'Выиграйте 3 идеальные игры подряд',
-        category: 'streak',
-        requirement: { type: 'winStreak', value: 3 }
+        id: 'legendary_scorer',
+        name: 'Легендарный рекордсмен',
+        description: 'Наберите 25,000 очков',
+        category: 'score',
+        requirement: { type: 'totalScore', value: 25000 }
+    },
+
+    // =========================================================================
+    // 🎭 КАТЕГОРИЯ: СПЕЦИАЛИЗАЦИЯ (Достижения по типам преступлений)
+    // =========================================================================
+    {
+        id: 'murder_specialist',
+        name: 'Специалист по убийствам',
+        description: 'Решите 20 дел об убийствах',
+        category: 'specialization',
+        requirement: { type: 'crimeType', crimeType: 'murder', value: 20 }
+    },
+    {
+        id: 'robbery_expert',
+        name: 'Эксперт по ограблениям',
+        description: 'Решите 20 дел об ограблениях',
+        category: 'specialization',
+        requirement: { type: 'crimeType', crimeType: 'robbery', value: 20 }
+    },
+    {
+        id: 'fraud_hunter',
+        name: 'Охотник за мошенниками',
+        description: 'Решите 20 дел о мошенничестве',
+        category: 'specialization',
+        requirement: { type: 'crimeType', crimeType: 'fraud', value: 20 }
+    },
+    {
+        id: 'theft_tracker',
+        name: 'Следопыт воров',
+        description: 'Решите 20 дел о кражах',
+        category: 'specialization',
+        requirement: { type: 'crimeType', crimeType: 'theft', value: 20 }
+    },
+    {
+        id: 'cyber_investigator',
+        name: 'Киберследователь',
+        description: 'Решите 20 киберпреступлений',
+        category: 'specialization',
+        requirement: { type: 'crimeType', crimeType: 'cybercrime', value: 20 }
+    },
+
+    // =========================================================================
+    // 📈 КАТЕГОРИЯ: СЛОЖНОСТЬ (Достижения по уровням сложности)
+    // =========================================================================
+    {
+        id: 'easy_master',
+        name: 'Мастер простых дел',
+        description: 'Решите 50 дел легкой сложности',
+        category: 'difficulty',
+        requirement: { type: 'difficultyType', difficulty: 'easy', value: 50 }
+    },
+    {
+        id: 'medium_expert',
+        name: 'Эксперт средних дел',
+        description: 'Решите 30 дел средней сложности',
+        category: 'difficulty',
+        requirement: { type: 'difficultyType', difficulty: 'medium', value: 30 }
+    },
+    {
+        id: 'hard_challenger',
+        name: 'Покоритель сложных дел',
+        description: 'Решите 20 дел повышенной сложности',
+        category: 'difficulty',
+        requirement: { type: 'difficultyType', difficulty: 'hard', value: 20 }
+    },
+    {
+        id: 'expert_legend',
+        name: 'Легенда экспертного уровня',
+        description: 'Решите 10 дел экспертной сложности',
+        category: 'difficulty',
+        requirement: { type: 'difficultyType', difficulty: 'expert', value: 10 }
+    },
+
+    // =========================================================================
+    // ⭐ КАТЕГОРИЯ: РЕПУТАЦИЯ (Достижения за репутацию)
+    // =========================================================================
+    {
+        id: 'rising_reputation',
+        name: 'Растущая репутация',
+        description: 'Достигните репутации 50',
+        category: 'reputation',
+        requirement: { type: 'reputation', value: 50 }
+    },
+    {
+        id: 'respected_detective',
+        name: 'Уважаемый детектив',
+        description: 'Достигните репутации 70',
+        category: 'reputation',
+        requirement: { type: 'reputation', value: 70 }
+    },
+    {
+        id: 'elite_investigator',
+        name: 'Элитный следователь',
+        description: 'Достигните репутации 85',
+        category: 'reputation',
+        requirement: { type: 'reputation', value: 85 }
+    },
+    {
+        id: 'legendary_reputation',
+        name: 'Легендарная репутация',
+        description: 'Достигните репутации 95',
+        category: 'reputation',
+        requirement: { type: 'reputation', value: 95 }
+    },
+
+    // =========================================================================
+    // 📅 КАТЕГОРИЯ: АКТИВНОСТЬ (Достижения за регулярность)
+    // =========================================================================
+    {
+        id: 'daily_dedication',
+        name: 'Ежедневная преданность',
+        description: 'Играйте 7 дней подряд',
+        category: 'activity',
+        requirement: { type: 'dailyStreak', value: 7 }
+    },
+    {
+        id: 'weekly_warrior',
+        name: 'Недельный воин',
+        description: 'Играйте 14 дней подряд',
+        category: 'activity',
+        requirement: { type: 'dailyStreak', value: 14 }
+    },
+    {
+        id: 'monthly_master',
+        name: 'Месячный мастер',
+        description: 'Играйте 30 дней подряд',
+        category: 'activity',
+        requirement: { type: 'dailyStreak', value: 30 }
+    },
+    {
+        id: 'eternal_detective',
+        name: 'Вечный детектив',
+        description: 'Играйте 100 дней подряд',
+        category: 'activity',
+        requirement: { type: 'dailyStreak', value: 100 }
+    },
+
+    // =========================================================================
+    // 🏆 КАТЕГОРИЯ: КОМБО (Сложные комбинированные достижения)
+    // =========================================================================
+    {
+        id: 'triple_threat',
+        name: 'Тройная угроза',
+        description: 'Достигните 80% точности, 5 серии побед и 5000 очков',
+        category: 'combo',
+        requirement: {
+            type: 'combo', requirements: [
+                { type: 'accuracy', value: 80, minGames: 20 },
+                { type: 'winStreak', value: 5 },
+                { type: 'totalScore', value: 5000 }
+            ]
+        }
+    },
+    {
+        id: 'master_of_all',
+        name: 'Мастер всех дел',
+        description: 'Решите минимум 10 дел каждого типа преступлений',
+        category: 'combo',
+        requirement: {
+            type: 'combo', requirements: [
+                { type: 'crimeType', crimeType: 'murder', value: 10 },
+                { type: 'crimeType', crimeType: 'robbery', value: 10 },
+                { type: 'crimeType', crimeType: 'fraud', value: 10 },
+                { type: 'crimeType', crimeType: 'theft', value: 10 }
+            ]
+        }
+    },
+    {
+        id: 'perfect_balance',
+        name: 'Идеальный баланс',
+        description: 'Достигните высоких показателей во всех категориях',
+        category: 'combo',
+        requirement: {
+            type: 'combo', requirements: [
+                { type: 'accuracy', value: 85, minGames: 50 },
+                { type: 'fastestGame', value: 20 },
+                { type: 'perfectGames', value: 15 },
+                { type: 'dailyStreak', value: 14 }
+            ]
+        }
+    },
+
+    // =========================================================================
+    // 🎪 КАТЕГОРИЯ: ОСОБЫЕ (Уникальные и редкие достижения)
+    // =========================================================================
+    {
+        id: 'speed_and_accuracy',
+        name: 'Скорость и точность',
+        description: 'Решите дело за 15 секунд с 100% точностью',
+        category: 'special',
+        requirement: {
+            type: 'combo', requirements: [
+                { type: 'fastestGame', value: 15 },
+                { type: 'perfectGames', value: 1 }
+            ]
+        }
+    },
+    {
+        id: 'first_day_hero',
+        name: 'Герой первого дня',
+        description: 'Получите 10 достижений в первый день игры',
+        category: 'special',
+        requirement: { type: 'achievementsInDay', value: 10 }
+    },
+    {
+        id: 'comeback_king',
+        name: 'Король возвращения',
+        description: 'Вернитесь в игру после 30+ дней отсутствия',
+        category: 'special',
+        requirement: { type: 'comebackAfterDays', value: 30 }
+    },
+    {
+        id: 'midnight_detective',
+        name: 'Полуночный детектив',
+        description: 'Сыграйте игру между 00:00 и 06:00',
+        category: 'special',
+        requirement: { type: 'timeOfDay', hours: [0, 1, 2, 3, 4, 5] }
+    },
+    {
+        id: 'weekend_warrior',
+        name: 'Воин выходных',
+        description: 'Сыграйте 10 игр в выходные дни',
+        category: 'special',
+        requirement: { type: 'weekendGames', value: 10 }
+    },
+    {
+        id: 'perfect_week',
+        name: 'Идеальная неделя',
+        description: 'Играйте каждый день недели с 80%+ точностью',
+        category: 'special',
+        requirement: {
+            type: 'combo', requirements: [
+                { type: 'dailyStreak', value: 7 },
+                { type: 'accuracy', value: 80, minGames: 7 }
+            ]
+        }
+    },
+    {
+        id: 'crime_encyclopedia',
+        name: 'Криминальная энциклопедия',
+        description: 'Решите 500+ дел и достигните всех основных достижений',
+        category: 'special',
+        requirement: {
+            type: 'combo', requirements: [
+                { type: 'investigations', value: 500 },
+                { type: 'achievementsCount', value: 40 }
+            ]
+        }
     }
 ];
 
@@ -674,7 +1039,7 @@ function calculateNextAchievements(user: IUser): NextAchievement[] {
     return next;
 }
 
-// Функция расчета прогресса для серверной части
+// Функция расчета прогресса для серверной части - РАСШИРЕННАЯ ДЛЯ НОВОЙ СИСТЕМЫ
 function calculateServerAchievementProgress(achievement: any, userStats: any) {
     const req = achievement.requirement;
     let current = 0;
@@ -683,6 +1048,12 @@ function calculateServerAchievementProgress(achievement: any, userStats: any) {
     switch (req.type) {
         case 'investigations':
             current = userStats.investigations || 0;
+            break;
+        case 'correctAnswers':
+            current = Math.round((userStats.totalQuestions || 0) * (userStats.accuracy || 0) / 100);
+            break;
+        case 'solvedCases':
+            current = userStats.solvedCases || userStats.investigations || 0;
             break;
         case 'accuracy':
             if ((userStats.investigations || 0) >= (req.minGames || 0)) {
@@ -697,6 +1068,40 @@ function calculateServerAchievementProgress(achievement: any, userStats: any) {
             break;
         case 'winStreak':
             current = userStats.maxWinStreak || 0;
+            break;
+        case 'fastestGame':
+            // Инвертируем - чем меньше время, тем больше прогресс
+            const fastestTime = userStats.fastestGame || 0;
+            current = fastestTime > 0 && fastestTime <= target ? target : fastestTime;
+            if (fastestTime > 0 && fastestTime <= target) current = target;
+            break;
+        case 'dailyStreak':
+            current = userStats.dailyStreakCurrent || 0;
+            break;
+        case 'reputation':
+            current = Math.round((userStats.reputation?.accuracy || 0) +
+                (userStats.reputation?.speed || 0) +
+                (userStats.reputation?.consistency || 0) +
+                (userStats.reputation?.difficulty || 0)) / 4;
+            break;
+        case 'crimeType':
+            // Пока не реализовано, возвращаем 0
+            current = 0;
+            break;
+        case 'difficultyType':
+            // Пока не реализовано, возвращаем 0
+            current = 0;
+            break;
+        case 'combo':
+            // Для комбо-достижений проверяем все требования
+            if (req.requirements && Array.isArray(req.requirements)) {
+                const allRequirementsMet = req.requirements.every((subReq: any) => {
+                    const subProgress = calculateServerAchievementProgress({ requirement: subReq }, userStats);
+                    return subProgress.percentage >= 100;
+                });
+                current = allRequirementsMet ? 1 : 0;
+                target = 1;
+            }
             break;
         default:
             current = 0;
