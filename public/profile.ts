@@ -406,12 +406,41 @@ export class CriminalTrustProfile {
         const allAchievements = ACHIEVEMENTS_CONFIG || [];
         console.log('📋 Всего достижений в конфигурации:', allAchievements.length);
 
+        if (!allAchievements || allAchievements.length === 0) {
+            console.error('❌ ACHIEVEMENTS_CONFIG пустая или не загружена!');
+            container.innerHTML = '<div style="color: red; text-align: center; padding: 20px;">Ошибка загрузки конфигурации достижений</div>';
+            return;
+        }
+
+        let unlockedCount = 0;
+
         // Создаем карточки для всех достижений
         allAchievements.forEach(achievementConfig => {
             // Ищем данные о прогрессе этого достижения
             const achievementData = achievements.find(a => a.id === achievementConfig.id);
-            const isUnlocked = achievementData?.isUnlocked || false;
-            const progress = achievementData?.progressData || null;
+
+            // ИСПРАВЛЕННАЯ ЛОГИКА: Проверяем разблокировано ли достижение
+            let isUnlocked = false;
+            if (achievementData && achievementData.isUnlocked) {
+                isUnlocked = true;
+                unlockedCount++;
+            } else {
+                // Дополнительная проверка - если прогресс 100%, то достижение разблокировано
+                const realProgress = this.calculateRealProgress(achievementConfig.id, this.state.user);
+                if (realProgress >= 100) {
+                    isUnlocked = true;
+                    unlockedCount++;
+                }
+            }
+
+            // Создаем объект прогресса для карточки
+            const progress = {
+                current: achievementData?.progress || 0,
+                target: achievementConfig.requirement?.value || 100,
+                percentage: this.calculateRealProgress(achievementConfig.id, this.state.user)
+            };
+
+            console.log(`🎯 Достижение ${achievementConfig.name}: разблокировано=${isUnlocked}, прогресс=${progress.percentage}%`);
 
             // Создаем карточку в новом стиле
             const card = this.createAchievementCard(achievementConfig, progress, isUnlocked);
@@ -419,7 +448,6 @@ export class CriminalTrustProfile {
         });
 
         // Обновляем счетчик
-        const unlockedCount = achievements.filter(a => a.isUnlocked).length;
         this.updateElement('achievements-count', unlockedCount.toString());
 
         console.log(`✅ Отрендерено ${allAchievements.length} достижений (${unlockedCount} разблокировано)`);
@@ -1902,12 +1930,16 @@ export class CriminalTrustProfile {
      * 🎯 СОЗДАНИЕ КАРТОЧКИ ДОСТИЖЕНИЯ В СТИЛЕ ДЕТЕКТИВНОГО ДОСЬЕ
      */
     private createAchievementCard(achievement: Achievement, progress: any, isUnlocked: boolean): HTMLElement {
+        console.log('🎯 Создаем карточку:', achievement.name, 'isUnlocked:', isUnlocked);
+
         const card = document.createElement('div');
         card.className = `achievement-item ${isUnlocked ? '' : 'locked'}`;
         card.setAttribute('data-achievement-id', achievement.id);
 
         // Рассчитываем прогресс в процентах
-        const progressPercent = progress ? Math.min((progress.current / progress.target) * 100, 100) : 0;
+        const progressPercent = progress ? Math.min(progress.percentage || 0, 100) : 0;
+
+        console.log(`📊 Прогресс для ${achievement.name}: ${progressPercent}%`, { progress });
 
         card.innerHTML = `
             <!-- Статус печать -->
@@ -1916,10 +1948,10 @@ export class CriminalTrustProfile {
             </div>
 
             <!-- Иконка достижения -->
-            <div class="achievement-icon">${achievement.icon}</div>
+            <div class="achievement-icon">${achievement.icon || '🏆'}</div>
 
             <!-- Название -->
-            <div class="achievement-name">${achievement.name}</div>
+            <div class="achievement-name">${achievement.name || 'Неизвестное достижение'}</div>
 
             <!-- Краткое описание -->
             <div class="achievement-summary">

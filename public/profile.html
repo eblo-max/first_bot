@@ -2331,11 +2331,17 @@
                 console.log('🚀 Начинаем инициализацию профиля...');
 
                 // Импортируем конфигурацию достижений
-                const { ACHIEVEMENTS_CONFIG } = await import('./dist/modules/profile-config.js?v=' + Date.now());
+                console.log('📦 Импортируем конфигурацию достижений...');
+                const profileConfig = await import('./dist/modules/profile-config.js?v=' + Date.now());
+                console.log('📦 Импорт завершен:', profileConfig);
+
+                const { ACHIEVEMENTS_CONFIG } = profileConfig;
                 window.ACHIEVEMENTS_CONFIG = ACHIEVEMENTS_CONFIG;
-                console.log('📋 Загружена конфигурация достижений:', ACHIEVEMENTS_CONFIG.length, 'достижений');
+                console.log('📋 Загружена конфигурация достижений:', ACHIEVEMENTS_CONFIG?.length || 0, 'достижений');
+                console.log('🔍 Первые 3 достижения:', ACHIEVEMENTS_CONFIG?.slice(0, 3));
 
                 // Импортируем и инициализируем модуль профиля
+                console.log('🎯 Импортируем основной профиль...');
                 const { CriminalTrustProfile } = await import('./dist/profile.js?v=' + Date.now());
 
                 // Создаем экземпляр профиля
