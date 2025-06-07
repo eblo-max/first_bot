@@ -2025,7 +2025,11 @@ export class CriminalTrustProfile {
                 : '<span>🔍</span> РАССЛЕДОВАНИЕ';
         }
 
+        // Настраиваем обработчики закрытия ПЕРЕД показом модального окна
+        this.setupModalCloseHandlers(modal);
+
         // Показываем модальное окно
+        modal.style.display = 'flex';
         modal.classList.add('show');
 
         // Haptic feedback для Telegram
