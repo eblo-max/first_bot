@@ -2324,7 +2324,12 @@
     <script type="module">
         // Проверяем, что мы внутри Telegram WebApp
         function checkTelegramAccess() {
+            console.log('🔍 Проверяем доступ к Telegram WebApp...');
+            console.log('window.Telegram:', !!window.Telegram);
+            console.log('window.Telegram.WebApp:', !!window.Telegram?.WebApp);
+
             if (!window.Telegram || !window.Telegram.WebApp) {
+                console.log('❌ Telegram WebApp не найден');
                 document.body.innerHTML = `
                     <div style="
                         display: flex;
@@ -2342,12 +2347,221 @@
                         <h1 style="margin: 0 0 10px 0; font-size: 1.5rem;">ДОСТУП ОГРАНИЧЕН</h1>
                         <p style="margin: 0 0 20px 0; opacity: 0.8;">Это приложение работает только в Telegram Mini Apps</p>
                         <p style="margin: 0; font-size: 0.9rem; opacity: 0.6;">Откройте приложение через бота в Telegram</p>
+                        <p style="margin: 20px 0 0 0; font-size: 0.7rem; opacity: 0.4;">DEBUG: ${window.location.href}</p>
                     </div>
                 `;
                 return false;
             }
+            console.log('✅ Telegram WebApp найден');
             return true;
         }
+
+        // Функция для быстрой инициализации без модулей
+        function quickInit() {
+            console.log('🚀 БЫСТРАЯ ИНИЦИАЛИЗАЦИЯ...');
+
+            // Показываем тестовые данные
+            const elements = {
+                'user-name': 'DETECTIVE_TEST',
+                'user-id': '123456789',
+                'user-level': '1',
+                'current-xp': '0',
+                'max-xp': '100',
+                'user-total-score': '0',
+                'user-games-played': '0',
+                'stat-streak': '0',
+                'user-accuracy': '0',
+                'user-position': '—',
+                'total-players': '—',
+                'achievements-count': '0',
+                'detective-rank': 'НОВИЧОК'
+            };
+
+            Object.entries(elements).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                    console.log(`✅ Обновлен ${id}: ${value}`);
+                }
+            });
+
+            // Устанавливаем аватар
+            const avatarPlaceholder = document.getElementById('avatar-placeholder');
+            if (avatarPlaceholder) {
+                avatarPlaceholder.textContent = '🕵️';
+            }
+
+            // Анимируем XP бар
+            const xpBar = document.getElementById('xp-bar');
+            if (xpBar) {
+                setTimeout(() => {
+                    xpBar.style.width = '0%';
+                }, 500);
+            }
+
+            // Инициализируем табы лидерборда
+            initLeaderboardTabs();
+
+            // Инициализируем достижения
+            initAchievements();
+
+            // Инициализируем кнопку "Назад"
+            initBackButton();
+
+            // Скрываем загрузку
+            const loadingElements = document.querySelectorAll('.loading-skeleton, .loading-message');
+            loadingElements.forEach(el => {
+                el.style.display = 'none';
+            });
+
+            console.log('✅ Быстрая инициализация завершена');
+        }
+
+        // Инициализация табов лидерборда
+        function initLeaderboardTabs() {
+            const tabs = document.querySelectorAll('.leaderboard-tab');
+            const content = document.getElementById('leaderboard-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Убираем активный класс со всех табов
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Добавляем активный класс к текущему табу
+                    tab.classList.add('active');
+
+                    // Показываем заглушку лидерборда
+                    if (content) {
+                        content.innerHTML = `
+                            <div style="text-align: center; padding: 40px 20px; color: var(--silver);">
+                                <div style="font-size: 2rem; margin-bottom: 16px;">🏆</div>
+                                <div style="font-size: 1.1rem; margin-bottom: 8px;">Лидерборд загружается...</div>
+                                <div style="font-size: 0.9rem; opacity: 0.7;">Период: ${tab.textContent}</div>
+                            </div>
+                        `;
+                    }
+                });
+            });
+        }
+
+        // Инициализация достижений
+        function initAchievements() {
+            const achievementsGrid = document.getElementById('achievements-grid');
+            if (!achievementsGrid) return;
+
+            // Тестовые достижения
+            const testAchievements = [
+                { id: 'first_case', name: 'Первое дело', icon: '🔍', description: 'Завершите первое расследование', unlocked: true },
+                { id: 'detective', name: 'Детектив', icon: '🕵️', description: 'Проведите 10 расследований', unlocked: false },
+                { id: 'sharp_eye', name: 'Острый глаз', icon: '👁️', description: 'Достигните точности 80%', unlocked: false },
+                { id: 'speed_demon', name: 'Демон скорости', icon: '⚡', description: 'Решите дело за 30 секунд', unlocked: false },
+                { id: 'perfectionist', name: 'Перфекционист', icon: '💎', description: 'Идеальная игра без ошибок', unlocked: false },
+                { id: 'veteran', name: 'Ветеран', icon: '🎖️', description: 'Проведите 100 расследований', unlocked: false }
+            ];
+
+            achievementsGrid.innerHTML = testAchievements.map(achievement => `
+                <div class="achievement-item ${achievement.unlocked ? '' : 'locked'}" 
+                     data-achievement-id="${achievement.id}" 
+                     onclick="showAchievementModal('${achievement.id}')">
+                    <div class="achievement-status-stamp ${achievement.unlocked ? 'unlocked' : 'locked'}">
+                        ${achievement.unlocked ? '✓' : '🔒'}
+                    </div>
+                    <div class="achievement-icon">${achievement.icon}</div>
+                    <div class="achievement-name">${achievement.name}</div>
+                    <div class="achievement-summary">${achievement.description}</div>
+                    <div class="achievement-progress-mini">
+                        <div class="achievement-progress-fill" style="width: ${achievement.unlocked ? '100' : '0'}%;"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Инициализация кнопки "Назад"
+        function initBackButton() {
+            const backButton = document.getElementById('back-button');
+            if (backButton) {
+                backButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = '/';
+                    }
+                });
+            }
+        }
+
+        // Показать модальное окно достижения
+        function showAchievementModal(achievementId) {
+            const modal = document.getElementById('achievement-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalDescription = document.getElementById('modal-description');
+            const modalIcon = document.getElementById('modal-icon');
+            const modalCaseNumber = document.getElementById('modal-case-number');
+            const modalStatus = document.getElementById('modal-status');
+
+            if (!modal) return;
+
+            // Данные достижения (заглушка)
+            const achievementData = {
+                'first_case': {
+                    title: 'ПЕРВОЕ ДЕЛО',
+                    icon: '🔍',
+                    description: 'Поздравляем! Вы завершили свое первое расследование в Criminal Trust. Это начало вашей карьеры детектива.',
+                    caseNumber: 'ДЕЛО №AC-001',
+                    unlocked: true
+                },
+                'detective': {
+                    title: 'ДЕТЕКТИВ',
+                    icon: '🕵️',
+                    description: 'Проведите 10 успешных расследований и докажите свою компетентность в раскрытии преступлений.',
+                    caseNumber: 'ДЕЛО №AC-002',
+                    unlocked: false
+                }
+            };
+
+            const data = achievementData[achievementId] || achievementData['first_case'];
+
+            if (modalTitle) modalTitle.textContent = data.title;
+            if (modalDescription) modalDescription.textContent = data.description;
+            if (modalIcon) modalIcon.textContent = data.icon;
+            if (modalCaseNumber) modalCaseNumber.textContent = data.caseNumber;
+            if (modalStatus) {
+                modalStatus.innerHTML = data.unlocked
+                    ? '<span>✓</span> ДЕЛО ЗАКРЫТО'
+                    : '<span>🔒</span> РАССЛЕДОВАНИЕ ВЕДЕТСЯ';
+                modalStatus.className = `achievement-status-badge ${data.unlocked ? 'unlocked' : 'locked'}`;
+            }
+
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+
+            // Обработчики закрытия
+            const closeBtn = document.getElementById('modal-close');
+            if (closeBtn) {
+                closeBtn.onclick = () => hideAchievementModal();
+            }
+
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    hideAchievementModal();
+                }
+            };
+        }
+
+        // Скрыть модальное окно достижения
+        function hideAchievementModal() {
+            const modal = document.getElementById('achievement-modal');
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        // Глобальные функции
+        window.showAchievementModal = showAchievementModal;
+        window.hideAchievementModal = hideAchievementModal;
 
         // Проверяем доступ при загрузке
         if (!checkTelegramAccess()) {
@@ -2358,33 +2572,72 @@
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 console.log('🚀 Начинаем инициализацию профиля...');
+                console.log('📍 Текущий URL:', window.location.href);
+                console.log('📍 User Agent:', navigator.userAgent);
 
-                // Импортируем конфигурацию достижений
-                console.log('📦 Импортируем конфигурацию достижений...');
-                const profileConfig = await import('./dist/modules/profile-config.js?v=' + Date.now());
-                console.log('📦 Импорт завершен:', profileConfig);
+                // Сначала быстрая инициализация
+                quickInit();
 
-                const { ACHIEVEMENTS_CONFIG } = profileConfig;
-                window.ACHIEVEMENTS_CONFIG = ACHIEVEMENTS_CONFIG;
-                console.log('📋 Загружена конфигурация достижений:', ACHIEVEMENTS_CONFIG?.length || 0, 'достижений');
-                console.log('🔍 Первые 3 достижения:', ACHIEVEMENTS_CONFIG?.slice(0, 3));
+                // Пытаемся загрузить модули с таймаутом
+                const loadWithTimeout = (promise, timeout = 5000) => {
+                    return Promise.race([
+                        promise,
+                        new Promise((_, reject) =>
+                            setTimeout(() => reject(new Error('Timeout')), timeout)
+                        )
+                    ]);
+                };
 
-                // Импортируем и инициализируем модуль профиля
-                console.log('🎯 Импортируем основной профиль...');
-                const { CriminalTrustProfile } = await import('./dist/profile.js?v=' + Date.now());
+                try {
+                    console.log('📦 Попытка импорта модулей...');
 
-                // Создаем экземпляр профиля
-                window.criminalProfile = new CriminalTrustProfile();
+                    const profileConfigPromise = import('./dist/modules/profile-config.js?v=' + Date.now());
+                    const profileConfig = await loadWithTimeout(profileConfigPromise, 3000);
 
-                console.log('✅ Профиль инициализирован');
+                    console.log('📦 Конфигурация загружена:', !!profileConfig);
+
+                    const { ACHIEVEMENTS_CONFIG } = profileConfig;
+                    if (ACHIEVEMENTS_CONFIG) {
+                        window.ACHIEVEMENTS_CONFIG = ACHIEVEMENTS_CONFIG;
+                        console.log('📋 Загружена конфигурация достижений:', ACHIEVEMENTS_CONFIG.length);
+                    }
+
+                    const profilePromise = import('./dist/profile.js?v=' + Date.now());
+                    const profileModule = await loadWithTimeout(profilePromise, 3000);
+
+                    console.log('📦 Профиль загружен:', !!profileModule);
+
+                    const { CriminalTrustProfile } = profileModule;
+                    if (CriminalTrustProfile) {
+                        window.criminalProfile = new CriminalTrustProfile();
+                        console.log('✅ Профиль полностью инициализирован');
+                    }
+
+                } catch (moduleError) {
+                    console.warn('⚠️ Ошибка загрузки модулей:', moduleError.message);
+                    console.log('🔄 Используем базовую функциональность');
+
+                    // Устанавливаем кнопку "Назад"
+                    const backButton = document.getElementById('back-button');
+                    if (backButton) {
+                        backButton.addEventListener('click', () => {
+                            if (window.history.length > 1) {
+                                window.history.back();
+                            } else {
+                                window.location.href = '/';
+                            }
+                        });
+                    }
+                }
+
             } catch (error) {
-                console.error('❌ Ошибка инициализации профиля:', error);
+                console.error('❌ Критическая ошибка инициализации:', error);
                 console.error('❌ Стек ошибки:', error.stack);
 
-                // Показываем тестовые данные для отладки
+                // Показываем ошибку пользователю
                 const errorElement = document.getElementById('user-name');
                 if (errorElement) {
-                    errorElement.textContent = 'ОШИБКА ЗАГРУЗКИ ПРОФИЛЯ';
+                    errorElement.textContent = 'ОШИБКА ЗАГРУЗКИ';
                     errorElement.style.color = '#ff4444';
                 }
 
@@ -2401,20 +2654,26 @@
                         padding: 15px; 
                         border-radius: 8px; 
                         font-family: monospace; 
-                        font-size: 12px;
+                        font-size: 11px;
                         z-index: 9999;
                         max-height: 200px;
                         overflow-y: auto;
                     ">
                         <strong>🔧 DEBUG INFO:</strong><br>
                         Error: ${error.message}<br>
-                        Stack: ${error.stack ? error.stack.substring(0, 300) + '...' : 'No stack trace'}<br>
+                        Stack: ${error.stack ? error.stack.substring(0, 200) + '...' : 'No stack'}<br>
                         Time: ${new Date().toISOString()}<br>
                         URL: ${window.location.href}<br>
-                        UserAgent: ${navigator.userAgent.substring(0, 100)}...
+                        Cloudflare: ${window.location.hostname.includes('workers.dev') ? 'YES' : 'NO'}<br>
+                        Telegram: ${!!window.Telegram ? 'YES' : 'NO'}
                     </div>
                 `;
                 document.body.appendChild(errorDetails);
+
+                // Автоматически скрыть ошибку через 10 секунд
+                setTimeout(() => {
+                    errorDetails.remove();
+                }, 10000);
             }
         });
     </script>
