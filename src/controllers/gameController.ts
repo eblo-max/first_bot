@@ -445,8 +445,14 @@ class GameController {
             // Обновляем статистику через метод модели
             await user.updateStatsAfterGame(gameResult);
 
-            // Проверяем новые достижения
+            // Проверяем и выдаем новые достижения
             const newAchievements = user.checkAchievements();
+
+            // ИСПРАВЛЕНО: Сохраняем пользователя после проверки достижений
+            if (newAchievements.length > 0) {
+                console.log(`🏆 Добавлено ${newAchievements.length} новых достижений:`, newAchievements.map(a => a.name));
+                await user.save();
+            }
 
             // Проверяем, повысился ли уровень
             const leveledUp = user.stats.level > prevLevel;

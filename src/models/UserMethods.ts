@@ -431,6 +431,10 @@ export function hasAchievement(this: IUser, achievementId: string): boolean {
 export function checkAchievements(this: IUser): IAchievement[] {
     const newAchievements: IAchievement[] = [];
 
+    console.log(`🔍 Проверяю достижения для пользователя ${this.telegramId}:`);
+    console.log(`📊 Статистика: расследований=${this.stats.investigations}, очков=${this.stats.totalScore}, точность=${this.stats.accuracy}%, серия=${this.stats.maxWinStreak}`);
+    console.log(`🏆 Текущие достижения: ${this.achievements.length} шт., ID: [${this.achievements.map(a => a.id).join(', ')}]`);
+
     // === ДОСТИЖЕНИЯ ПРОГРЕССА ===
 
     // Первое дело
@@ -697,7 +701,11 @@ export function checkAchievements(this: IUser): IAchievement[] {
 
     // Добавляем новые достижения
     if (newAchievements.length > 0) {
+        console.log(`🎉 Добавляю ${newAchievements.length} новых достижений:`, newAchievements.map(a => `${a.id}: ${a.name}`));
         this.achievements.push(...newAchievements);
+        console.log(`📊 Общее количество достижений у пользователя: ${this.achievements.length}`);
+    } else {
+        console.log('ℹ️ Новых достижений не обнаружено');
     }
 
     return newAchievements;
