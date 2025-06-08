@@ -434,11 +434,24 @@ export function checkAchievements(this: IUser): IAchievement[] {
     // === ДОСТИЖЕНИЯ ПРОГРЕССА ===
 
     // Первое дело
-    if (this.stats.investigations >= 1 && !this.hasAchievement('first_case')) {
+    if (this.stats.investigations >= 1 && !this.hasAchievement('first_investigation')) {
         newAchievements.push({
-            id: 'first_case',
-            name: 'Первое дело',
+            id: 'first_investigation',
+            name: 'Первое расследование',
             description: 'Провели первое расследование',
+            category: 'ПРОГРЕСС',
+            rarity: 'ОБЫЧНОЕ',
+            unlockedAt: new Date(),
+            progress: { current: 1, target: 1 }
+        });
+    }
+
+    // Искатель истины - базовое достижение для всех
+    if (this.stats.investigations >= 1 && !this.hasAchievement('truth_seeker')) {
+        newAchievements.push({
+            id: 'truth_seeker',
+            name: 'Искатель истины',
+            description: 'Начали путь детектива',
             category: 'ПРОГРЕСС',
             rarity: 'ОБЫЧНОЕ',
             unlockedAt: new Date(),
@@ -448,10 +461,10 @@ export function checkAchievements(this: IUser): IAchievement[] {
 
     // Серия расследований
     const investigationMilestones = [
-        { count: 5, id: 'detective_rookie', name: 'Начинающий детектив', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
-        { count: 25, id: 'detective_experienced', name: 'Опытный детектив', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
-        { count: 50, id: 'detective_veteran', name: 'Ветеран розыска', rarity: 'РЕДКОЕ' as AchievementRarity },
-        { count: 100, id: 'detective_master', name: 'Мастер следствия', rarity: 'РЕДКОЕ' as AchievementRarity },
+        { count: 5, id: 'rookie_detective', name: 'Детектив-новичок', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
+        { count: 25, id: 'senior_detective', name: 'Старший детектив', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
+        { count: 50, id: 'veteran_investigator', name: 'Ветеран следствия', rarity: 'РЕДКОЕ' as AchievementRarity },
+        { count: 100, id: 'master_detective', name: 'Мастер-детектив', rarity: 'РЕДКОЕ' as AchievementRarity },
         { count: 250, id: 'detective_legend', name: 'Легенда криминалистики', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
         { count: 500, id: 'detective_immortal', name: 'Бессмертный сыщик', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
     ];
@@ -472,24 +485,24 @@ export function checkAchievements(this: IUser): IAchievement[] {
 
     // === ДОСТИЖЕНИЯ МАСТЕРСТВА ===
 
-    // Точность
-    if (this.stats.accuracy >= 95 && this.stats.investigations >= 20 && !this.hasAchievement('perfectionist')) {
+    // Точность - базовые достижения
+    if (this.stats.accuracy >= 60 && this.stats.investigations >= 10 && !this.hasAchievement('sharp_eye')) {
         newAchievements.push({
-            id: 'perfectionist',
-            name: 'Перфекционист',
-            description: 'Точность 95%+ в 20+ играх',
+            id: 'sharp_eye',
+            name: 'Острый глаз',
+            description: 'Точность 60%+ в 10+ играх',
             category: 'МАСТЕРСТВО',
-            rarity: 'ЭПИЧЕСКОЕ',
+            rarity: 'ОБЫЧНОЕ',
             unlockedAt: new Date(),
             progress: { current: 1, target: 1 }
         });
     }
 
-    if (this.stats.accuracy >= 90 && this.stats.investigations >= 50 && !this.hasAchievement('master_detective')) {
+    if (this.stats.accuracy >= 75 && this.stats.investigations >= 20 && !this.hasAchievement('keen_observer')) {
         newAchievements.push({
-            id: 'master_detective',
-            name: 'Мастер-детектив',
-            description: 'Точность 90%+ в 50+ играх',
+            id: 'keen_observer',
+            name: 'Внимательный наблюдатель',
+            description: 'Точность 75%+ в 20+ играх',
             category: 'МАСТЕРСТВО',
             rarity: 'РЕДКОЕ',
             unlockedAt: new Date(),
@@ -497,12 +510,36 @@ export function checkAchievements(this: IUser): IAchievement[] {
         });
     }
 
+    if (this.stats.accuracy >= 90 && this.stats.investigations >= 50 && !this.hasAchievement('master_analyst')) {
+        newAchievements.push({
+            id: 'master_analyst',
+            name: 'Мастер-аналитик',
+            description: 'Точность 90%+ в 50+ играх',
+            category: 'МАСТЕРСТВО',
+            rarity: 'ЭПИЧЕСКОЕ',
+            unlockedAt: new Date(),
+            progress: { current: 1, target: 1 }
+        });
+    }
+
+    if (this.stats.accuracy >= 95 && this.stats.investigations >= 20 && !this.hasAchievement('perfectionist')) {
+        newAchievements.push({
+            id: 'perfectionist',
+            name: 'Перфекционист',
+            description: 'Точность 95%+ в 20+ играх',
+            category: 'МАСТЕРСТВО',
+            rarity: 'ЛЕГЕНДАРНОЕ',
+            unlockedAt: new Date(),
+            progress: { current: 1, target: 1 }
+        });
+    }
+
     // Идеальные игры
     const perfectGameMilestones = [
-        { count: 5, id: 'perfect_5', name: 'Снайпер', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
-        { count: 15, id: 'perfect_15', name: 'Безошибочный', rarity: 'РЕДКОЕ' as AchievementRarity },
-        { count: 50, id: 'perfect_50', name: 'Гений дедукции', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
-        { count: 100, id: 'perfect_100', name: 'Шерлок Холмс', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
+        { count: 1, id: 'perfect_start', name: 'Идеальный старт', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
+        { count: 5, id: 'perfect_five', name: 'Пять идеальных', rarity: 'РЕДКОЕ' as AchievementRarity },
+        { count: 15, id: 'perfect_fifteen', name: 'Безошибочный', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
+        { count: 50, id: 'perfect_fifty', name: 'Гений дедукции', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
     ];
 
     perfectGameMilestones.forEach(milestone => {
@@ -551,10 +588,10 @@ export function checkAchievements(this: IUser): IAchievement[] {
 
     // Серии идеальных игр
     const streakMilestones = [
-        { count: 3, id: 'streak_3', name: 'Удачная серия', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
-        { count: 5, id: 'streak_5', name: 'Горячая рука', rarity: 'РЕДКОЕ' as AchievementRarity },
-        { count: 10, id: 'streak_10', name: 'Неостановимый', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
-        { count: 20, id: 'streak_20', name: 'Машина правосудия', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
+        { count: 3, id: 'triple_success', name: 'Тройной успех', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
+        { count: 5, id: 'five_streak', name: 'Пятикратный успех', rarity: 'РЕДКОЕ' as AchievementRarity },
+        { count: 10, id: 'ten_streak', name: 'Неостановимый', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
+        { count: 20, id: 'twenty_streak', name: 'Машина правосудия', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
     ];
 
     streakMilestones.forEach(milestone => {
@@ -638,10 +675,10 @@ export function checkAchievements(this: IUser): IAchievement[] {
 
     // Мильные достижения по очкам
     const scoreMilestones = [
-        { score: 1000, id: 'score_1k', name: 'Первая тысяча', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
-        { score: 5000, id: 'score_5k', name: 'Пять тысяч очков', rarity: 'РЕДКОЕ' as AchievementRarity },
-        { score: 10000, id: 'score_10k', name: 'Десять тысяч очков', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
-        { score: 25000, id: 'score_25k', name: 'Четверть сотни тысяч', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
+        { score: 1000, id: 'first_thousand', name: 'Первая тысяча', rarity: 'ОБЫЧНОЕ' as AchievementRarity },
+        { score: 5000, id: 'five_thousand', name: 'Пять тысяч очков', rarity: 'РЕДКОЕ' as AchievementRarity },
+        { score: 10000, id: 'ten_thousand', name: 'Десять тысяч очков', rarity: 'ЭПИЧЕСКОЕ' as AchievementRarity },
+        { score: 25000, id: 'quarter_hundred', name: 'Четверть сотни тысяч', rarity: 'ЛЕГЕНДАРНОЕ' as AchievementRarity }
     ];
 
     scoreMilestones.forEach(milestone => {
