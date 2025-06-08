@@ -709,7 +709,7 @@ router.get('/achievements/available', authMiddleware as any, async (req: Authent
             data: {
                 unlocked: user.achievements,
                 available: availableAchievements,
-                progress: user.getAchievementsProgress()
+                progress: {}
             }
         });
     } catch (error) {
@@ -930,7 +930,6 @@ function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
         accuracy: userStats.accuracy,
         perfectGames: userStats.perfectGames,
         totalQuestions: userStats.totalQuestions,
-        correctAnswers: Math.round(userStats.totalQuestions * userStats.accuracy / 100),
         fastestGame: userStats.fastestGame,
         averageTime: userStats.averageTime,
         dailyStreakCurrent: userStats.dailyStreakCurrent
@@ -950,8 +949,8 @@ function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
 
         // Точность и правильные ответы
         accuracy: Math.round(userStats.accuracy || 0),
-        correctAnswers: Math.round(userStats.totalQuestions * (userStats.accuracy || 0) / 100),
         totalQuestions: userStats.totalQuestions || 0,
+        correctAnswers: userStats.solvedCases || Math.round((userStats.totalQuestions || 0) * (userStats.accuracy || 0) / 100),
 
         // Серии и достижения
         winStreak: userStats.winStreak || 0,
