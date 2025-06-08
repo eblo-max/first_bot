@@ -38,7 +38,11 @@
         "type-check:watch": "tsc --noEmit --skipLibCheck --watch",
         "migrate:js-to-ts": "node scripts/migrate-to-typescript.js",
         "lint:types": "tsc --noEmit --pretty",
-        "precommit": "npm run type-check && npm run security-check"
+        "precommit": "npm run type-check && npm run security-check",
+        "stats:check": "node scripts/check-stats.js",
+        "stats:reset": "node scripts/reset-user-stats.js",
+        "stats:force-reset": "node scripts/force-reset-stats.js",
+        "stats:restore": "node scripts/reset-user-stats.js restore"
     },
     "keywords": [
         "telegram",
