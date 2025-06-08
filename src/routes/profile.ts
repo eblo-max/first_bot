@@ -920,48 +920,63 @@ function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
     const available: AvailableAchievement[] = [];
     const userStats = user.stats;
 
-    console.log('🔍 Генерация доступных достижений для пользователя:', user.telegramId);
-    console.log('📊 Статистика пользователя:', {
+    console.log('🔍 [ИСПРАВЛЕНО] Генерация доступных достижений для пользователя:', user.telegramId);
+    console.log('📊 [ИСПРАВЛЕНО] Статистика пользователя:', {
         totalScore: userStats.totalScore,
         investigations: userStats.investigations,
+        solvedCases: userStats.solvedCases,
         winStreak: userStats.winStreak,
+        maxWinStreak: userStats.maxWinStreak,
         accuracy: userStats.accuracy,
         perfectGames: userStats.perfectGames,
-        gamesPlayed: userStats.totalQuestions / 5 // Примерно дел из вопросов
+        totalQuestions: userStats.totalQuestions,
+        correctAnswers: Math.round(userStats.totalQuestions * userStats.accuracy / 100),
+        fastestGame: userStats.fastestGame,
+        averageTime: userStats.averageTime,
+        dailyStreakCurrent: userStats.dailyStreakCurrent
     });
 
     // Получаем разблокированные достижения
     const unlockedAchievementIds = (user.achievements || []).map(a => a.id);
-    console.log('🏆 Разблокированные достижения:', unlockedAchievementIds);
+    console.log('🏆 [ИСПРАВЛЕНО] Разблокированные достижения:', unlockedAchievementIds);
 
-    // Конвертируем пользовательские данные в формат для новой системы
-    const convertedUserStats = {
-        investigations: userStats.investigations || Math.floor((userStats.totalQuestions || 0) / 5) || 0,
-        gamesPlayed: userStats.investigations || Math.floor((userStats.totalQuestions || 0) / 5) || 0,
-        solvedCases: userStats.solvedCases || userStats.investigations || Math.floor((userStats.totalQuestions || 0) / 5) || 0,
+    // ИСПРАВЛЕННАЯ конвертация пользовательских данных в унифицированный формат
+    const unifiedUserStats = {
+        // Основные метрики
+        investigations: userStats.investigations || 0,
+        gamesPlayed: userStats.investigations || 0,
+        solvedCases: userStats.solvedCases || userStats.investigations || 0,
         totalScore: userStats.totalScore || 0,
+
+        // Точность и правильные ответы
         accuracy: Math.round(userStats.accuracy || 0),
+        correctAnswers: Math.round(userStats.totalQuestions * (userStats.accuracy || 0) / 100),
+        totalQuestions: userStats.totalQuestions || 0,
+
+        // Серии и достижения
+        winStreak: userStats.winStreak || 0,
         maxWinStreak: userStats.maxWinStreak || userStats.winStreak || 0,
         perfectGames: userStats.perfectGames || 0,
+
+        // Время
         fastestGame: userStats.fastestGame || 0,
         averageTime: userStats.averageTime || 0,
+
+        // Активность
         dailyStreakCurrent: userStats.dailyStreakCurrent || 0,
-        totalQuestions: userStats.totalQuestions || 0,
-        correctAnswers: Math.round((userStats.totalQuestions || 0) * (userStats.accuracy || 0) / 100),
+
+        // Сложность
         easyGames: userStats.easyGames || 0,
         mediumGames: userStats.mediumGames || 0,
         hardGames: userStats.hardGames || 0,
         expertGames: userStats.expertGames || 0,
-        reputation: {
-            level: Math.round(((user.reputation?.accuracy || 0) + (user.reputation?.speed || 0) +
-                (user.reputation?.consistency || 0) + (user.reputation?.difficulty || 0)) / 4),
-            accuracy: user.reputation?.accuracy || 0,
-            speed: user.reputation?.speed || 0,
-            consistency: user.reputation?.consistency || 0,
-            difficulty: user.reputation?.difficulty || 0
-        },
-        crimeTypeMastery: user.stats?.crimeTypeMastery || {} // Берем из реальных данных
+
+        // Мастерство и репутация
+        crimeTypeMastery: userStats.crimeTypeMastery || {},
+        reputation: user.reputation || { level: 0, accuracy: 0, speed: 0, consistency: 0, difficulty: 0 }
     };
+
+    console.log('📋 [ИСПРАВЛЕНО] Унифицированная статистика:', unifiedUserStats);
 
     // Проходим по всем достижениям и показываем только близкие к получению
     for (const achievement of SERVER_ACHIEVEMENTS_CONFIG) {
@@ -970,8 +985,8 @@ function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
             continue;
         }
 
-        // Рассчитываем прогресс
-        const progress = calculateServerAchievementProgress(achievement, convertedUserStats);
+        // ИСПРАВЛЕННЫЙ расчет прогресса
+        const progress = calculateServerAchievementProgress(achievement, unifiedUserStats);
 
         // Показываем достижения с прогрессом > 0% или базовые для новичков
         const shouldShow = progress.percentage > 0 ||
@@ -1001,8 +1016,8 @@ function generateAvailableAchievements(user: IUser): AvailableAchievement[] {
     // Ограничиваем количество достижений для оптимизации
     const limitedAvailable = available.slice(0, 15);
 
-    console.log('✅ Сгенерировано доступных достижений:', limitedAvailable.length);
-    console.log('📋 Доступные достижения:', limitedAvailable.map(a => ({
+    console.log('✅ [ИСПРАВЛЕНО] Сгенерировано доступных достижений:', limitedAvailable.length);
+    console.log('📋 [ИСПРАВЛЕНО] Доступные достижения:', limitedAvailable.map(a => ({
         id: a.id,
         name: a.name,
         progress: `${a.progress.current}/${a.progress.target}`,
@@ -1041,19 +1056,21 @@ function calculateNextAchievements(user: IUser): NextAchievement[] {
     return next;
 }
 
-// Функция расчета прогресса для серверной части - РАСШИРЕННАЯ ДЛЯ НОВОЙ СИСТЕМЫ
+// ПОЛНОСТЬЮ ПЕРЕРАБОТАННАЯ функция расчета прогресса для серверной части
 function calculateServerAchievementProgress(achievement: any, userStats: any) {
     const req = achievement.requirement;
     let current = 0;
     let target = req.value || 1;
 
-    console.log(`🔍 Расчет прогресса для достижения ${achievement.id}:`, {
+    console.log(`🔍 [ИСПРАВЛЕНО] Расчет прогресса для достижения ${achievement.id}:`, {
         type: req.type,
         target,
+        requirement: req,
         userStats: {
             investigations: userStats.investigations,
             accuracy: userStats.accuracy,
             totalScore: userStats.totalScore,
+            correctAnswers: userStats.correctAnswers,
             perfectGames: userStats.perfectGames,
             maxWinStreak: userStats.maxWinStreak,
             fastestGame: userStats.fastestGame,
@@ -1065,62 +1082,118 @@ function calculateServerAchievementProgress(achievement: any, userStats: any) {
         case 'investigations':
             current = userStats.investigations || 0;
             break;
+
         case 'correctAnswers':
-            current = userStats.correctAnswers || Math.round((userStats.totalQuestions || 0) * (userStats.accuracy || 0) / 100);
+            current = userStats.correctAnswers || 0;
             break;
+
         case 'solvedCases':
-            current = userStats.solvedCases || 0;
+            current = userStats.solvedCases || userStats.investigations || 0;
             break;
+
         case 'accuracy':
-            // Проверяем минимальное количество игр
+            // ИСПРАВЛЕНО: Проверяем минимальное количество игр для достижений точности
             const gamesPlayed = userStats.investigations || userStats.gamesPlayed || 0;
-            if (gamesPlayed >= (req.minGames || 0)) {
+            const minGamesRequired = req.minGames || 0;
+
+            if (gamesPlayed >= minGamesRequired) {
                 current = Math.round(userStats.accuracy || 0);
+                // Для достижений точности target = требуемая точность
+                target = req.value || 100;
             } else {
-                current = 0; // Недостаточно игр для получения этого достижения
+                // Недостаточно игр - показываем прогресс по количеству игр
+                current = gamesPlayed;
+                target = minGamesRequired;
             }
             break;
+
         case 'totalScore':
             current = userStats.totalScore || 0;
             break;
+
         case 'perfectGames':
             current = userStats.perfectGames || 0;
             break;
+
         case 'winStreak':
-            current = userStats.maxWinStreak || userStats.winStreak || 0;
+            // ИСПРАВЛЕНО: Используем правильное поле для серий
+            current = userStats.maxWinStreak || 0;
             break;
+
         case 'fastestGame':
-            // Для достижений скорости: если время достигнуто, показываем 100%
+            // ИСПРАВЛЕНО: Для достижений скорости правильная логика
             const fastestTime = userStats.fastestGame || 0;
-            if (fastestTime > 0 && fastestTime <= target * 1000) { // target в секундах, fastestGame в мс
-                current = target;
+            const targetTimeMs = target * 1000; // target в секундах, fastestGame в мс
+
+            if (fastestTime > 0) {
+                if (fastestTime <= targetTimeMs) {
+                    // Достижение выполнено
+                    current = target;
+                } else {
+                    // Показываем обратный прогресс (чем меньше время, тем больше прогресс)
+                    const progressRatio = Math.max(0, (targetTimeMs / fastestTime));
+                    current = Math.round(target * progressRatio);
+                }
             } else {
-                // Показываем прогресс на основе текущего времени
-                current = fastestTime > 0 ? Math.max(0, target - Math.floor(fastestTime / 1000)) : 0;
+                current = 0; // Нет записей о времени
             }
             break;
+
+        case 'averageTime':
+            // ИСПРАВЛЕНО: Для средего времени также проверяем минимальное количество игр
+            const avgGamesPlayed = userStats.investigations || 0;
+            const avgMinGames = req.minGames || 0;
+
+            if (avgGamesPlayed >= avgMinGames) {
+                const avgTime = userStats.averageTime || 0;
+                const targetAvgTimeMs = req.value * 1000;
+
+                if (avgTime > 0 && avgTime <= targetAvgTimeMs) {
+                    current = target;
+                } else if (avgTime > 0) {
+                    const progressRatio = Math.max(0, (targetAvgTimeMs / avgTime));
+                    current = Math.round(target * progressRatio);
+                } else {
+                    current = 0;
+                }
+            } else {
+                // Недостаточно игр для подсчета среднего времени
+                current = avgGamesPlayed;
+                target = avgMinGames;
+            }
+            break;
+
         case 'dailyStreak':
             current = userStats.dailyStreakCurrent || 0;
             break;
+
         case 'reputation':
-            current = userStats.reputation?.level || Math.round(((userStats.reputation?.accuracy || 0) +
-                (userStats.reputation?.speed || 0) +
-                (userStats.reputation?.consistency || 0) +
-                (userStats.reputation?.difficulty || 0)) / 4);
+            // ИСПРАВЛЕНО: Правильный расчет репутации
+            if (userStats.reputation) {
+                current = userStats.reputation.level || Math.round((
+                    (userStats.reputation.accuracy || 0) +
+                    (userStats.reputation.speed || 0) +
+                    (userStats.reputation.consistency || 0) +
+                    (userStats.reputation.difficulty || 0)
+                ) / 4);
+            } else {
+                current = 0;
+            }
             break;
+
         case 'crimeType':
-            // Реализуем расчет для типов преступлений
+            // ИСПРАВЛЕНО: Реализация для типов преступлений
             const crimeType = req.crimeType;
             const mastery = userStats.crimeTypeMastery?.[crimeType];
             if (mastery) {
-                // Предполагаем что level отражает количество решенных дел этого типа
                 current = mastery.level || 0;
             } else {
                 current = 0;
             }
             break;
+
         case 'difficultyType':
-            // Реализуем расчет для сложности
+            // ИСПРАВЛЕНО: Реализация для сложности
             const difficulty = req.difficulty;
             switch (difficulty) {
                 case 'easy':
@@ -1139,18 +1212,26 @@ function calculateServerAchievementProgress(achievement: any, userStats: any) {
                     current = 0;
             }
             break;
+
         case 'combo':
-            // Для комбо-достижений проверяем все требования
+            // ИСПРАВЛЕНО: Для комбо-достижений проверяем все требования
             if (req.requirements && Array.isArray(req.requirements)) {
-                const allRequirementsMet = req.requirements.every((subReq: any) => {
+                let completedRequirements = 0;
+                const totalRequirements = req.requirements.length;
+
+                for (const subReq of req.requirements) {
                     const subProgress = calculateServerAchievementProgress({ requirement: subReq }, userStats);
-                    return subProgress.percentage >= 100;
-                });
-                current = allRequirementsMet ? 1 : 0;
-                target = 1;
+                    if (subProgress.percentage >= 100) {
+                        completedRequirements++;
+                    }
+                }
+
+                current = completedRequirements;
+                target = totalRequirements;
             }
             break;
-        // Дополнительные типы для специальных достижений
+
+        // ИСПРАВЛЕНО: Дополнительные типы для специальных достижений
         case 'achievementsInDay':
         case 'comebackAfterDays':
         case 'timeOfDay':
@@ -1158,15 +1239,18 @@ function calculateServerAchievementProgress(achievement: any, userStats: any) {
         case 'achievementsCount':
             // Пока не реализованы, возвращаем 0
             current = 0;
+            console.warn(`⚠️ [ИСПРАВЛЕНО] Тип требования "${req.type}" пока не реализован для достижения ${achievement.id}`);
             break;
+
         default:
-            console.warn(`⚠️ Неизвестный тип требования: ${req.type}`);
+            console.warn(`⚠️ [ИСПРАВЛЕНО] Неизвестный тип требования: ${req.type} для достижения ${achievement.id}`);
             current = 0;
     }
 
-    const percentage = Math.min((current / target) * 100, 100);
+    // ИСПРАВЛЕНО: Безопасный расчет процента
+    const percentage = target > 0 ? Math.min(Math.round((current / target) * 100), 100) : 0;
 
-    console.log(`📊 Результат расчета для ${achievement.id}: ${current}/${target} = ${percentage.toFixed(1)}%`);
+    console.log(`📊 [ИСПРАВЛЕНО] Результат расчета для ${achievement.id}: ${current}/${target} = ${percentage}%`);
 
     return { current, target, percentage };
 }

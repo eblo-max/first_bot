@@ -156,40 +156,21 @@ export class CriminalTrustProfile {
     // =========================================================================
 
     private async loadProfileData(): Promise<void> {
-        console.log('📊 Загружаем данные профиля...');
-        this.setLoading(true);
+        console.log('📋 Загрузка данных профиля...');
 
         try {
-            // Показываем скелетон
-            this.showProfileSkeleton();
-
-            // Загружаем все данные параллельно
-            console.log('🔄 Вызываем getBatchData...');
+            // Получаем данные пакетно для оптимизации
             const batchData = await apiService.getBatchData();
-            console.log('📦 Получили batchData:', batchData);
 
-            // Обновляем профиль
             if (batchData.profile) {
-                console.log('✅ Найден profile в batchData, обновляем UI...');
+                console.log('👤 Обновление данных пользователя:', batchData.profile);
                 this.state.user = batchData.profile;
                 this.updateProfileUI(batchData.profile);
-            } else {
-                console.error('❌ НЕТ ДАННЫХ ПРОФИЛЯ в batchData!', { batchData });
-                // Попробуем загрузить профиль напрямую
-                console.log('🔄 Пробуем загрузить профиль напрямую...');
-                const profileResult = await apiService.getUserProfile();
-                console.log('👤 Прямой запрос профиля:', profileResult);
-
-                if (profileResult.success && profileResult.data) {
-                    console.log('✅ Получили профиль напрямую, обновляем UI...');
-                    this.state.user = profileResult.data;
-                    this.updateProfileUI(profileResult.data);
-                }
             }
 
-            // Обновляем достижения
+            // ИСПРАВЛЕННАЯ обработка достижений
             if (batchData.achievements) {
-                console.log('📊 Получены данные достижений:', batchData.achievements);
+                console.log('📊 [ИСПРАВЛЕНО] Получены данные достижений:', batchData.achievements);
 
                 // API возвращает объект {unlocked: [], available: [], progress: {}}
                 let allAchievements: any[] = [];
@@ -197,7 +178,7 @@ export class CriminalTrustProfile {
 
                 // Обрабатываем разблокированные достижения (из user.achievements в базе)
                 if (achievementsData.unlocked && Array.isArray(achievementsData.unlocked)) {
-                    console.log('🔓 Обрабатываем разблокированные достижения:', achievementsData.unlocked.length);
+                    console.log('🔓 [ИСПРАВЛЕНО] Обрабатываем разблокированные достижения:', achievementsData.unlocked.length);
 
                     allAchievements = [...allAchievements, ...achievementsData.unlocked.map((ach: any) => {
                         const achievementInfo = this.getAchievementInfo(ach.id);
@@ -216,21 +197,18 @@ export class CriminalTrustProfile {
                     })];
                 }
 
-                // Обрабатываем доступные достижения (генерируемые в generateAvailableAchievements)
+                // ИСПРАВЛЕНО: Обрабатываем доступные достижения (генерируемые сервером)
                 if (achievementsData.available && Array.isArray(achievementsData.available)) {
-                    console.log('🔒 Обрабатываем доступные достижения:', achievementsData.available.length);
+                    console.log('🔒 [ИСПРАВЛЕНО] Обрабатываем доступные достижения:', achievementsData.available.length);
 
                     allAchievements = [...allAchievements, ...achievementsData.available.map((ach: any) => {
                         const achievementInfo = this.getAchievementInfo(ach.id);
 
-                        // Используем прогресс напрямую с сервера если есть
+                        // ИСПРАВЛЕНО: Используем прогресс ТОЛЬКО с сервера
                         let progress = 0;
                         if (ach.progress && ach.progress.current !== undefined && ach.progress.target !== undefined) {
                             progress = Math.min((ach.progress.current / ach.progress.target) * 100, 100);
-                            console.log(`📊 Прогресс для ${ach.id}: ${ach.progress.current}/${ach.progress.target} = ${progress}%`);
-                        } else {
-                            // Fallback к расчету на клиенте
-                            progress = this.calculateRealProgress(ach.id, this.state.user);
+                            console.log(`📊 [ИСПРАВЛЕНО] Прогресс для ${ach.id}: ${ach.progress.current}/${ach.progress.target} = ${progress}%`);
                         }
 
                         return {
@@ -247,7 +225,7 @@ export class CriminalTrustProfile {
                     })];
                 }
 
-                // Добавляем прочие достижения из системы как заблокированные
+                // Добавляем прочие достижения из системы как заблокированные (с прогрессом 0)
                 const unlockedIds = allAchievements.map(a => a.id);
                 const allPossibleAchievements = this.getAllPossibleAchievements();
 
@@ -276,8 +254,8 @@ export class CriminalTrustProfile {
                     return 0;
                 });
 
-                console.log('🏆 Сформирован финальный массив достижений:', allAchievements.length);
-                console.log('📊 Статистика достижений:', {
+                console.log('🏆 [ИСПРАВЛЕНО] Сформирован финальный массив достижений:', allAchievements.length);
+                console.log('📊 [ИСПРАВЛЕНО] Статистика достижений:', {
                     unlocked: allAchievements.filter(a => a.isUnlocked).length,
                     locked: allAchievements.filter(a => !a.isUnlocked).length,
                     total: allAchievements.length
@@ -285,37 +263,21 @@ export class CriminalTrustProfile {
 
                 this.state.achievements = allAchievements;
                 this.renderAchievements(allAchievements);
-            } else {
-                console.log('❌ Нет данных достижений или неправильный формат');
-                // Показываем базовые достижения как заблокированные
-                const baseAchievements = this.getAllPossibleAchievements().map(info => ({
-                    ...info,
-                    isUnlocked: false,
-                    progress: 0
-                }));
-
-                this.state.achievements = baseAchievements;
-                this.renderAchievements(baseAchievements);
             }
 
             // Обновляем лидерборд
             if (batchData.leaderboard) {
-                this.state.leaderboard.data[this.state.leaderboard.current] = batchData.leaderboard;
+                console.log('🏆 Обработка данных лидерборда:', batchData.leaderboard);
                 this.renderLeaderboard(batchData.leaderboard);
+                this.updateUserPosition(batchData.leaderboard);
             }
 
-            // Загружаем аватар пользователя
-            if (this.state.user?.telegramId) {
-                await this.loadUserAvatar(this.state.user.telegramId);
-            }
-
-            console.log('✅ Данные профиля загружены');
+            console.log('✅ Профиль полностью загружен');
+            this.setLoading(false);
 
         } catch (error) {
-            console.error('❌ Ошибка загрузки данных:', error);
-            this.showError('Не удалось загрузить данные профиля');
-        } finally {
-            this.hideProfileSkeleton();
+            console.error('❌ Ошибка загрузки профиля:', error);
+            this.showError('Ошибка загрузки данных профиля');
             this.setLoading(false);
         }
     }
@@ -419,25 +381,18 @@ export class CriminalTrustProfile {
             // Ищем данные о прогрессе этого достижения
             const achievementData = achievements.find(a => a.id === achievementConfig.id);
 
-            // ИСПРАВЛЕННАЯ ЛОГИКА: Проверяем разблокировано ли достижение
+            // ИСПРАВЛЕННАЯ ЛОГИКА: Используем только серверные данные о достижениях
             let isUnlocked = false;
             if (achievementData && achievementData.isUnlocked) {
                 isUnlocked = true;
                 unlockedCount++;
-            } else {
-                // Дополнительная проверка - если прогресс 100%, то достижение разблокировано
-                const realProgress = this.calculateRealProgress(achievementConfig.id, this.state.user);
-                if (realProgress >= 100) {
-                    isUnlocked = true;
-                    unlockedCount++;
-                }
             }
 
-            // Создаем объект прогресса для карточки
+            // Создаем объект прогресса для карточки на основе серверных данных
             const progress = {
-                current: achievementData?.progress || 0,
-                target: achievementConfig.requirement?.value || 100,
-                percentage: this.calculateRealProgress(achievementConfig.id, this.state.user)
+                current: achievementData?.progressData?.current || 0,
+                target: achievementData?.progressData?.target || achievementConfig.requirement?.value || 100,
+                percentage: achievementData?.progress || 0
             };
 
             console.log(`🎯 Достижение ${achievementConfig.name}: разблокировано=${isUnlocked}, прогресс=${progress.percentage}%`);
@@ -1445,43 +1400,38 @@ export class CriminalTrustProfile {
     }
 
     private updateModalContent(achievement: any): void {
-        // Обновляем иконку
         const modalIcon = document.getElementById('modal-icon');
-        if (modalIcon) {
-            modalIcon.textContent = this.getAchievementIcon(achievement.category || 'default');
-        }
-
-        // Обновляем заголовок
+        const modalCaseNumber = document.getElementById('modal-case-number');
         const modalTitle = document.getElementById('modal-title');
-        if (modalTitle) {
-            modalTitle.textContent = achievement.name || 'Неизвестное достижение';
-        }
-
-        // Обновляем описание
         const modalDescription = document.getElementById('modal-description');
-        if (modalDescription) {
-            modalDescription.textContent = achievement.description || 'Описание отсутствует';
-        }
-
-        // Обновляем статус
         const modalStatus = document.getElementById('modal-status');
+        const modalProgress = document.getElementById('modal-evidence');
+        const progressCurrent = document.getElementById('evidence-current');
+        const progressTarget = document.getElementById('evidence-target');
+        const progressBar = document.getElementById('evidence-bar');
+        const detailType = document.getElementById('detail-type');
+        const detailReward = document.getElementById('detail-reward');
+
+        if (modalIcon) modalIcon.textContent = achievement.icon || '🏆';
+        if (modalCaseNumber) modalCaseNumber.textContent = `ДЕЛО №${achievement.id.toUpperCase()}`;
+        if (modalTitle) modalTitle.textContent = achievement.name;
+        if (modalDescription) modalDescription.textContent = achievement.description;
+
+        // ИСПРАВЛЕНО: Статус достижения
         if (modalStatus) {
-            if (achievement.isUnlocked) {
-                modalStatus.textContent = 'ПОЛУЧЕНО';
-                modalStatus.className = 'achievement-modal-status unlocked';
-            } else {
-                modalStatus.textContent = 'НЕ ПОЛУЧЕНО';
-                modalStatus.className = 'achievement-modal-status locked';
+            const statusBadge = modalStatus.querySelector('.achievement-status-badge');
+            if (statusBadge) {
+                if (achievement.isUnlocked) {
+                    statusBadge.className = 'achievement-status-badge unlocked';
+                    statusBadge.innerHTML = '<span>✓</span> ДЕЛО ЗАКРЫТО';
+                } else {
+                    statusBadge.className = 'achievement-status-badge locked';
+                    statusBadge.innerHTML = '<span>⏳</span> РАССЛЕДУЕТСЯ';
+                }
             }
         }
 
-        // Обновляем прогресс (показываем всегда - и для полученных, и для неполученных)
-        const modalProgress = document.getElementById('modal-progress');
-        const progressCurrent = document.getElementById('progress-current');
-        const progressTarget = document.getElementById('progress-target');
-        const progressBar = document.getElementById('progress-bar');
-        const progressPercentage = document.getElementById('progress-percentage');
-
+        // ИСПРАВЛЕНО: Прогресс достижения
         if (modalProgress) {
             // Ищем достижение в конфигурации для получения подробной информации
             const configAchievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievement.id);
@@ -1489,249 +1439,135 @@ export class CriminalTrustProfile {
             if (configAchievement && configAchievement.requirement && this.state.user) {
                 modalProgress.style.display = 'block';
                 const req = configAchievement.requirement;
+
+                // ИСПРАВЛЕНО: Используем данные прогресса с сервера если они есть
                 let currentValue = 0;
-                let targetValue = req.value;
+                let targetValue = req.value || 1;
                 let progressPercentageValue = 0;
 
-                // Рассчитываем реальные значения на основе типа достижения
-                switch (req.type) {
-                    case 'investigations':
-                        currentValue = (this.state.user as any).investigations ||
-                            Math.floor(((this.state.user as any).totalQuestions || 0) / 5) ||
-                            this.state.user.gamesPlayed || 0;
-                        break;
-                    case 'correctAnswers':
-                        const totalQuestions = (this.state.user as any).totalQuestions || 0;
-                        const accuracy = this.state.user.accuracy || 0;
-                        currentValue = Math.round(totalQuestions * accuracy / 100);
-                        break;
-                    case 'solvedCases':
-                        currentValue = (this.state.user as any).solvedCases ||
-                            (this.state.user as any).investigations ||
-                            Math.floor(((this.state.user as any).totalQuestions || 0) / 5) || 0;
-                        break;
-                    case 'accuracy':
-                        currentValue = Math.round(this.state.user.accuracy || 0);
-                        break;
-                    case 'winStreak':
-                        currentValue = (this.state.user as any).maxWinStreak ||
-                            this.state.user.maxWinStreak || this.state.user.winStreak || 0;
-                        break;
-                    case 'totalScore':
-                        currentValue = this.state.user.totalScore || 0;
-                        break;
-                    case 'perfectGames':
-                        currentValue = (this.state.user as any).perfectGames ||
-                            this.state.user.stats?.perfectGames || 0;
-                        break;
-                    case 'fastestGame':
-                        const fastestTime = (this.state.user as any).fastestGame ||
-                            this.state.user.stats?.fastestGame || 0;
-                        if (fastestTime > 0) {
-                            currentValue = Math.round(fastestTime / 1000);
-                            targetValue = req.value;
-                        }
-                        break;
-                    case 'dailyStreak':
-                        currentValue = (this.state.user as any).dailyStreakCurrent ||
-                            this.state.user.stats?.dailyStreakCurrent || 0;
-                        break;
-                    case 'reputation':
-                        const rep = (this.state.user as any).reputation;
-                        if (rep) {
-                            currentValue = rep.level || Math.round((rep.accuracy + rep.speed + rep.consistency + rep.difficulty) / 4);
-                        }
-                        break;
-                    default:
-                        // Для неизвестных типов пробуем использовать данные с сервера
-                        if (achievement.progressData) {
-                            currentValue = achievement.progressData.current || 0;
-                            targetValue = achievement.progressData.target || 1;
-                        }
-                        break;
+                if (achievement.progressData && achievement.progressData.current !== undefined && achievement.progressData.target !== undefined) {
+                    // Используем данные с сервера
+                    currentValue = achievement.progressData.current;
+                    targetValue = achievement.progressData.target;
+                    progressPercentageValue = achievement.progress || 0;
+
+                    console.log(`📊 [ИСПРАВЛЕНО] Используем серверные данные для ${achievement.id}: ${currentValue}/${targetValue} = ${progressPercentageValue}%`);
+                } else {
+                    // Fallback к расчету на основе типа требования (для совместимости)
+                    switch (req.type) {
+                        case 'investigations':
+                            currentValue = (this.state.user as any).investigations ||
+                                Math.floor(((this.state.user as any).totalQuestions || 0) / 5) ||
+                                this.state.user.gamesPlayed || 0;
+                            break;
+                        case 'correctAnswers':
+                            const totalQuestions = (this.state.user as any).totalQuestions || 0;
+                            const accuracy = this.state.user.accuracy || 0;
+                            currentValue = Math.round(totalQuestions * accuracy / 100);
+                            break;
+                        case 'solvedCases':
+                            currentValue = (this.state.user as any).solvedCases ||
+                                (this.state.user as any).investigations ||
+                                Math.floor(((this.state.user as any).totalQuestions || 0) / 5) || 0;
+                            break;
+                        case 'accuracy':
+                            // Для достижений точности проверяем количество игр
+                            const gamesPlayed = (this.state.user as any).investigations || this.state.user.gamesPlayed || 0;
+                            const minGames = req.minGames || 0;
+
+                            if (gamesPlayed >= minGames) {
+                                currentValue = Math.round(this.state.user.accuracy || 0);
+                                targetValue = req.value || 100;
+                            } else {
+                                currentValue = gamesPlayed;
+                                targetValue = minGames;
+                            }
+                            break;
+                        case 'totalScore':
+                            currentValue = this.state.user.totalScore || 0;
+                            break;
+                        case 'perfectGames':
+                            currentValue = (this.state.user as any).perfectGames ||
+                                this.state.user.stats?.perfectGames || 0;
+                            break;
+                        case 'winStreak':
+                            currentValue = (this.state.user as any).maxWinStreak ||
+                                this.state.user.maxWinStreak ||
+                                this.state.user.winStreak || 0;
+                            break;
+                        case 'fastestGame':
+                            const fastestTime = (this.state.user as any).fastestGame ||
+                                this.state.user.stats?.fastestGame || 0;
+                            const targetTimeMs = targetValue * 1000;
+
+                            if (fastestTime > 0 && fastestTime <= targetTimeMs) {
+                                currentValue = targetValue;
+                                progressPercentageValue = 100;
+                            } else if (fastestTime > 0) {
+                                const progressRatio = Math.max(0, (targetTimeMs / fastestTime));
+                                currentValue = Math.round(targetValue * progressRatio);
+                                progressPercentageValue = Math.min(Math.round(progressRatio * 100), 99);
+                            }
+                            break;
+                        case 'dailyStreak':
+                            currentValue = (this.state.user as any).dailyStreakCurrent ||
+                                this.state.user.stats?.dailyStreakCurrent || 0;
+                            break;
+                        case 'reputation':
+                            const rep = (this.state.user as any).reputation;
+                            if (rep) {
+                                currentValue = rep.level || Math.round((rep.accuracy + rep.speed + rep.consistency + rep.difficulty) / 4);
+                            }
+                            break;
+                        default:
+                            // Для неизвестных типов используем базовые данные
+                            currentValue = 0;
+                            break;
+                    }
+
+                    // Рассчитываем процент для fallback случаев
+                    if (req.type !== 'fastestGame') {
+                        progressPercentageValue = Math.min(Math.round((currentValue / targetValue) * 100), achievement.isUnlocked ? 100 : 99);
+                    }
                 }
 
-                // Для полученных достижений показываем 100% или текущий максимум
+                // Для полученных достижений показываем 100%
                 if (achievement.isUnlocked) {
                     if (req.type === 'fastestGame') {
-                        // Для скорости показываем реальное время, если оно есть
+                        // Для скорости показываем реальное время
                         progressPercentageValue = 100;
                     } else {
                         // Для остальных - обеспечиваем что текущее >= целевого
                         currentValue = Math.max(currentValue, targetValue);
                         progressPercentageValue = 100;
                     }
-                } else {
-                    // Для неполученных - рассчитываем процент
-                    if (req.type === 'fastestGame') {
-                        progressPercentageValue = currentValue > 0 && currentValue <= targetValue ? 100 :
-                            Math.min(Math.round((targetValue / Math.max(currentValue, 1)) * 100), 99);
-                    } else {
-                        progressPercentageValue = Math.min(Math.round((currentValue / targetValue) * 100), 99);
-                    }
                 }
 
                 // Обновляем элементы интерфейса
                 if (progressCurrent) progressCurrent.textContent = currentValue.toLocaleString();
                 if (progressTarget) progressTarget.textContent = targetValue.toLocaleString();
-                if (progressBar) progressBar.style.width = `${progressPercentageValue}%`;
-                if (progressPercentage) progressPercentage.textContent = `${progressPercentageValue}%`;
-
-                console.log(`📊 Показываем прогресс для ${achievement.id}: ${currentValue}/${targetValue} = ${progressPercentageValue}%`);
+                if (progressBar) {
+                    progressBar.style.width = `${progressPercentageValue}%`;
+                }
             } else {
-                // Если нет конфигурации, скрываем прогресс
                 modalProgress.style.display = 'none';
             }
         }
 
-        // Обновляем требования
-        const modalRequirement = document.getElementById('modal-requirement');
-        const requirementText = document.getElementById('requirement-text');
-        if (modalRequirement && requirementText) {
-            const requirement = this.getAchievementRequirement(achievement);
-            requirementText.textContent = requirement;
-        }
+        // Детали достижения
+        if (detailType) detailType.textContent = achievement.category || 'Общее';
+        if (detailReward) detailReward.textContent = achievement.rarity || 'Обычное';
 
-        // Обновляем награду (показываем только для разблокированных достижений)
-        const modalReward = document.getElementById('modal-reward');
-        const rewardText = document.getElementById('reward-text');
-        if (modalReward && rewardText && achievement.isUnlocked) {
-            const reward = this.getAchievementReward(achievement);
-            rewardText.textContent = reward;
-            modalReward.style.display = 'block';
-        } else if (modalReward) {
-            modalReward.style.display = 'none';
-        }
-    }
-
-    private getAchievementRequirement(achievement: any): string {
-        // Ищем правильное достижение в конфигурации
-        const configAchievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievement.id);
-
-        if (configAchievement && configAchievement.requirement) {
-            const req = configAchievement.requirement;
-
-            switch (req.type) {
-                case 'investigations':
-                    return `Провести ${req.value} криминальных расследований`;
-
-                case 'correctAnswers':
-                    return `Дать ${req.value} правильных ответов`;
-
-                case 'solvedCases':
-                    return `Раскрыть ${req.value} криминальных дел`;
-
-                case 'accuracy':
-                    const minGames = req.minGames || 0;
-                    if (minGames > 0) {
-                        return `Достичь точности ${req.value}% при минимуме ${minGames} игр`;
-                    }
-                    return `Достичь точности ${req.value}%`;
-
-                case 'winStreak':
-                    return `Достичь серии из ${req.value} правильных ответов подряд`;
-
-                case 'totalScore':
-                    return `Набрать ${req.value.toLocaleString()} очков общего счета`;
-
-                case 'perfectGames':
-                    return `Сыграть ${req.value} идеальных игр (5/5 правильных ответов)`;
-
-                case 'fastestGame':
-                case 'fastGame':
-                    return `Решить дело за ${req.value} секунд или быстрее`;
-
-                case 'averageTime':
-                    const minGames2 = req.minGames || 0;
-                    return `Достичь среднего времени ${req.value} секунд за вопрос в ${minGames2}+ играх`;
-
-                case 'dailyStreak':
-                    return `Играть ${req.value} дней подряд без перерывов`;
-
-                case 'reputation':
-                    return `Достичь уровня репутации ${req.value}`;
-
-                case 'crimeType':
-                    const crimeTypes: Record<string, string> = {
-                        'murder': 'убийствам',
-                        'robbery': 'ограблениям',
-                        'fraud': 'мошенничеству',
-                        'theft': 'кражам',
-                        'cybercrime': 'киберпреступлениям'
-                    };
-                    const crimeTypeName = crimeTypes[req.crimeType || ''] || 'преступлениям';
-                    return `Решить ${req.value} дел по ${crimeTypeName}`;
-
-                case 'difficultyType':
-                    const difficulties: Record<string, string> = {
-                        'easy': 'легкой',
-                        'medium': 'средней',
-                        'hard': 'высокой',
-                        'expert': 'экспертной'
-                    };
-                    const difficultyName = difficulties[req.difficulty || ''] || 'указанной';
-                    return `Решить ${req.value} дел ${difficultyName} сложности`;
-
-                case 'combo':
-                    if (req.requirements && req.requirements.length > 0) {
-                        const comboReqs = req.requirements.map(subReq => {
-                            // Упрощенное описание для комбо
-                            switch (subReq.type) {
-                                case 'accuracy': return `${subReq.value}% точности`;
-                                case 'winStreak': return `серия ${subReq.value}`;
-                                case 'totalScore': return `${subReq.value} очков`;
-                                case 'fastestGame': return `время ≤${subReq.value}с`;
-                                case 'perfectGames': return `${subReq.value} идеальных игр`;
-                                case 'dailyStreak': return `${subReq.value} дней подряд`;
-                                default: return `${subReq.value} ${subReq.type}`;
-                            }
-                        }).join(', ');
-                        return `Достичь одновременно: ${comboReqs}`;
-                    }
-                    return 'Выполнить комбинированные условия';
-
-                case 'speedAccuracy':
-                    const acc = req.accuracy || 90;
-                    const time = req.averageTime ? Math.round(req.averageTime / 1000) : 10;
-                    const games = req.minGames || 50;
-                    return `Достичь ${acc}% точности и среднего времени ≤${time}с в ${games}+ играх`;
-
-                case 'perfectReputation':
-                    return `Достичь высоких показателей во всех компонентах репутации`;
-
-                // Уникальные достижения
-                case 'firstDayGames':
-                    return `Решить ${req.value} дел в первый день игры`;
-
-                case 'comeback':
-                    const days = req.days || 30;
-                    return `Вернуться после перерыва ${days}+ дней и сыграть идеально`;
-
-                case 'midnightGame':
-                    const start = req.startHour || 0;
-                    const end = req.endHour || 2;
-                    return `Решить дело в период с ${start}:00 до ${end}:00`;
-
-                case 'weekendGames':
-                    return `Решить ${req.value} дел в выходные дни`;
-
-                case 'perfectWeek':
-                    return `Играть идеально (5/5) каждый день в течение недели`;
-
-                case 'encyclopedic':
-                    return `Решить по ${req.value} дел каждого типа преступления`;
-
-                default:
-                    // Если тип неизвестен, пробуем использовать описание из конфигурации
-                    return configAchievement.description || 'Выполнить специальные условия';
+        // Обновляем класс модального окна для правильной стилизации
+        const modalContent = document.querySelector('.achievement-modal-content');
+        if (modalContent) {
+            if (achievement.isUnlocked) {
+                modalContent.classList.add('unlocked');
+            } else {
+                modalContent.classList.remove('unlocked');
             }
         }
-
-        // Fallback для достижений без конфигурации
-        return achievement.description || 'Выполнить специальные условия для получения этого достижения';
     }
-
-
 
     private setupModalCloseHandlers(modal: HTMLElement): void {
         // Удаляем старые обработчики если есть
@@ -1814,117 +1650,7 @@ export class CriminalTrustProfile {
         }
     }
 
-    private calculateRealProgress(achievementId: string, user: any): number {
-        if (!user || !this.state.user) return 0;
-
-        // Ищем достижение в правильной конфигурации
-        const achievement = ACHIEVEMENTS_CONFIG.find(a => a.id === achievementId);
-        if (!achievement || !achievement.requirement) return 0;
-
-        const { requirement } = achievement;
-        let currentValue = 0;
-
-        console.log(`🔍 Расчет прогресса для ${achievementId}:`, {
-            requirement,
-            userData: {
-                investigations: (this.state.user as any).investigations,
-                gamesPlayed: this.state.user.gamesPlayed,
-                accuracy: this.state.user.accuracy,
-                totalScore: this.state.user.totalScore,
-                stats: this.state.user.stats
-            }
-        });
-
-        switch (requirement.type) {
-            case 'investigations':
-                // Приоритет: поле investigations из сервера > расчет из totalQuestions > gamesPlayed
-                currentValue = (this.state.user as any).investigations ||
-                    Math.floor(((this.state.user as any).totalQuestions || 0) / 5) ||
-                    this.state.user.gamesPlayed ||
-                    this.state.user.stats?.totalGames || 0;
-                break;
-            case 'correctAnswers':
-                // Рассчитываем количество правильных ответов
-                const totalQuestions = (this.state.user as any).totalQuestions || 0;
-                const accuracy = this.state.user.accuracy || 0;
-                currentValue = Math.round(totalQuestions * accuracy / 100);
-                break;
-            case 'solvedCases':
-                currentValue = (this.state.user as any).solvedCases ||
-                    (this.state.user as any).investigations ||
-                    Math.floor(((this.state.user as any).totalQuestions || 0) / 5) || 0;
-                break;
-            case 'accuracy':
-                // Проверяем минимальное количество игр
-                const gamesPlayed = (this.state.user as any).investigations ||
-                    Math.floor(((this.state.user as any).totalQuestions || 0) / 5) ||
-                    this.state.user.gamesPlayed || 0;
-                if (gamesPlayed >= (requirement.minGames || 0)) {
-                    currentValue = Math.round(this.state.user.accuracy || 0);
-                } else {
-                    return 0; // Недостаточно игр
-                }
-                break;
-            case 'winStreak':
-                currentValue = (this.state.user as any).maxWinStreak ||
-                    this.state.user.maxWinStreak ||
-                    this.state.user.winStreak || 0;
-                break;
-            case 'totalScore':
-                currentValue = this.state.user.totalScore || 0;
-                break;
-            case 'perfectGames':
-                currentValue = (this.state.user as any).perfectGames ||
-                    this.state.user.stats?.perfectGames || 0;
-                break;
-            case 'fastestGame':
-                // Для достижений скорости проверяем быстрейшую игру
-                const fastestTime = (this.state.user as any).fastestGame ||
-                    this.state.user.stats?.fastestGame || 0;
-                if (fastestTime > 0 && fastestTime <= requirement.value * 1000) {
-                    return 100; // Уже выполнено
-                }
-                return Math.min(Math.round((fastestTime > 0 ? requirement.value * 1000 / fastestTime : 0) * 100), 99);
-            case 'dailyStreak':
-                currentValue = (this.state.user as any).dailyStreakCurrent ||
-                    this.state.user.stats?.dailyStreakCurrent || 0;
-                break;
-            case 'reputation':
-                // Используем общий уровень репутации или рассчитываем
-                const rep = (this.state.user as any).reputation;
-                if (rep) {
-                    currentValue = rep.level || Math.round((rep.accuracy + rep.speed + rep.consistency + rep.difficulty) / 4);
-                }
-                break;
-            case 'crimeType':
-                // Для типов преступлений проверяем мастерство
-                const crimeType = requirement.crimeType;
-                if (crimeType && (this.state.user as any).crimeTypeMastery) {
-                    const mastery = (this.state.user as any).crimeTypeMastery[crimeType];
-                    if (mastery) {
-                        currentValue = mastery.level || 0;
-                    }
-                }
-                break;
-            case 'difficultyType':
-                // Для уровней сложности
-                const difficulty = requirement.difficulty;
-                const difficultyStats = (this.state.user as any)[`${difficulty}Games`] || 0;
-                currentValue = difficultyStats;
-                break;
-            default:
-                console.warn(`⚠️ Неизвестный тип требования: ${requirement.type}`);
-                return 0;
-        }
-
-        // Для остальных типов - процент от цели
-        const progress = (currentValue / requirement.value) * 100;
-        const result = Math.min(Math.round(progress), 99); // Максимум 99% для не разблокированных
-
-        console.log(`📊 Результат расчета: ${currentValue}/${requirement.value} = ${result}%`);
-
-        return result;
-    }
+    // УДАЛЕНА функция calculateRealProgress - весь расчет прогресса теперь происходит на сервере
 
     /**
      * 🎯 СОЗДАНИЕ КАРТОЧКИ ДОСТИЖЕНИЯ В СТИЛЕ ДЕТЕКТИВНОГО ДОСЬЕ

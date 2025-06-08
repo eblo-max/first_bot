@@ -980,201 +980,21 @@ export const PROFILE_CONFIG: ProfileConfig = {
 // =============================================================================
 
 /**
- * Расчет прогресса достижения с учетом сложной математики
+ * УСТАРЕЛО: Расчет прогресса достижения теперь происходит на сервере
+ * Эта функция сохранена только для совместимости и не используется
+ * @deprecated Используйте серверный API для получения прогресса достижений
  */
 export function calculateAchievementProgress(
     achievement: Achievement,
     userStats: any
 ): { current: number; target: number; percentage: number; isCompleted: boolean } {
-    const req = achievement.requirement;
-    if (!req) {
-        return { current: 0, target: 1, percentage: 0, isCompleted: false };
-    }
-
-    let current = 0;
-    let target = req.value || 1;
-    let isCompleted = false;
-
-    switch (req.type) {
-        case 'investigations':
-            current = userStats.investigations || 0;
-            break;
-
-        case 'correctAnswers':
-            current = userStats.solvedCases || 0;
-            break;
-
-        case 'solvedCases':
-            current = userStats.solvedCases || 0;
-            break;
-
-        case 'accuracy':
-            if ((userStats.investigations || 0) >= (req.minGames || 0)) {
-                current = Math.round(userStats.accuracy || 0);
-                isCompleted = current >= req.value;
-            }
-            break;
-
-        case 'fastestGame':
-            // Для достижений скорости: меньше = лучше
-            const fastestTime = userStats.fastestGame || 0;
-            if (fastestTime > 0 && fastestTime <= req.value) {
-                current = target;
-                isCompleted = true;
-            } else {
-                current = fastestTime > 0 ? Math.min(req.value, fastestTime) : 0;
-            }
-            break;
-
-        case 'averageTime':
-            // Проверяем минимальное количество игр и среднее время
-            if ((userStats.investigations || 0) >= (req.minGames || 0)) {
-                const avgTime = userStats.averageTime || 0;
-                if (avgTime > 0 && avgTime <= req.value) {
-                    current = target;
-                    isCompleted = true;
-                } else {
-                    current = avgTime > 0 ? Math.min(req.value, avgTime) : 0;
-                }
-            }
-            break;
-
-        case 'winStreak':
-            current = userStats.maxWinStreak || 0;
-            break;
-
-        case 'perfectGames':
-            current = userStats.perfectGames || 0;
-            break;
-
-        case 'totalScore':
-            current = userStats.totalScore || 0;
-            break;
-
-        case 'easyGames':
-            current = userStats.easyGames || 0;
-            break;
-
-        case 'mediumGames':
-            current = userStats.mediumGames || 0;
-            break;
-
-        case 'hardGames':
-            current = userStats.hardGames || 0;
-            break;
-
-        case 'expertGames':
-            current = userStats.expertGames || 0;
-            break;
-
-        case 'reputation':
-            current = userStats.reputation?.level || 0;
-            break;
-
-        case 'dailyStreak':
-            current = userStats.dailyStreakCurrent || 0;
-            break;
-
-        case 'crimeTypeMastery':
-            if (req.crimeType && userStats.crimeTypeMastery) {
-                const mastery = userStats.crimeTypeMastery[req.crimeType];
-                if (mastery) {
-                    const solved = mastery.solved || 0;
-                    const accuracy = mastery.accuracy || 0;
-
-                    if (solved >= req.value && accuracy >= (req.accuracy || 0)) {
-                        current = target;
-                        isCompleted = true;
-                    } else {
-                        current = solved;
-                    }
-                }
-            }
-            break;
-
-        case 'multipleMastery':
-            // Считаем сколько типов преступлений достигли нужного уровня
-            if (userStats.crimeTypeMastery && req.level) {
-                let masteredTypes = 0;
-                Object.values(userStats.crimeTypeMastery).forEach((mastery: any) => {
-                    if (mastery.level >= req.level!) {
-                        masteredTypes++;
-                    }
-                });
-                current = masteredTypes;
-            }
-            break;
-
-        case 'allMastery':
-            // Проверяем все ли типы достигли нужного уровня
-            if (userStats.crimeTypeMastery && req.level) {
-                const requiredTypes = ['murder', 'robbery', 'fraud', 'theft', 'cybercrime'];
-                let masteredTypes = 0;
-
-                requiredTypes.forEach(type => {
-                    const mastery = userStats.crimeTypeMastery[type];
-                    if (mastery && mastery.level >= req.level!) {
-                        masteredTypes++;
-                    }
-                });
-
-                current = masteredTypes;
-                target = requiredTypes.length;
-                isCompleted = masteredTypes === target;
-            }
-            break;
-
-        case 'perfectReputation':
-            // Проверяем все компоненты репутации
-            if (userStats.reputation && req.accuracy && req.speed && req.consistency && req.difficulty) {
-                const rep = userStats.reputation;
-                const checks = [
-                    rep.accuracy >= req.accuracy,
-                    rep.speed >= req.speed,
-                    rep.consistency >= req.consistency,
-                    rep.difficulty >= req.difficulty
-                ];
-
-                current = checks.filter(Boolean).length;
-                target = 4;
-                isCompleted = current === target;
-            }
-            break;
-
-        case 'speedAccuracy':
-            // Комбинированное достижение скорости и точности
-            if ((userStats.investigations || 0) >= (req.minGames || 0) && req.accuracy && req.averageTime) {
-                const accuracyOk = (userStats.accuracy || 0) >= req.accuracy;
-                const speedOk = (userStats.averageTime || 0) <= req.averageTime && userStats.averageTime > 0;
-
-                if (accuracyOk && speedOk) {
-                    current = target;
-                    isCompleted = true;
-                } else {
-                    current = (accuracyOk ? 0.5 : 0) + (speedOk ? 0.5 : 0);
-                }
-            }
-            break;
-
-        // Для уникальных достижений пока базовая логика
-        default:
-            current = 0;
-            target = 1;
-            break;
-    }
-
-    // Если не установлено явно, проверяем через базовое сравнение
-    if (!isCompleted && req.type !== 'fastestGame' && req.type !== 'averageTime') {
-        isCompleted = current >= target;
-    }
-
-    const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+    console.warn('⚠️ УСТАРЕЛО: calculateAchievementProgress больше не используется. Прогресс рассчитывается на сервере.');
 
     return {
-        current,
-        target,
-        percentage: Math.round(percentage),
-        isCompleted
+        current: 0,
+        target: 1,
+        percentage: 0,
+        isCompleted: false
     };
 }
 
