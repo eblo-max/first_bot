@@ -87,15 +87,15 @@
     }
 }
 
-/* Стили для достижений - ГОРИЗОНТАЛЬНАЯ ПРОКРУТКА */
+/* Стили для достижений - СЕТКА КАРТОЧЕК */
 #achievements-grid {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 16px !important;
-    margin-top: 16px !important;
-    padding: 8px !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+    gap: 18px !important;
+    padding: 16px !important;
+    max-height: 500px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     scroll-behavior: smooth !important;
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: thin !important;
@@ -122,359 +122,285 @@
     background: linear-gradient(90deg, #DC143C, #FF073A) !important;
 }
 
-.achievement-card {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: flex-start !important;
-    gap: 12px !important;
-    background: linear-gradient(135deg, 
-        rgba(26, 26, 26, 0.95) 0%, 
-        rgba(42, 42, 42, 0.85) 50%, 
-        rgba(26, 26, 26, 0.95) 100%) !important;
-    border: 2px solid #666 !important;
-    border-radius: 16px !important;
-    padding: 16px !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+.achievement-item {
+    background:
+        linear-gradient(145deg, #3a3a3a 0%, #2d2d2d 100%),
+        repeating-linear-gradient(0deg,
+            transparent,
+            transparent 3px,
+            rgba(139, 0, 0, 0.1) 3px,
+            rgba(139, 0, 0, 0.1) 4px) !important;
+    border: 2px solid #DC143C !important;
+    border-radius: 12px !important;
+    padding: 16px 14px !important;
     cursor: pointer !important;
     position: relative !important;
-    overflow: hidden !important;
-    backdrop-filter: blur(10px) !important;
-    box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.3),
-        0 2px 8px rgba(139, 0, 0, 0.1) !important;
-    min-height: 120px !important;
-    max-height: 150px !important;
-    min-width: 280px !important;
-    max-width: 320px !important;
-    flex-shrink: 0 !important;
-    flex-grow: 0 !important;
-}
-
-/* ЗАПРЕЩАЕМ любую вертикальную структуру */
-.achievement-card * {
-    display: block !important;
-}
-
-.achievement-card .achievement-icon {
-    display: flex !important;
-    flex-direction: row !important;
-}
-
-.achievement-card .achievement-content {
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-.achievement-card::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: -100% !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: linear-gradient(90deg, transparent, rgba(220, 20, 60, 0.1), transparent) !important;
-    transition: left 0.6s ease !important;
-    z-index: 1 !important;
-}
-
-.achievement-card:hover::before {
-    left: 100% !important;
-}
-
-.achievement-card:hover {
-    transform: translateY(-4px) scale(1.02) !important;
-    border-color: #DC143C !important;
-    box-shadow: 
-        0 12px 24px rgba(0, 0, 0, 0.4),
-        0 6px 16px rgba(220, 20, 60, 0.3),
-        0 0 20px rgba(220, 20, 60, 0.15) !important;
-}
-
-/* Статусы достижений */
-.achievement-card.unlocked {
-    border-color: #32CD32 !important;
-    background: linear-gradient(135deg, 
-        rgba(50, 205, 50, 0.08) 0%, 
-        rgba(26, 26, 26, 0.95) 40%, 
-        rgba(50, 205, 50, 0.08) 100%) !important;
-    box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.3),
-        0 2px 8px rgba(50, 205, 50, 0.2),
-        0 0 12px rgba(50, 205, 50, 0.1) !important;
-}
-
-.achievement-card.unlocked:hover {
-    border-color: #40E940 !important;
-    box-shadow: 
-        0 12px 24px rgba(0, 0, 0, 0.4),
-        0 6px 16px rgba(50, 205, 50, 0.4),
-        0 0 25px rgba(50, 205, 50, 0.3) !important;
-}
-
-.achievement-card.locked {
-    opacity: 0.7 !important;
-    border-color: #666 !important;
-    background: linear-gradient(135deg, 
-        rgba(16, 16, 16, 0.95) 0%, 
-        rgba(32, 32, 32, 0.85) 50%, 
-        rgba(16, 16, 16, 0.95) 100%) !important;
-}
-
-.achievement-card.locked:hover {
-    opacity: 0.85 !important;
-    border-color: #888 !important;
-    transform: translateY(-2px) scale(1.01) !important;
-}
-
-/* Иконки достижений - СТРОГО ГОРИЗОНТАЛЬНОЕ РАСПОЛОЖЕНИЕ */
-.achievement-icon {
-    font-size: 36px !important;
-    min-width: 48px !important;
-    max-width: 48px !important;
-    width: 48px !important;
-    height: 48px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 12px !important;
-    background: linear-gradient(135deg, 
-        rgba(139, 0, 0, 0.2) 0%, 
-        rgba(220, 20, 60, 0.3) 100%) !important;
-    border: 2px solid rgba(139, 0, 0, 0.4) !important;
-    position: relative !important;
-    z-index: 2 !important;
     transition: all 0.3s ease !important;
-    filter: drop-shadow(0 0 8px rgba(139, 0, 0, 0.4)) !important;
-    flex-shrink: 0 !important;
-    flex-grow: 0 !important;
-}
-
-.achievement-card.unlocked .achievement-icon {
-    background: linear-gradient(135deg, 
-        rgba(50, 205, 50, 0.3) 0%, 
-        rgba(40, 255, 40, 0.4) 100%) !important;
-    border-color: rgba(50, 205, 50, 0.6) !important;
-    filter: drop-shadow(0 0 12px rgba(50, 205, 50, 0.6)) !important;
-    animation: unlockedIconGlow 2s ease-in-out infinite !important;
-}
-
-.achievement-card.locked .achievement-icon {
-    background: linear-gradient(135deg, rgba(64, 64, 64, 0.2) 0%, rgba(96, 96, 96, 0.3) 100%) !important;
-    border-color: rgba(96, 96, 96, 0.4) !important;
-    filter: drop-shadow(0 0 4px rgba(96, 96, 96, 0.3)) !important;
-}
-
-@keyframes unlockedIconGlow {
-    0%, 100% {
-        transform: scale(1) !important;
-        filter: drop-shadow(0 0 12px rgba(50, 205, 50, 0.6)) !important;
-    }
-    50% {
-        transform: scale(1.05) !important;
-        filter: drop-shadow(0 0 20px rgba(50, 205, 50, 0.8)) !important;
-    }
-}
-
-/* Контент достижения - СТРОГО ВЕРТИКАЛЬНОЕ РАСПОЛОЖЕНИЕ ВНУТРИ ГОРИЗОНТАЛЬНОЙ КАРТОЧКИ */
-.achievement-content {
-    flex: 1 !important;
-    flex-grow: 1 !important;
+    overflow: hidden !important;
+    box-shadow:
+        0 4px 15px rgba(220, 20, 60, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        0 2px 8px rgba(0, 0, 0, 0.8) !important;
+    text-align: center !important;
+    height: 180px !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 6px !important;
-    z-index: 2 !important;
-    position: relative !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
+    justify-content: space-between !important;
 }
 
-.achievement-name {
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    color: var(--silver, #C0C0C0) !important;
-    margin: 0 !important;
-    line-height: 1.2 !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-
-.achievement-card.unlocked .achievement-name {
-    color: #40E940 !important;
-    text-shadow: 0 0 8px rgba(64, 233, 64, 0.4) !important;
-}
-
-.achievement-card.locked .achievement-name {
-    color: #888 !important;
-}
-
-.achievement-description {
-    font-size: 11px !important;
-    color: var(--fog, #666) !important;
-    margin: 0 !important;
-    line-height: 1.3 !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-height: 28px !important;
-}
-
-.achievement-card.locked .achievement-description {
-    color: #555 !important;
-}
-
-.achievement-category {
-    font-size: 9px !important;
-    font-weight: 600 !important;
-    color: var(--crimson, #DC143C) !important;
-    text-transform: uppercase !important;
-    letter-spacing: 1px !important;
-    opacity: 0.8 !important;
-    background: rgba(220, 20, 60, 0.1) !important;
-    padding: 2px 6px !important;
-    border-radius: 4px !important;
-    border: 1px solid rgba(220, 20, 60, 0.3) !important;
-    width: fit-content !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    white-space: nowrap !important;
-}
-
-.achievement-card.unlocked .achievement-category {
-    color: #40E940 !important;
-    background: rgba(64, 233, 64, 0.1) !important;
-    border-color: rgba(64, 233, 64, 0.3) !important;
-    text-shadow: 0 0 4px rgba(64, 233, 64, 0.3) !important;
-}
-
-.achievement-card.locked .achievement-category {
-    color: #666 !important;
-    background: rgba(96, 96, 96, 0.1) !important;
-    border-color: rgba(96, 96, 96, 0.3) !important;
-}
-
-/* Прогресс бар для заблокированных достижений */
-.achievement-progress {
-    margin-top: 6px !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-}
-
-.progress-bar {
-    flex: 1 !important;
-    height: 6px !important;
-    background: rgba(64, 64, 64, 0.4) !important;
-    border-radius: 3px !important;
-    overflow: hidden !important;
-    position: relative !important;
-    border: 1px solid rgba(96, 96, 96, 0.3) !important;
-}
-
-.progress-fill {
-    height: 100% !important;
-    background: linear-gradient(90deg, 
-        var(--crimson, #DC143C) 0%, 
-        var(--neon-red, #FF073A) 50%, 
-        var(--crimson, #DC143C) 100%) !important;
-    border-radius: 3px !important;
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    position: relative !important;
-    overflow: hidden !important;
-}
-
-.progress-fill::before {
+/* Эффект бумаги */
+.achievement-item::before {
     content: '' !important;
     position: absolute !important;
     top: 0 !important;
-    left: -100% !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent) !important;
-    animation: progressShine 2s ease-in-out infinite !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(220, 20, 60, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(139, 0, 0, 0.03) 0%, transparent 50%) !important;
+    pointer-events: none !important;
 }
 
-@keyframes progressShine {
-    0% { left: -100% !important; }
-    100% { left: 100% !important; }
+/* Hover эффект */
+.achievement-item:hover {
+    transform: translateY(-2px) !important;
+    border-color: rgba(220, 20, 60, 0.6) !important;
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(220, 20, 60, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
-.progress-text {
-    font-size: 9px !important;
-    color: var(--fog, #666) !important;
-    font-weight: 600 !important;
-    min-width: 28px !important;
-    text-align: right !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    white-space: nowrap !important;
+/* Открытые достижения */
+.achievement-item:not(.locked) {
+    border-color: rgba(255, 215, 0, 0.6) !important;
+    background:
+        linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%),
+        repeating-linear-gradient(0deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 215, 0, 0.02) 2px,
+            rgba(255, 215, 0, 0.02) 4px) !important;
 }
 
-/* Значок разблокированного достижения */
-.achievement-unlock-badge {
+.achievement-item:not(.locked):hover {
+    transform: translateY(-6px) scale(1.05) !important;
+    border-color: #FFD700 !important;
+    box-shadow:
+        0 12px 35px rgba(220, 20, 60, 0.7),
+        0 0 0 2px rgba(255, 215, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        0 4px 15px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Заблокированные достижения */
+.achievement-item.locked {
+    opacity: 0.75 !important;
+    filter: grayscale(0.5) !important;
+    background:
+        linear-gradient(145deg, #2a2a2a 0%, #1d1d1d 100%),
+        repeating-linear-gradient(0deg,
+            transparent,
+            transparent 3px,
+            rgba(105, 105, 105, 0.1) 3px,
+            rgba(105, 105, 105, 0.1) 4px) !important;
+    border-color: #666 !important;
+}
+
+.achievement-item.locked:hover {
+    opacity: 0.9 !important;
+    transform: translateY(-3px) scale(1.02) !important;
+    border-color: #888 !important;
+    box-shadow:
+        0 6px 15px rgba(105, 105, 105, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Иконка достижения */
+.achievement-icon {
+    font-size: 2.2rem !important;
+    margin-bottom: 10px !important;
+    display: block !important;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.8)) !important;
+    transition: all 0.3s ease !important;
+}
+
+.achievement-item:not(.locked) .achievement-icon {
+    filter:
+        drop-shadow(0 3px 6px rgba(0, 0, 0, 0.8)) 
+        drop-shadow(0 0 12px rgba(255, 215, 0, 0.5)) 
+        drop-shadow(0 0 20px rgba(220, 20, 60, 0.3)) !important;
+}
+
+.achievement-item.locked .achievement-icon {
+    filter:
+        drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) 
+        grayscale(0.7) 
+        opacity(0.8) !important;
+}
+
+/* Статус печать в углу */
+.achievement-status-stamp {
     position: absolute !important;
     top: 8px !important;
     right: 8px !important;
-    width: 24px !important;
-    height: 24px !important;
-    background: linear-gradient(135deg, #32CD32, #40E940) !important;
-    color: white !important;
+    width: 28px !important;
+    height: 28px !important;
     border-radius: 50% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 12px !important;
-    font-weight: bold !important;
-    z-index: 3 !important;
-    box-shadow: 0 2px 8px rgba(50, 205, 50, 0.4) !important;
-    animation: unlockBadgePulse 2s ease-in-out infinite !important;
-    border: 2px solid white !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    border: 2px solid !important;
+    animation: detectiveStamp 3s ease-in-out infinite !important;
+    z-index: 10 !important;
 }
 
-@keyframes unlockBadgePulse {
+.achievement-status-stamp.unlocked {
+    background: radial-gradient(circle, #DC143C 0%, #8B0000 100%) !important;
+    color: #FFF !important;
+    border-color: #FFD700 !important;
+    box-shadow:
+        0 0 15px rgba(220, 20, 60, 0.8),
+        0 0 25px rgba(255, 215, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.achievement-status-stamp.locked {
+    background: radial-gradient(circle, #555 0%, #333 100%) !important;
+    color: #AAA !important;
+    border-color: #777 !important;
+    box-shadow:
+        0 0 8px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+@keyframes detectiveStamp {
     0%, 100% {
         transform: scale(1) !important;
-        box-shadow: 0 2px 8px rgba(50, 205, 50, 0.4) !important;
+        filter: brightness(1) !important;
     }
     50% {
-        transform: scale(1.1) !important;
-        box-shadow: 0 4px 16px rgba(50, 205, 50, 0.6) !important;
+        transform: scale(1.08) !important;
+        filter: brightness(1.2) !important;
     }
 }
 
-/* Цветовая дифференциация по редкости */
-.achievement-card.rarity-common {
-    border-color: #999 !important;
+/* Название достижения */
+.achievement-name {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.8rem !important;
+    font-weight: 800 !important;
+    color: #FFFFFF !important;
+    line-height: 1.3 !important;
+    margin-bottom: 8px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    text-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.9),
+        0 0 8px rgba(255, 215, 0, 0.3) !important;
 }
 
-.achievement-card.rarity-rare {
-    border-color: #3498db !important;
-    background: linear-gradient(135deg, 
-        rgba(52, 152, 219, 0.05) 0%, 
-        rgba(26, 26, 26, 0.95) 40%, 
-        rgba(52, 152, 219, 0.05) 100%) !important;
+.achievement-item.locked .achievement-name {
+    color: #BBB !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
-.achievement-card.rarity-epic {
-    border-color: #9b59b6 !important;
-    background: linear-gradient(135deg, 
-        rgba(155, 89, 182, 0.05) 0%, 
-        rgba(26, 26, 26, 0.95) 40%, 
-        rgba(155, 89, 182, 0.05) 100%) !important;
+/* Краткое описание */
+.achievement-summary {
+    font-size: 0.72rem !important;
+    color: #F0F0F0 !important;
+    opacity: 0.95 !important;
+    line-height: 1.4 !important;
+    margin-bottom: 10px !important;
+    text-align: center !important;
+    flex-grow: 1 !important;
+    font-weight: 500 !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8) !important;
 }
 
-.achievement-card.rarity-legendary {
-    border-color: #f39c12 !important;
-    background: linear-gradient(135deg, 
-        rgba(243, 156, 18, 0.05) 0%, 
-        rgba(26, 26, 26, 0.95) 40%, 
-        rgba(243, 156, 18, 0.05) 100%) !important;
-    box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.3),
-        0 2px 8px rgba(243, 156, 18, 0.2),
-        0 0 12px rgba(243, 156, 18, 0.1) !important;
+.achievement-item.locked .achievement-summary {
+    color: #999 !important;
+    opacity: 0.8 !important;
 }
+
+/* Прогресс-полоска внизу */
+.achievement-progress-mini {
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 3px !important;
+    background: rgba(40, 40, 40, 0.8) !important;
+    overflow: hidden !important;
+}
+
+.achievement-progress-fill {
+    height: 100% !important;
+    background: linear-gradient(90deg, var(--blood-red), var(--crimson)) !important;
+    transition: width 0.8s ease !important;
+    position: relative !important;
+}
+
+.achievement-item:not(.locked) .achievement-progress-fill {
+    background: linear-gradient(90deg, #ffd700, #ffed4e) !important;
+}
+
+/* Анимация заполнения */
+.achievement-progress-fill::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -50% !important;
+    width: 50% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4)) !important;
+    animation: progressShine 2s linear infinite !important;
+}
+
+@keyframes progressShine {
+    0% {
+        left: -50% !important;
+    }
+    100% {
+        left: 100% !important;
+    }
+}
+
+/* Мобильная адаптация для достижений */
+@media (max-width: 480px) {
+    #achievements-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+        gap: 14px !important;
+        padding: 12px !important;
+    }
+    
+    .achievement-item {
+        height: 160px !important;
+        padding: 12px 10px !important;
+    }
+    
+    .achievement-icon {
+        font-size: 1.8rem !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .achievement-name {
+        font-size: 0.7rem !important;
+        margin-bottom: 6px !important;
+    }
+    
+    .achievement-summary {
+        font-size: 0.65rem !important;
+        margin-bottom: 8px !important;
+    }
+}
+
+/* СТИЛИ ОЧИЩЕНЫ - теперь используем только стили для .achievement-item */
 
 /* Стили для лидерборда */
 .leaderboard-list {
@@ -591,7 +517,7 @@
 }
 
 /* Анимация появления */
-.achievement-card, .leaderboard-entry {
+.achievement-item, .leaderboard-entry {
     animation: fadeInUp 0.6s ease-out forwards;
 }
 
